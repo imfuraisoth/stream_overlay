@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta name1="viewport" content="width=device-width">
+    <meta social1="viewport" content="width=device-width">
+    <meta nextPlayer1="viewport" content="width=device-width">
+    <meta nextPlayer2="viewport" content="width=device-width">
+    <link rel="stylesheet" href="https://use.typekit.net/ogo7pba.css">
+    <title>Commentator Overlay</title>
+    <link href="style.css" rel="stylesheet" type="text/css" />
+    <script src="https://kit.fontawesome.com/2c93766a80.js" crossorigin="anonymous"></script>
+  </head>
+  <body>
+    <script>
+    var com1Value = "";
+    var soc1Value = "";
+    var nextPlayer1 = "";
+    var nextPlayer2 = "";
+
+    function loadElements() {
+
+      fetch('http://127.0.0.1:8080/getdata')
+          .then(function (response) {
+            return response.json();
+          })
+          .then(function (data) {
+              appendData(data);
+            })
+          .catch(function (err) {
+            console.log('error: ' + err);
+          });
+          function appendData(data) {
+            if (data.com1 !== com1Value) {
+              var element = document.getElementById("comWrapper");
+              if (!!element) {
+                fadeOutElement(element);
+              }
+
+              com1Value = data.com1;
+              if (data.com1.length > 0) {
+                var name1 = document.createElement("span");
+                name1.setAttribute("id", "name1");
+                name1.style.color = "#533B2D";
+                name1.innerHTML = data.com1;
+                var div = document.createElement("div");
+                div.setAttribute("id", "comWrapper");
+                div.appendChild(name1);
+                document.body.appendChild(div);
+              }
+            }
+
+            if (data.soc1 !== soc1Value) {
+              var element = document.getElementById("socWrapper");
+              if (!!element) {
+                fadeOutElement(element);
+              }
+              soc1Value = data.soc1;
+              if (data.soc1.length > 0) {
+                var soc1 = document.createElement("span");
+                soc1.setAttribute("id", "social1");
+                soc1.style.color = "#533B2D";
+                soc1.innerHTML = data.soc1;
+                var div = document.createElement("div");
+                div.setAttribute("id", "socWrapper");
+                div.appendChild(soc1);
+                document.body.appendChild(div);
+              }
+            }
+
+            if (data.nextplayer1 !== nextPlayer1) {
+              var element = document.getElementById("np1Div");
+              if (!!element) {
+                fadeOutElement(element);
+              }
+              nextPlayer1 = data.nextplayer1;
+              if (data.nextplayer1.length > 0) {
+                var np1 = document.createElement("span");
+                np1.setAttribute("id", "nextplayer1");
+                np1.style.color = "#533B2D";
+                np1.innerHTML = data.nextplayer1;
+                var div = document.createElement("div");
+                div.setAttribute("id", "np1Div");
+                div.appendChild(np1);
+                document.body.appendChild(div);
+              }
+            }
+
+            if (data.nextplayer2 !== nextPlayer2) {
+              var element = document.getElementById("np2Div");
+              if (!!element) {
+                fadeOutElement(element);
+              }
+              nextPlayer2 = data.nextplayer2;
+              if (data.nextplayer2.length > 0) {
+                var np2 = document.createElement("span");
+                np2.setAttribute("id", "nextplayer2");
+                np2.style.color = "#533B2D";
+                np2.innerHTML = data.nextplayer2;
+                var div = document.createElement("div");
+                div.setAttribute("id", "np2Div");
+                div.appendChild(np2);
+                document.body.appendChild(div);
+              }
+            }
+          }
+    }
+
+    function fadeOutElement(element) {
+        var op = 1;  // initial opacity
+        var timer = setInterval(function () {
+            if (op <= 0.1) {
+                clearInterval(timer);
+                element.style.display = 'none';
+                element.remove();
+                return;
+            } else {
+              element.style.opacity = op;
+              element.style.filter = 'alpha(opacity=' + op * 100 + ")";
+              op -= op * 0.1;
+            }
+        }, 30);
+    }
+
+    window.setInterval(loadElements, 2000);
+    </script>
+  </body>
+</html>

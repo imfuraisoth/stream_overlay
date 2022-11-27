@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta name1="viewport" content="width=device-width">
+    <meta name2="viewport" content="width=device-width">
+    <meta team1="viewport" content="width=device-width">
+    <meta team2="viewport" content="width=device-width">
+    <link rel="stylesheet" href="https://use.typekit.net/ogo7pba.css">
+    <title>Versus Overlay</title>
+    <link href="style.css" rel="stylesheet" type="text/css" />
+    <script src="https://kit.fontawesome.com/2c93766a80.js" crossorigin="anonymous"></script>
+  </head>
+  <body>
+    <script>
+    var p1Name = "";
+    var p2Name = "";
+    var p1Team = "";
+    var p2Team = "";
+
+    function loadElements() {
+
+      fetch('http://127.0.0.1:8080/getdata')
+          .then(function (response) {
+            return response.json();
+          })
+          .then(function (data) {
+              appendData(data);
+            })
+          .catch(function (err) {
+            console.log('error: ' + err);
+          });
+          function appendData(data) {
+            if (data.p1Team !== p1Team) {
+              var element = document.getElementById("team1Div");
+              if (!!element) {
+                fadeOutElement(element);
+              }
+
+              p1Team = data.p1Team;
+              if (data.p1Team.length > 0) {
+                var team1 = document.createElement("span");
+                team1.setAttribute("id", "p1Team");
+                team1.style.color = "#533B2D";
+                team1.innerHTML = data.p1Team;
+                var div = document.createElement("div");
+                div.setAttribute("id", "team1Div");
+                div.appendChild(team1);
+                document.body.appendChild(div);
+              }
+            }
+
+            if (data.p1Name !== p1Name) {
+              var element = document.getElementById("name1Div");
+              if (!!element) {
+                fadeOutElement(element);
+              }
+
+              p1Name = data.p1Name;
+              if (data.p1Name.length > 0) {
+                var name1 = document.createElement("span");
+                name1.setAttribute("id", "p1Name");
+                name1.style.color = "#533B2D";
+                name1.style.textAlign = "center";
+                name1.innerHTML = data.p1Name;
+                var div = document.createElement("div");
+                div.setAttribute("id", "name1Div");
+                div.appendChild(name1);
+                document.body.appendChild(div);
+              }
+            }
+
+            if (data.p2Team !== p2Team) {
+              var element = document.getElementById("team2Div");
+              if (!!element) {
+                fadeOutElement(element);
+              }
+
+              p2Team = data.p2Team;
+              if (data.p2Team.length > 0) {
+                var team2 = document.createElement("span");
+                team2.setAttribute("id", "p2Team");
+                team2.style.color = "#533B2D";
+                team2.innerHTML = data.p2Team;
+                var div = document.createElement("div");
+                div.setAttribute("id", "team2Div");
+                div.appendChild(team2);
+                document.body.appendChild(div);
+              }
+            }
+
+            if (data.p2Name !== p2Name) {
+              var element = document.getElementById("name2Div");
+              if (!!element) {
+                fadeOutElement(element);
+              }
+
+              p2Name = data.p2Name;
+              if (data.p2Name.length > 0) {
+                var name2 = document.createElement("span");
+                name2.setAttribute("id", "p2Name");
+                name2.style.textAlign = "center";
+                name2.style.color = "#533B2D";
+                name2.innerHTML = data.p2Name;
+                var div = document.createElement("div");
+                div.setAttribute("id", "name2Div");
+                div.appendChild(name2);
+                document.body.appendChild(div);
+              }
+            }
+          }
+    }
+
+    function fadeOutElement(element) {
+        var op = 1;  // initial opacity
+        var timer = setInterval(function () {
+            if (op <= 0.1) {
+                clearInterval(timer);
+                element.style.display = 'none';
+                element.remove();
+                return;
+            } else {
+              element.style.opacity = op;
+              element.style.filter = 'alpha(opacity=' + op * 100 + ")";
+              op -= op * 0.1;
+            }
+        }, 30);
+    }
+
+    window.setInterval(loadElements, 2000);
+    </script>
+  </body>
+</html>

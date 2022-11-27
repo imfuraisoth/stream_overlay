@@ -1,0 +1,108 @@
+@font-face {
+    font-family: "antiquarian-scribe";
+}
+
+@font-face {
+    font-family: "bradley-djr";
+}
+
+#name1 {
+  animation-duration: 2s;
+  animation-name: fadeIn;
+  text-align: left;
+  padding: 10px 0 3px;
+  text-decoration-color: #533B2D;
+  position: fixed;
+  top: 840px;
+  right: 1160px;
+  display:inline-block;
+  font-size: 90px;
+  font-family: 'bradley-djr', monospace;
+}
+
+@keyframes fadeIn {
+  0% {opacity: 0;}
+  100% {opacity: 1;}
+}
+
+#name2 {
+  animation-duration: 4s;
+  animation-name: fadeIn;
+  text-align: left;
+  padding: 10px 0 3px;
+  text-decoration-color: #533B2D;
+  position: fixed;
+  top: 840px;
+  display:inline-block;
+  margin-left: 1163px;
+  font-size: 90px;
+  font-family: 'bradley-djr', monospace;
+}
+
+#social1 {
+  animation-duration: 2s;
+  animation-name: fadeIn;
+  text-align: left;
+  padding: 5px 0 5px;
+  text-decoration-color: #533B2D;
+  position: fixed;
+  right: 1160px;
+  top: 935px;
+  font-size: 55px;
+  font-family: 'antiquarian-scribe', monospace;
+}
+
+#social2 {
+  animation-duration: 4s;
+  animation-name: fadeIn;
+  text-align: left;
+  padding: 5px 0 5px;
+  text-decoration-color: #533B2D;
+  position: fixed;
+  margin-left: 1163px;
+  top: 935px;
+  font-size: 55px;
+  font-family: 'antiquarian-scribe', monospace;
+}
+
+#nextplayer1 {
+  animation-duration: 2s;
+  animation-name: fadeIn;
+  text-align: left;
+  padding: 10px 0 3px;
+  text-decoration-color: #533B2D;
+  position: fixed;
+  top: 1006px;
+  right: 1454px;
+  font-size: 45px;
+  font-family: 'bradley-djr', monospace;
+}
+
+#nextplayer2 {
+  animation-duration: 2s;
+  animation-name: fadeIn;
+  text-align: left;
+  padding: 10px 0 3px;
+  text-decoration-color: #533B2D;
+  position: fixed;
+  top: 1006px;
+  margin-left: 574px;
+  font-size: 45px;
+  font-family: 'bradley-djr', monospace;
+}
+
+span + span {
+  margin-left: 33%;
+}
+
+span {
+  font-family: 'antiquarian-scribe', monospace;
+}
+
+inputWithSocial1 {
+    position: absolute;
+    left: 0;
+    top: 8px;
+    padding: 9px 8px;
+    color: #533B2D;
+}
