@@ -1,0 +1,364 @@
+<html>
+
+<head>
+
+	<script src="../js/scoreboard.js" type="text/javascript" charset="utf-8"></script>
+	<script src="../js/jquery-3.3.1.min.js" type="text/javascript" charset="utf-8"></script>
+	<script src="../js/greensock-js/src/minified/TweenMax.min.js" type="text/javascript" charset="utf-8"></script>
+	<script src="../js/countries.js" type="text/javascript" charset="utf-8"></script>
+	<link rel="stylesheet" href="https://use.typekit.net/ogo7pba.css">
+
+<style text="text/CSS">
+
+	@font-face {
+		src: url('../../fonts/JacobRiley.otf');
+		font-family: "JacobRiley";
+	}
+
+	@font-face {
+    	font-family: "antiquarian-scribe";
+	}
+
+	@font-face {
+		font-family: "bradley-djr";
+	}
+
+	body {
+		width: 1920px;
+		height: 1080px;
+		overflow: hidden;
+		background: transparent;
+		padding: 0px;
+		margin: 0px;
+		color: #533B2D;
+		//text-shadow: 2px 2px 3px DimGray;
+		-webkit-mask-size: 100%;
+	}
+
+	.scoreboard {
+		position: absolute;
+		left: 0px;
+		top: 0px;
+	}
+
+	.leftWrapper {
+		position: absolute;
+		width: 600px;
+		text-align: right;
+		top: 22px;
+		opacity: 0;
+		height: 120px;
+		line-height: 120px;
+		font-size: 90px;
+	}
+
+	.rightWrapper {
+		position: absolute;
+		width: 600px;
+		text-align: left;
+		top: 22px;
+		opacity: 0;
+		height: 120px;
+		line-height: 120px;
+		font-size: 90px;
+	}
+
+	#p1Wrapper {
+		right: 1283px;
+	}
+
+	#p2Wrapper {
+		margin-left: 1271px;
+	}
+
+	#teams {
+		color: #533B2D;
+		font-family: antiquarian-scribe;
+	}
+
+	#p1Name {
+		color: #533B2D;
+		font-size: 90px;
+		font-family: "bradley-djr";
+	}
+
+	#p2Name {
+		color: #533B2D;
+		font-size: 90px;
+		font-family: "bradley-djr";
+	}
+
+	#p1Team {
+		color: #533B2D;
+		font-size: 60px;
+		font-family: "antiquarian-scribe";
+		vertical-align: middle;
+	}
+
+	#p2Team {
+		color: #533B2D;
+		font-size: 60px;
+		font-family: "antiquarian-scribe";
+		vertical-align: middle;
+	}
+
+	.scores {
+		-webkit-text-stroke: 1px black;
+		opacity: 0;
+		font-family: "JacobRiley";
+	}
+
+	#p1Score {
+		font-size: 110px;
+		top: -20px;
+		right: 1022px;
+		text-align: right;
+		position: fixed;
+  		display:inline-block;
+	}
+
+	#p2Score {
+		font-size: 110px;
+		top: -20px;
+		margin-left: 1004px;
+		text-align: left;
+		position: fixed;
+		display:inline-block;
+	}
+
+	.fWrappers {
+		position: absolute;
+		width: 117px;
+		height: 45px;
+	}
+
+	#f1Wrapper {
+		top: 68px;
+		left: 453px;
+	}
+
+	#f2Wrapper {
+		top: 68px;
+		left: 1348px;
+	}
+
+	#p1Country, #p1TFlag {
+		margin-top: 70px;
+		margin-left: -110px;
+		width: 91px;
+		height: 53px;
+		opacity: 0;
+	}
+
+	#p2Country, #p2TFlag {
+		margin-top: 70px;
+		margin-left: 142px;
+		width: 91px;
+		height: 53px;
+		opacity: 0;
+	}
+
+	#round {
+		position: absolute;
+		top: 1050px;
+		right: 1150px;
+		font-size: 40px;
+		opacity: 0;
+		color: #533B2D;
+		font-family: "JacobRiley";
+		text-transform: uppercase;
+	}
+
+	.logos {
+		width: 240px;
+		height: 140px;
+		position: absolute;
+		margin-top: 80px;
+		margin-left: 50px;
+		left: -18px;
+		top: 750px;
+		opacity: .7;
+		display: none;
+	}
+
+	.resultContainer {
+		display: flex;
+		flex-direction: row;
+		align-items: flex-start
+	}
+
+	#results1 {
+		position: absolute;
+		width: 190px;
+		height: 100px;
+		line-height: 100px;
+		left: 45px;
+		top: 638px;
+		color: #533B2D;
+	}
+
+	#results2 {
+		position: absolute;
+		width: 190px;
+		height: 100px;
+		line-height: 100px;
+		left: 45px;
+		top: 698px;
+		color: #533B2D;
+	}
+
+	#result1Name {
+		left: 15px;
+		font-size: 45px;
+		font-family: "bradley-djr";
+	}
+
+	#result2Name {
+		left: 15px;
+		font-size: 45px;
+		font-family: "bradley-djr";
+	}
+
+	#result1 {
+		position: absolute;
+		top: 643px;
+		left: 254px;
+		font-size: 45px;
+	}
+
+	#result2 {
+		position: absolute;
+		top: 705px;
+		left: 254px;
+		font-size: 45px;
+	}
+
+	#next1 {
+		position: absolute;
+		width: 240px;
+		height: 100px;
+		line-height: 100px;
+		left: 45px;
+		top: 838px;
+		color: #533B2D;
+		text-align: center;
+	}
+
+	#next2 {
+		position: absolute;
+		width: 240px;
+		height: 100px;
+		line-height: 100px;
+		left: 45px;
+		top: 898px;
+		color: #533B2D;
+		text-align: center;
+	}
+
+	#nextPlayer1 {
+		text-align: center;
+		font-size: 45px;
+		font-family: "bradley-djr";
+	}
+
+	#nextPlayer2 {
+		text-align: center;
+		font-size: 45px;
+		font-family: "bradley-djr";
+	}
+	
+	#gameHold {
+		display: none;
+	}
+
+
+</style>
+
+</head>
+
+<body>
+
+	<div id="scoreboardBG">
+		<video id="scoreboardVid" class="scoreboard" type="video/webm" width="1920" height="114"></video> <!-- video source file set in scoreboard.js -->
+		<!--<img src="../imgs/p1Score.png" class="scoreboard"></img>
+		<img src="../imgs/p1Name.png" class="scoreboard"></img>
+		<img src="../imgs/p2Score.png" class="scoreboard"></img>
+		<img src="../imgs/p2Name.png" class="scoreboard"></img>
+		<img src="../imgs/round.png" class="scoreboard"></img>-->
+	</div>
+
+
+	<div id="scoreboard">
+		<div id="leftWrapper">
+			<span id="p1Score" class="scores"></span>
+			<span id="f1Wrapper" class="fWrappers">
+				<img id="p1Country" class="cFlags"></img>
+				<img id="p1TFlag" class="tFlags"></img>
+			</span>
+			<span id="p1Wrapper" class="leftWrapper">
+				<span id="p1Team" class="teams"></span> <!-- team/name spans nested within wrapper span to allow them to align the same without overlapping each other -->
+				<span id="p1Name" class="names"></span>
+			</span>
+		</div>
+		<div id="rightWrapper">
+			<span id="p2Score" class="scores"></span>
+			<span id="f2Wrapper" class="fWrappers">
+				<img id="p2Country" class="cFlags"></img>
+				<img id="p2TFlag" class="tFlags"></img>
+			</span>
+			<span id="p2Wrapper" class="rightWrapper">
+				<span id="p2Name" class="names"></span>
+				<span id="p2Team" class="teams"></span>
+			</span>
+		</div>
+		<div id="results1" class="resultContainer">
+			<span id="result1Name" class="names"></span>
+		</div>
+		<div><span id="result1" class="scores"></span></div>
+		<div id="results2" class="resultContainer">
+			<span id="result2Name" class="names"></span>
+		</div>
+		<div><span id="result2" class="scores"></span></div>
+		<div id="next1">
+			<span id="nextPlayer1" class="names"></span>
+		</div>
+		<div id="next2">
+			<span id="nextPlayer2" class="names"></span>
+		</div>
+		<div id="rdWrapper">
+			<span id="round"></span>
+		</div>
+	</div>
+
+<!--<div id="logoWrapper">
+		<img id="logo1" class="logos" src="../imgs/drpepper.jpg"></img>
+	</div>
+-->
+
+<script type="text/javascript">
+
+	var resultNameSize = '45px';
+	var resultScoreSize = '45px';
+	var nextNameSize = '45px';
+	var nameSize = '90px'; //default font size of name wrappers, should match 'font-size' value of .wrappers
+	var rdSize = '40px'; //default font size of round container, should match 'font-size' value of #round
+	var p1Move = '+90px'; //distance on x-axis that P1 name should initially be set to prior to load-in animation
+	var p2Move = '-90px'; //distance on x-axis that P2 name should initially be set to prior to load-in animation
+	var rdMove = '-40px'; //distance on y-axis that round should initially be set to prior to load-in animation
+	var nameTime = .3; //amount of time in seconds that the load-in animation for names takes
+	var nameDelay = .2; //amount of time in seconds that the load-in animation for names is delayed before starting
+	var rdTime = .3; //amount of time in seconds that the load-in animation for round info takes
+	var rdDelay = .2; //amount of time in seconds that the load-in animation for round info is delayed before starting
+	var scTime = .3; //amount of time in seconds that the load-in animation for scores takes
+	var scDelay = .45; //amount of time in seconds that the load-in animation for scores is delayed before starting
+	var logoTime = 200; //amount of time the fade-in animation for logos is delayed before starting
+	var adjust2 = '-28px'; //distance on y-axis that scoreboards move when adjusting for 2nd webm
+	var adjust3 = '+28px'; //distance on y-axis that scoreboards move when adjusting for 3rd webm
+	var adjustLg = ['+890px','+30px',.8,'240px','140px']; //array of [distance to move logos on x-axis, "" on y-axis, scaling factor to shrink logos by, original logo width, original logo height]
+
+</script>
+
+
+</body>
+
+</html>
