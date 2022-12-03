@@ -29,7 +29,7 @@
       <script>
         var jsonData;
 
-        fetch('http://127.0.0.1:8080/getdata')
+        fetch('http://192.168.0.133:8080/getdata')
             .then(function (response) {
             jsonData = response.json();
           return jsonData;
@@ -312,7 +312,7 @@
 
             // Creating a XHR object
             let xhr = new XMLHttpRequest();
-            let url = "http://127.0.0.1:8080/updatealldata";
+            let url = "http://192.168.0.133:8080/updatealldata";
 
             // open a connection
             xhr.open("POST", url, true);

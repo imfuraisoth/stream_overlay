@@ -111,6 +111,10 @@ def save_previous_results(full_data):
     write_to_file(result2, "p2Score", full_data)
     write_to_file(result_name_1, "p1Name", full_data)
     write_to_file(result_name_2, "p2Name", full_data)
+    full_data["resultscore1"] = full_data["p1Score"]
+    full_data["resultscore2"] = full_data["p2Score"]
+    full_data["resultplayer1"] = full_data["p1Name"]
+    full_data["resultplayer2"] = full_data["p2Name"]
     
 
 def write_to_file(file_name, data_key, json_data):
