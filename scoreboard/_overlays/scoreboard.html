@@ -64,10 +64,12 @@
 	}
 
 	#p1Wrapper {
+		height: 130px;
 		right: 1283px;
 	}
 
 	#p2Wrapper {
+		height: 130px;
 		margin-left: 1271px;
 	}
 
@@ -293,7 +295,6 @@
 			<span id="p1Score" class="scores"></span>
 			<span id="f1Wrapper" class="fWrappers">
 				<img id="p1Country" class="cFlags"></img>
-				<img id="p1TFlag" class="tFlags"></img>
 			</span>
 			<span id="p1Wrapper" class="leftWrapper">
 				<span id="p1Team" class="teams"></span> <!-- team/name spans nested within wrapper span to allow them to align the same without overlapping each other -->
@@ -304,7 +305,6 @@
 			<span id="p2Score" class="scores"></span>
 			<span id="f2Wrapper" class="fWrappers">
 				<img id="p2Country" class="cFlags"></img>
-				<img id="p2TFlag" class="tFlags"></img>
 			</span>
 			<span id="p2Wrapper" class="rightWrapper">
 				<span id="p2Name" class="names"></span>
@@ -340,6 +340,7 @@
 	var resultNameSize = '45px';
 	var resultScoreSize = '45px';
 	var nextNameSize = '45px';
+	var teamNameSize = '60px';
 	var nameSize = '90px'; //default font size of name wrappers, should match 'font-size' value of .wrappers
 	var rdSize = '40px'; //default font size of round container, should match 'font-size' value of #round
 	var p1Move = '+90px'; //distance on x-axis that P1 name should initially be set to prior to load-in animation

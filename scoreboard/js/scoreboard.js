@@ -24,12 +24,13 @@ function init(){
 	
 	function pollJSON() {
 		xhr.open('GET',streamJSON+'?v='+cBust,true); //string query-style cache busting, forces non-cached new version of json to be opened each time
+		//xhr.open('GET', "http://192.168.0.133:8080/getdata"); //Go to local server
 		xhr.send();
 		cBust++;		
 	}
 	
 	pollJSON();
-	setInterval(function(){pollJSON();},500); //runs polling function twice per second
+	setInterval(function(){pollJSON();},1000); //runs polling function twice per second
 	
 	xhr.onreadystatechange = parseJSON; //runs parseJSON function every time XMLHttpRequest ready state changes
 	
@@ -134,15 +135,7 @@ function init(){
 			$("#p2Country").attr("src","../imgs/countries/"+countryFlag(p2Country)+".png").on("error",function(){
 				$("#p2Country").attr("src","../imgs/countries/world.png");
 			});
-			
-			$("#p1TFlag").attr("src","../imgs/teams/"+p1Team+".png").on("error",function(){
-				$("#p1TFlag").attr("src","../imgs/teams/default.png");
-			});
-			
-			$("#p2TFlag").attr("src","../imgs/teams/"+p2Team+".png").on("error",function(){
-				$("#p2TFlag").attr("src","../imgs/teams/default.png");
-			});
-			
+						
 			p1Wrap.each(function(i, p1Wrap){ //function to resize font if text string is too long and causes div to overflow its width/height boundaries
 				while(p1Wrap.scrollWidth > p1Wrap.offsetWidth || p1Wrap.scrollHeight > p1Wrap.offsetHeight){
 					var newFontSize = (parseFloat($("#p1Name").css('font-size').slice(0,-2)) * .95) + 'px';
@@ -215,10 +208,7 @@ function init(){
 			if($('#p1Name').text() != p1Name || $('#p1Team').text() != p1Team){ //if either name or team do not match, fades out wrapper and updates them both
 				TweenMax.to('#p1Wrapper',.3,{css:{x: p1Move, opacity: 0},ease:Quad.easeOut,delay:0,onComplete:function(){ //uses onComplete parameter to execute function after TweenMax
 					$('#p1Name').css('font-size',nameSize).html(p1Name); //updates name and team html objects with current json values
-					$('#p1Team').html(p1Team);
-					$("#p1TFlag").attr('src','../imgs/teams/'+p1Team.toUpperCase()+'.png').on("error",function(){
-						$("#p1TFlag").attr("src","../imgs/teams/default.png");
-					});
+					$('#p1Team').css('font-size', teamNameSize).html(p1Team);
 			
 					p1Wrap.each(function(i, p1Wrap){//same resize functions from above
 						while(p1Wrap.scrollWidth > p1Wrap.offsetWidth || p1Wrap.scrollHeight > p1Wrap.offsetHeight){
@@ -231,19 +221,10 @@ function init(){
 				}});
 			}
 			
-			if($("#p1Team").text() != p1Team){
-				TweenMax.to("#f1Wrapper",.3,{css:{opacity: 0},delay:0,onComplete:function(){
-					TweenMax.to("#f1Wrapper",.3,{css:{opacity: 1},delay:.2});
-				}});
-			}
-			
 			if($('#p2Name').text() != p2Name || $('#p2Team').text() != p2Team){
 				TweenMax.to('#p2Wrapper',.3,{css:{x: p2Move, opacity: 0},ease:Quad.easeOut,delay:0,onComplete:function(){
 					$('#p2Name').css('font-size',nameSize).html(p2Name);
-					$('#p2Team').html(p2Team);
-					$("#p2TFlag").attr('src','../imgs/teams/'+p2Team.toUpperCase()+'.png').on("error",function(){
-						$("#p2TFlag").attr("src","../imgs/teams/default.png");
-					});
+					$('#p2Team').css('font-size', teamNameSize).html(p2Team);
 			
 					p2Wrap.each(function(i, p2Wrap){
 						while(p2Wrap.scrollWidth > p2Wrap.offsetWidth || p2Wrap.scrollHeight > p2Wrap.offsetHeight){
@@ -253,12 +234,6 @@ function init(){
 					});
 					
 					TweenMax.to('#p2Wrapper',.3,{css:{x: '+0px', opacity: 1},ease:Quad.easeOut,delay:.2});
-				}});
-			}
-			
-			if($("#p2Team").text() != p2Team){
-				TweenMax.to("#f2Wrapper",.3,{css:{opacity: 0},delay:0,onComplete:function(){
-					TweenMax.to("#f2Wrapper",.3,{css:{opacity: 1},delay:.2});
 				}});
 			}
 			
