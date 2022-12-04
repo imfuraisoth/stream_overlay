@@ -5,7 +5,7 @@ from flask import request
 from flask_cors import CORS
 import time
 
-hostName = "192.168.0.133"
+hostName = "127.0.0.1"
 serverPort = 8080
 
 stream_control_file = "../scoreboard/sc/streamcontrol.json"

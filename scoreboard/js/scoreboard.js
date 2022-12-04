@@ -24,7 +24,7 @@ function init(){
 	
 	function pollJSON() {
 		xhr.open('GET',streamJSON+'?v='+cBust,true); //string query-style cache busting, forces non-cached new version of json to be opened each time
-		//xhr.open('GET', "http://192.168.0.133:8080/getdata"); //Go to local server
+		//xhr.open('GET', "http://127.0.0.1:8080/getdata"); //Go to local server
 		xhr.send();
 		cBust++;		
 	}

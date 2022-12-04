@@ -27,9 +27,14 @@
   </head>
   <body data-home-page="index.html" data-home-page-title="Scoreboard Dash" class="u-body"><header class="u-clearfix u-header u-header" id="sec-9324"><div class="u-clearfix u-sheet u-sheet-1">
       <script>
+	  
+		// Creating a XHR object
+		var xhr = new XMLHttpRequest();
+		var url = "http://127.0.0.1:8080/";
+	  
         var jsonData;
 
-        fetch('http://192.168.0.133:8080/getdata')
+        fetch(url + 'getdata')
             .then(function (response) {
             jsonData = response.json();
           return jsonData;
@@ -309,13 +314,8 @@
 		}
 
         function sendJSON() {
-
-            // Creating a XHR object
-            let xhr = new XMLHttpRequest();
-            let url = "http://192.168.0.133:8080/updatealldata";
-
             // open a connection
-            xhr.open("POST", url, true);
+            xhr.open("POST", url + 'updatealldata', true);
 
             // Set the request header i.e. which type of content you are sending
             xhr.setRequestHeader("Content-Type", "application/json");
