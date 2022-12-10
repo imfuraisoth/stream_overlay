@@ -25,7 +25,7 @@ def check_win_conditions():
     while True:
         if pyautogui.locateCenterOnScreen(p1_win_condition_2, confidence=0.8):
             print("Player 1 Wins! Perfect!")
-            add_to_score("p2Score")
+            add_to_score("p1Score")
         elif pyautogui.locateCenterOnScreen(p1_win_condition, confidence=0.8):
             print("Player 1 Wins!")
             add_to_score("p1Score")
