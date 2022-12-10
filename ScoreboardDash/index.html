@@ -68,6 +68,7 @@
 			updateElement("resultscore1", data.resultscore1);
 			updateElement("resultplayer2", data.resultplayer2);
 			updateElement("resultscore2", data.resultscore2);
+			updateElement("maxScore", data.maxScore);
             jsonData = data;
         }
 
@@ -149,6 +150,11 @@
 
         function updateRound() {
             jsonData.round = document.getElementById("round").value;
+            sendJSON();
+        }
+
+        function updateMaxScore() {
+            jsonData.maxScore = document.getElementById("maxScore").value;
             sendJSON();
         }
 
@@ -430,6 +436,10 @@
 						  <input class="u-text u-text-default u-form-302" type="text" id="resultscore2" style="float: left;" value="" onchange="updateResults();">
 						  <input class="u-text u-text-default u-form-303" type="text" id="resultplayer2" style="float: left; "value="" onchange="updateResults();">
 					  </div>
+                      <h3 class="u-align-center u-text u-section-1 u-text-max-score">FT#</h3>
+                      <div id = "ftx">
+                          <input class="u-text u-text-default u-form-max-score" type="text" id="maxScore" style="float: left;" value="" onchange="updateMaxScore();">
+                      </div>
                     </div>
                   </div>
                   <div class="u-container-style u-layout-cell u-size-30 u-layout-cell-3">

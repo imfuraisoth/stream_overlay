@@ -149,6 +149,13 @@ input[type=text] {
   margin: 25px auto 0 135px;
 }
 
+.u-section-1 .u-text-max-score {
+  font-weight: normal;
+  text-align: center;
+  font-size: 20px;
+  margin: 25px auto 0 135px;
+}
+
 .u-section-1 .u-form-200 {
   margin: 15px auto 0 135px;
   width: 80px;
@@ -165,6 +172,13 @@ input[type=text] {
   margin: 15px auto 0 135px;
   width: 40px;
   display: inline-block; 
+  text-align: left;
+}
+
+.u-section-1 .u-form-max-score {
+  margin: 15px auto 0 135px;
+  width: 40px;
+  display: inline-block;
   text-align: left;
 }
 

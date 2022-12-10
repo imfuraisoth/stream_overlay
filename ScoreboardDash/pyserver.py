@@ -4,6 +4,7 @@ from flask import Flask
 from flask import request
 from flask_cors import CORS
 import time
+from scripts import AutoScoreUpdater
 
 hostName = "127.0.0.1"
 serverPort = 8080
@@ -23,12 +24,15 @@ CORS(api)
 
 previous_player_1 = (0, 0.0)
 previous_player_2 = (0, 0.0)
-#Only allow player info to update once a second
-player_info_update_window = 1 
+# Only allow player info to update once a second
+player_info_update_window = 1
+auto_score_updater = AutoScoreUpdater
+
 
 @api.route('/getdata', methods=['GET'])
 def get_data():
     return json.dumps(read_file(stream_control_file), ensure_ascii=False), 200
+
 
 @api.route('/updatealldata', methods=['POST'])
 def update_all_data():
@@ -51,7 +55,7 @@ def update_player1():
     global previous_player_1
     json_data = request.get_json()
     player_id = json_data["id"]
-    
+
     previous_id, previous_timestamp = previous_player_1
     current_time = time.time()
     if previous_id != player_id:
@@ -60,16 +64,16 @@ def update_player1():
     elif previous_id == player_id and (current_time - player_info_update_window) > previous_timestamp:
         add_to_score("p1Score")
         previous_player_1 = (player_id, current_time)
-        
-    return "200"    
-    
+
+    return "200"
+
 
 @api.route('/updateplayer2', methods=['POST'])
 def update_player2():
     global previous_player_2
     json_data = request.get_json()
     player_id = json_data["id"]
-    
+
     previous_id, previous_timestamp = previous_player_2
     current_time = time.time()
     if previous_id != player_id:
@@ -78,8 +82,8 @@ def update_player2():
     elif previous_id == player_id and (current_time - player_info_update_window) > previous_timestamp:
         add_to_score("p2Score")
         previous_player_2 = (player_id, current_time)
-        
-    return "200" 
+
+    return "200"
 
 
 def add_to_score(score_key):
@@ -97,8 +101,8 @@ def update_player_name(player_name_key, team_name_key, file_name, player_id):
     if len(player_info) > 1:
         # update team name
         full_data[team_name_key] = player_info[1]
-    
-    #Reset the scores
+
+    # Reset the scores
     full_data["p1Score"] = "0"
     full_data["p2Score"] = "0"
     write_to_file(file_name, player_name_key, full_data)
@@ -115,7 +119,7 @@ def save_previous_results(full_data):
     full_data["resultscore2"] = full_data["p2Score"]
     full_data["resultplayer1"] = full_data["p1Name"]
     full_data["resultplayer2"] = full_data["p2Name"]
-    
+
 
 def write_to_file(file_name, data_key, json_data):
     file = open(file_name, "w")
@@ -127,9 +131,9 @@ def get_player_info_from_id_map(player_id):
     id_map = read_file("id_map.txt")
     if str(player_id) in id_map:
         return id_map[str(player_id)].split(":")
-    print("No name associated with id: " + str(player_id))    
+    print("No name associated with id: " + str(player_id))
     return [str(player_id), ""]
-    
+
 
 def read_file(file_name):
     with open(file_name) as json_file:
@@ -142,6 +146,9 @@ def read_file(file_name):
 if __name__ == "__main__":
     try:
         print("Now we talk'n, server started ...")
+        # Experimental
+        auto_score_updater.auto_update_scores()
+
         api.run(host=hostName, port=serverPort)
     except KeyboardInterrupt:
         pass
