@@ -6,8 +6,10 @@ from flask_cors import CORS
 import time
 from scripts import AutoScoreUpdater
 
-hostName = "127.0.0.1"
-serverPort = 8080
+server_info = open('../config/serverip.txt', 'r').readline().split(':')
+
+hostName = server_info[0]
+serverPort = server_info[1]
 
 stream_control_file = "../scoreboard/sc/streamcontrol.json"
 player_1 = "../data/player1.txt"

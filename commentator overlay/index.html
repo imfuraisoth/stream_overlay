@@ -21,10 +21,18 @@
     var soc2Value = "";
     var nextPlayer1 = "";
     var nextPlayer2 = "";
+    var serverIp = readServerIp();
+
+    function readServerIp() {
+        var request = new XMLHttpRequest();
+        request.open("GET", "../config/serverip.txt", false);
+        request.send(null);
+        var returnValue = request.responseText;
+        return returnValue;
+    }
 
     function loadElements() {
-
-      fetch('http://127.0.0.1:8080/getdata')
+      fetch('http://' + serverIp + '/getdata')
           .then(function (response) {
             return response.json();
           })
