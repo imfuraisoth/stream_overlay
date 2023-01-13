@@ -4,17 +4,18 @@ For twitch stream overlays with player score updating
 Includes code for scoreboard UI, overlay for OBS, and backend server processing.
 
 Needed dependencies to be installed:
-pip install PyAutoGUI
-pip install Pillow --upgrade
-pip install opencv-python
+sudo pip install PyAutoGUI
+sudo pip install Pillow --upgrade
+sudo pip install opencv-python
 
-#Pi Reader Instructions
+#Pi Reader Instructions:
+
 Go to terminal and type: sudo raspi-config
 Enable SPI under config menu
 
 Install following packages:
-pip install mfrc522
-pip install RPi.GPIO
-pip install python-http-client
+sudo pip install mfrc522
+sudo pip install RPi.GPIO
+sudo pip install python-http-client
 
-Add python run path to crontab -e to run script on start up
+Add python run path to /etc/profile to run script on start up
