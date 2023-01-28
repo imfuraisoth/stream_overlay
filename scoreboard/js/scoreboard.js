@@ -24,7 +24,7 @@ function init(){
 	
 	function pollJSON() {
 		xhr.open('GET',streamJSON+'?v='+cBust,true); //string query-style cache busting, forces non-cached new version of json to be opened each time
-		//xhr.open('GET', "http://127.0.0.1:8080/getdata"); //Go to local server
+		//xhr.open('GET', "http://192.168.0.132:8080/getdata"); //Go to local server
 		xhr.send();
 		cBust++;		
 	}
@@ -138,16 +138,21 @@ function init(){
 						
 			p1Wrap.each(function(i, p1Wrap){ //function to resize font if text string is too long and causes div to overflow its width/height boundaries
 				while(p1Wrap.scrollWidth > p1Wrap.offsetWidth || p1Wrap.scrollHeight > p1Wrap.offsetHeight){
-					var newFontSize = (parseFloat($("#p1Name").css('font-size').slice(0,-2)) * .95) + 'px';
+					var newFontSize = parseInt(parseFloat($("#p1Name").css('font-size').slice(0,-2)) * .95) + 'px';
 					$("#p1Name").css('font-size', newFontSize);
+					var newTeamFontSize = parseInt(parseFloat($("#p1Team").css('font-size').slice(0,-2)) * .95) + 'px';
+					$("#p1Team").css('font-size', newTeamFontSize);
 				}
 			});
 			
 			p2Wrap.each(function(i, p2Wrap){
 				while(p2Wrap.scrollWidth > p2Wrap.offsetWidth || p2Wrap.scrollHeight > p2Wrap.offsetHeight){
-					var newFontSize = (parseFloat($("#p2Name").css('font-size').slice(0,-2)) * .95) + 'px';
+					var newFontSize = parseInt(parseFloat($("#p2Name").css('font-size').slice(0,-2)) * .95) + 'px';
 					$("#p2Name").css('font-size', newFontSize);
+					var newTeamFontSize = parseInt(parseFloat($("#p2Team").css('font-size').slice(0,-2)) * .95) + 'px';
+					$("#p2Team").css('font-size', newTeamFontSize);
 				}
+				return true;
 			});
 			
 			rdResize.each(function(i, rdResize){
@@ -155,6 +160,7 @@ function init(){
 					var newFontSize = (parseFloat($(rdResize).css('font-size').slice(0,-2)) * .95) + 'px';
 					$(rdResize).css('font-size', newFontSize);
 				}
+				return true;
 			});
 
 			p1Result.each(function(i, p1Result){
@@ -162,6 +168,7 @@ function init(){
                     var newFontSize = (parseFloat($('#result1Name').css('font-size').slice(0,-2)) * .95) + 'px';
                     $('#result1Name').css('font-size', newFontSize);
                 }
+				return true;
             });
 
 			p2Result.each(function(i, p2Result){
@@ -169,6 +176,7 @@ function init(){
                     var newFontSize = (parseFloat($('#result2Name').css('font-size').slice(0,-2)) * .95) + 'px';
                     $('#result2Name').css('font-size', newFontSize);
                 }
+				return true;
             });
 
             next1.each(function(i, next1){
@@ -176,6 +184,7 @@ function init(){
                     var newFontSize = (parseFloat($('#nextPlayer1').css('font-size').slice(0,-2)) * .95) + 'px';
                     $('#nextPlayer1').css('font-size', newFontSize);
                 }
+				return true;
             });
 
             next2.each(function(i, next2){
@@ -183,6 +192,7 @@ function init(){
                     var newFontSize = (parseFloat($('#nextPlayer2').css('font-size').slice(0,-2)) * .95) + 'px';
                     $('#nextPlayer2').css('font-size', newFontSize);
                 }
+				return true;
             });
 
 			TweenMax.to('#p1Wrapper',nameTime,{css:{x: '+0px', opacity: 1},ease:Quad.easeOut,delay:nameDelay}); //animates wrappers traveling back to default css positions while
@@ -212,8 +222,10 @@ function init(){
 			
 					p1Wrap.each(function(i, p1Wrap){//same resize functions from above
 						while(p1Wrap.scrollWidth > p1Wrap.offsetWidth || p1Wrap.scrollHeight > p1Wrap.offsetHeight){
-							var newFontSize = (parseFloat($("#p1Name").css('font-size').slice(0,-2)) * .95) + 'px';
+							var newFontSize = parseInt(parseFloat($("#p1Name").css('font-size').slice(0,-2)) * .95) + 'px';
 							$('#p1Name').css('font-size', newFontSize);
+							var newTeamFontSize = parseInt(parseFloat($("#p1Team").css('font-size').slice(0,-2)) * .95) + 'px';
+							$("#p1Team").css('font-size', newTeamFontSize);
 						}
 					});
 					
@@ -228,8 +240,10 @@ function init(){
 			
 					p2Wrap.each(function(i, p2Wrap){
 						while(p2Wrap.scrollWidth > p2Wrap.offsetWidth || p2Wrap.scrollHeight > p2Wrap.offsetHeight){
-							var newFontSize = (parseFloat($("#p2Name").css('font-size').slice(0,-2)) * .95) + 'px';
+							var newFontSize = parseInt(parseFloat($("#p2Name").css('font-size').slice(0,-2)) * .95) + 'px';
 							$('#p2Name').css('font-size', newFontSize);
+							var newTeamFontSize = parseInt(parseFloat($("#p2Team").css('font-size').slice(0,-2)) * .95) + 'px';
+							$("#p2Team").css('font-size', newTeamFontSize);
 						}
 					});
 					
@@ -263,7 +277,11 @@ function init(){
 			if($('#result1').text() != resultScore1){
                 TweenMax.to('#result1',.3,{css:{opacity: 0},ease:Quad.easeOut,delay:0,onComplete:function(){
                     $('#result1').html(resultScore1);
-
+					if (resultScore1.length > 1) {
+						$('#result1').css("fontSize", "35px");
+					} else {
+						$('#result1').css("fontSize", resultScoreSize);
+					}
                     TweenMax.to('#result1',.3,{css:{opacity: 1},ease:Quad.easeOut,delay:.2});
                 }});
             }
@@ -271,7 +289,11 @@ function init(){
             if($('#result2').text() != resultScore2){
                 TweenMax.to('#result2',.3,{css:{opacity: 0},ease:Quad.easeOut,delay:0,onComplete:function(){
                     $('#result2').html(resultScore2);
-
+					if (resultScore2.length > 1) {
+						$('#result2').css("fontSize", "35px");
+					} else {
+						$('#result2').css("fontSize", resultScoreSize);
+					}
                     TweenMax.to('#result2',.3,{css:{opacity: 1},ease:Quad.easeOut,delay:.2});
                 }});
             }
@@ -282,7 +304,7 @@ function init(){
 
                     p1Result.each(function(i, p1Result){
                         while(p1Result.scrollWidth > p1Result.offsetWidth || p1Result.scrollHeight > p1Result.offsetHeight){
-                            var newFontSize = (parseFloat($('#result1Name').css('font-size').slice(0,-2)) * .95) + 'px';
+                            var newFontSize = parseInt(parseFloat($('#result1Name').css('font-size').slice(0,-2)) * .95) + 'px';
                             $('#result1Name').css('font-size', newFontSize);
                         }
                     });
@@ -296,7 +318,7 @@ function init(){
 
                     p2Result.each(function(i, p2Result){
                         while(p2Result.scrollWidth > p2Result.offsetWidth || p2Result.scrollHeight > p2Result.offsetHeight){
-                            var newFontSize = (parseFloat($('#result2Name').css('font-size').slice(0,-2)) * .95) + 'px';
+                            var newFontSize = parseInt(parseFloat($('#result2Name').css('font-size').slice(0,-2)) * .95) + 'px';
                             $('#result2Name').css('font-size', newFontSize);
                         }
                     });
@@ -311,7 +333,7 @@ function init(){
 
                      next1.each(function(i, next1){
                         while(next1.scrollWidth > next1.offsetWidth || next1.scrollHeight > next1.offsetHeight){
-                            var newFontSize = (parseFloat($('#nextPlayer1').css('font-size').slice(0,-2)) * .95) + 'px';
+                            var newFontSize = parseInt(parseFloat($('#nextPlayer1').css('font-size').slice(0,-2)) * .95) + 'px';
                             $('#nextPlayer1').css('font-size', newFontSize);
                         }
                     });
@@ -326,7 +348,7 @@ function init(){
 
                      next2.each(function(i, next2){
                         while(next2.scrollWidth > next2.offsetWidth || next2.scrollHeight > next2.offsetHeight){
-                            var newFontSize = (parseFloat($('#nextPlayer2').css('font-size').slice(0,-2)) * .95) + 'px';
+                            var newFontSize = parseInt(parseFloat($('#nextPlayer2').css('font-size').slice(0,-2)) * .95) + 'px';
                             $('#nextPlayer2').css('font-size', newFontSize);
                         }
                     });

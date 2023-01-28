@@ -1,67 +1,157 @@
 @font-face {
-    font-family: "antiquarian-scribe";
+	src: url('../resources/Fonts/Rigid Square - ExtraBold.ttf');
+	font-family: "RigidSquareExtraBold";
 }
 
 @font-face {
-    font-family: "bradley-djr";
+	src: url('../resources/Fonts/Rigid Square - Italics.ttf');
+	font-family: "RigidSquareItalic";
+}
+
+h1 {
+  //background-image: url(https://media.giphy.com/media/26BROrSHlmyzzHf3i/giphy.gif);
+  background-image: url(https://media3.giphy.com/media/fiyQQLci4d1w6Njojo/giphy.gif);
+  //background-image: url(https://media2.giphy.com/media/f5kBKQ6oDHE6cyLbVA/giphy.gif);
+  //background-image: url(https://media2.giphy.com/media/9MJ65OWvrNIXnOiNEk/giphy.gif);
+  background-size: cover;
+  color: white;
+  -moz-background-clip: text;
+  -webkit-background-clip: text;
+  font-size: 200px;
+}
+
+h2 {
+  //background-image: url(https://media.giphy.com/media/26BROrSHlmyzzHf3i/giphy.gif);
+  background-image: url(https://media3.giphy.com/media/fiyQQLci4d1w6Njojo/giphy.gif);
+  //background-image: url(https://media2.giphy.com/media/f5kBKQ6oDHE6cyLbVA/giphy.gif);
+  //background-image: url(https://media2.giphy.com/media/9MJ65OWvrNIXnOiNEk/giphy.gif);
+  background-size: cover;
+  color: white;
+  -moz-background-clip: text;
+  -webkit-background-clip: text;
+  font-size: 90px;
 }
 
 #p1Name {
-  animation-duration: 1s;
-  animation-name: fadeIn;
+  animation-name: moveright;
+  animation-duration: 7s;
+  animation-fill-mode: forwards;
   text-align: center;
   padding: 10px 0 3px;
-  text-decoration-color: #533B2D;
-  position: absolute;
-  top: 175px;
+  text-decoration-color: #FFFFFF;
+  position: fixed;
+  top: 80px;
+  left: -150px;
   width: 100%;
-  font-size: 225px;
-  font-family: 'bradley-djr', monospace;
+  font-size: 200px;
+  font-family: 'RigidSquareExtraBold', monospace;
+}
+
+#p1NameBackground {
+  animation: fadeIn 12s; 
+  text-align: center;
+  padding: 10px 0 3px;
+  text-decoration-color: #FFFFFF;
+  position: fixed;
+  top: 130px;
+
+  width: 100%;
+  font-size: 350px;
+  color: white;
+  opacity: 0.5;
+  -webkit-text-stroke-width: 1px;
+  -webkit-text-fill-color: transparent;
+  font-family: 'RigidSquareExtraBold', monospace;
+}
+
+#p2NameBackground {
+  animation: fadeIn 12s; 
+  text-align: center;
+  padding: 10px 0 3px;
+  text-decoration-color: #FFFFFF;
+  position: fixed;
+  top: 460px;
+
+  width: 100%;
+  font-size: 410px;
+  color: white;
+  opacity: 0.5;
+  -webkit-text-stroke-width: 1px;
+  -webkit-text-fill-color: transparent;
+  font-family: 'RigidSquareExtraBold', monospace;
+}
+
+@keyframes moveleft {
+	0% {opacity: 0;}
+	100% {opacity: 1;}
+	from {
+		transform: translateX(0px);
+	} 
+	to {
+		transform: translateX(-150px);
+	}	
+}
+
+@keyframes moveright {
+	0% {opacity: 0;}
+	100% {opacity: 1;}
+	from {
+		transform: translateX(0px);
+	} 
+	to {
+		transform: translateX(150px);
+	}	
 }
 
 @keyframes fadeIn {
   0% {opacity: 0;}
-  100% {opacity: 1;}
+  100% {opacity: 0.5;}
 }
 
 #p2Name {
-  animation-duration: 3s;
-  animation-name: fadeIn;
+  animation-name: moveleft;
+  animation-duration: 7s;
+  animation-fill-mode: forwards;
   text-align: center;
   padding: 10px 0 3px;
-  text-decoration-color: #533B2D;
+  text-decoration-color: #FFFFFF;
   position: fixed;
-  top: 645px;
+  top: 460px;
+  left: 150px;
   display:inline-block;
   width: 100%;
-  font-size: 225px;
-  font-family: 'bradley-djr', monospace;
+  font-size: 200px;
+  font-family: 'RigidSquareExtraBold', monospace;
 }
 
 #p1Team {
-  animation-duration: 1s;
-  animation-name: fadeIn;
+  animation-name: moveright;
+  animation-duration: 6s;
+  animation-fill-mode: forwards;
   text-align: center;
   padding: 5px 0 5px;
-  text-decoration-color: #533B2D;
+  text-decoration-color: #FFFFFF;
   position: fixed;
   width: 100%;
-  top: 183px;
+  top: 35px;
+  left: -150px;
   font-size: 90px;
-  font-family: 'antiquarian-scribe', monospace;
+  font-family: 'RigidSquareItalic', monospace;
 }
 
 #p2Team {
-  animation-duration: 3s;
-  animation-name: fadeIn;
+  animation-name: moveleft;
+  animation-duration: 6s;
+  animation-fill-mode: forwards;
   text-align: center;
   padding: 5px 0 5px;
-  text-decoration-color: #533B2D;
+  text-decoration-color: #FFFFFF;
   position: fixed;
   width: 100%;
-  top: 652px;
+  top: 770px;
+  left: 150px;
   font-size: 90px;
-  font-family: 'antiquarian-scribe', monospace;
+  font-family: 'RigidSquareItalic', monospace;
 }
 
 span + span {
@@ -69,5 +159,5 @@ span + span {
 }
 
 span {
-  font-family: 'antiquarian-scribe', monospace;
+  font-family: 'RigidSquareItalic', monospace;
 }

@@ -3,7 +3,7 @@
 <head>
 
 	<script src="../js/scoreboard.js" type="text/javascript" charset="utf-8"></script>
-	<script src="../js/jquery-3.3.1.min.js" type="text/javascript" charset="utf-8"></script>
+	<script src="../js/jquery-3.6.3.min.js" type="text/javascript" charset="utf-8"></script>
 	<script src="../js/greensock-js/src/minified/TweenMax.min.js" type="text/javascript" charset="utf-8"></script>
 	<script src="../js/countries.js" type="text/javascript" charset="utf-8"></script>
 	<link rel="stylesheet" href="https://use.typekit.net/ogo7pba.css">
@@ -11,16 +11,18 @@
 <style text="text/CSS">
 
 	@font-face {
-		src: url('../../fonts/JacobRiley.otf');
-		font-family: "JacobRiley";
+		src: url('../../resources/Fonts/Rigid Square - SemiBold.ttf');
+		font-family: "RigidSquareSemiBold";
+	}
+	
+	@font-face {
+		src: url('../../resources/Fonts/Rigid Square - ExtraBold.ttf');
+		font-family: "RigidSquareExtraBold";
 	}
 
 	@font-face {
-    	font-family: "antiquarian-scribe";
-	}
-
-	@font-face {
-		font-family: "bradley-djr";
+		src: url('../../resources/Fonts/Rigid Square - Italics.ttf');
+		font-family: "RigidSquareItalic";
 	}
 
 	body {
@@ -30,7 +32,7 @@
 		background: transparent;
 		padding: 0px;
 		margin: 0px;
-		color: #533B2D;
+		color: #FFFFFF;
 		//text-shadow: 2px 2px 3px DimGray;
 		-webkit-mask-size: 100%;
 	}
@@ -62,67 +64,76 @@
 		line-height: 120px;
 		font-size: 90px;
 	}
+	
+	.cFlags {
+		width: 80px;
+		height: 47px;
+	}
 
 	#p1Wrapper {
-		height: 130px;
-		right: 1283px;
+		height: 145px;
+		top: 15px;
+		width: 435px;
+		right: 1156px;
 	}
 
 	#p2Wrapper {
-		height: 130px;
-		margin-left: 1271px;
+		height: 145px;
+		top: 15px;
+		width: 435px;
+		left: 1150px;
 	}
 
 	#teams {
-		color: #533B2D;
-		font-family: antiquarian-scribe;
+		color: #FFFFFF;
+		font-family: RigidSquareItalic;
 	}
 
 	#p1Name {
-		color: #533B2D;
-		font-size: 90px;
-		font-family: "bradley-djr";
+		color: #FFFFFF;
+		font-size: 70px;
+		font-family: "RigidSquareExtraBold";
 	}
 
 	#p2Name {
-		color: #533B2D;
-		font-size: 90px;
-		font-family: "bradley-djr";
+		color: #FFFFFF;
+		font-size: 70px;
+		font-family: "RigidSquareExtraBold";
 	}
 
 	#p1Team {
-		color: #533B2D;
-		font-size: 60px;
-		font-family: "antiquarian-scribe";
+		color: #FFFFFF;
+		font-size: 50px;
+		font-family: "RigidSquareItalic";
 		vertical-align: middle;
 	}
 
 	#p2Team {
-		color: #533B2D;
-		font-size: 60px;
-		font-family: "antiquarian-scribe";
+		color: #FFFFFF;
+		font-size: 50px;
+		font-family: "RigidSquareItalic";
 		vertical-align: middle;
 	}
 
 	.scores {
 		-webkit-text-stroke: 1px black;
 		opacity: 0;
-		font-family: "JacobRiley";
+		font-family: "RigidSquareSemiBold";
 	}
 
 	#p1Score {
-		font-size: 110px;
-		top: -20px;
-		right: 1022px;
+		font-size: 100px;
+		top: 14px;
+		right: 1012px;
 		text-align: right;
 		position: fixed;
   		display:inline-block;
 	}
 
 	#p2Score {
-		font-size: 110px;
-		top: -20px;
-		margin-left: 1004px;
+		font-size: 100px;
+		top: 14px;
+		left: 1012px;
 		text-align: left;
 		position: fixed;
 		display:inline-block;
@@ -130,44 +141,53 @@
 
 	.fWrappers {
 		position: absolute;
-		width: 117px;
-		height: 45px;
+		width: 80px;
+		height: 47px;
 	}
 
 	#f1Wrapper {
-		top: 68px;
-		left: 453px;
+		top: 67px;
+		left: 425px;
 	}
 
 	#f2Wrapper {
-		top: 68px;
-		left: 1348px;
+		top: 67px;
+		left: 1382px;
 	}
 
 	#p1Country, #p1TFlag {
 		margin-top: 70px;
 		margin-left: -110px;
-		width: 91px;
-		height: 53px;
+		width: 83px;
+		height: 50px;
 		opacity: 0;
+		-webkit-mask-image: url("../../resources/left.png");
+		mask-image: url("../../resources/left.png");
+		-webkit-mask-repeat: no-repeat;
+		mask-repeat: no-repeat;   
 	}
 
 	#p2Country, #p2TFlag {
 		margin-top: 70px;
-		margin-left: 142px;
-		width: 91px;
-		height: 53px;
+		margin-left: 138px;
+		width: 83px;
+		height: 50px;
 		opacity: 0;
+		-webkit-mask-image: url("../../resources/right.png");
+		mask-image: url("../../resources/right.png");
+		-webkit-mask-repeat: no-repeat;
+		mask-repeat: no-repeat; 
 	}
 
 	#round {
 		position: absolute;
-		top: 1050px;
-		right: 1150px;
+		top: 1060px;
+		right: 1495px;
 		font-size: 40px;
+		text-align: center;
 		opacity: 0;
-		color: #533B2D;
-		font-family: "JacobRiley";
+		color: #FFFFFF;
+		font-family: "RigidSquareExtraBold";
 		text-transform: uppercase;
 	}
 
@@ -194,9 +214,9 @@
 		width: 190px;
 		height: 100px;
 		line-height: 100px;
-		left: 45px;
+		left: 35px;
 		top: 638px;
-		color: #533B2D;
+		color: #FFFFFF;
 	}
 
 	#results2 {
@@ -204,35 +224,37 @@
 		width: 190px;
 		height: 100px;
 		line-height: 100px;
-		left: 45px;
-		top: 698px;
-		color: #533B2D;
+		left: 35px;
+		top: 696px;
+		color: #FFFFFF;
 	}
 
 	#result1Name {
 		left: 15px;
 		font-size: 45px;
-		font-family: "bradley-djr";
+		font-family: "RigidSquareExtraBold";
 	}
 
 	#result2Name {
 		left: 15px;
 		font-size: 45px;
-		font-family: "bradley-djr";
+		font-family: "RigidSquareExtraBold";
 	}
 
 	#result1 {
 		position: absolute;
-		top: 643px;
-		left: 254px;
-		font-size: 45px;
+		top: 658px;
+		left: 240px;
+		font-size: 50px;
+		font-family: "RigidSquareSemiBold";
 	}
 
 	#result2 {
 		position: absolute;
-		top: 705px;
-		left: 254px;
-		font-size: 45px;
+		top: 716px;
+		left: 240px;
+		font-size: 50px;
+		font-family: "RigidSquareSemiBold";
 	}
 
 	#next1 {
@@ -240,9 +262,9 @@
 		width: 240px;
 		height: 100px;
 		line-height: 100px;
-		left: 45px;
-		top: 838px;
-		color: #533B2D;
+		left: 32px;
+		top: 835px;
+		color: #FFFFFF;
 		text-align: center;
 	}
 
@@ -251,22 +273,22 @@
 		width: 240px;
 		height: 100px;
 		line-height: 100px;
-		left: 45px;
-		top: 898px;
-		color: #533B2D;
+		left: 32px;
+		top: 895px;
+		color: #FFFFFF;
 		text-align: center;
 	}
 
 	#nextPlayer1 {
 		text-align: center;
 		font-size: 45px;
-		font-family: "bradley-djr";
+		font-family: "RigidSquareExtraBold";
 	}
 
 	#nextPlayer2 {
 		text-align: center;
 		font-size: 45px;
-		font-family: "bradley-djr";
+		font-family: "RigidSquareExtraBold";
 	}
 	
 	#gameHold {
@@ -340,11 +362,11 @@
 	var resultNameSize = '45px';
 	var resultScoreSize = '45px';
 	var nextNameSize = '45px';
-	var teamNameSize = '60px';
-	var nameSize = '90px'; //default font size of name wrappers, should match 'font-size' value of .wrappers
+	var teamNameSize = '50px';
+	var nameSize = '70px'; //default font size of name wrappers, should match 'font-size' value of .wrappers
 	var rdSize = '40px'; //default font size of round container, should match 'font-size' value of #round
-	var p1Move = '+90px'; //distance on x-axis that P1 name should initially be set to prior to load-in animation
-	var p2Move = '-90px'; //distance on x-axis that P2 name should initially be set to prior to load-in animation
+	var p1Move = '-45px'; //distance on x-axis that P1 name should initially be set to prior to load-in animation
+	var p2Move = '45px'; //distance on x-axis that P2 name should initially be set to prior to load-in animation
 	var rdMove = '-40px'; //distance on y-axis that round should initially be set to prior to load-in animation
 	var nameTime = .3; //amount of time in seconds that the load-in animation for names takes
 	var nameDelay = .2; //amount of time in seconds that the load-in animation for names is delayed before starting

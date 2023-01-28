@@ -13,80 +13,9 @@
 	font-family: "RigidSquareSemiBold";
 }
 
-#name1Div {
-	text-align: left;
-}
-
-#name2Div {
-	text-align: right;
-}
-
-#soc1Div {
-	text-align: left;
-}
-
-#soc2Div {
-	text-align: right;
-}
-
-
-#name1 {
-  animation-duration: 2s;
-  animation-name: fadeIn;
-  text-align: left;
-  padding: 10px 0 3px;
-  text-decoration-color: #FFFFFF;
-  position: fixed;
-  top: 910px;
-  left: 850px;
-  display:inline-block;
-  font-size: 50px;
-  font-family: 'RigidSquareExtraBold', monospace;
-}
-
 @keyframes fadeIn {
   0% {opacity: 0;}
   100% {opacity: 1;}
-}
-
-#name2 {
-  animation-duration: 2s;
-  animation-name: fadeIn;
-  text-align: right;
-  padding: 10px 0 3px;
-  text-decoration-color: #FFFFFF;
-  position: fixed;
-  top: 910px;
-  display:inline-block;
-  right: 160px;
-  font-size: 50px;
-  font-family: 'RigidSquareExtraBold', monospace;
-}
-
-#social1 {
-  animation-duration: 3s;
-  animation-name: fadeIn;
-  text-align: left;
-  padding: 5px 0 5px;
-  text-decoration-color: #FFFFFF;
-  position: fixed;
-  left: 850px;
-  top: 970px;
-  font-size: 30px;
-  font-family: 'RigidSquareItalic', monospace;
-}
-
-#social2 {
-  animation-duration: 3s;
-  animation-name: fadeIn;
-  text-align: right;
-  padding: 5px 0 5px;
-  text-decoration-color: #FFFFFF;
-  position: fixed;
-  right: 160px;
-  top: 970px;
-  font-size: 30px;
-  font-family: 'RigidSquareItalic', monospace;
 }
 
 .resultContainer {
@@ -149,7 +78,7 @@
 	position: absolute;
 	left: 267px;
 	top: -2px;
-	font-size: 45px;
+	font-size: 50px;
 	font-family: "RigidSquareSemiBold";
 }
 
@@ -159,7 +88,7 @@
 	position: absolute;
 	top: -2px;
 	left: 267px;
-	font-size: 45px;
+	font-size: 50px;
 	font-family: "RigidSquareSemiBold";
 }
 

@@ -26,7 +26,7 @@
 	var resultName2 = "";
 	var result1 = "";
 	var result2 = "";
-    var serverIp = "127.0.0.1:8080";//readServerIp();
+    var serverIp = readServerIp();
 
     function readServerIp() {
         var request = new XMLHttpRequest();
@@ -49,85 +49,6 @@
             console.log('error: ' + err);
           });
           function appendData(data) {
-            if (data.com1 !== com1Value) {
-              var element = document.getElementById("name1Div");
-              if (!!element) {
-                fadeOutElement(element);
-              }
-				sleep(1000).then(() => {
-				  com1Value = data.com1;
-				  if (data.com1.length > 0) {
-					var name1 = document.createElement("span");
-					name1.setAttribute("id", "name1");
-					name1.style.color = "#FFFFFF";
-					name1.innerHTML = data.com1;
-					var div = document.createElement("div");
-					div.setAttribute("id", "name1Div");
-					div.appendChild(name1);
-					document.body.appendChild(div);
-				  }
-				});  
-            }
-
-            if (data.com2 !== com2Value) {
-              var element = document.getElementById("name2Div");
-              if (!!element) {
-                fadeOutElement(element);
-              }
-			  sleep(1000).then(() => {
-				  com2Value = data.com2;
-				  if (data.com2.length > 0) {
-					var name2 = document.createElement("span");
-					name2.setAttribute("id", "name2");
-					name2.style.color = "#FFFFFF";
-					name2.innerHTML = data.com2;
-					var div = document.createElement("div");
-					div.setAttribute("id", "name2Div");
-					div.appendChild(name2);
-					document.body.appendChild(div);
-				  }
-				 }); 
-            }
-
-            if (data.soc1 !== soc1Value) {
-              var element = document.getElementById("soc1Div");
-              if (!!element) {
-                fadeOutElement(element);
-              }
-			  sleep(1000).then(() => {
-				  soc1Value = data.soc1;
-				  if (data.soc1.length > 0) {
-					var soc1 = document.createElement("span");
-					soc1.setAttribute("id", "social1");
-					soc1.style.color = "#FFFFFF";
-					soc1.innerHTML = data.soc1;
-					var div = document.createElement("div");
-					div.setAttribute("id", "soc1Div");
-					div.appendChild(soc1);
-					document.body.appendChild(div);
-				  }
-				}); 
-            }
-
-            if (data.soc2 !== soc2Value) {
-              var element = document.getElementById("soc2Div");
-              if (!!element) {
-                fadeOutElement(element);
-              }
-			  sleep(1000).then(() => {
-				  soc2Value = data.soc2;
-				  if (data.soc2.length > 0) {
-					var soc2 = document.createElement("span");
-					soc2.setAttribute("id", "social2");
-					soc2.style.color = "#FFFFFF";
-					soc2.innerHTML = data.soc2;
-					var div = document.createElement("div");
-					div.setAttribute("id", "soc2Div");
-					div.appendChild(soc2);
-					document.body.appendChild(div);
-				  }
-			  }); 
-            }
 
             if (data.nextplayer1 !== nextPlayer1) {
               var element = document.getElementById("next1");
@@ -177,7 +98,6 @@
 			  sleep(1000).then(() => {
 				  resultName1 = data.resultplayer1;
 				  result1 = data.resultscore1;
-
 				  if (resultName1.length > 0) {
 					var rp1 = document.createElement("td");
 					rp1.setAttribute("id", "resultName1");
@@ -278,14 +198,6 @@
 			</div>
 			<div id="next2">
 				<span id="nextPlayer2" class="names"></span>
-			</div>
-			<div id="name1Div">
-				<span id="name1" class="names"></span>
-				<span id="soc1" class="names"></span>
-			</div>
-			<div id="name2Div">
-				<span id="name2" class="names"></span>
-				<span id="soc2" class="names"></span>
 			</div>
 		</div>
 	

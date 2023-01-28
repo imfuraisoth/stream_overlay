@@ -49,8 +49,8 @@
               if (data.p1Team.length > 0) {
                 var team1 = document.createElement("span");
                 team1.setAttribute("id", "p1Team");
-                team1.style.color = "#533B2D";
-                team1.innerHTML = data.p1Team;
+                team1.style.color = "#FFFFFF";
+                team1.innerHTML = "<h2>" + data.p1Team + "</h2>";
                 var div = document.createElement("div");
                 div.setAttribute("id", "team1Div");
                 div.appendChild(team1);
@@ -60,27 +60,41 @@
 
             if (data.p1Name !== p1Name) {
               var element = document.getElementById("name1Div");
+			  var element1 = document.getElementById("name1DivBg");
               if (!!element) {
                 fadeOutElement(element);
               }
+			  if (!!element1) {
+				fadeOutElement(element1);
+			  }
 
               p1Name = data.p1Name;
               if (data.p1Name.length > 0) {
                 var name1 = document.createElement("span");
                 name1.setAttribute("id", "p1Name");
-                name1.style.color = "#533B2D";
+                name1.style.color = "#FFFFFF";
                 name1.style.textAlign = "center";
-                name1.innerHTML = data.p1Name;
+                name1.innerHTML = "<h1>" + data.p1Name + "</h1>";
                 var div = document.createElement("div");
                 div.setAttribute("id", "name1Div");
                 div.appendChild(name1);
                 document.body.appendChild(div);
+				
+				var name1bg = document.createElement("span");
+                name1bg.setAttribute("id", "p1NameBackground");
+                name1bg.style.color = "#FFFFFF";
+                name1bg.style.textAlign = "center";
+                name1bg.innerHTML = data.p1Name;
+                var div1 = document.createElement("div");
+                div1.setAttribute("id", "name1DivBg");
+                div1.appendChild(name1bg);
+				document.body.appendChild(div1);
               }
             }
 
             if (data.p2Team !== p2Team) {
               var element = document.getElementById("team2Div");
-              if (!!element) {
+			  if (!!element) {
                 fadeOutElement(element);
               }
 
@@ -88,8 +102,8 @@
               if (data.p2Team.length > 0) {
                 var team2 = document.createElement("span");
                 team2.setAttribute("id", "p2Team");
-                team2.style.color = "#533B2D";
-                team2.innerHTML = data.p2Team;
+                team2.style.color = "#FFFFFF";
+                team2.innerHTML = "<h2>" + data.p2Team + "</h2>";
                 var div = document.createElement("div");
                 div.setAttribute("id", "team2Div");
                 div.appendChild(team2);
@@ -99,21 +113,35 @@
 
             if (data.p2Name !== p2Name) {
               var element = document.getElementById("name2Div");
+			  var element1 = document.getElementById("name2DivBg");
               if (!!element) {
                 fadeOutElement(element);
               }
+			  if (!!element1) {
+				fadeOutElement(element1);
+			  }
 
               p2Name = data.p2Name;
               if (data.p2Name.length > 0) {
                 var name2 = document.createElement("span");
                 name2.setAttribute("id", "p2Name");
                 name2.style.textAlign = "center";
-                name2.style.color = "#533B2D";
-                name2.innerHTML = data.p2Name;
+                name2.style.color = "#FFFFFF";
+                name2.innerHTML = "<h1>" + data.p2Name + "</h1>";
                 var div = document.createElement("div");
                 div.setAttribute("id", "name2Div");
                 div.appendChild(name2);
                 document.body.appendChild(div);
+				
+				var name2bg = document.createElement("span");
+                name2bg.setAttribute("id", "p2NameBackground");
+                name2bg.style.color = "#FFFFFF";
+                name2bg.style.textAlign = "center";
+                name2bg.innerHTML = data.p2Name;
+                var div2 = document.createElement("div");
+                div2.setAttribute("id", "name2DivBg");
+                div2.appendChild(name2bg);
+				document.body.appendChild(div2);
               }
             }
           }
