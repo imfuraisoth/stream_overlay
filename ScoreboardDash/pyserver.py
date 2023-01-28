@@ -20,6 +20,8 @@ result1 = "../data/result1.txt"
 result2 = "../data/result2.txt"
 result_name_1 = "../data/resultname1.txt"
 result_name_2 = "../data/resultname2.txt"
+replay_start = "../data/replay_start.txt"
+replay_stop = "../data/replay_stop.txt"
 
 api = Flask(__name__)
 CORS(api)
@@ -88,6 +90,20 @@ def update_player2():
     return "200"
 
 
+@api.route('/replaystart', methods=['POST'])
+def replay_start():
+    with open(replay_start, 'w', encoding="utf-8") as replay_file:
+        ts = time.time()
+        replay_file.write(str(ts))
+
+
+@api.route('/replaystop', methods=['POST'])
+def replay_stop():
+    with open(replay_stop, 'w', encoding="utf-8") as replay_file:
+        ts = time.time()
+        replay_file.write(str(ts))
+
+
 def add_to_score(score_key):
     full_data = read_file(stream_control_file)
     full_data[score_key] = str(int(full_data[score_key]) + 1)
@@ -149,7 +165,7 @@ if __name__ == "__main__":
     try:
         print("Now we talk'n, server started ...")
         # Experimental
-        auto_score_updater.auto_update_scores()
+        #auto_score_updater.auto_update_scores()
 
         api.run(host=hostName, port=serverPort)
     except KeyboardInterrupt:
