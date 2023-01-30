@@ -4,7 +4,8 @@ from flask import Flask
 from flask import request
 from flask_cors import CORS
 import time
-from scripts import AutoScoreUpdater
+from scripts import AutoScoreUpdaterSt
+from scripts import AutoScoreUpdaterCvs2
 
 server_info = open('../config/serverip.txt', 'r').readline().split(':')
 
@@ -30,7 +31,8 @@ previous_player_1 = (0, 0.0)
 previous_player_2 = (0, 0.0)
 # Only allow player info to update once a second
 player_info_update_window = 1
-auto_score_updater = AutoScoreUpdater
+auto_score_updater_st = AutoScoreUpdaterSt
+auto_score_updater_cvs2 = AutoScoreUpdaterCvs2
 
 
 @api.route('/getdata', methods=['GET'])
@@ -170,7 +172,8 @@ if __name__ == "__main__":
     try:
         print("Now we talk'n, server started ...")
         # Experimental
-        #auto_score_updater.auto_update_scores()
+        #auto_score_updater_st.auto_update_scores()
+        #auto_score_updater_cvs2.auto_update_scores()
 
         api.run(host=hostName, port=serverPort)
     except KeyboardInterrupt:
