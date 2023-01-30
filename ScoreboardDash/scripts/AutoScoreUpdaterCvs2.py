@@ -5,7 +5,7 @@ from io import open
 import pyautogui
 
 p1_win_condition = '../resources/cvs2/p1_win.png'
-p2_win_condition = '../resources/st/p2_win.png'
+p2_win_condition = '../resources/cvs2/p2_win.png'
 stream_control_file = "../scoreboard/sc/streamcontrol.json"
 
 # Only allow player info to update once every 10 seconds
@@ -14,7 +14,7 @@ last_score_update_timestamp = 0
 
 
 def auto_update_scores():
-    print("Auto score updater enabled")
+    print("Auto score updater for CVS2 enabled")
     checker = threading.Thread(target=check_win_conditions, args=(), daemon=True)
     checker.start()
 
@@ -22,6 +22,7 @@ def auto_update_scores():
 def check_win_conditions():
     while True:
         if pyautogui.locateCenterOnScreen(p1_win_condition, confidence=0.8):
+            print("Player 1 Wins!")
             add_to_score("p1Score")
         elif pyautogui.locateCenterOnScreen(p2_win_condition, confidence=0.8):
             print("Player 2 Wins!")
