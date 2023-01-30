@@ -374,6 +374,30 @@ input[type=text] {
   margin: 300px auto 0;
 }
 
+.u-section-1 .u-btn-20 {
+  border-style: none;
+  font-weight: 700;
+  text-transform: uppercase;
+  font-size: 0.875rem;
+  letter-spacing: 1px;
+  align-self: center;
+  box-shadow: 5px 5px 20px 0 rgba(0,0,0,0.4);
+  top: 500px;
+  left: 500px;
+}
+
+.u-section-1 .u-btn-21 {
+  border-style: none;
+  font-weight: 700;
+  text-transform: uppercase;
+  font-size: 0.875rem;
+  letter-spacing: 1px;
+  align-self: center;
+  box-shadow: 5px 5px 20px 0 rgba(0,0,0,0.4);
+  top: 500px;
+  left: 500px;
+}
+
 .u-section-1 .u-text-21 {
   font-weight: normal;
   text-align: left;

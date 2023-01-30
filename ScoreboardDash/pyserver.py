@@ -20,8 +20,8 @@ result1 = "../data/result1.txt"
 result2 = "../data/result2.txt"
 result_name_1 = "../data/resultname1.txt"
 result_name_2 = "../data/resultname2.txt"
-replay_start = "../data/replay_start.txt"
-replay_stop = "../data/replay_stop.txt"
+replay_start_file = "../data/replay_start.txt"
+replay_stop_file = "../data/replay_stop.txt"
 
 api = Flask(__name__)
 CORS(api)
@@ -92,16 +92,21 @@ def update_player2():
 
 @api.route('/replaystart', methods=['POST'])
 def replay_start():
-    with open(replay_start, 'w', encoding="utf-8") as replay_file:
-        ts = time.time()
-        replay_file.write(str(ts))
+    with open(replay_start_file, 'w', encoding="utf-8") as replay_file:
+        ts = str(time.time())   
+        print(ts)        
+        replay_file.write(ts)
+    
+    return "200"    
 
 
 @api.route('/replaystop', methods=['POST'])
 def replay_stop():
-    with open(replay_stop, 'w', encoding="utf-8") as replay_file:
-        ts = time.time()
-        replay_file.write(str(ts))
+    with open(replay_stop_file, 'w', encoding="utf-8") as replay_file:
+        ts = str(time.time())
+        replay_file.write(ts)
+            
+    return "200"    
 
 
 def add_to_score(score_key):

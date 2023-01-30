@@ -30,7 +30,7 @@
 	  
 		// Creating a XHR object
 		var xhr = new XMLHttpRequest();
-		var url = "http://192.168.0.249:8080/";
+		var url = "http://127.0.0.1:8080/";
 	  
         var jsonData;
 
@@ -318,6 +318,42 @@
 			jsonData.resultplayer2 = document.getElementById("resultplayer2").value;
 			sendJSON();
 		}
+		
+		function triggerReplay() {
+			// open a connection
+            xhr.open("POST", url + 'replaystart', true);
+
+            // Set the request header i.e. which type of content you are sending
+            xhr.setRequestHeader("Content-Type", "application/json");
+
+            // Create a state change callback
+            xhr.onreadystatechange = function () {
+                if (xhr.readyState === 4 && xhr.status === 200) {
+                    // console.log("Server Okay");
+                }
+            };
+
+            // Sending data with the request
+            xhr.send();
+		}
+		
+		function stopReplay() {
+			// open a connection
+            xhr.open("POST", url + 'replaystop', true);
+
+            // Set the request header i.e. which type of content you are sending
+            xhr.setRequestHeader("Content-Type", "application/json");
+
+            // Create a state change callback
+            xhr.onreadystatechange = function () {
+                if (xhr.readyState === 4 && xhr.status === 200) {
+                    // console.log("Server Okay");
+                }
+            };
+
+            // Sending data with the request
+            xhr.send();
+		}
 
         function sendJSON() {
             // open a connection
@@ -484,6 +520,8 @@
 		  <a class="u-btn u-btn-round u-button-style u-hover-palette-1-light-1 u-palette-1-base u-radius-50 u-btn-10" onclick="nextRound();">next round</a>
           <h3 class="u-align-left u-text u-text-21">Round</h3>
           <input class="u-text u-text-default u-form-22" type="text" id="round" value="" onchange="updateRound();">
+		  <a class="u-btn u-btn-round u-button-style u-hover-palette-1-light-1 u-palette-1-base u-radius-50 u-btn-20" onclick="triggerReplay();">Start Replay</a>
+		  <a class="u-btn u-btn-round u-button-style u-hover-palette-1-light-1 u-palette-1-base u-radius-50 u-btn-21" onclick="stopReplay();">Stop Replay</a>
       </div>
     </section>
 
