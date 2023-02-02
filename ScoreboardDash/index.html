@@ -1,14 +1,15 @@
 <!DOCTYPE html>
 <html>
-  <head>
-    <meta charset="utf-8">
-    <link rel="stylesheet" href="https://use.typekit.net/ogo7pba.css">
-    <title>Scoreboard Dashboard</title>
-    <link href="style.css" rel="stylesheet" type="text/css" />
-    <script src="https://kit.fontawesome.com/2c93766a80.js" crossorigin="anonymous"></script>
+<head>
+	<meta charset="utf-8">
+	<link rel="stylesheet" href="https://use.typekit.net/ogo7pba.css">
+	<title>Scoreboard Dashboard</title>
+	<link href="style.css" rel="stylesheet" type="text/css" />
+	<link rel="icon" href="images/V.png">
+	<script src="https://kit.fontawesome.com/2c93766a80.js" crossorigin="anonymous"></script>
 	<script class="u-script" type="text/javascript" src="scoreboarddash.js" defer=""></script>
-  </head>
-  <body>
+</head>
+<body>
 	<div class="container">
 		<div id="event_page">
 			<svg class="background">
@@ -79,9 +80,9 @@
 				<path id="line_about" d="M 0 0 L 42 0">
 				</path>
 			</svg>
-			
+
 			<!-- Text fields -->
-			
+
 			<div id="text_1p">
 				<span>1P</span>
 			</div>
@@ -142,17 +143,17 @@
 			<div id="text_ft">
 				<span>First to #</span>
 			</div>
-			
+
 			<!-- Buttons -->
 			<div id="button_reset_all">
 				<button class="rectangle_button" id="rectangle_button" onclick='resetAll();'>
 					<text x="25" y="19" id="button_text">Reset All</text>
 				</button>
 			</div>
-			
+
 			<div id="button_reset_names_scores">
 				<button class="rectangle_button" id="rectangle_button" onclick='resetNamesAndScore();'>
-					<text x="5" y="19" id="button_text_2">Rest Names & Scores</text>
+					<text x="5" y="19" id="button_text_2">Reset Names & Scores</text>
 				</button>
 			</div>
 			<div id="button_score_sub_2p">
@@ -203,20 +204,20 @@
 				<svg class="icon_stop">
 					<path id="icon_stop" d="M 11.1607141494751 2.25 L 1.339285731315613 2.25 C 0.5998884439468384 2.25 0 2.849888324737549 0 3.589285373687744 L 0 13.41071510314941 C 0 14.15011215209961 0.5998884439468384 14.75 1.339285731315613 14.75 L 11.1607141494751 14.75 C 11.90011215209961 14.75 12.50000095367432 14.15011215209961 12.50000095367432 13.41071510314941 L 12.50000095367432 3.589285373687744 C 12.50000095367432 2.849888324737549 11.90011215209961 2.25 11.1607141494751 2.25 Z">
 					</path>
-				</svg>	
+				</svg>
 			</div>
-			
+
 			<div id="button_next_round">
 				<button class="rectangle_button" id="rectangle_button" onclick='nextRound();'>
 					<text x="18" y="19" id="button_text_4">Next Round</text
-				</svg>
+					</svg>
 			</div>
 			<div id="button_reverse_names">
 				<button class="rectangle_button" id="rectangle_button" onclick='reversePlayerNames();'>
 					<text x="0" y="19" id="button_text_4"><-Reverse Names-></text>
 				</button>
 			</div>
-			
+
 			<!-- Forms -->
 			<div id="round">
 				<select id = "dropdown_round" class="dropdown_round" onchange = "updateRound();">
@@ -277,7 +278,7 @@
 					<option>SE</option>
 					<option>PR</option>
 				</select>
-			</div>	
+			</div>
 			<div id="result1p">
 				<input class="form_results_score_1p" type="text" id="form_results_score_1p" style="float: left;" value="" onchange="updateResults();">
 				<input class="form_results_name_1p" type="text" id="form_results_name_1p" style="float: left;" value="" onchange="updateResults();">
@@ -299,6 +300,5 @@
 			</div>
 		</div>
 	</div>
-	
-  </body>
+</body>
 </html>
