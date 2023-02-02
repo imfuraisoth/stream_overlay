@@ -1,528 +1,304 @@
 <!DOCTYPE html>
-<html style="font-size: 16px;">
+<html>
   <head>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta charset="utf-8">
-    <meta name="keywords" content="">
-    <meta name="description" content="">
-    <meta name="page_type" content="np-template-header-footer-from-plugin">
-    <title>Scoreboard Dash</title>
-    <link rel="stylesheet" href="nicepage.css" media="screen">
-<link rel="stylesheet" href="Scoreboard-Dash.css" media="screen">
-    <script class="u-script" type="text/javascript" src="jquery.js" defer=""></script>
-    <script class="u-script" type="text/javascript" src="nicepage.js" defer=""></script>
-    <meta name="generator" content="Nicepage 4.0.3, nicepage.com">
-    <link id="u-theme-google-font" rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:100,100i,300,300i,400,400i,500,500i,700,700i,900,900i|Open+Sans:300,300i,400,400i,600,600i,700,700i,800,800i">
-    
-    
-    <script type="application/ld+json">{
-		"@context": "http://schema.org",
-		"@type": "Organization",
-		"name": "",
-		"logo": "images/v.png"
-}</script>
-    <meta name="theme-color" content="#478ac9">
-    <meta property="og:title" content="Scoreboard Dash">
-    <meta property="og:type" content="website">
+    <link rel="stylesheet" href="https://use.typekit.net/ogo7pba.css">
+    <title>Scoreboard Dashboard</title>
+    <link href="style.css" rel="stylesheet" type="text/css" />
+    <script src="https://kit.fontawesome.com/2c93766a80.js" crossorigin="anonymous"></script>
+	<script class="u-script" type="text/javascript" src="scoreboarddash.js" defer=""></script>
   </head>
-  <body data-home-page="index.html" data-home-page-title="Scoreboard Dash" class="u-body"><header class="u-clearfix u-header u-header" id="sec-9324"><div class="u-clearfix u-sheet u-sheet-1">
-      <script>
-	  
-		// Creating a XHR object
-		var xhr = new XMLHttpRequest();
-		var url = "http://127.0.0.1:8080/";
-	  
-        var jsonData;
-
-        fetch(url + 'getdata')
-            .then(function (response) {
-            jsonData = response.json();
-          return jsonData;
-        })
-        .then(function (data) {
-            populateData(data);
-          })
-        .catch(function (err) {
-          console.log('error: ' + err);
-        });
-        function populateData(data) {
-        console.log(data);
-            updateElement("com1", data.com1);
-            updateElement("com2", data.com2);
-            updateElement("soc1", data.soc1);
-            updateElement("soc2", data.soc2);
-            updateElement("player1", data.p1Name);
-            updateElement("player2", data.p2Name);
-            updateElement("team1", data.p1Team);
-            updateElement("team2", data.p2Team);
-            updateElement("round", data.round);
-            updateElement("score1", data.p1Score);
-            updateElement("score2", data.p2Score);
-            updateElement("country1", data.p1Country);
-            updateElement("country2", data.p2Country);
-			updateElement("nextteam1", data.nextteam1);
-			updateElement("nextplayer1", data.nextplayer1);
-			updateElement("nextteam1", data.nextteam2);
-			updateElement("nextplayer2", data.nextplayer2);
-			updateElement("resultplayer1", data.resultplayer1);
-			updateElement("resultscore1", data.resultscore1);
-			updateElement("resultplayer2", data.resultplayer2);
-			updateElement("resultscore2", data.resultscore2);
-			updateElement("maxScore", data.maxScore);
-            jsonData = data;
-        }
-
-        function updateElement(id, value) {
-            if (value != null && value.length > 0) {
-                document.getElementById(id).value = value;
-            }
-        }
-
-        function updateCom1() {
-            jsonData.com1 = document.getElementById("com1").value;
-            sendJSON();
-        }
-
-        function updateCom2() {
-            jsonData.com2 = document.getElementById("com2").value;
-            sendJSON();
-        }
-
-        function updateSoc1() {
-            jsonData.soc1 = document.getElementById("soc1").value;
-            sendJSON();
-        }
-
-        function updateSoc2() {
-            jsonData.soc2 = document.getElementById("soc2").value;
-            sendJSON();
-        }
-
-        function updatePlayer1() {
-            jsonData.p1Name = document.getElementById("player1").value;
-            sendJSON();
-        }
-
-        function updatePlayer2() {
-            jsonData.p2Name = document.getElementById("player2").value;
-            sendJSON();
-        }
-
-        function updateTeam1() {
-            jsonData.p1Team = document.getElementById("team1").value;
-            sendJSON();
-        }
-
-        function updateTeam2() {
-            jsonData.p2Team = document.getElementById("team2").value;
-            sendJSON();
-        }
-		
-        function updateNextPlayer1() {
-            jsonData.nextplayer1 = document.getElementById("nextplayer1").value;
-            sendJSON();
-        }
-
-        function updateNextPlayer2() {
-            jsonData.nextplayer2 = document.getElementById("nextplayer2").value;
-            sendJSON();
-        }
-
-        function updateNextTeam1() {
-            jsonData.nextteam1 = document.getElementById("nextteam1").value;
-            sendJSON();
-        }
-
-        function updateNextTeam2() {
-            jsonData.nextteam2 = document.getElementById("nextteam2").value;
-            sendJSON();
-        }
-
-        function updateScore1() {
-            jsonData.p1Score = document.getElementById("score1").value;
-            sendJSON();
-        }
-
-        function updateScore2() {
-            jsonData.p2Score = document.getElementById("score2").value;
-            sendJSON();
-        }
-
-        function updateRound() {
-            jsonData.round = document.getElementById("round").value;
-            sendJSON();
-        }
-
-        function updateMaxScore() {
-            jsonData.maxScore = document.getElementById("maxScore").value;
-            sendJSON();
-        }
-
-        function resetNamesAndScore() {
-            document.getElementById("player1").value = "";
-            document.getElementById("player2").value = "";
-            document.getElementById("team1").value = "";
-            document.getElementById("team2").value = "";
-            document.getElementById("score1").value = "0";
-            document.getElementById("score2").value = "0";
-            jsonData.p1Name = "";
-            jsonData.p2Name = "";
-            jsonData.p1Team = "";
-            jsonData.p2Team = "";
-            jsonData.p1Score = "0";
-            jsonData.p2Score = "0";
-            sendJSON();
-        }
-
-        function reverseCommentatorNames() {
-            var c1 = document.getElementById("com1").value;
-            var c2 = document.getElementById("com2").value;
-            var s1 = document.getElementById("soc1").value;
-            var s2 = document.getElementById("soc2").value;
-            document.getElementById("com1").value = c2;
-            document.getElementById("com2").value = c1;
-            document.getElementById("soc1").value = s2;
-            document.getElementById("soc2").value = s1;
-            jsonData.com1 = c2;
-            jsonData.com2 = c1;
-            jsonData.soc1 = s2;
-            jsonData.soc2 = s1;
-            sendJSON();
-        }
-
-        function reversePlayerNames() {
-            var p1 = document.getElementById("player1").value;
-            var p2 = document.getElementById("player2").value;
-            var t1 = document.getElementById("team1").value;
-            var t2 = document.getElementById("team2").value;
-            document.getElementById("player1").value = p2;
-            document.getElementById("player2").value = p1;
-            document.getElementById("team1").value = t2;
-            document.getElementById("team2").value = t1;
-            jsonData.p1Name = p2;
-            jsonData.p2Name = p1;
-            jsonData.p1Team = t2;
-            jsonData.p2Team = t1;
-            sendJSON();
-        }
-
-        function reverseScores() {
-            var p1 = document.getElementById("score1").value;
-            var p2 = document.getElementById("score2").value;
-            document.getElementById("score1").value = p2;
-            document.getElementById("score2").value = p1;
-            jsonData.p1Score = p2;
-            jsonData.p2Score = p1;
-            sendJSON();
-        }
-
-        function addScoreP1() {
-            var score = parseInt(document.getElementById("score1").value);
-            score++;
-            jsonData.p1Score = score.toString();
-            document.getElementById("score1").value = jsonData.p1Score;
-            sendJSON();
-        }
-
-        function subtractScoreP1() {
-            var score = parseInt(document.getElementById("score1").value);
-            if (score <= 0) {
-                return;
-            }
-            score--;
-            jsonData.p1Score = score.toString();
-            document.getElementById("score1").value = jsonData.p1Score;
-            sendJSON();
-        }
-
-        function addScoreP2() {
-            var score = parseInt(document.getElementById("score2").value);
-            score++;
-            jsonData.p2Score = score.toString();
-            document.getElementById("score2").value = jsonData.p2Score;
-            sendJSON();
-        }
-
-        function subtractScoreP2() {
-            var score = parseInt(document.getElementById("score2").value);
-            if (score <= 0) {
-                return;
-            }
-            score--;
-            jsonData.p2Score = score.toString();
-            document.getElementById("score2").value = jsonData.p2Score;
-            sendJSON();
-        }
-
-        function resetScores() {
-            document.getElementById("score1").value = "0";
-            document.getElementById("score2").value = "0";
-            jsonData.p1Score = "0";
-            jsonData.p2Score = "0";
-            sendJSON();
-        }
-
-        function countryDropdown1() {
-            var c1 = document.getElementById("country1");
-            jsonData.p1Country = c1.options[c1.selectedIndex].text;
-            sendJSON();
-        }
-
-        function countryDropdown2() {
-            var c2 = document.getElementById("country2");
-            jsonData.p2Country = c2.options[country2.selectedIndex].text;
-            sendJSON();
-        }
-		
-		function nextRound() {
-			jsonData.resultscore1 = document.getElementById("score1").value;
-			jsonData.resultscore2 = document.getElementById("score2").value;
-			jsonData.resultplayer1 = document.getElementById("player1").value;
-			jsonData.resultplayer2 = document.getElementById("player2").value;
-			document.getElementById("resultscore1").value = jsonData.resultscore1;
-			document.getElementById("resultscore2").value = jsonData.resultscore2;
-			document.getElementById("resultplayer1").value = jsonData.resultplayer1;
-			document.getElementById("resultplayer2").value = jsonData.resultplayer2;
+  <body>
+	<div class="container">
+		<div id="event_page">
+			<svg class="background">
+				<rect id="background" rx="0" ry="0" x="0" y="0" width=100% height=1080px>
+				</rect>
+			</svg>
+			<svg class="grid_bottom_bar">
+				<rect id="grid_bottom_bar" rx="0" ry="0" x="0" y="0" width=100% height="61">
+				</rect>
+			</svg>
+			<svg class="grid_top_bar">
+				<rect id="grid_top_bar" rx="0" ry="0" x="0" y="0" width=100% height="61">
+				</rect>
+			</svg>
+			<div id="Commentators">
+				<a href="commentators/commentators.html" style="text-decoration: none">Commentators</a>
+			</div>
+			<div id="Top_8">
+				<span>Top 8</span>
+			</div>
+			<div id="Event_Dashboard">
+				<a href="index.html" style="text-decoration: none">Event Dashboard</a>
+			</div>
+			<div id="ABOUT">
+				<a href="https://www.theshilluminati.com/" style="text-decoration: none" target="_blank">ABOUT</a>
+			</div>
+			<svg class="grid_background">
+				<rect id="grid_background" rx="0" ry="0" x="0" y="0" width="660" height="958">
+				</rect>
+			</svg>
+			<svg class="grid_round">
+				<rect id="grid_round" rx="0" ry="0" x="0" y="0" width="660" height="82.627">
+				</rect>
+			</svg>
+			<svg class="grid_current_match">
+				<rect id="grid_current_match" rx="0" ry="0" x="0" y="0" width="660" height="350">
+				</rect>
+			</svg>
+			<svg class="grid_ft">
+				<rect id="grid_ft" rx="0" ry="0" x="0" y="0" width="170" height="149">
+				</rect>
+			</svg>
+			<svg class="grid_next_round">
+				<rect id="grid_next_round" rx="0" ry="0" x="0" y="0" width="245" height="304">
+				</rect>
+			</svg>
+			<svg class="grid_results">
+				<rect id="grid_results" rx="0" ry="0" x="0" y="0" width="245" height="304">
+				</rect>
+			</svg>
+			<svg class="grid_replays">
+				<rect id="grid_replays" rx="0" ry="0" x="0" y="0" width="170" height="156">
+				</rect>
+			</svg>
+			<svg class="line_commentators" viewBox="0 0 132 2">
+				<path id="line_commentators" d="M 0 0 L 132 0">
+				</path>
+			</svg>
+			<svg class="line_event_dashboard" viewBox="0 0 153 2">
+				<path id="line_event_dashboard" d="M 0 0 L 153 0">
+				</path>
+			</svg>
+			<svg class="line_top8" viewBox="0 0 45 2">
+				<path id="line_top8" d="M 0 0 L 45 0">
+				</path>
+			</svg>
+			<svg class="line_about" viewBox="0 0 42 2">
+				<path id="line_about" d="M 0 0 L 42 0">
+				</path>
+			</svg>
 			
-			var team1 = document.getElementById("nextteam1").value;
-			var player1 = document.getElementById("nextplayer1").value;
-			var team2 = document.getElementById("nextteam2").value;
-			var player2 = document.getElementById("nextplayer2").value;
-			document.getElementById("team1").value = team1;
-            document.getElementById("player1").value = player1;
-			document.getElementById("team2").value = team2;
-            document.getElementById("player2").value = player2;
-			jsonData.p1Team = team1;
-			jsonData.p2Team = team2;
-			jsonData.p1Name = player1;
-			jsonData.p2Name = player2;
-			document.getElementById("score1").value = "0";
-            document.getElementById("score2").value = "0";
-            jsonData.p1Score = "0";
-            jsonData.p2Score = "0";
-			document.getElementById("nextteam1").value = "";
-			document.getElementById("nextplayer1").value = "";
-			document.getElementById("nextteam2").value = "";
-			document.getElementById("nextplayer2").value = "";
-			jsonData.nextteam1 = "";
-			jsonData.nextplayer1 = "";
-			jsonData.nextteam2 = "";
-			jsonData.nextplayer2 = "";
-			sendJSON();
-		}
-		
-		function updateResults() {
-			jsonData.resultscore1 = document.getElementById("resultscore1").value;
-			jsonData.resultscore2 = document.getElementById("resultscore2").value;
-			jsonData.resultplayer1 = document.getElementById("resultplayer1").value;
-			jsonData.resultplayer2 = document.getElementById("resultplayer2").value;
-			sendJSON();
-		}
-		
-		function triggerReplay() {
-			// open a connection
-            xhr.open("POST", url + 'replaystart', true);
+			<!-- Text fields -->
+			
+			<div id="text_1p">
+				<span>1P</span>
+			</div>
+			<div id="text_2p">
+				<span>2P</span>
+			</div>
+			<div id="text_round">
+				<span>ROUND</span>
+			</div>
+			<div id="text_current_match">
+				<span>Current Match</span>
+			</div>
+			<div id="text_name">
+				<span>Name</span>
+			</div>
+			<div id="text_team">
+				<span>Team</span>
+			</div>
+			<div id="text_country">
+				<span>Country</span>
+			</div>
+			<div id="text_score">
+				<span>Score</span>
+			</div>
+			<div id="text_next_round_cs">
+				<span>Next Round</span>
+			</div>
+			<div id="text_next_round_1p">
+				<span>1P</span>
+			</div>
+			<div id="text_next_round_name_1p">
+				<span>Name</span>
+			</div>
+			<div id="text_next_round_team_1p">
+				<span>Team</span>
+			</div>
+			<div id="text_next_round_2p">
+				<span>2P</span>
+			</div>
+			<div id="text_next_round_name_2p">
+				<span>Name</span>
+			</div>
+			<div id="text_next_round_team_2p">
+				<span>Team</span>
+			</div>
+			<div id="text_results">
+				<span>RESULTS</span>
+			</div>
+			<div id="text_results_1p">
+				<span>1P</span>
+			</div>
+			<div id="text_results_2p">
+				<span>2P</span>
+			</div>
+			<div id="text_replays">
+				<span>Replays</span>
+			</div>
+			<div id="text_ft">
+				<span>First to #</span>
+			</div>
+			
+			<!-- Buttons -->
+			<div id="button_reset_all">
+				<button class="rectangle_button" id="rectangle_button" onclick='resetAll();'>
+					<text x="25" y="19" id="button_text">Reset All</text>
+				</button>
+			</div>
+			
+			<div id="button_reset_names_scores">
+				<button class="rectangle_button" id="rectangle_button" onclick='resetNamesAndScore();'>
+					<text x="5" y="19" id="button_text_2">Rest Names & Scores</text>
+				</button>
+			</div>
+			<div id="button_score_sub_2p">
+				<button class="rectangle_button_small" onclick='subtractScoreP2();'>
+					<text x="6" y="16" id="button_text_3">-</text>
+				</button>
+			</div>
+			<div id="button_score_add_1p">
+				<button class="rectangle_button_small" onclick='addScoreP1();'>
+					<text x="6" y="17" id="button_text_3">+</text>
+				</button>
+			</div>
+			<div id="button_score_sub_1p">
+				<button class="rectangle_button_small" onclick='subtractScoreP1();'>
+					<text x="6" y="16" id="button_text_3">-</text>
+				</button>
+			</div>
+			<div id="button_score_add_2p">
+				<button class="rectangle_button_small" onclick='addScoreP2();'>
+					<text x="6" y="17" id="button_text_3">+</text>
+				</button>
+			</div>
+			<div id="button_reverse_scores">
+				<button class="rectangle_button" id="rectangle_button" onclick='reverseScores();'>
+					<text x="0" y="19" id="button_text_4"><-Reverse Scores-></text>
+				</button>
+			</div>
+			<div id="button_reset_scores">
+				<button class="rectangle_button" id="rectangle_button" onclick='resetScores();'>
+					<text x="18" y="19" id="button_text_4">Reset Scores</text>
+				</button>
+			</div>
+			<div id="button_start_replay">
+				<svg class="icon_play" viewBox="7.5 4.5 8.5 10.929">
+					<path id="icon_play" d="M 7.499999523162842 4.5 L 16.00002670288086 9.964302062988281 L 7.499999523162842 15.4286060333252 L 7.499999523162842 4.5 Z">
+					</path>
+				</svg>
+				<button class="rectangle_button" id="rectangle_button" onclick='triggerReplay();'>
+					<text x="14" y="19" id="button_text_4">Start Replay ⏵</text>
+				</button>
 
-            // Set the request header i.e. which type of content you are sending
-            xhr.setRequestHeader("Content-Type", "application/json");
+			</div>
 
-            // Create a state change callback
-            xhr.onreadystatechange = function () {
-                if (xhr.readyState === 4 && xhr.status === 200) {
-                    // console.log("Server Okay");
-                }
-            };
-
-            // Sending data with the request
-            xhr.send();
-		}
-		
-		function stopReplay() {
-			// open a connection
-            xhr.open("POST", url + 'replaystop', true);
-
-            // Set the request header i.e. which type of content you are sending
-            xhr.setRequestHeader("Content-Type", "application/json");
-
-            // Create a state change callback
-            xhr.onreadystatechange = function () {
-                if (xhr.readyState === 4 && xhr.status === 200) {
-                    // console.log("Server Okay");
-                }
-            };
-
-            // Sending data with the request
-            xhr.send();
-		}
-
-        function sendJSON() {
-            // open a connection
-            xhr.open("POST", url + 'updatealldata', true);
-
-            // Set the request header i.e. which type of content you are sending
-            xhr.setRequestHeader("Content-Type", "application/json");
-
-            // Create a state change callback
-            xhr.onreadystatechange = function () {
-                if (xhr.readyState === 4 && xhr.status === 200) {
-                    // console.log("Server Okay");
-                }
-            };
-
-            // Set timestamp
-            jsonData.timestamp = Date.now();
-
-            // Converting JSON data to string
-            var data = JSON.stringify(jsonData);
-            // Sending data with the request
-            xhr.send(data);
-        }
-      </script>
-      <a href="https://twitch.tv/vodkagobalsky" class="u-image u-logo u-image-1">
-          <img src="images/v.png" class="u-logo-image u-logo-image-1">
-        </a>
-        <nav class="u-menu u-menu-dropdown u-offcanvas u-menu-1">
-          <div class="menu-collapse" style="font-size: 1rem; letter-spacing: 0px;">
-            <a class="u-button-style u-custom-left-right-menu-spacing u-custom-padding-bottom u-custom-top-bottom-menu-spacing u-nav-link u-text-active-palette-1-base u-text-hover-palette-2-base" href="#">
-              <svg><use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#menu-hamburger"></use></svg>
-              <svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"><defs><symbol id="menu-hamburger" viewBox="0 0 16 16" style="width: 16px; height: 16px;"><rect y="1" width="16" height="2"></rect><rect y="7" width="16" height="2"></rect><rect y="13" width="16" height="2"></rect>
-</symbol>
-</defs></svg>
-            </a>
-          </div>
-          <div class="u-custom-menu u-nav-container">
-            <ul class="u-nav u-unstyled u-nav-1"><li class="u-nav-item"><a class="u-button-style u-nav-link u-text-active-palette-1-base u-text-hover-palette-2-base" href="index.html" style="padding: 10px 20px;">Scoreboard Dash</a>
-</li><li class="u-nav-item"><a class="u-button-style u-nav-link u-text-active-palette-1-base u-text-hover-palette-2-base" href="About.html" style="padding: 10px 20px;">About</a>
-</li><li class="u-nav-item"><a class="u-button-style u-nav-link u-text-active-palette-1-base u-text-hover-palette-2-base" href="mailto:blank@yahoo.com?subject=hi" style="padding: 10px 20px;">Contact</a>
-</li></ul>
-          </div>
-          <div class="u-custom-menu u-nav-container-collapse">
-            <div class="u-black u-container-style u-inner-container-layout u-opacity u-opacity-95 u-sidenav">
-              <div class="u-inner-container-layout u-sidenav-overflow">
-                <div class="u-menu-close"></div>
-                <ul class="u-align-center u-nav u-popupmenu-items u-unstyled u-nav-2"><li class="u-nav-item"><a class="u-button-style u-nav-link" href="index.html" style="padding: 10px 20px;">Scoreboard Dash</a>
-</li><li class="u-nav-item"><a class="u-button-style u-nav-link" href="About.html" style="padding: 10px 20px;">About</a>
-</li><li class="u-nav-item"><a class="u-button-style u-nav-link" href="mailto:blank@yahoo.com?subject=hi" style="padding: 10px 20px;">Contact</a>
-</li></ul>
-              </div>
-            </div>
-            <div class="u-black u-menu-overlay u-opacity u-opacity-70"></div>
-          </div>
-        </nav>
-      </div></header>
-    <section class="u-align-center u-clearfix u-section-1" id="sec-4d55">
-      <div class="u-clearfix u-sheet u-sheet-1">
-        <div class="u-clearfix u-expanded-width u-layout-wrap u-layout-wrap-1">
-          <div class="u-layout">
-            <div class="u-layout-col">
-              <div class="u-size-30">
-                <div class="u-layout-col">
-                  <div class="u-container-style u-layout-cell u-size-60 u-layout-cell-1">
-                    <div class="u-container-layout u-container-layout-1">
-                      <h3 class="u-align-left u-text u-text-default u-text-1">Commentator 2</h3>
-                      <h3 class="u-align-left u-text u-text-default u-text-2">Commentator 1</h3>
-                      <a class="u-btn u-btn-round u-button-style u-hover-palette-1-light-1 u-palette-1-base u-radius-50 u-btn-1" onclick="reverseCommentatorNames();">&lt; Reverse Names &gt;</a>
-                        <input class="u-text u-text-default u-form-3" type="text" id="com1" value="" onchange="updateCom1();">
-                        <input class="u-text u-text-default u-form-4" type="text" id="com2" value="" onchange="updateCom2();">
-                      <h3 class="u-align-left u-text u-text-default u-text-5">Social</h3>
-                      <h3 class="u-align-left u-text u-text-default u-text-6">Social</h3>
-                        <input class="u-text u-text-default u-form-7" type="text" id="soc1" value="" onchange="updateSoc1();">
-                        <input class="u-text u-text-default u-form-8" type="text" id="soc2" value="" onchange="updateSoc2();">
-                      <div class="u-border-3 u-border-grey-dark-1 u-expanded-width u-line u-line-horizontal u-line-1"></div>
-                    </div>
-					<div>
-					</div>
-                  </div>
-                </div>
-              </div>
-              <div class="u-size-30">
-                <div class="u-layout-row">
-                  <div class="u-container-style u-layout-cell u-size-30 u-layout-cell-2">
-                    <div class="u-container-layout u-valign-top u-container-layout-2">
-                      <h3 class="u-align-left u-text u-text-default u-text-9">Player 1</h3>
-                      <input class="u-text u-text-default u-form-10" type="text" id="player1" value="" onchange="updatePlayer1();">
-                      <h3 class="u-align-left u-text u-text-default u-text-11">Team</h3>
-                      <input class="u-text u-text-default u-form-12" type="text" id="team1" value="" onchange="updateTeam1();">
-                      <h3 class="u-align-left u-text u-text-default u-text-100">Country</h3>
-                        <select id = "country1" class="dropdown1" onchange = "countryDropdown1()">
-                            <option>US</option>
-                            <option>CA</option>
-                            <option>JP</option>
-                            <option>KR</option>
-                            <option>MX</option>
-                            <option>GB</option>
-                            <option>ES</option>
-                            <option>FR</option>
-                            <option>FI</option>
-                            <option>SE</option>
-                            <option>PR</option>
-                        </select>
-                      <h3 class="u-align-left u-text u-text-default u-text-13">Score</h3>
-                      <input class="u-text u-text-default u-form-14" type="text" id="score1" value="0" onchange="updateScore1();">
-                      <a class="u-btn u-btn-round u-button-style u-hover-palette-1-light-1 u-palette-1-base u-radius-6 u-btn-2" onclick="addScoreP1();">+<br>
-                      </a>
-                      <a class="u-btn u-btn-round u-button-style u-hover-palette-1-light-1 u-palette-1-base u-radius-6 u-btn-3" onclick="subtractScoreP1();">-</a>
-					  <h3 class="u-align-center u-text u-section-1 u-text-200">Next Team : Player</h3>
-					  <input class="u-text u-text-default u-form-200" type="text" id="nextteam1" value="" onchange="updateNextTeam1();">
-					  <input class="u-text u-text-default u-form-201" type="text" id="nextplayer1" value="" onchange="updateNextPlayer1();">
-					  <h3 class="u-align-center u-text u-section-1 u-text-202">Last Results</h3>
-					  <div id = "results">
-						  <input class="u-text u-text-default u-form-300" type="text" id="resultscore1" style="float: left;" value="" onchange="updateResults();">
-						  <input class="u-text u-text-default u-form-301" type="text" id="resultplayer1" style="float: left;" value="" onchange="updateResults();">
-						  <input class="u-text u-text-default u-form-302" type="text" id="resultscore2" style="float: left;" value="" onchange="updateResults();">
-						  <input class="u-text u-text-default u-form-303" type="text" id="resultplayer2" style="float: left; "value="" onchange="updateResults();">
-					  </div>
-                      <h3 class="u-align-center u-text u-section-1 u-text-max-score">FT#</h3>
-                      <div id = "ftx">
-                          <input class="u-text u-text-default u-form-max-score" type="text" id="maxScore" style="float: left;" value="" onchange="updateMaxScore();">
-                      </div>
-                    </div>
-                  </div>
-                  <div class="u-container-style u-layout-cell u-size-30 u-layout-cell-3">
-                    <div class="u-container-layout u-container-layout-3">
-                      <h3 class="u-align-left u-text u-text-default u-text-15">Player 2</h3>
-                      <input class="u-text u-text-default u-form-16" type="text" id="player2" value="" onchange="updatePlayer2();">
-                      <h3 class="u-align-left u-text u-text-default u-text-17">Team</h3>
-                      <input class="u-text u-text-default u-form-18" type="text" id="team2" value="" onchange="updateTeam2();">
-                      <h3 class="u-align-left u-text u-text-default u-text-101">Country</h3>
-                        <select id = "country2" class="dropdown2" onchange = "countryDropdown2()">
-                            <option>US</option>
-                            <option>CA</option>
-                            <option>JP</option>
-                            <option>KR</option>
-                            <option>MX</option>
-                            <option>GB</option>
-                            <option>ES</option>
-                            <option>FR</option>
-                            <option>FI</option>
-                            <option>SE</option>
-                            <option>PR</option>
-                        </select>
-                      <h3 class="u-align-left u-text u-text-default u-text-19">Score</h3>
-                      <input class="u-text u-text-default u-form-20" type="text" id="score2" value="0" onchange="updateScore2();">
-                      <a class="u-btn u-btn-round u-button-style u-hover-palette-1-light-1 u-palette-1-base u-radius-6 u-btn-4" onclick="addScoreP2();">+<br>
-                      </a>
-                      <a class="u-btn u-btn-round u-button-style u-hover-palette-1-light-1 u-palette-1-base u-radius-6 u-btn-5" onclick="subtractScoreP2();">-</a>
-					  <h3 class="u-align-center u-text u-section-1 u-text-201">Next Team : Player</h3>
-					  <input class="u-text u-text-default u-form-202" type="text" id="nextteam2" value="" onchange="updateNextTeam2();">
-					  <input class="u-text u-text-default u-form-203" type="text" id="nextplayer2" value="" onchange="updateNextPlayer2();">
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-          <a class="u-btn u-btn-round u-button-style u-hover-palette-1-light-1 u-palette-1-base u-radius-50 u-btn-6" onclick="reverseScores();">&lt; Reverse scores &gt;</a>
-          <a class="u-btn u-btn-round u-button-style u-hover-palette-1-light-1 u-palette-1-base u-radius-50 u-btn-9" onclick="resetScores();">Reset Scores</a>
-          <a class="u-btn u-btn-round u-button-style u-hover-palette-1-light-1 u-palette-1-base u-radius-50 u-btn-7" onclick="reversePlayerNames();">&lt; Reverse names &gt;</a>
-          <a class="u-btn u-btn-round u-button-style u-hover-palette-1-light-1 u-palette-1-base u-radius-50 u-btn-8" onclick="resetNamesAndScore();">reset names and scores</a>
-		  <a class="u-btn u-btn-round u-button-style u-hover-palette-1-light-1 u-palette-1-base u-radius-50 u-btn-10" onclick="nextRound();">next round</a>
-          <h3 class="u-align-left u-text u-text-21">Round</h3>
-          <input class="u-text u-text-default u-form-22" type="text" id="round" value="" onchange="updateRound();">
-		  <a class="u-btn u-btn-round u-button-style u-hover-palette-1-light-1 u-palette-1-base u-radius-50 u-btn-20" onclick="triggerReplay();">Start Replay</a>
-		  <a class="u-btn u-btn-round u-button-style u-hover-palette-1-light-1 u-palette-1-base u-radius-50 u-btn-21" onclick="stopReplay();">Stop Replay</a>
-      </div>
-    </section>
-
+			<div id="button_stop_replay">
+				<button class="rectangle_button" id="rectangle_button" onclick='stopReplay();'>
+					<text x="14" y="19" id="button_text_4">Stop Replay  ⏹</text>
+				</button>
+				<svg class="icon_stop">
+					<path id="icon_stop" d="M 11.1607141494751 2.25 L 1.339285731315613 2.25 C 0.5998884439468384 2.25 0 2.849888324737549 0 3.589285373687744 L 0 13.41071510314941 C 0 14.15011215209961 0.5998884439468384 14.75 1.339285731315613 14.75 L 11.1607141494751 14.75 C 11.90011215209961 14.75 12.50000095367432 14.15011215209961 12.50000095367432 13.41071510314941 L 12.50000095367432 3.589285373687744 C 12.50000095367432 2.849888324737549 11.90011215209961 2.25 11.1607141494751 2.25 Z">
+					</path>
+				</svg>	
+			</div>
+			
+			<div id="button_next_round">
+				<button class="rectangle_button" id="rectangle_button" onclick='nextRound();'>
+					<text x="18" y="19" id="button_text_4">Next Round</text
+				</svg>
+			</div>
+			<div id="button_reverse_names">
+				<button class="rectangle_button" id="rectangle_button" onclick='reversePlayerNames();'>
+					<text x="0" y="19" id="button_text_4"><-Reverse Names-></text>
+				</button>
+			</div>
+			
+			<!-- Forms -->
+			<div id="round">
+				<select id = "dropdown_round" class="dropdown_round" onchange = "updateRound();">
+					<option>Casuals</option>
+					<option>Winners Round 1</option>
+					<option>Winners Round 2</option>
+					<option>Winners Round 3</option>
+					<option>Winners Round 4</option>
+					<option>Winners Quarters</option>
+					<option>Winners Semis</option>
+					<option>Winners Finals</option>
+					<option>Grand Finals</option>
+					<option>Losers Round 1</option>
+					<option>Losers Round 2</option>
+					<option>Losers Round 3</option>
+					<option>Losers Round 4</option>
+					<option>Losers Quarters</option>
+					<option>Losers Semis</option>
+					<option>Losers Finals</option>
+					<option>FT3</option>
+					<option>FT5</option>
+					<option>FT10</option>
+					<option>FT?</option>
+				</select>
+			</div>
+			<div id="current1p">
+				<input class="form_name_1p" type="text" id="form_name_1p" value="" placeholder="P1 Name" onchange="updatePlayer1();">
+				<input class="form_team_1p" type="text" id="form_team_1p" value="" placeholder="P1 Team" onchange="updateTeam1();">
+				<input class="form_score_1p" type="text" id="form_score_1p" value="0" onchange="updateScore1();">
+				<select id = "dropdown_country_1p" class="dropdown_country_1p" onchange = "countryDropdown1()">
+					<option>US</option>
+					<option>CA</option>
+					<option>JP</option>
+					<option>KR</option>
+					<option>MX</option>
+					<option>GB</option>
+					<option>ES</option>
+					<option>FR</option>
+					<option>FI</option>
+					<option>SE</option>
+					<option>PR</option>
+				</select>
+			</div>
+			<div id="current2p">
+				<input class="form_name_2p" type="text" id="form_name_2p" value="" placeholder="P2 Name" onchange="updatePlayer2();">
+				<input class="form_team_2p" type="text" id="form_team_2p" value="" placeholder="P2 Team" onchange="updateTeam2();">
+				<input class="form_score_2p" type="text" id="form_score_2p" value="0" onchange="updateScore2();">
+				<select id = "dropdown_country_2p" class="dropdown_country_2p" onchange = "countryDropdown2()">
+					<option>US</option>
+					<option>CA</option>
+					<option>JP</option>
+					<option>KR</option>
+					<option>MX</option>
+					<option>GB</option>
+					<option>ES</option>
+					<option>FR</option>
+					<option>FI</option>
+					<option>SE</option>
+					<option>PR</option>
+				</select>
+			</div>	
+			<div id="result1p">
+				<input class="form_results_score_1p" type="text" id="form_results_score_1p" style="float: left;" value="" onchange="updateResults();">
+				<input class="form_results_name_1p" type="text" id="form_results_name_1p" style="float: left;" value="" onchange="updateResults();">
+			</div>
+			<div id="result2p">
+				<input class="form_results_score_2p" type="text" id="form_results_score_2p" style="float: left;" value="" onchange="updateResults();">
+				<input class="form_results_name_2p" type="text" id="form_results_name_2p" style="float: left; "value="" onchange="updateResults();">
+			</div>
+			<div id="next1p">
+				<input class="form_next_round_team_1p" type="text" id="form_next_round_team_1p" value="" placeholder="Next P1 Team" onchange="updateNextTeam1();">
+				<input class="form_next_round_name_1p" type="text" id="form_next_round_name_1p" value="" placeholder="Next P1 Name" onchange="updateNextPlayer1();">
+			</div>
+			<div id="next2p">
+				<input class="form_next_round_team_2p" type="text" id="form_next_round_team_2p" value="" placeholder="Next P1 Team"onchange="updateNextTeam2();">
+				<input class="form_next_round_name_2p" type="text" id="form_next_round_name_2p" value="" placeholder="Next P1 Name" onchange="updateNextPlayer2();">
+			</div>
+			<div id="ftx">
+				<input class="form_ft" type="text" id="form_ft" style="float: left;" value="" onchange="updateMaxScore();">
+			</div>
+		</div>
+	</div>
+	
   </body>
+</html>

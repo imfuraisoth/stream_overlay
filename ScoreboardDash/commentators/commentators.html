@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <link rel="stylesheet" href="https://use.typekit.net/ogo7pba.css">
+    <title>Commentators Dashboard</title>
+    <link href="style.css" rel="stylesheet" type="text/css" />
+    <script src="https://kit.fontawesome.com/2c93766a80.js" crossorigin="anonymous"></script>
+	<script class="u-script" type="text/javascript" src="commentators.js" defer=""></script>
+  </head>
+  <body>
+	<div class="container">
+		<div id="commentators">
+			<svg class="background" viewBox="0 0 1920 1080">
+				<path id="background" d="M 0 0 L 33.9565544128418 0 C 33.9565544128418 0 665.8049926757812 0 1078.125 0 C 1558.125 0 1920 0 1920 0 L 1920 1080 L 0 1080 L 0 0 Z">
+				</path>
+			</svg>
+			<svg class="grid_bottom_bar">
+				<rect id="grid_bottom_bar" rx="0" ry="0" x="0" y="0" width="1920" height="61">
+				</rect>
+			</svg>
+			<svg class="grid_top_bar">
+				<rect id="grid_top_bar" rx="0" ry="0" x="0" y="0" width="1920" height="61">
+				</rect>
+			</svg>
+			<div id="Commentators_j">
+				<a href="commentators.html" style="text-decoration: none">Commentators</a>
+			</div>
+			<div id="Top_8">
+				<span>Top 8</span>
+			</div>
+			<div id="Event_Dashboard">
+				<a href="../index.html" style="text-decoration: none">Event Dashboard</a>
+			</div>
+			<div id="ABOUT">
+				<a href="https://www.theshilluminati.com/" style="text-decoration: none" target="_blank">ABOUT</a>
+			</div>
+			<svg class="grid_background">
+				<rect id="grid_background" rx="0" ry="0" x="0" y="0" width="660" height="958">
+				</rect>
+			</svg>
+			<svg class="line_commentators" viewBox="0 0 132 2">
+				<path id="line_commentators" d="M 0 0 L 132 0">
+				</path>
+			</svg>
+			<svg class="line_event_dashboard" viewBox="0 0 153 2">
+				<path id="line_event_dashboard" d="M 0 0 L 153 0">
+				</path>
+			</svg>
+			<svg class="line_top8" viewBox="0 0 45 2">
+				<path id="line_top8" d="M 0 0 L 45 0">
+				</path>
+			</svg>
+			<svg class="line_about" viewBox="0 0 42 2">
+				<path id="line_about" d="M 0 0 L 42 0">
+				</path>
+			</svg>
+			<svg class="grid_commentators">
+				<rect id="grid_commentators" rx="0" ry="0" x="0" y="0" width="660" height="241">
+				</rect>
+			</svg>
+			
+			<!-- Text fields -->
+			
+			<div id="text_secondary">
+				<span>Secondary</span>
+			</div>
+			<div id="text_primary">
+				<span>Primary</span>
+			</div>
+			<div id="text_commentators">
+				<span>Commentators</span>
+			</div>
+			<div id="text_name">
+				<span>Name</span>
+			</div>
+			<div id="text_social">
+				<span>Social</span>
+			</div>
+			
+			<!-- Buttons -->
+			<div id="button_reverse_names">
+				<button class="rectangle_button" id="rectangle_button" onclick='reverseCommentatorNames();'>
+					<text x="0" y="19" id="button_text"><-Reverse Names-></text>
+				</button>
+			</div>
+			
+			<!-- Forms -->
+			<div id="com_primary">
+				<input class="form_name_1" type="text" id="form_name_1" value="" placeholder="Name" onchange="updateCom1();">
+				<input class="form_social_1" type="text" id="form_social_1" value="" placeholder="Social" onchange="updateSoc1();">
+
+			</div>
+			<div id="com_secondary">
+				<input class="form_name_2" type="text" id="form_name_2" value="" placeholder="Name" onchange="updateCom2();">
+				<input class="form_social_2" type="text" id="form_social_2" value="" placeholder="Social" onchange="updateSoc2();">
+			</div>	
+		</div>
+	</div>
+	
+  </body>
+</html>
