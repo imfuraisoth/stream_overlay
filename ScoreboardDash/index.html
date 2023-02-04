@@ -28,7 +28,7 @@
 				<a href="commentators/commentators.html" style="text-decoration: none">Commentators</a>
 			</div>
 			<div id="Top_8">
-				<span>Top 8</span>
+				<a href="top8/top8.html" style="text-decoration: none">Top 8</a>
 			</div>
 			<div id="Event_Dashboard">
 				<a href="index.html" style="text-decoration: none">Event Dashboard</a>
@@ -152,7 +152,7 @@
 			</div>
 
 			<div id="button_reset_names_scores">
-				<button class="rectangle_button" id="rectangle_button" onclick='resetNamesAndScore();'>
+				<button class="rectangle_button" id="rectangle_button_1" onclick='resetNamesAndScore();'>
 					<text x="5" y="19" id="button_text_2">Reset Names & Scores</text>
 				</button>
 			</div>
@@ -177,43 +177,35 @@
 				</button>
 			</div>
 			<div id="button_reverse_scores">
-				<button class="rectangle_button" id="rectangle_button" onclick='reverseScores();'>
+				<button class="rectangle_button" id="rectangle_button_2" onclick='reverseScores();'>
 					<text x="0" y="19" id="button_text_4"><-Reverse Scores-></text>
 				</button>
 			</div>
 			<div id="button_reset_scores">
-				<button class="rectangle_button" id="rectangle_button" onclick='resetScores();'>
+				<button class="rectangle_button" id="rectangle_button_3" onclick='resetScores();'>
 					<text x="18" y="19" id="button_text_4">Reset Scores</text>
 				</button>
 			</div>
 			<div id="button_start_replay">
-				<svg class="icon_play" viewBox="7.5 4.5 8.5 10.929">
-					<path id="icon_play" d="M 7.499999523162842 4.5 L 16.00002670288086 9.964302062988281 L 7.499999523162842 15.4286060333252 L 7.499999523162842 4.5 Z">
-					</path>
-				</svg>
-				<button class="rectangle_button" id="rectangle_button" onclick='triggerReplay();'>
+				<button class="rectangle_button" id="rectangle_button_4" onclick='triggerReplay();'>
 					<text x="14" y="19" id="button_text_4">Start Replay ⏵</text>
 				</button>
 
 			</div>
 
 			<div id="button_stop_replay">
-				<button class="rectangle_button" id="rectangle_button" onclick='stopReplay();'>
+				<button class="rectangle_button" id="rectangle_button_5" onclick='stopReplay();'>
 					<text x="14" y="19" id="button_text_4">Stop Replay  ⏹</text>
 				</button>
-				<svg class="icon_stop">
-					<path id="icon_stop" d="M 11.1607141494751 2.25 L 1.339285731315613 2.25 C 0.5998884439468384 2.25 0 2.849888324737549 0 3.589285373687744 L 0 13.41071510314941 C 0 14.15011215209961 0.5998884439468384 14.75 1.339285731315613 14.75 L 11.1607141494751 14.75 C 11.90011215209961 14.75 12.50000095367432 14.15011215209961 12.50000095367432 13.41071510314941 L 12.50000095367432 3.589285373687744 C 12.50000095367432 2.849888324737549 11.90011215209961 2.25 11.1607141494751 2.25 Z">
-					</path>
-				</svg>
 			</div>
 
 			<div id="button_next_round">
-				<button class="rectangle_button" id="rectangle_button" onclick='nextRound();'>
-					<text x="18" y="19" id="button_text_4">Next Round</text
-					</svg>
+				<button class="rectangle_button" id="rectangle_button_6" onclick='nextRound();'>
+					<text x="18" y="19" id="button_text_4">Next Round</text>
+				</button>
 			</div>
 			<div id="button_reverse_names">
-				<button class="rectangle_button" id="rectangle_button" onclick='reversePlayerNames();'>
+				<button class="rectangle_button" id="rectangle_button_7" onclick='reversePlayerNames();'>
 					<text x="0" y="19" id="button_text_4"><-Reverse Names-></text>
 				</button>
 			</div>

@@ -266,6 +266,68 @@
 	stroke-miterlimit: 4;
 	shape-rendering: auto;
 }
+#rectangle_button_1 {
+	fill: rgba(103,82,103,1);
+	stroke: rgba(0,0,0,0);
+	stroke-width: 1px;
+	stroke-linejoin: miter;
+	stroke-linecap: butt;
+	stroke-miterlimit: 4;
+	shape-rendering: auto;
+}
+#rectangle_button_2 {
+	fill: rgba(103,82,103,1);
+	stroke: rgba(0,0,0,0);
+	stroke-width: 1px;
+	stroke-linejoin: miter;
+	stroke-linecap: butt;
+	stroke-miterlimit: 4;
+	shape-rendering: auto;
+}
+#rectangle_button_3 {
+	fill: rgba(103,82,103,1);
+	stroke: rgba(0,0,0,0);
+	stroke-width: 1px;
+	stroke-linejoin: miter;
+	stroke-linecap: butt;
+	stroke-miterlimit: 4;
+	shape-rendering: auto;
+}
+#rectangle_button_4 {
+	fill: rgba(103,82,103,1);
+	stroke: rgba(0,0,0,0);
+	stroke-width: 1px;
+	stroke-linejoin: miter;
+	stroke-linecap: butt;
+	stroke-miterlimit: 4;
+	shape-rendering: auto;
+}
+#rectangle_button_5 {
+	fill: rgba(103,82,103,1);
+	stroke: rgba(0,0,0,0);
+	stroke-width: 1px;
+	stroke-linejoin: miter;
+	stroke-linecap: butt;
+	stroke-miterlimit: 4;
+	shape-rendering: auto;
+}#rectangle_button_6 {
+ 	fill: rgba(103,82,103,1);
+ 	stroke: rgba(0,0,0,0);
+ 	stroke-width: 1px;
+ 	stroke-linejoin: miter;
+ 	stroke-linecap: butt;
+ 	stroke-miterlimit: 4;
+ 	shape-rendering: auto;
+ }
+ #rectangle_button_7 {
+ 	fill: rgba(103,82,103,1);
+ 	stroke: rgba(0,0,0,0);
+ 	stroke-width: 1px;
+ 	stroke-linejoin: miter;
+ 	stroke-linecap: butt;
+ 	stroke-miterlimit: 4;
+ 	shape-rendering: auto;
+ }
 .rectangle_button {
 	position: absolute;
 	overflow: visible;
