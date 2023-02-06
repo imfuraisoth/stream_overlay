@@ -505,7 +505,7 @@ function highlightCurrentRoundForms(round) {
     }
     if (round == 11) {
         document.getElementById("form_score_w1_gf2" + suffix).style.border="2px solid red";
-        document.getElementById("form_score_w1_gf2" + suffix).style.border="2px solid red";
+        document.getElementById("form_score_w2_gf2" + suffix).style.border="2px solid red";
     }
     lastRoundSuffix = roundSuffixMap[round];
 }
@@ -617,7 +617,7 @@ function resetTop8() {
                 document.getElementById("form_score_" + suffix).style.border="";
             }
             document.getElementById("form_score_w1_gf2" + suffix).style.border="";
-            document.getElementById("form_score_w1_gf2" + suffix).style.border="";
+            document.getElementById("form_score_w2_gf2" + suffix).style.border="";
 		}
 	};
 
