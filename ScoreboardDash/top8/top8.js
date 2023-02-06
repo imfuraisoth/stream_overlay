@@ -17,7 +17,7 @@ var roundSuffixMap = {
     8: ["l1_ls", "l2_ls"],
     9: ["l1_lf", "l2_lf"],
     10: ["w1_gf", "w2_gf"],
-    11: ["w1_gf", "w2_gf", "w1_gf2", "w2_gf2"]
+    11: ["w1_gf", "w2_gf"]
 }
 
 fetch(url + 'getdata')
@@ -502,6 +502,10 @@ function highlightCurrentRoundForms(round) {
         document.getElementById("form_team_" + suffix).style.border="2px solid red";
         document.getElementById("form_name_" + suffix).style.border="2px solid red";
         document.getElementById("form_score_" + suffix).style.border="2px solid red";
+    }
+    if (round == 11) {
+        document.getElementById("form_score_w1_gf2" + suffix).style.border="2px solid red";
+        document.getElementById("form_score_w1_gf2" + suffix).style.border="2px solid red";
     }
     lastRoundSuffix = roundSuffixMap[round];
 }
