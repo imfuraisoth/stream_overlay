@@ -601,23 +601,23 @@ function resetTop8() {
 	// Create a state change callback
 	xhr.onreadystatechange = function () {
 		if (xhr.readyState === 4 && xhr.status === 200) {
-			// console.log("Server Okay");
+	        document.getElementById("rectangle_button_18").style.background = "#675267";
+            for (const suffix of lastRoundSuffix) {
+                document.getElementById("form_team_" + suffix).style.border="";
+                document.getElementById("form_name_" + suffix).style.border="";
+                document.getElementById("form_score_" + suffix).style.border="";
+            }
+            for (const suffix of lastNextRoundSuffix) {
+                document.getElementById("form_team_" + suffix).style.border="";
+                document.getElementById("form_name_" + suffix).style.border="";
+                document.getElementById("form_score_" + suffix).style.border="";
+            }
 		}
 	};
 
 	// Sending data with the request
 	xhr.send();
-	document.getElementById("rectangle_button_18").style.background = "#675267";
-    for (const suffix of lastRoundSuffix) {
-        document.getElementById("form_team_" + suffix).style.border="";
-        document.getElementById("form_name_" + suffix).style.border="";
-        document.getElementById("form_score_" + suffix).style.border="";
-    }
-    for (const suffix of lastNextRoundSuffix) {
-        document.getElementById("form_team_" + suffix).style.border="";
-        document.getElementById("form_name_" + suffix).style.border="";
-        document.getElementById("form_score_" + suffix).style.border="";
-    }
+
 }
 
 function sendJSON() {
