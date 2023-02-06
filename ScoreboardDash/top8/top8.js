@@ -616,6 +616,8 @@ function resetTop8() {
                 document.getElementById("form_name_" + suffix).style.border="";
                 document.getElementById("form_score_" + suffix).style.border="";
             }
+            document.getElementById("form_score_w1_gf2" + suffix).style.border="";
+            document.getElementById("form_score_w1_gf2" + suffix).style.border="";
 		}
 	};
 
