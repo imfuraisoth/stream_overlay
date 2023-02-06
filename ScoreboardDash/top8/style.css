@@ -39,7 +39,7 @@
 .grid_background {
 	overflow: visible;
 	position: absolute;
-	width: 1920px;
+	width: 100%;
 	height: 1080px;
 	left: 0px;
 	top: 0px;
@@ -51,7 +51,7 @@
 .grid_bottom_bar {
 	position: absolute;
 	overflow: visible;
-	width: 1920px;
+	width: 100%;
 	height: 61px;
 	left: 0px;
 	top: 1019px;
@@ -113,7 +113,7 @@
 .grid_top_bar {
 	position: absolute;
 	overflow: visible;
-	width: 1920px;
+	width: 100%;
 	height: 61px;
 	left: 0px;
 	top: 0px;
@@ -482,6 +482,15 @@
 	shape-rendering: auto;
 }
 #rectangle_button_17 {
+	fill: rgba(103,82,103,1);
+	stroke: rgba(0,0,0,0);
+	stroke-width: 1px;
+	stroke-linejoin: round;
+	stroke-linecap: butt;
+	stroke-miterlimit: 4;
+	shape-rendering: auto;
+}
+#rectangle_button_18 {
 	fill: rgba(103,82,103,1);
 	stroke: rgba(0,0,0,0);
 	stroke-width: 1px;
@@ -975,10 +984,44 @@
 .dropdown_country_current_1 {
 	position: absolute;
 	overflow: visible;
-	width: 51px;
+	width: 55px;
 	height: 24px;
 	left: 724px;
 	top: 194px;
+}
+#dropdown_country_next1 {
+	fill: rgba(255,255,255,1);
+	stroke: rgba(112,112,112,1);
+	stroke-width: 1px;
+	stroke-linejoin: miter;
+	stroke-linecap: butt;
+	stroke-miterlimit: 4;
+	shape-rendering: auto;
+}
+.dropdown_country_next1 {
+	position: absolute;
+	overflow: visible;
+	width: 55px;
+	height: 24px;
+	left: 1649px;
+	top: 424px;
+}
+#dropdown_country_next2 {
+	fill: rgba(255,255,255,1);
+	stroke: rgba(112,112,112,1);
+	stroke-width: 1px;
+	stroke-linejoin: miter;
+	stroke-linecap: butt;
+	stroke-miterlimit: 4;
+	shape-rendering: auto;
+}
+.dropdown_country_next2 {
+	position: absolute;
+	overflow: visible;
+	width: 55px;
+	height: 24px;
+	left: 1649px;
+	top: 540px;
 }
 #dropdown_country_current_2 {
 	fill: rgba(255,255,255,1);
@@ -992,7 +1035,7 @@
 .dropdown_country_current_2 {
 	position: absolute;
 	overflow: visible;
-	width: 51px;
+	width: 55px;
 	height: 24px;
 	left: 1137px;
 	top: 194px;
@@ -1866,6 +1909,7 @@
 	stroke-linecap: butt;
 	stroke-miterlimit: 4;
 	shape-rendering: auto;
+	text-align: center;
 }
 .form_score_w1 {
 	position: absolute;
@@ -1883,6 +1927,7 @@
 	stroke-linecap: butt;
 	stroke-miterlimit: 4;
 	shape-rendering: auto;
+	text-align: center;
 }
 .form_score_w2 {
 	position: absolute;
@@ -1900,6 +1945,7 @@
 	stroke-linecap: butt;
 	stroke-miterlimit: 4;
 	shape-rendering: auto;
+	text-align: center;
 }
 .form_score_w3 {
 	position: absolute;
@@ -1917,6 +1963,7 @@
 	stroke-linecap: butt;
 	stroke-miterlimit: 4;
 	shape-rendering: auto;
+	text-align: center;
 }
 .form_score_w4 {
 	position: absolute;
@@ -1934,6 +1981,7 @@
 	stroke-linecap: butt;
 	stroke-miterlimit: 4;
 	shape-rendering: auto;
+	text-align: center;
 }
 .form_score_w1_wf {
 	position: absolute;
@@ -1951,6 +1999,7 @@
 	stroke-linecap: butt;
 	stroke-miterlimit: 4;
 	shape-rendering: auto;
+	text-align: center;
 }
 .form_score_w2_wf {
 	position: absolute;
@@ -1960,40 +2009,6 @@
 	left: 935px;
 	top: 548px;
 }
-#form_team_1p_dy {
-	fill: rgba(255,255,255,1);
-	stroke: rgba(112,112,112,1);
-	stroke-width: 1px;
-	stroke-linejoin: miter;
-	stroke-linecap: butt;
-	stroke-miterlimit: 4;
-	shape-rendering: auto;
-}
-.form_team_1p_dy {
-	position: absolute;
-	overflow: visible;
-	width: 30px;
-	height: 25px;
-	left: 542px;
-	top: 741px;
-}
-#form_team_1p_dz {
-	fill: rgba(255,255,255,1);
-	stroke: rgba(112,112,112,1);
-	stroke-width: 1px;
-	stroke-linejoin: miter;
-	stroke-linecap: butt;
-	stroke-miterlimit: 4;
-	shape-rendering: auto;
-}
-.form_team_1p_dz {
-	position: absolute;
-	overflow: visible;
-	width: 30px;
-	height: 25px;
-	left: 542px;
-	top: 784px;
-}
 #form_score_l3 {
 	fill: rgba(255,255,255,1);
 	stroke: rgba(112,112,112,1);
@@ -2002,6 +2017,7 @@
 	stroke-linecap: butt;
 	stroke-miterlimit: 4;
 	shape-rendering: auto;
+	text-align: center;
 }
 .form_score_l3 {
 	position: absolute;
@@ -2019,6 +2035,7 @@
 	stroke-linecap: butt;
 	stroke-miterlimit: 4;
 	shape-rendering: auto;
+	text-align: center;
 }
 .form_score_l4 {
 	position: absolute;
@@ -2036,6 +2053,7 @@
 	stroke-linecap: butt;
 	stroke-miterlimit: 4;
 	shape-rendering: auto;
+	text-align: center;
 }
 .form_score_w1_gf {
 	position: absolute;
@@ -2053,6 +2071,7 @@
 	stroke-linecap: butt;
 	stroke-miterlimit: 4;
 	shape-rendering: auto;
+	text-align: center;
 }
 .form_score_w2_gf {
 	position: absolute;
@@ -2060,6 +2079,42 @@
 	width: 30px;
 	height: 25px;
 	left: 1292px;
+	top: 548px;
+}
+#form_score_w1_gf2 {
+	fill: rgba(255,255,255,1);
+	stroke: rgba(112,112,112,1);
+	stroke-width: 1px;
+	stroke-linejoin: miter;
+	stroke-linecap: butt;
+	stroke-miterlimit: 4;
+	shape-rendering: auto;
+	text-align: center;
+}
+.form_score_w1_gf2 {
+	position: absolute;
+	overflow: visible;
+	width: 30px;
+	height: 25px;
+	left: 1343px;
+	top: 505px;
+}
+#form_score_w2_gf2 {
+	fill: rgba(255,255,255,1);
+	stroke: rgba(112,112,112,1);
+	stroke-width: 1px;
+	stroke-linejoin: miter;
+	stroke-linecap: butt;
+	stroke-miterlimit: 4;
+	shape-rendering: auto;
+	text-align: center;
+}
+.form_score_w2_gf2 {
+	position: absolute;
+	overflow: visible;
+	width: 30px;
+	height: 25px;
+	left: 1343px;
 	top: 548px;
 }
 #form_score_l1_ls {
@@ -2070,6 +2125,7 @@
 	stroke-linecap: butt;
 	stroke-miterlimit: 4;
 	shape-rendering: auto;
+	text-align: center;
 }
 .form_score_l1_ls {
 	position: absolute;
@@ -2087,6 +2143,7 @@
 	stroke-linecap: butt;
 	stroke-miterlimit: 4;
 	shape-rendering: auto;
+	text-align: center;
 }
 .form_score_l2_ls {
 	position: absolute;
@@ -2104,6 +2161,7 @@
 	stroke-linecap: butt;
 	stroke-miterlimit: 4;
 	shape-rendering: auto;
+	text-align: center;
 }
 .form_score_l1_lf {
 	position: absolute;
@@ -2121,6 +2179,7 @@
 	stroke-linecap: butt;
 	stroke-miterlimit: 4;
 	shape-rendering: auto;
+	text-align: center;
 }
 .form_score_l2_lf {
 	position: absolute;
@@ -2142,7 +2201,7 @@
 .dropdown_country_w1 {
 	position: absolute;
 	overflow: visible;
-	width: 51px;
+	width: 55px;
 	height: 24px;
 	left: 234px;
 	top: 411px;
@@ -2159,7 +2218,7 @@
 .dropdown_country_w2 {
 	position: absolute;
 	overflow: visible;
-	width: 51px;
+	width: 55px;
 	height: 24px;
 	left: 234px;
 	top: 454px;
@@ -2176,7 +2235,7 @@
 .dropdown_country_w3 {
 	position: absolute;
 	overflow: visible;
-	width: 51px;
+	width: 55px;
 	height: 24px;
 	left: 234px;
 	top: 592px;
@@ -2193,7 +2252,7 @@
 .dropdown_country_w4 {
 	position: absolute;
 	overflow: visible;
-	width: 51px;
+	width: 55px;
 	height: 24px;
 	left: 234px;
 	top: 635px;
@@ -2210,7 +2269,7 @@
 .dropdown_country_l1 {
 	position: absolute;
 	overflow: visible;
-	width: 51px;
+	width: 55px;
 	height: 24px;
 	left: 234px;
 	top: 741px;
@@ -2227,7 +2286,7 @@
 .dropdown_country_l2 {
 	position: absolute;
 	overflow: visible;
-	width: 51px;
+	width: 55px;
 	height: 24px;
 	left: 234px;
 	top: 784px;
@@ -2244,7 +2303,7 @@
 .dropdown_country_l3 {
 	position: absolute;
 	overflow: visible;
-	width: 51px;
+	width: 55px;
 	height: 24px;
 	left: 234px;
 	top: 922px;
@@ -2261,7 +2320,7 @@
 .dropdown_country_l4 {
 	position: absolute;
 	overflow: visible;
-	width: 51px;
+	width: 55px;
 	height: 24px;
 	left: 234px;
 	top: 965px;
@@ -2552,6 +2611,7 @@
 	stroke-linecap: butt;
 	stroke-miterlimit: 4;
 	shape-rendering: auto;
+	text-align: center;
 }
 .form_score_l1 {
 	position: absolute;
@@ -2569,6 +2629,7 @@
 	stroke-linecap: butt;
 	stroke-miterlimit: 4;
 	shape-rendering: auto;
+	text-align: center;
 }
 .form_score_l2 {
 	position: absolute;
@@ -2577,37 +2638,6 @@
 	height: 25px;
 	left: 542px;
 	top: 784px;
-}
-#dropdown_country_l1_fo {
-	fill: rgba(255,255,255,1);
-	stroke: rgba(112,112,112,1);
-	stroke-width: 1px;
-	stroke-linejoin: miter;
-	stroke-linecap: butt;
-	stroke-miterlimit: 4;
-	shape-rendering: auto;
-}
-.dropdown_country_l1_fo {
-	position: absolute;
-	overflow: visible;
-	width: 51px;
-	height: 24px;
-	left: 234px;
-	top: 741px;
-}
-#US_fp {
-	left: 243px;
-	top: 744px;
-	position: absolute;
-	overflow: visible;
-	width: 13px;
-	white-space: nowrap;
-	text-align: center;
-	font-family: Rift;
-	font-style: normal;
-	font-weight: normal;
-	font-size: 15px;
-	color: rgba(0,0,0,1);
 }
 #Icon_ionic-md-arrow-dropdown_fq {
 	fill: rgba(0,0,0,1);
@@ -2620,37 +2650,6 @@
 	left: 261px;
 	top: 749px;
 	transform: matrix(1,0,0,1,0,0);
-}
-#dropdown_country_l2_fr {
-	fill: rgba(255,255,255,1);
-	stroke: rgba(112,112,112,1);
-	stroke-width: 1px;
-	stroke-linejoin: miter;
-	stroke-linecap: butt;
-	stroke-miterlimit: 4;
-	shape-rendering: auto;
-}
-.dropdown_country_l2_fr {
-	position: absolute;
-	overflow: visible;
-	width: 51px;
-	height: 24px;
-	left: 234px;
-	top: 784px;
-}
-#US_fs {
-	left: 243px;
-	top: 787px;
-	position: absolute;
-	overflow: visible;
-	width: 13px;
-	white-space: nowrap;
-	text-align: center;
-	font-family: Rift;
-	font-style: normal;
-	font-weight: normal;
-	font-size: 15px;
-	color: rgba(0,0,0,1);
 }
 #Icon_ionic-md-arrow-dropdown_ft {
 	fill: rgba(0,0,0,1);
@@ -2740,6 +2739,7 @@
 	stroke-linecap: butt;
 	stroke-miterlimit: 4;
 	shape-rendering: auto;
+	text-align: center;
 }
 .form_score_l1_lq {
 	position: absolute;
@@ -2757,6 +2757,7 @@
 	stroke-linecap: butt;
 	stroke-miterlimit: 4;
 	shape-rendering: auto;
+	text-align: center;
 }
 .form_score_l2_lq {
 	position: absolute;
@@ -2927,6 +2928,7 @@
 	stroke-linecap: butt;
 	stroke-miterlimit: 4;
 	shape-rendering: auto;
+	text-align: center;
 }
 .form_score_l3_lq {
 	position: absolute;
@@ -2944,6 +2946,7 @@
 	stroke-linecap: butt;
 	stroke-miterlimit: 4;
 	shape-rendering: auto;
+	text-align: center;
 }
 .form_score_l4_lq {
 	position: absolute;
@@ -3046,6 +3049,14 @@
 	height: 30px;
 	left: 1520px;
 	top: 643px;
+	overflow: visible;
+}
+#button_start_top8 {
+	position: absolute;
+	width: 100px;
+	height: 30px;
+	left: 934px;
+	top: 378px;
 	overflow: visible;
 }
 #METADATA_gp {
@@ -3743,7 +3754,7 @@
 	font-style: normal;
 	font-weight: normal;
 	font-size: 9px;
-		color: white;
+	color: white;
 	fill: rgba(255,255,255,1);
 }
 #button_text_3 {

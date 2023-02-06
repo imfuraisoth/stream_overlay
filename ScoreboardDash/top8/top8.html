@@ -7,7 +7,7 @@
 	<link href="style.css" rel="stylesheet" type="text/css" />
 	<link rel="icon" href="../images/V.png">
 	<script src="https://kit.fontawesome.com/2c93766a80.js" crossorigin="anonymous"></script>
-	<script class="u-script" type="text/javascript" src="scoreboarddash.js" defer=""></script>
+	<script class="u-script" type="text/javascript" src="top8.js" defer=""></script>
 </head>
 <body>
 	<div class="container">
@@ -275,56 +275,62 @@
 					<text x="18" y="19" id="button_text_4">Next Round</text>
 				</button>
 			</div>
+			<div id="button_start_top8">
+				<button class="rectangle_button" id="rectangle_button_18" onclick='startTop8();'>
+					<text x="18" y="19" id="button_text_4">Start Top 8</text>
+				</button>
+			</div>
 			<div id="button_reverse_names">
 				<button class="rectangle_button" id="rectangle_button_8" onclick='reversePlayerNames();'>
 					<text x="0" y="19" id="button_text_4"><-Reverse Names-></text>
 				</button>
 			</div>
 			<div id="button_next_round_w1">
-				<button class="rectangle_button" id="rectangle_button_9" onclick='resetAll();'>
+				<button class="rectangle_button" id="rectangle_button_9" onclick='setAsNextRound(1, "w1", "w2");'>
 					<text x="25" y="19" id="button_text_4">Set As Next Round</text>
 				</button>
 			</div>
 			<div id="button_next_round_w2">
-				<button class="rectangle_button" id="rectangle_button_10" onclick='resetAll();'>
+				<button class="rectangle_button" id="rectangle_button_10" onclick='setAsNextRound(2, "w3", "w4");'>
 					<text x="25" y="19" id="button_text_4">Set As Next Round</text>
 				</button>
 			</div>
 			<div id="button_next_round_l1">
-				<button class="rectangle_button" id="rectangle_button_11" onclick='resetAll();'>
+				<button class="rectangle_button" id="rectangle_button_11" onclick='setAsNextRound(3, "l1", "l2");'>
 					<text x="25" y="19" id="button_text_4">Set As Next Round</text>
 				</button>
 			</div>
 			<div id="button_next_round_l2">
-				<button class="rectangle_button" id="rectangle_button_12" onclick='resetAll();'>
+				<button class="rectangle_button" id="rectangle_button_12" onclick='setAsNextRound(4, "l3", "l4");'>
 					<text x="25" y="19" id="button_text_4">Set As Next Round</text>
 				</button>
 			</div>button_next_round_wf
 			<div id="button_next_round_wf">
-				<button class="rectangle_button" id="rectangle_button_13" onclick='resetAll();'>
+				<button class="rectangle_button" id="rectangle_button_13" onclick='setAsNextRound(7, "w1_wf", "w2_wf");'>
 					<text x="25" y="19" id="button_text_4">Set As Next Round</text>
 				</button>
 			</div>
 			<div id="button_next_round_l1_lq">
-				<button class="rectangle_button" id="rectangle_button_14" onclick='resetAll();'>
+				<button class="rectangle_button" id="rectangle_button_14" onclick='setAsNextRound(5, "l1_lq", "l2_lq");'>
 					<text x="25" y="19" id="button_text_4">Set As Next Round</text>
 				</button>
 			</div>
 			<div id="button_next_round_l2_lq">
-				<button class="rectangle_button" id="rectangle_button_15" onclick='resetAll();'>
+				<button class="rectangle_button" id="rectangle_button_15" onclick='setAsNextRound(6, "l3_lq", "l4_lq");'>
 					<text x="25" y="19" id="button_text_4">Set As Next Round</text>
 				</button>
 			</div>
 			<div id="button_next_round_ls">
-				<button class="rectangle_button" id="rectangle_button_16" onclick='resetAll();'>
+				<button class="rectangle_button" id="rectangle_button_16" onclick='setAsNextRound(8, "l1_ls", "l2_ls");'>
 					<text x="25" y="19" id="button_text_4">Set As Next Round</text>
 				</button>
 			</div>
 			<div id="button_next_round_lf">
-				<button class="rectangle_button" id="rectangle_button_17" onclick='resetAll();'>
+				<button class="rectangle_button" id="rectangle_button_17" onclick='setAsNextRound(9, "l1_lf", "l2_lf");'>
 					<text x="25" y="19" id="button_text_4">Set As Next Round</text>
 				</button>
 			</div>
+
 			<!-- Forms -->
 			<div id="round">
 				<select id = "dropdown_round" class="dropdown_round" onchange = "updateRound();">
@@ -342,7 +348,7 @@
 				<input class="form_name_1p" type="text" id="form_name_1p" value="" placeholder="P1 Name" onchange="updatePlayer1();">
 				<input class="form_team_1p" type="text" id="form_team_1p" value="" placeholder="P1 Team" onchange="updateTeam1();">
 				<input class="form_score_1p" type="text" id="form_score_1p" value="0" onchange="updateScore1();">
-				<select id = "dropdown_country_current_1" class="dropdown_country_current_1" onchange = "countryDropdown1()">
+				<select id = "dropdown_country_current_1" class="dropdown_country_current_1" onchange = "countryDropdown('dropdown_country_current_1');">
 					<option>US</option>
 					<option>CA</option>
 					<option>JP</option>
@@ -360,7 +366,7 @@
 				<input class="form_name_2p" type="text" id="form_name_2p" value="" placeholder="P2 Name" onchange="updatePlayer2();">
 				<input class="form_team_2p" type="text" id="form_team_2p" value="" placeholder="P2 Team" onchange="updateTeam2();">
 				<input class="form_score_2p" type="text" id="form_score_2p" value="0" onchange="updateScore2();">
-				<select id = "dropdown_country_current_2" class="dropdown_country_current_2" onchange = "countryDropdown2()">
+				<select id = "dropdown_country_current_2" class="dropdown_country_current_2" onchange = "countryDropdown('dropdown_country_current_2');">
 					<option>US</option>
 					<option>CA</option>
 					<option>JP</option>
@@ -375,7 +381,7 @@
 				</select>
 			</div>
 			<div id="winner1">
-				<select id = "dropdown_country_w1" class="dropdown_country_w1" onchange = "countryDropdown2()">
+				<select id = "dropdown_country_w1" class="dropdown_country_w1" onchange = "countryDropdown('dropdown_country_w1', 'r1', 'p1');">
 					<option>US</option>
 					<option>CA</option>
 					<option>JP</option>
@@ -392,7 +398,7 @@
 				<input class=form_team_w1 id="form_team_w1" style="float: left;" placeholder="Team" value="" onchange="updateResults();">
 				<input class="form_score_w1" type="text" id="form_score_w1" style="float: left;" value="" onchange="updateResults();">
 
-				<select id = "dropdown_country_w2" class="dropdown_country_w2" onchange = "countryDropdown2()">
+				<select id = "dropdown_country_w2" class="dropdown_country_w2" onchange = "countryDropdown('dropdown_country_w2', 'r1', 'p2');">
 					<option>US</option>
 					<option>CA</option>
 					<option>JP</option>
@@ -410,7 +416,7 @@
 				<input class="form_score_w2" type="text" id="form_score_w2" style="float: left;" value="" onchange="updateResults();">
 			</div>
 			<div id="winner2">
-				<select id = "dropdown_country_w3" class="dropdown_country_w3" onchange = "countryDropdown2()">
+				<select id = "dropdown_country_w3" class="dropdown_country_w3" onchange = "countryDropdown('dropdown_country_w3', 'r2', 'p1');">
 					<option>US</option>
 					<option>CA</option>
 					<option>JP</option>
@@ -427,7 +433,7 @@
 				<input class=form_team_w3 id="form_team_w3" style="float: left;" placeholder="Team" value="" onchange="updateResults();">
 				<input class="form_score_w3" type="text" id="form_score_w3" style="float: left;" value="" onchange="updateResults();">
 
-				<select id = "dropdown_country_w4" class="dropdown_country_w4" onchange = "countryDropdown2()">
+				<select id = "dropdown_country_w4" class="dropdown_country_w4" onchange = "countryDropdown('dropdown_country_w4', 'r2', 'p2');">
 					<option>US</option>
 					<option>CA</option>
 					<option>JP</option>
@@ -445,7 +451,7 @@
 				<input class="form_score_w4" type="text" id="form_score_w4" style="float: left;" value="" onchange="updateResults();">
 			</div>
 			<div id="loser1">
-				<select id = "dropdown_country_l1" class="dropdown_country_l1" onchange = "countryDropdown2()">
+				<select id = "dropdown_country_l1" class="dropdown_country_l1" onchange = "countryDropdown('dropdown_country_l1', 'r3', 'p1');">
 					<option>US</option>
 					<option>CA</option>
 					<option>JP</option>
@@ -462,7 +468,7 @@
 				<input class=form_team_l1 id="form_team_l1" style="float: left;" placeholder="Team" value="" onchange="updateResults();">
 				<input class="form_score_l1" type="text" id="form_score_l1" style="float: left;" value="" onchange="updateResults();">
 
-				<select id = "dropdown_country_l2" class="dropdown_country_l2" onchange = "countryDropdown2()">
+				<select id = "dropdown_country_l2" class="dropdown_country_l2" onchange = "countryDropdown('dropdown_country_l2', 'r3', 'p2');">
 					<option>US</option>
 					<option>CA</option>
 					<option>JP</option>
@@ -480,7 +486,7 @@
 				<input class="form_score_l2" type="text" id="form_score_l2" style="float: left;" value="" onchange="updateResults();">
 			</div>
 			<div id="loser2">
-				<select id = "dropdown_country_l3" class="dropdown_country_l3" onchange = "countryDropdown2()">
+				<select id = "dropdown_country_l3" class="dropdown_country_l3" onchange = "countryDropdown('dropdown_country_l3', 'r4', 'p1');">
 					<option>US</option>
 					<option>CA</option>
 					<option>JP</option>
@@ -497,7 +503,7 @@
 				<input class=form_team_l3 id="form_team_l3" style="float: left;" placeholder="Team" value="" onchange="updateResults();">
 				<input class="form_score_l3" type="text" id="form_score_l3" style="float: left;" value="" onchange="updateResults();">
 
-				<select id = "dropdown_country_l4" class="dropdown_country_l4" onchange = "countryDropdown2()">
+				<select id = "dropdown_country_l4" class="dropdown_country_l4" onchange = "countryDropdown('dropdown_country_l4', 'r4', 'p2');">
 					<option>US</option>
 					<option>CA</option>
 					<option>JP</option>
@@ -527,10 +533,12 @@
 				<input class="form_name_w1_gf" id="form_name_w1_gf" style="float: left;" placeholder="Name" value="" onchange="updateResults();">
 				<input class=form_team_w1_gf id="form_team_w1_gf" style="float: left;" placeholder="Team" value="" onchange="updateResults();">
 				<input class="form_score_w1_gf" type="text" id="form_score_w1_gf" style="float: left;" value="" onchange="updateResults();">
+				<input class="form_score_w1_gf2" type="text" id="form_score_w1_gf2" style="float: left;" value="" onchange="updateResults();">
 
 				<input class="form_name_w2_gf" id="form_name_w2_gf" style="float: left;" placeholder="Name" value="" onchange="updateResults();">
 				<input class=form_team_w2_gf id="form_team_w2_gf" style="float: left;" placeholder="Team" value="" onchange="updateResults();">
 				<input class="form_score_w2_gf" type="text" id="form_score_w2_gf" style="float: left;" value="" onchange="updateResults();">
+				<input class="form_score_w2_gf2" type="text" id="form_score_w2_gf2" style="float: left;" value="" onchange="updateResults();">
 			</div>
 			<div id="losers_quarters_1">
 				<input class="form_name_l1_lq" id="form_name_l1_lq" style="float: left;" placeholder="Name" value="" onchange="updateResults();">
@@ -577,12 +585,38 @@
 				<input class="form_results_name_2p" type="text" id="form_results_name_2p" style="float: left; "value="" onchange="updateResults();">
 			</div>
 			<div id="next1p">
+				<select id = "dropdown_country_next1" class="dropdown_country_next1" onchange = "countryDropdown('dropdown_country_next1');">
+					<option>US</option>
+					<option>CA</option>
+					<option>JP</option>
+					<option>KR</option>
+					<option>MX</option>
+					<option>GB</option>
+					<option>ES</option>
+					<option>FR</option>
+					<option>FI</option>
+					<option>SE</option>
+					<option>PR</option>
+				</select>
 				<input class="form_next_round_team_1p" type="text" id="form_next_round_team_1p" value="" placeholder="Next P1 Team" onchange="updateNextTeam1();">
 				<input class="form_next_round_name_1p" type="text" id="form_next_round_name_1p" value="" placeholder="Next P1 Name" onchange="updateNextPlayer1();">
 			</div>
 			<div id="next2p">
-				<input class="form_next_round_team_2p" type="text" id="form_next_round_team_2p" value="" placeholder="Next P1 Team"onchange="updateNextTeam2();">
-				<input class="form_next_round_name_2p" type="text" id="form_next_round_name_2p" value="" placeholder="Next P1 Name" onchange="updateNextPlayer2();">
+				<select id = "dropdown_country_next2" class="dropdown_country_next2" onchange = "countryDropdown('dropdown_country_next2');">
+					<option>US</option>
+					<option>CA</option>
+					<option>JP</option>
+					<option>KR</option>
+					<option>MX</option>
+					<option>GB</option>
+					<option>ES</option>
+					<option>FR</option>
+					<option>FI</option>
+					<option>SE</option>
+					<option>PR</option>
+				</select>
+				<input class="form_next_round_team_2p" type="text" id="form_next_round_team_2p" value="" placeholder="Next P2 Team"onchange="updateNextTeam2();">
+				<input class="form_next_round_name_2p" type="text" id="form_next_round_name_2p" value="" placeholder="Next P2 Name" onchange="updateNextPlayer2();">
 			</div>
 		</div>
 	</div>

@@ -16,7 +16,7 @@ last_score_update_timestamp = 0
 
 
 def auto_update_scores():
-    print("Auto score updater enabled")
+    print("Auto score updater for ST enabled")
     checker = threading.Thread(target=check_win_conditions, args=(), daemon=True)
     checker.start()
 

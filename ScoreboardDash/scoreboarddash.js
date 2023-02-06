@@ -16,7 +16,7 @@ fetch(url + 'getdata')
   console.log('error: ' + err);
 });
 function populateData(data) {
-console.log(data);
+    console.log(data);
 	updateElement("form_name_1p", data.p1Name);
 	updateElement("form_name_2p", data.p2Name);
 	updateElement("form_team_1p", data.p1Team);
@@ -111,10 +111,14 @@ function resetNamesAndScore() {
 	document.getElementById("form_team_2p").value = "";
 	document.getElementById("form_score_1p").value = "0";
 	document.getElementById("form_score_2p").value = "0";
+	document.getElementById("dropdown_country_current_1").value = "US";
+    document.getElementById("dropdown_country_current_2").value = "US";
 	jsonData.p1Name = "";
 	jsonData.p2Name = "";
 	jsonData.p1Team = "";
 	jsonData.p2Team = "";
+	jsonData.p1Country = "";
+	jsonData.p2Country = "";
 	jsonData.p1Score = "0";
 	jsonData.p2Score = "0";
 	sendJSON();
@@ -199,8 +203,6 @@ function resetAll() {
 	document.getElementById("form_team_2p").value = "";
 	document.getElementById("form_score_1p").value = "0";
 	document.getElementById("form_score_2p").value = "0";
-	document.getElementById("dropdown_country_1p").value = "";
-	document.getElementById("dropdown_country_2p").value = "";
 	document.getElementById("form_next_round_team_1p").value = "";
 	document.getElementById("form_next_round_name_1p").value = "";
 	document.getElementById("form_next_round_team_2p").value = "";
@@ -210,6 +212,7 @@ function resetAll() {
 	document.getElementById("form_results_name_2p").value = "";
 	document.getElementById("form_results_score_2p").value = "";
 	document.getElementById("form_ft").value = "";
+	document.getElementById("dropdown_round").value = "Casuals";
 	
 	jsonData.p1Name = "";
 	jsonData.p2Name = "";
@@ -228,10 +231,10 @@ function resetAll() {
 	jsonData.resultplayer2 = "";
 	jsonData.resultscore1 = "";
 	jsonData.resultscore2 = "";
-	jsonData.maxScore = "";	
+	jsonData.maxScore = "";
+	jsonData.round = "Casuals";
 	sendJSON();
 }
-
 
 function countryDropdown1() {
 	var c1 = document.getElementById("dropdown_country_1p");
@@ -241,7 +244,7 @@ function countryDropdown1() {
 
 function countryDropdown2() {
 	var c2 = document.getElementById("dropdown_country_2p");
-	jsonData.p2Country = c2.options[country2.selectedIndex].text;
+	jsonData.p2Country = c2.options[c2.selectedIndex].text;
 	sendJSON();
 }
 

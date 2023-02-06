@@ -3,7 +3,7 @@ window.onload = init;
 function init(){
 	
 	var xhr = new XMLHttpRequest(); //AJAX data request sent to server(in this case server being local json file)
-	var streamJSON = '../sc/streamcontrol.json'; //specifies path for streamcontrol output json
+	var streamJSON = '../../data/scoreboard.json'; //specifies path for streamcontrol output json
 	var scObj; //variable to hold data extracted from parsed json
 	var startup = true; //flag for if looping functions are on their first pass or not
 	var animated = false; //flag for if scoreboard animation has run or not
