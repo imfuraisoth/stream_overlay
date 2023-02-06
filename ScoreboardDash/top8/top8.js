@@ -93,17 +93,17 @@ function setAsNextRound(round, suffix1, suffix2) {
     // Create a state change callback
     xhr.onreadystatechange = function () {
         if (xhr.readyState === 4 && xhr.status === 200) {
-            // console.log("Server Okay");
+            document.getElementById("form_next_round_team_1p").value = document.getElementById("form_team_" + suffix1).value;
+            document.getElementById("form_next_round_name_1p").value = document.getElementById("form_name_" + suffix1).value;
+            document.getElementById("form_next_round_team_2p").value = document.getElementById("form_team_" + suffix2).value;
+            document.getElementById("form_next_round_name_2p").value = document.getElementById("form_name_" + suffix2).value;
+            highlightNextRoundForms(round);
+        } else {
+            alert("Setting next round failed!");
         }
     };
     // Sending data with the request
     xhr.send('round=' + round);
-
-    document.getElementById("form_next_round_team_1p").value = document.getElementById("form_team_" + suffix1).value;
-    document.getElementById("form_next_round_name_1p").value = document.getElementById("form_name_" + suffix1).value;
-    document.getElementById("form_next_round_team_2p").value = document.getElementById("form_team_" + suffix2).value;
-    document.getElementById("form_next_round_name_2p").value = document.getElementById("form_name_" + suffix2).value;
-    highlightNextRoundForms(round);
 }
 
 function populateData(data) {
@@ -431,7 +431,7 @@ function nextRound() {
     var p2Score = Number(document.getElementById("form_score_2p").value);
     if (p1Score == p2Score) {
         //Tie, cannot move to next round
-        alert("The scores are tied! Cannot move to next round.")
+        alert("The scores are tied! Cannot move to next round.");
         return;
     }
 

@@ -433,9 +433,14 @@ def update_loser_player_data(global_player_round_data, player_data, current_roun
 
 
 def set_next_round_override(override):
+    global rounds
+    if override not in rounds:
+        print("Trying to set a round that's already finished: " + str(override) + " Ignoring")
+        return "500"
     global next_round_override
     print("Next round override set to: " + str(override))
     next_round_override = override
+    return "200"
 
 
 def get_next_round(current_round):

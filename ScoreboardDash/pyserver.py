@@ -56,8 +56,7 @@ def reset_top8_data():
 
 @api.route('/setNextRound', methods=['POST'])
 def set_next_round():
-    top8.set_next_round_override(int(request.form['round']))
-    return "200"
+    return top8.set_next_round_override(int(request.form['round']))
 
 
 @api.route('/getNextRoundData', methods=['GET'])
