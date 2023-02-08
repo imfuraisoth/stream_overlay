@@ -53,11 +53,11 @@
 				</rect>
 			</svg>
 			<svg class="grid_next_round">
-				<rect id="grid_next_round" rx="0" ry="0" x="0" y="0" width="245" height="304">
+				<rect id="grid_next_round" rx="0" ry="0" x="0" y="0" width="260" height="304">
 				</rect>
 			</svg>
 			<svg class="grid_results">
-				<rect id="grid_results" rx="0" ry="0" x="0" y="0" width="245" height="304">
+				<rect id="grid_results" rx="0" ry="0" x="0" y="0" width="230" height="304">
 				</rect>
 			</svg>
 			<svg class="grid_replays">
@@ -214,6 +214,7 @@
 			<div id="round">
 				<select id = "dropdown_round" class="dropdown_round" onchange = "updateRound();">
 					<option>Casuals</option>
+					<option>Pools</option>
 					<option>Winners Round 1</option>
 					<option>Winners Round 2</option>
 					<option>Winners Round 3</option>
@@ -229,6 +230,7 @@
 					<option>Losers Quarters</option>
 					<option>Losers Semis</option>
 					<option>Losers Finals</option>
+					<option>Exhibitions</option>
 					<option>FT3</option>
 					<option>FT5</option>
 					<option>FT10</option>
@@ -277,14 +279,40 @@
 			</div>
 			<div id="result2p">
 				<input class="form_results_score_2p" type="text" id="form_results_score_2p" style="float: left;" value="" onchange="updateResults();">
-				<input class="form_results_name_2p" type="text" id="form_results_name_2p" style="float: left; "value="" onchange="updateResults();">
+				<input class="form_results_name_2p" type="text" id="form_results_name_2p" style="float: left; " value="" onchange="updateResults();">
 			</div>
 			<div id="next1p">
+				<select id = "dropdown_country_next1" class="dropdown_country_next1" onchange = "updateNextCountry1();">
+					<option>US</option>
+					<option>CA</option>
+					<option>JP</option>
+					<option>KR</option>
+					<option>MX</option>
+					<option>GB</option>
+					<option>ES</option>
+					<option>FR</option>
+					<option>FI</option>
+					<option>SE</option>
+					<option>PR</option>
+				</select>
 				<input class="form_next_round_team_1p" type="text" id="form_next_round_team_1p" value="" placeholder="Next P1 Team" onchange="updateNextTeam1();">
 				<input class="form_next_round_name_1p" type="text" id="form_next_round_name_1p" value="" placeholder="Next P1 Name" onchange="updateNextPlayer1();">
 			</div>
 			<div id="next2p">
-				<input class="form_next_round_team_2p" type="text" id="form_next_round_team_2p" value="" placeholder="Next P1 Team"onchange="updateNextTeam2();">
+				<select id = "dropdown_country_next2" class="dropdown_country_next2" onchange = "updateNextCountry2();">
+					<option>US</option>
+					<option>CA</option>
+					<option>JP</option>
+					<option>KR</option>
+					<option>MX</option>
+					<option>GB</option>
+					<option>ES</option>
+					<option>FR</option>
+					<option>FI</option>
+					<option>SE</option>
+					<option>PR</option>
+				</select>
+				<input class="form_next_round_team_2p" type="text" id="form_next_round_team_2p" value="" placeholder="Next P1 Team" onchange="updateNextTeam2();">
 				<input class="form_next_round_name_2p" type="text" id="form_next_round_name_2p" value="" placeholder="Next P1 Name" onchange="updateNextPlayer2();">
 			</div>
 			<div id="ftx">

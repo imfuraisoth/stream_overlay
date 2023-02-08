@@ -26,6 +26,8 @@ function populateData(data) {
 	updateElement("form_score_2p", data.p2Score);
 	updateElement("dropdown_country_1p", data.p1Country);
 	updateElement("dropdown_country_2p", data.p2Country);
+    updateElement("dropdown_country_next1", data.nextcountry1);
+    updateElement("dropdown_country_next2", data.nextcountry2);
 	updateElement("form_next_round_team_1p", data.nextteam1);
 	updateElement("form_next_round_name_1p", data.nextplayer1);
 	updateElement("form_next_round_team_2p", data.nextteam2);
@@ -101,6 +103,16 @@ function updateRound() {
 
 function updateMaxScore() {
 	jsonData.maxScore = document.getElementById("form_ft").value;
+	sendJSON();
+}
+
+function updateNextCountry1() {
+	jsonData.nextcountry1 = document.getElementById("dropdown_country_next1").value;
+	sendJSON();
+}
+
+function updateNextCountry2() {
+	jsonData.nextcountry2 = document.getElementById("dropdown_country_next2").value;
 	sendJSON();
 }
 
@@ -211,6 +223,8 @@ function resetAll() {
 	document.getElementById("form_next_round_name_1p").value = "";
 	document.getElementById("form_next_round_team_2p").value = "";
 	document.getElementById("form_next_round_name_2p").value = "";
+	document.getElementById("dropdown_country_next1").value = "US";
+	document.getElementById("dropdown_country_next2").value = "US";
 	document.getElementById("form_results_name_1p").value = "";
 	document.getElementById("form_results_score_1p").value = "";
 	document.getElementById("form_results_name_2p").value = "";
@@ -225,12 +239,14 @@ function resetAll() {
 	jsonData.p1Score = "0";
 	jsonData.p2Score = "0";
 	jsonData.round = "";
-	jsonData.p1Country = "";
-	jsonData.p2Country = "";
+	jsonData.p1Country = "US";
+	jsonData.p2Country = "US";
 	jsonData.nextplayer1 = "";
 	jsonData.nextplayer2 = "";
 	jsonData.nextteam1 = "";
 	jsonData.nextteam2 = "";
+    jsonData.nextcountry1 = "US";
+    jsonData.nextcountry2 = "US";
 	jsonData.resultplayer1 = "";
 	jsonData.resultplayer2 = "";
 	jsonData.resultscore1 = "";
@@ -271,6 +287,10 @@ function nextRound() {
 	var player1 = document.getElementById("form_next_round_name_1p").value;
 	var team2 = document.getElementById("form_next_round_team_2p").value;
 	var player2 = document.getElementById("form_next_round_name_2p").value;
+    var c1 = document.getElementById("dropdown_country_next1").value;
+    var c2 = document.getElementById("dropdown_country_next2").value;
+    document.getElementById("dropdown_country_1p").value = c1;
+    document.getElementById("dropdown_country_2p").value = c2;
 	document.getElementById("form_team_1p").value = team1;
 	document.getElementById("form_name_1p").value = player1;
 	document.getElementById("form_team_2p").value = team2;
@@ -279,8 +299,12 @@ function nextRound() {
 	jsonData.p2Team = team2;
 	jsonData.p1Name = player1;
 	jsonData.p2Name = player2;
+	jsonData.p1Country = c1;
+	jsonData.p2Country = c2;
 	document.getElementById("form_score_1p").value = "0";
 	document.getElementById("form_score_2p").value = "0";
+    document.getElementById("dropdown_country_next1").value = "US";
+    document.getElementById("dropdown_country_next2").value = "US";
 	jsonData.p1Score = "0";
 	jsonData.p2Score = "0";
 	document.getElementById("form_next_round_team_1p").value = "";
@@ -291,6 +315,8 @@ function nextRound() {
 	jsonData.nextplayer1 = "";
 	jsonData.nextteam2 = "";
 	jsonData.nextplayer2 = "";
+    jsonData.nextcountry1 = "US";
+    jsonData.nextcountry2 = "US";
 	sendJSON();
 }
 
