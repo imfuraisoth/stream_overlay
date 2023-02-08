@@ -222,6 +222,7 @@ def read_file(file_name):
 
 
 current_next_data = read_file(current_next_data_file)
+current_next_data["started"] = False
 global_player_data = read_file(player_data_file_name)
 
 
@@ -254,6 +255,7 @@ def initialize():
     current_next_data["currentRoundName"] = roundNamesMap.get(current_round)
     started = True
     current_next_data["started"] = started
+    update_scoreboard_json(current_next_data, "", "", "", "", current_next_data["currentRoundName"])
     with open(current_next_data_file, 'w', encoding="utf-8") as json_file:
         json_file.write(json.dumps(current_next_data, ensure_ascii=False))
     print("Top 8 started!")
@@ -389,6 +391,8 @@ def add_placeholder_names(next_round):
 def update_final_round(global_player_round_data, current_round_data, p1_score, p2_score, current_round):
     global current_next_data
     reverse_names = current_round_data["reverseNames"]
+    p1_name = current_round_data["player1"]["name"]
+    p2_name = current_round_data["player2"]["name"]
     if current_round == 10:
         if reverse_names:
             global_player_round_data["r10"]["p1"]["score"] = p2_score
@@ -405,9 +409,9 @@ def update_final_round(global_player_round_data, current_round_data, p1_score, p
             current_round_data["player1"]["score"] = "0"
             current_round_data["player2"]["score"] = "0"
             if reverse_names:
-                current_round_data["player2"]["name"] = current_round_data["player2"]["name"] + " [L]"
+                current_round_data["player2"]["name"] = p2_name + " [L]"
             else:
-                current_round_data["player1"]["name"] = current_round_data["player1"]["name"] + " [L]"
+                current_round_data["player1"]["name"] = p1_name + " [L]"
         print("Completed Round 10")
     else:
         if reverse_names:
@@ -421,6 +425,10 @@ def update_final_round(global_player_round_data, current_round_data, p1_score, p
         print("Completed Round 11")
 
     # Save off top 8 player data to file
+    global roundNamesMap
+    current_round_name = roundNamesMap.get(current_round)
+    current_next_data["currentRoundName"] = current_round_name
+    update_scoreboard_json(current_next_data, p1_name, p2_name, str(p1_score), str(p2_score), current_round_name)
     with open(player_data_file_name, 'w', encoding="utf-8") as json_file:
         data_to_write = json.dumps(global_player_round_data, ensure_ascii=False)
         json_file.write(data_to_write)
@@ -434,15 +442,21 @@ def update_scoreboard_json(data, result_name_1, result_name_2, result1, result2,
     scoreboard_data["p1Name"] = data["player1"]["name"]
     scoreboard_data["p1Team"] = data["player1"]["team"]
     scoreboard_data["p1Country"] = data["player1"]["country"]
-    scoreboard_data["p1Score"] = data["player1"]["score"]
+    scoreboard_data["p1Score"] = "0"
     scoreboard_data["p2Name"] = data["player2"]["name"]
     scoreboard_data["p2Team"] = data["player2"]["team"]
     scoreboard_data["p2Country"] = data["player2"]["country"]
-    scoreboard_data["p2Score"] = data["player2"]["score"]
+    scoreboard_data["p2Score"] = "0"
     scoreboard_data["resultplayer1"] = result_name_1
     scoreboard_data["resultscore1"] = result1
     scoreboard_data["resultplayer2"] = result_name_2
     scoreboard_data["resultscore2"] = result2
+    scoreboard_data["nextteam1"] = data["nextPlayer1"]["team"]
+    scoreboard_data["nextteam2"] = data["nextPlayer1"]["team"]
+    scoreboard_data["nextplayer1"] = data["nextPlayer1"]["name"]
+    scoreboard_data["nextplayer2"] = data["nextPlayer2"]["name"]
+    scoreboard_data["nextcountry1"] = data["nextPlayer1"]["country"]
+    scoreboard_data["nextcountry2"] = data["nextPlayer2"]["country"]
     scoreboard_data["round"] = current_round_name
     with open(scoreboard_json_file, 'w', encoding="utf-8") as json_file:
         json_file.write(json.dumps(scoreboard_data, ensure_ascii=False))
