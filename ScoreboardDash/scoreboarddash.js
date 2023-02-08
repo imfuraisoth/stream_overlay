@@ -129,10 +129,14 @@ function reversePlayerNames() {
 	var p2 = document.getElementById("form_name_2p").value;
 	var t1 = document.getElementById("form_team_1p").value;
 	var t2 = document.getElementById("form_team_2p").value;
+	var c1 = document.getElementById("dropdown_country_current_1").value;
+	var c2 = document.getElementById("dropdown_country_current_2").value;
 	document.getElementById("form_name_1p").value = p2;
 	document.getElementById("form_name_2p").value = p1;
 	document.getElementById("form_team_1p").value = t2;
 	document.getElementById("form_team_2p").value = t1;
+	document.getElementById("dropdown_country_current_1").value = c2;
+	document.getElementById("dropdown_country_current_2").value = c1;
 	jsonData.p1Name = p2;
 	jsonData.p2Name = p1;
 	jsonData.p1Team = t2;

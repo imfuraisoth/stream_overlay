@@ -260,13 +260,13 @@
 				</button>
 			</div>
 			<div id="button_start_replay">
-				<button class="rectangle_button" id="rectangle_button_5" onclick='triggerReplay();'>
+				<button class="rectangle_button" id="rectangle_button_5" onclick='callServer("replaystart");'>
 					<text x="14" y="19" id="button_text_4">Start Replay ⏵</text>
 				</button>
 
 			</div>
 			<div id="button_stop_replay">
-				<button class="rectangle_button" id="rectangle_button_6" onclick='stopReplay();'>
+				<button class="rectangle_button" id="rectangle_button_6" onclick='callServer("replaystop");'>
 					<text x="14" y="19" id="button_text_4">Stop Replay  ⏹</text>
 				</button>
 			</div>
@@ -394,9 +394,9 @@
 					<option>SE</option>
 					<option>PR</option>
 				</select>
-				<input class="form_name_w1" id="form_name_w1" style="float: left;" placeholder="Name" value="" onchange="updateResults();">
-				<input class=form_team_w1 id="form_team_w1" style="float: left;" placeholder="Team" value="" onchange="updateResults();">
-				<input class="form_score_w1" type="text" id="form_score_w1" style="float: left;" value="" onchange="updateResults();">
+				<input class="form_name_w1" id="form_name_w1" style="float: left;" placeholder="Name" value="" onchange="updateTop8PlayerInfo('r1', 'p1', 'name', value);">
+				<input class="form_team_w1" id="form_team_w1" style="float: left;" placeholder="Team" value="" onchange="updateTop8PlayerInfo('r1', 'p1', 'team', value);">
+				<input class="form_score_w1" type="text" id="form_score_w1" style="float: left;" value="" onchange="updateTop8PlayerInfo('r1', 'p1', 'score', value);">
 
 				<select id = "dropdown_country_w2" class="dropdown_country_w2" onchange = "countryDropdown('dropdown_country_w2', 'r1', 'p2');">
 					<option>US</option>
@@ -411,9 +411,9 @@
 					<option>SE</option>
 					<option>PR</option>
 				</select>
-				<input class="form_name_w2" id="form_name_w2" style="float: left;" placeholder="Name" value="" onchange="updateResults();">
-				<input class=form_team_w2 id="form_team_w2" style="float: left;" placeholder="Team" value="" onchange="updateResults();">
-				<input class="form_score_w2" type="text" id="form_score_w2" style="float: left;" value="" onchange="updateResults();">
+				<input class="form_name_w2" id="form_name_w2" style="float: left;" placeholder="Name" value="" onchange="updateTop8PlayerInfo('r1', 'p2', 'name', value);">
+				<input class="form_team_w2" id="form_team_w2" style="float: left;" placeholder="Team" value="" onchange="updateTop8PlayerInfo('r1', 'p2', 'team', value);">
+				<input class="form_score_w2" type="text" id="form_score_w2" style="float: left;" value="" onchange="updateTop8PlayerInfo('r1', 'p2', 'score', value);">
 			</div>
 			<div id="winner2">
 				<select id = "dropdown_country_w3" class="dropdown_country_w3" onchange = "countryDropdown('dropdown_country_w3', 'r2', 'p1');">
@@ -429,9 +429,9 @@
 					<option>SE</option>
 					<option>PR</option>
 				</select>
-				<input class="form_name_w3" id="form_name_w3" style="float: left;" placeholder="Name" value="" onchange="updateResults();">
-				<input class=form_team_w3 id="form_team_w3" style="float: left;" placeholder="Team" value="" onchange="updateResults();">
-				<input class="form_score_w3" type="text" id="form_score_w3" style="float: left;" value="" onchange="updateResults();">
+				<input class="form_name_w3" id="form_name_w3" style="float: left;" placeholder="Name" value="" onchange="updateTop8PlayerInfo('r2', 'p1', 'name', value);">
+				<input class="form_team_w3" id="form_team_w3" style="float: left;" placeholder="Team" value="" onchange="updateTop8PlayerInfo('r2', 'p1', 'team', value);">
+				<input class="form_score_w3" type="text" id="form_score_w3" style="float: left;" value="" onchange="updateTop8PlayerInfo('r2', 'p1', 'score', value);">
 
 				<select id = "dropdown_country_w4" class="dropdown_country_w4" onchange = "countryDropdown('dropdown_country_w4', 'r2', 'p2');">
 					<option>US</option>
@@ -446,9 +446,9 @@
 					<option>SE</option>
 					<option>PR</option>
 				</select>
-				<input class="form_name_w4" id="form_name_w4" style="float: left;" placeholder="Name" value="" onchange="updateResults();">
-				<input class=form_team_w4 id="form_team_w4" style="float: left;" placeholder="Team" value="" onchange="updateResults();">
-				<input class="form_score_w4" type="text" id="form_score_w4" style="float: left;" value="" onchange="updateResults();">
+				<input class="form_name_w4" id="form_name_w4" style="float: left;" placeholder="Name" value="" onchange="updateTop8PlayerInfo('r2', 'p2', 'name', value);">
+				<input class="form_team_w4" id="form_team_w4" style="float: left;" placeholder="Team" value="" onchange="updateTop8PlayerInfo('r2', 'p2', 'team', value);">
+				<input class="form_score_w4" type="text" id="form_score_w4" style="float: left;" value="" onchange="updateTop8PlayerInfo('r2', 'p2', 'score', value);">
 			</div>
 			<div id="loser1">
 				<select id = "dropdown_country_l1" class="dropdown_country_l1" onchange = "countryDropdown('dropdown_country_l1', 'r3', 'p1');">
@@ -464,9 +464,9 @@
 					<option>SE</option>
 					<option>PR</option>
 				</select>
-				<input class="form_name_l1" id="form_name_l1" style="float: left;" placeholder="Name" value="" onchange="updateResults();">
-				<input class=form_team_l1 id="form_team_l1" style="float: left;" placeholder="Team" value="" onchange="updateResults();">
-				<input class="form_score_l1" type="text" id="form_score_l1" style="float: left;" value="" onchange="updateResults();">
+				<input class="form_name_l1" id="form_name_l1" style="float: left;" placeholder="Name" value="" onchange="updateTop8PlayerInfo('r3', 'p1', 'name', value);">
+				<input class="form_team_l1" id="form_team_l1" style="float: left;" placeholder="Team" value="" onchange="updateTop8PlayerInfo('r3', 'p1', 'team', value);">
+				<input class="form_score_l1" type="text" id="form_score_l1" style="float: left;" value="" onchange="updateTop8PlayerInfo('r3', 'p1', 'score', value);">
 
 				<select id = "dropdown_country_l2" class="dropdown_country_l2" onchange = "countryDropdown('dropdown_country_l2', 'r3', 'p2');">
 					<option>US</option>
@@ -481,9 +481,9 @@
 					<option>SE</option>
 					<option>PR</option>
 				</select>
-				<input class="form_name_l2" id="form_name_l2" style="float: left;" placeholder="Name" value="" onchange="updateResults();">
-				<input class=form_team_l2 id="form_team_l2" style="float: left;" placeholder="Team" value="" onchange="updateResults();">
-				<input class="form_score_l2" type="text" id="form_score_l2" style="float: left;" value="" onchange="updateResults();">
+				<input class="form_name_l2" id="form_name_l2" style="float: left;" placeholder="Name" value="" onchange="updateTop8PlayerInfo('r3', 'p2', 'name', value);">
+				<input class="form_team_l2" id="form_team_l2" style="float: left;" placeholder="Team" value="" onchange="updateTop8PlayerInfo('r3', 'p2', 'team', value);">
+				<input class="form_score_l2" type="text" id="form_score_l2" style="float: left;" value="" onchange="updateTop8PlayerInfo('r3', 'p2', 'score', value);">
 			</div>
 			<div id="loser2">
 				<select id = "dropdown_country_l3" class="dropdown_country_l3" onchange = "countryDropdown('dropdown_country_l3', 'r4', 'p1');">
@@ -499,9 +499,9 @@
 					<option>SE</option>
 					<option>PR</option>
 				</select>
-				<input class="form_name_l3" id="form_name_l3" style="float: left;" placeholder="Name" value="" onchange="updateResults();">
-				<input class=form_team_l3 id="form_team_l3" style="float: left;" placeholder="Team" value="" onchange="updateResults();">
-				<input class="form_score_l3" type="text" id="form_score_l3" style="float: left;" value="" onchange="updateResults();">
+				<input class="form_name_l3" id="form_name_l3" style="float: left;" placeholder="Name" value="" onchange="updateTop8PlayerInfo('r4', 'p1', 'name', value);">
+				<input class="form_team_l3" id="form_team_l3" style="float: left;" placeholder="Team" value="" onchange="updateTop8PlayerInfo('r4', 'p1', 'team', value);">
+				<input class="form_score_l3" type="text" id="form_score_l3" style="float: left;" value="" onchange="updateTop8PlayerInfo('r4', 'p1', 'score', value);">
 
 				<select id = "dropdown_country_l4" class="dropdown_country_l4" onchange = "countryDropdown('dropdown_country_l4', 'r4', 'p2');">
 					<option>US</option>
@@ -516,65 +516,65 @@
 					<option>SE</option>
 					<option>PR</option>
 				</select>
-				<input class="form_name_l4" id="form_name_l4" style="float: left;" placeholder="Name" value="" onchange="updateResults();">
-				<input class=form_team_l4 id="form_team_l4" style="float: left;" placeholder="Team" value="" onchange="updateResults();">
-				<input class="form_score_l4" type="text" id="form_score_l4" style="float: left;" value="" onchange="updateResults();">
+				<input class="form_name_l4" id="form_name_l4" style="float: left;" placeholder="Name" value="" onchange="updateTop8PlayerInfo('r4', 'p2', 'name', value);">
+				<input class="form_team_l4" id="form_team_l4" style="float: left;" placeholder="Team" value="" onchange="updateTop8PlayerInfo('r4', 'p2', 'team', value);">
+				<input class="form_score_l4" type="text" id="form_score_l4" style="float: left;" value="" onchange="updateTop8PlayerInfo('r4', 'p2', 'score', value);">
 			</div>
 			<div id="winners_semis">
-				<input class="form_name_w1_wf" id="form_name_w1_wf" style="float: left;" placeholder="Name" value="" onchange="updateResults();">
-				<input class=form_team_w1_wf id="form_team_w1_wf" style="float: left;" placeholder="Team" value="" onchange="updateResults();">
-				<input class="form_score_w1_wf" type="text" id="form_score_w1_wf" style="float: left;" value="" onchange="updateResults();">
+				<input class="form_name_w1_wf" id="form_name_w1_wf" style="float: left;" placeholder="Name" value="" onchange="updateTop8PlayerInfo('r7', 'p1', 'name', value);">
+				<input class="form_team_w1_wf" id="form_team_w1_wf" style="float: left;" placeholder="Team" value="" onchange="updateTop8PlayerInfo('r7', 'p1', 'team', value);">
+				<input class="form_score_w1_wf" type="text" id="form_score_w1_wf" style="float: left;" value="" onchange="updateTop8PlayerInfo('r7', 'p1', 'score', value);">
 
-				<input class="form_name_w2_wf" id="form_name_w2_wf" style="float: left;" placeholder="Name" value="" onchange="updateResults();">
-				<input class=form_team_w2_wf id="form_team_w2_wf" style="float: left;" placeholder="Team" value="" onchange="updateResults();">
-				<input class="form_score_w2_wf" type="text" id="form_score_w2_wf" style="float: left;" value="" onchange="updateResults();">
+				<input class="form_name_w2_wf" id="form_name_w2_wf" style="float: left;" placeholder="Name" value="" onchange="updateTop8PlayerInfo('r7', 'p2', 'name', value);">
+				<input class="form_team_w2_wf" id="form_team_w2_wf" style="float: left;" placeholder="Team" value="" onchange="updateTop8PlayerInfo('r7', 'p2', 'team', value);">
+				<input class="form_score_w2_wf" type="text" id="form_score_w2_wf" style="float: left;" value="" onchange="updateTop8PlayerInfo('r7', 'p2', 'score', value);">
 			</div>
 			<div id="winners_finals">
-				<input class="form_name_w1_gf" id="form_name_w1_gf" style="float: left;" placeholder="Name" value="" onchange="updateResults();">
-				<input class=form_team_w1_gf id="form_team_w1_gf" style="float: left;" placeholder="Team" value="" onchange="updateResults();">
-				<input class="form_score_w1_gf" type="text" id="form_score_w1_gf" style="float: left;" value="" onchange="updateResults();">
-				<input class="form_score_w1_gf2" type="text" id="form_score_w1_gf2" style="float: left;" value="" onchange="updateResults();">
+				<input class="form_name_w1_gf" id="form_name_w1_gf" style="float: left;" placeholder="Name" value="" onchange="updateTop8PlayerInfo('r10', 'p1', 'name', value);">
+				<input class="form_team_w1_gf" id="form_team_w1_gf" style="float: left;" placeholder="Team" value="" onchange="updateTop8PlayerInfo('r10', 'p1', 'team', value);">
+				<input class="form_score_w1_gf" type="text" id="form_score_w1_gf" style="float: left;" value="" onchange="updateTop8PlayerInfo('r10', 'p1', 'score', value);">
+				<input class="form_score_w1_gf2" type="text" id="form_score_w1_gf2" style="float: left;" value="" onchange="updateTop8PlayerInfo('r10', 'p1', 'score2', value);">
 
-				<input class="form_name_w2_gf" id="form_name_w2_gf" style="float: left;" placeholder="Name" value="" onchange="updateResults();">
-				<input class=form_team_w2_gf id="form_team_w2_gf" style="float: left;" placeholder="Team" value="" onchange="updateResults();">
-				<input class="form_score_w2_gf" type="text" id="form_score_w2_gf" style="float: left;" value="" onchange="updateResults();">
-				<input class="form_score_w2_gf2" type="text" id="form_score_w2_gf2" style="float: left;" value="" onchange="updateResults();">
+				<input class="form_name_w2_gf" id="form_name_w2_gf" style="float: left;" placeholder="Name" value="" onchange="updateTop8PlayerInfo('r10', 'p2', 'name', value);">
+				<input class="form_team_w2_gf" id="form_team_w2_gf" style="float: left;" placeholder="Team" value="" onchange="updateTop8PlayerInfo('r10', 'p2', 'team', value);">
+				<input class="form_score_w2_gf" type="text" id="form_score_w2_gf" style="float: left;" value="" onchange="updateTop8PlayerInfo('r10', 'p2', 'score', value);">
+				<input class="form_score_w2_gf2" type="text" id="form_score_w2_gf2" style="float: left;" value="" onchange="updateTop8PlayerInfo('r10', 'p2', 'score2', value);">
 			</div>
 			<div id="losers_quarters_1">
-				<input class="form_name_l1_lq" id="form_name_l1_lq" style="float: left;" placeholder="Name" value="" onchange="updateResults();">
-				<input class=form_team_l1_lq id="form_team_l1_lq" style="float: left;" placeholder="Team" value="" onchange="updateResults();">
-				<input class="form_score_l1_lq" type="text" id="form_score_l1_lq" style="float: left;" value="" onchange="updateResults();">
+				<input class="form_name_l1_lq" id="form_name_l1_lq" style="float: left;" placeholder="Name" value="" onchange="updateTop8PlayerInfo('r5', 'p1', 'name', value);">
+				<input class="form_team_l1_lq" id="form_team_l1_lq" style="float: left;" placeholder="Team" value="" onchange="updateTop8PlayerInfo('r5', 'p1', 'team', value);">
+				<input class="form_score_l1_lq" type="text" id="form_score_l1_lq" style="float: left;" value="" onchange="updateTop8PlayerInfo('r5', 'p1', 'score', value);">
 
-				<input class="form_name_l2_lq" id="form_name_l2_lq" style="float: left;" placeholder="Name" value="" onchange="updateResults();">
-				<input class=form_team_l2_lq id="form_team_l2_lq" style="float: left;" placeholder="Team" value="" onchange="updateResults();">
-				<input class="form_score_l2_lq" type="text" id="form_score_l2_lq" style="float: left;" value="" onchange="updateResults();">
+				<input class="form_name_l2_lq" id="form_name_l2_lq" style="float: left;" placeholder="Name" value="" onchange="updateTop8PlayerInfo('r5', 'p2', 'name', value);">
+				<input class="form_team_l2_lq" id="form_team_l2_lq" style="float: left;" placeholder="Team" value="" onchange="updateTop8PlayerInfo('r5', 'p2', 'team', value);">
+				<input class="form_score_l2_lq" type="text" id="form_score_l2_lq" style="float: left;" value="" onchange="updateTop8PlayerInfo('r5', 'p2', 'score', value);">
 			</div>
 			<div id="losers_quarters_2">
-				<input class="form_name_l3_lq" id="form_name_l3_lq" style="float: left;" placeholder="Name" value="" onchange="updateResults();">
-				<input class=form_team_l3_lq id="form_team_l3_lq" style="float: left;" placeholder="Team" value="" onchange="updateResults();">
-				<input class="form_score_l3_lq" type="text" id="form_score_l3_lq" style="float: left;" value="" onchange="updateResults();">
+				<input class="form_name_l3_lq" id="form_name_l3_lq" style="float: left;" placeholder="Name" value="" onchange="updateTop8PlayerInfo('r6', 'p1', 'name', value);">
+				<input class="form_team_l3_lq" id="form_team_l3_lq" style="float: left;" placeholder="Team" value="" onchange="updateTop8PlayerInfo('r6', 'p1', 'team', value);">
+				<input class="form_score_l3_lq" type="text" id="form_score_l3_lq" style="float: left;" value="" onchange="updateTop8PlayerInfo('r6', 'p1', 'score', value);">
 
-				<input class="form_name_l4_lq" id="form_name_l4_lq" style="float: left;" placeholder="Name" value="" onchange="updateResults();">
-				<input class=form_team_l4_lq id="form_team_l4_lq" style="float: left;" placeholder="Team" value="" onchange="updateResults();">
-				<input class="form_score_l4_lq" type="text" id="form_score_l4_lq" style="float: left;" value="" onchange="updateResults();">
+				<input class="form_name_l4_lq" id="form_name_l4_lq" style="float: left;" placeholder="Name" value="" onchange="updateTop8PlayerInfo('r6', 'p2', 'name', value);">
+				<input class="form_team_l4_lq" id="form_team_l4_lq" style="float: left;" placeholder="Team" value="" onchange="updateTop8PlayerInfo('r6', 'p2', 'team', value);">
+				<input class="form_score_l4_lq" type="text" id="form_score_l4_lq" style="float: left;" value="" onchange="updateTop8PlayerInfo('r6', 'p2', 'score', value);">
 			</div>
 			<div id="losers_semis">
-				<input class="form_name_l1_ls" id="form_name_l1_ls" style="float: left;" placeholder="Name" value="" onchange="updateResults();">
-				<input class=form_team_l1_ls id="form_team_l1_ls" style="float: left;" placeholder="Team" value="" onchange="updateResults();">
-				<input class="form_score_l1_ls" type="text" id="form_score_l1_ls" style="float: left;" value="" onchange="updateResults();">
+				<input class="form_name_l1_ls" id="form_name_l1_ls" style="float: left;" placeholder="Name" value="" onchange="updateTop8PlayerInfo('r8', 'p1', 'name', value);">
+				<input class="form_team_l1_ls" id="form_team_l1_ls" style="float: left;" placeholder="Team" value="" onchange="updateTop8PlayerInfo('r8', 'p1', 'team', value);">
+				<input class="form_score_l1_ls" type="text" id="form_score_l1_ls" style="float: left;" value="" onchange="updateTop8PlayerInfo('r8', 'p1', 'score', value);">
 
-				<input class="form_name_l2_ls" id="form_name_l2_ls" style="float: left;" placeholder="Name" value="" onchange="updateResults();">
-				<input class=form_team_l2_ls id="form_team_l2_ls" style="float: left;" placeholder="Team" value="" onchange="updateResults();">
-				<input class="form_score_l2_ls" type="text" id="form_score_l2_ls" style="float: left;" value="" onchange="updateResults();">
+				<input class="form_name_l2_ls" id="form_name_l2_ls" style="float: left;" placeholder="Name" value="" onchange="updateTop8PlayerInfo('r8', 'p2', 'name', value);">
+				<input class="form_team_l2_ls" id="form_team_l2_ls" style="float: left;" placeholder="Team" value="" onchange="updateTop8PlayerInfo('r8', 'p2', 'team', value);">
+				<input class="form_score_l2_ls" type="text" id="form_score_l2_ls" style="float: left;" value="" onchange="updateTop8PlayerInfo('r8', 'p2', 'score', value);">
 			</div>
 			<div id="losers_finals">
-				<input class="form_name_l1_lf" id="form_name_l1_lf" style="float: left;" placeholder="Name" value="" onchange="updateResults();">
-				<input class=form_team_l1_lf id="form_team_l1_lf" style="float: left;" placeholder="Team" value="" onchange="updateResults();">
-				<input class="form_score_l1_lf" type="text" id="form_score_l1_lf" style="float: left;" value="" onchange="updateResults();">
+				<input class="form_name_l1_lf" id="form_name_l1_lf" style="float: left;" placeholder="Name" value="" onchange="updateTop8PlayerInfo('r9', 'p1', 'name', value);">
+				<input class="form_team_l1_lf" id="form_team_l1_lf" style="float: left;" placeholder="Team" value="" onchange="updateTop8PlayerInfo('r9', 'p1', 'team', value);">
+				<input class="form_score_l1_lf" type="text" id="form_score_l1_lf" style="float: left;" value="" onchange="updateTop8PlayerInfo('r9', 'p1', 'score', value);">
 
-				<input class="form_name_l2_lf" id="form_name_l2_lf" style="float: left;" placeholder="Name" value="" onchange="updateResults();">
-				<input class=form_team_l2_lf id="form_team_l2_lf" style="float: left;" placeholder="Team" value="" onchange="updateResults();">
-				<input class="form_score_l2_lf" type="text" id="form_score_l2_lf" style="float: left;" value="" onchange="updateResults();">
+				<input class="form_name_l2_lf" id="form_name_l2_lf" style="float: left;" placeholder="Name" value="" onchange="updateTop8PlayerInfo('r9', 'p2', 'name', value);">
+				<input class="form_team_l2_lf" id="form_team_l2_lf" style="float: left;" placeholder="Team" value="" onchange="updateTop8PlayerInfo('r9', 'p2', 'team', value);">
+				<input class="form_score_l2_lf" type="text" id="form_score_l2_lf" style="float: left;" value="" onchange="updateTop8PlayerInfo('r9', 'p2', 'score', value);">
 			</div>
 			<div id="result1p">
 				<input class="form_results_score_1p" type="text" id="form_results_score_1p" style="float: left;" value="" onchange="updateResults();">

@@ -93,17 +93,28 @@ function setAsNextRound(round, suffix1, suffix2) {
     // Create a state change callback
     xhr.onreadystatechange = function () {
         if (xhr.readyState === 4 && xhr.status === 200) {
-            document.getElementById("form_next_round_team_1p").value = document.getElementById("form_team_" + suffix1).value;
-            document.getElementById("form_next_round_name_1p").value = document.getElementById("form_name_" + suffix1).value;
-            document.getElementById("form_next_round_team_2p").value = document.getElementById("form_team_" + suffix2).value;
-            document.getElementById("form_next_round_name_2p").value = document.getElementById("form_name_" + suffix2).value;
-            highlightNextRoundForms(round);
-        } else {
-            alert("Setting next round failed!");
+            getJsonDataFromServerWithArgs('getTop8PlayerData', updateNextRoundForms, round, suffix1, suffix2);
         }
     };
     // Sending data with the request
     xhr.send('round=' + round);
+}
+
+function updateNextRoundForms(top8PlayerData, round, suffix1, suffix2) {
+    document.getElementById("form_next_round_team_1p").value = document.getElementById("form_team_" + suffix1).value;
+    document.getElementById("form_next_round_name_1p").value = document.getElementById("form_name_" + suffix1).value;
+    document.getElementById("dropdown_country_next1").value = top8PlayerData["r" + round]["p1"]["country"];
+    document.getElementById("form_next_round_team_2p").value = document.getElementById("form_team_" + suffix2).value;
+    document.getElementById("form_next_round_name_2p").value = document.getElementById("form_name_" + suffix2).value;
+    document.getElementById("dropdown_country_next2").value = top8PlayerData["r" + round]["p2"]["country"];
+    highlightNextRoundForms(round);
+    jsonData.nextteam1 = document.getElementById("form_team_" + suffix1).value;
+    jsonData.nextplayer1 = document.getElementById("form_name_" + suffix1).value;
+    jsonData.nextteam2 = document.getElementById("form_team_" + suffix2).value;
+    jsonData.nextplayer2 = document.getElementById("form_name_" + suffix2).value;
+    jsonData.nextcountry1 = top8PlayerData["r" + round]["p1"]["country"];
+    jsonData.nextcountry2 = top8PlayerData["r" + round]["p2"]["country"];
+    sendJsonToEndpoint('updateNextPlayers');
 }
 
 function populateData(data) {
@@ -136,57 +147,57 @@ function updateElement(id, value) {
 
 function updatePlayer1() {
 	jsonData.p1Name = document.getElementById("form_name_1p").value;
-	sendJSON();
+	sendJsonToEndpoint('updateCurrentPlayers');
 }
 
 function updatePlayer2() {
 	jsonData.p2Name = document.getElementById("form_name_2p").value;
-	sendJSON();
+	sendJsonToEndpoint('updateCurrentPlayers');
 }
 
 function updateTeam1() {
 	jsonData.p1Team = document.getElementById("form_team_1p").value;
-	sendJSON();
+	sendJsonToEndpoint('updateCurrentPlayers');
 }
 
 function updateTeam2() {
 	jsonData.p2Team = document.getElementById("form_team_2p").value;
-	sendJSON();
+	sendJsonToEndpoint('updateCurrentPlayers');
 }
 
 function updateNextPlayer1() {
 	jsonData.nextplayer1 = document.getElementById("form_next_round_name_1p").value;
-	sendJSON();
+	sendJsonToEndpoint('updateNextPlayers');
 }
 
 function updateNextPlayer2() {
 	jsonData.nextplayer2 = document.getElementById("form_next_round_name_2p").value;
-	sendJSON();
+	sendJsonToEndpoint('updateNextPlayers');
 }
 
 function updateNextTeam1() {
 	jsonData.nextteam1 = document.getElementById("dropdown_country_next1").value;
-	sendJSON();
+	sendJsonToEndpoint('updateNextPlayers');
 }
 
 function updateNextTeam2() {
 	jsonData.nextteam2 = document.getElementById("dropdown_country_next2").value;
-	sendJSON();
+	sendJsonToEndpoint('updateNextPlayers');
 }
 
 function updateScore1() {
 	jsonData.p1Score = document.getElementById("form_score_1p").value;
-	sendJSON();
+	sendJsonToEndpoint('updateCurrentPlayers');
 }
 
 function updateScore2() {
 	jsonData.p2Score = document.getElementById("form_score_2p").value;
-	sendJSON();
+	sendJsonToEndpoint('updateCurrentPlayers');
 }
 
 function updateRound() {
 	jsonData.round = document.getElementById("dropdown_round").value;
-	sendJSON();
+	sendJsonToEndpoint('updateCurrentPlayers');
 }
 
 function resetNamesAndScore() {
@@ -206,7 +217,7 @@ function resetNamesAndScore() {
 	jsonData.p2Country = "";
 	jsonData.p1Score = "0";
 	jsonData.p2Score = "0";
-	sendJSON();
+	sendJsonToEndpoint('updateCurrentPlayers');
 }
 
 function reversePlayerNames() {
@@ -214,15 +225,25 @@ function reversePlayerNames() {
 	var p2 = document.getElementById("form_name_2p").value;
 	var t1 = document.getElementById("form_team_1p").value;
 	var t2 = document.getElementById("form_team_2p").value;
+	var c1 = document.getElementById("dropdown_country_current_1").value;
+	var c2 = document.getElementById("dropdown_country_current_2").value;
 	document.getElementById("form_name_1p").value = p2;
 	document.getElementById("form_name_2p").value = p1;
 	document.getElementById("form_team_1p").value = t2;
 	document.getElementById("form_team_2p").value = t1;
+	document.getElementById("dropdown_country_current_1").value = c2;
+	document.getElementById("dropdown_country_current_2").value = c1;
 	jsonData.p1Name = p2;
 	jsonData.p2Name = p1;
 	jsonData.p1Team = t2;
 	jsonData.p2Team = t1;
-	sendJSON();
+	jsonData.p1Country = c2;
+	jsonData.p2Country = c1;
+	sendJsonToEndpointWithCallback(reverseNames, 'updateCurrentPlayers');
+}
+
+function reverseNames() {
+    callServer("reverseNames");
 }
 
 function reverseScores() {
@@ -232,7 +253,7 @@ function reverseScores() {
 	document.getElementById("form_score_2p").value = p1;
 	jsonData.p1Score = p2;
 	jsonData.p2Score = p1;
-	sendJSON();
+	sendJsonToEndpoint('updateCurrentPlayers');
 }
 
 function addScoreP1() {
@@ -240,7 +261,7 @@ function addScoreP1() {
 	score++;
 	jsonData.p1Score = score.toString();
 	document.getElementById("form_score_1p").value = jsonData.p1Score;
-	sendJSON();
+	sendJsonToEndpoint('updateCurrentPlayers');
 }
 
 function subtractScoreP1() {
@@ -251,7 +272,7 @@ function subtractScoreP1() {
 	score--;
 	jsonData.p1Score = score.toString();
 	document.getElementById("form_score_1p").value = jsonData.p1Score;
-	sendJSON();
+	sendJsonToEndpoint('updateCurrentPlayers');
 }
 
 function addScoreP2() {
@@ -259,7 +280,7 @@ function addScoreP2() {
 	score++;
 	jsonData.p2Score = score.toString();
 	document.getElementById("form_score_2p").value = jsonData.p2Score;
-	sendJSON();
+	sendJsonToEndpoint('updateCurrentPlayers');
 }
 
 function subtractScoreP2() {
@@ -270,7 +291,7 @@ function subtractScoreP2() {
 	score--;
 	jsonData.p2Score = score.toString();
 	document.getElementById("form_score_2p").value = jsonData.p2Score;
-	sendJSON();
+	sendJsonToEndpoint('updateCurrentPlayers');
 }
 
 function resetScores() {
@@ -278,7 +299,7 @@ function resetScores() {
 	document.getElementById("form_score_2p").value = "0";
 	jsonData.p1Score = "0";
 	jsonData.p2Score = "0";
-	sendJSON();
+	sendJsonToEndpoint('updateCurrentPlayers');
 }
 
 function resetAll() {
@@ -393,17 +414,13 @@ function resetAll() {
 	jsonData.resultscore2 = "";
 	jsonData.maxScore = "";
 	jsonData.round = "Casuals";
-	sendJSON();
-    var millisecondsToWait = 1000;
-    setTimeout(function() {
-        resetTop8();
-    }, millisecondsToWait);
+	updateAllData(resetTop8);
 }
 
 function countryDropdown(id) {
 	var c = document.getElementById(id);
 	jsonData.p1Country = c.options[c.selectedIndex].text;
-	sendJSON();
+	sendJsonToEndpoint('updateCurrentPlayers');
 }
 
 function countryDropdown(id, round, player) {
@@ -475,6 +492,8 @@ function updateCurrentAndNextInfo(currentNextData) {
     var top8Started = currentNextData.started;
     if (top8Started) {
         document.getElementById("rectangle_button_18").style.background = "#14BF01";
+    } else {
+        document.getElementById("rectangle_button_18").style.background = "#675267";
     }
     highlightNextRoundForms(currentNextData.nextRound)
     highlightCurrentRoundForms(currentNextData.currentRound)
@@ -484,12 +503,16 @@ function updateCurrentAndNextInfo(currentNextData) {
     jsonData.p2Team = currentNextData.player2.team;
     jsonData.p1Name = currentNextData.player1.name;
     jsonData.p2Name = currentNextData.player2.name;
+    jsonData.p1Country = currentNextData.player1.country;
+    jsonData.p2Country = currentNextData.player2.country;
     jsonData.p1Score = "0";
     jsonData.p2Score = "0";
     jsonData.nextteam1 = currentNextData.nextPlayer1.team;
-    jsonData.nextplayer1 = currentNextData.nextPlayer2.name;
-    jsonData.nextteam2 = currentNextData.nextPlayer1.team;
+    jsonData.nextplayer1 = currentNextData.nextPlayer1.name;
+    jsonData.nextteam2 = currentNextData.nextPlayer2.team;
     jsonData.nextplayer2 = currentNextData.nextPlayer2.name;
+    jsonData.nextcountry1 = currentNextData.nextPlayer1.country;
+    jsonData.nextcountry2 = currentNextData.nextPlayer2.country;
 }
 
 function highlightCurrentRoundForms(round) {
@@ -504,8 +527,8 @@ function highlightCurrentRoundForms(round) {
         document.getElementById("form_score_" + suffix).style.border="2px solid red";
     }
     if (round == 11) {
-        document.getElementById("form_score_w1_gf2" + suffix).style.border="2px solid red";
-        document.getElementById("form_score_w2_gf2" + suffix).style.border="2px solid red";
+        document.getElementById("form_score_w1_gf2").style.border="2px solid red";
+        document.getElementById("form_score_w2_gf2").style.border="2px solid red";
     }
     lastRoundSuffix = roundSuffixMap[round];
 }
@@ -527,6 +550,24 @@ function highlightNextRoundForms(round) {
 function updateCurrentAndNextInfoUpdatePlayerData(currentNextData) {
     updateCurrentAndNextInfo(currentNextData)
     getJsonDataFromServer("getTop8PlayerData", populateTop8PlayerData)
+}
+
+function getJsonDataFromServerWithArgs(endpoint, callback, arg1, arg2, arg3) {
+	// open a connection
+	xhr.open("GET", url + endpoint, true);
+
+	// Set the request header i.e. which type of content you are sending
+	xhr.setRequestHeader("Content-Type", "application/json");
+
+	// Create a state change callback
+	xhr.onreadystatechange = function () {
+		if (xhr.readyState === 4 && xhr.status === 200) {
+			// console.log("Server Okay");
+			callback(JSON.parse(xhr.response), arg1, arg2, arg3)
+		}
+	};
+	// Sending data with the request
+	xhr.send();
 }
 
 function getJsonDataFromServer(endpoint, callback) {
@@ -556,12 +597,12 @@ function updateResults() {
 	jsonData.resultscore2 = document.getElementById("form_results_score_2p").value;
 	jsonData.resultplayer1 = document.getElementById("form_results_name_1p").value;
 	jsonData.resultplayer2 = document.getElementById("form_results_name_2p").value;
-	sendJSON();
+	sendJsonToEndpoint('updateCurrentPlayers');
 }
 
-function triggerReplay() {
+function callServer(endpoint) {
 	// open a connection
-	xhr.open("POST", url + 'replaystart', true);
+	xhr.open("POST", url + endpoint, true);
 
 	// Set the request header i.e. which type of content you are sending
 	xhr.setRequestHeader("Content-Type", "application/json");
@@ -569,25 +610,6 @@ function triggerReplay() {
 	// Create a state change callback
 	xhr.onreadystatechange = function () {
 		if (xhr.readyState === 4 && xhr.status === 200) {
-			// console.log("Server Okay");
-		}
-	};
-
-	// Sending data with the request
-	xhr.send();
-}
-
-function stopReplay() {
-	// open a connection
-	xhr.open("POST", url + 'replaystop', true);
-
-	// Set the request header i.e. which type of content you are sending
-	xhr.setRequestHeader("Content-Type", "application/json");
-
-	// Create a state change callback
-	xhr.onreadystatechange = function () {
-		if (xhr.readyState === 4 && xhr.status === 200) {
-			// console.log("Server Okay");
 		}
 	};
 
@@ -616,18 +638,17 @@ function resetTop8() {
                 document.getElementById("form_name_" + suffix).style.border="";
                 document.getElementById("form_score_" + suffix).style.border="";
             }
-            document.getElementById("form_score_w1_gf2" + suffix).style.border="";
-            document.getElementById("form_score_w2_gf2" + suffix).style.border="";
+            document.getElementById("form_score_w1_gf2").style.border="";
+            document.getElementById("form_score_w2_gf2").style.border="";
 		}
 	};
 
 	// Sending data with the request
 	xhr.send();
-
 }
 
-function sendJSON() {
-	// open a connection
+function updateAllData(callback) {
+    // open a connection
 	xhr.open("POST", url + 'updatealldata', true);
 
 	// Set the request header i.e. which type of content you are sending
@@ -636,8 +657,39 @@ function sendJSON() {
 	// Create a state change callback
 	xhr.onreadystatechange = function () {
 		if (xhr.readyState === 4 && xhr.status === 200) {
-			// console.log("Server Okay");
-		}
+            callback();
+        }
+	};
+
+	// Set timestamp
+	jsonData.timestamp = Date.now();
+
+	// Converting JSON data to string
+	var data = JSON.stringify(jsonData);
+	// Sending data with the request
+	xhr.send(data);
+}
+
+function sendJSON() {
+	updateAllData(function (){})
+}
+
+function sendJsonToEndpoint(endpoint) {
+    sendJsonToEndpointWithCallback(function (){}, endpoint);
+}
+
+function sendJsonToEndpointWithCallback(callback, endpoint) {
+    // open a connection
+	xhr.open("POST", url + endpoint, true);
+
+	// Set the request header i.e. which type of content you are sending
+	xhr.setRequestHeader("Content-Type", "application/json");
+
+	// Create a state change callback
+	xhr.onreadystatechange = function () {
+		if (xhr.readyState === 4 && xhr.status === 200) {
+		    callback();
+        }
 	};
 
 	// Set timestamp

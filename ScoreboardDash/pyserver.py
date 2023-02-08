@@ -59,6 +59,12 @@ def set_next_round():
     return top8.set_next_round_override(int(request.form['round']))
 
 
+@api.route('/reverseNames', methods=['POST'])
+def reverse_names():
+    top8.set_reverse_names()
+    return "200"
+
+
 @api.route('/getNextRoundData', methods=['GET'])
 def get_next_round_data():
     return top8.progress_to_next_round(), 200
@@ -69,15 +75,46 @@ def update_all_data():
     json_data = request.get_json()
     with open(stream_control_file, 'w', encoding="utf-8") as json_file:
         json_file.write(json.dumps(json_data))
-    write_to_file(player_1, "p1Name", json_data)
-    write_to_file(player_2, "p2Name", json_data)
-    write_to_file(next_player_1, "nextplayer1", json_data)
-    write_to_file(next_player_2, "nextplayer2", json_data)
-    write_to_file(result1, "resultscore1", json_data)
-    write_to_file(result2, "resultscore2", json_data)
-    write_to_file(result_name_1, "resultplayer1", json_data)
-    write_to_file(result_name_2, "resultplayer2", json_data)
+    return "200"
+
+
+@api.route('/updateCurrentPlayers', methods=['POST'])
+def update_current_players():
+    json_data = request.get_json()
+    full_data = read_file(stream_control_file)
+    full_data["p1Name"] = json_data["p1Name"]
+    full_data["p2Name"] = json_data["p2Name"]
+    full_data["p1Team"] = json_data["p1Team"]
+    full_data["p2Team"] = json_data["p2Team"]
+    full_data["p1Score"] = json_data["p1Score"]
+    full_data["p2Score"] = json_data["p2Score"]
+    full_data["p1Score"] = json_data["p1Score"]
+    full_data["p2Score"] = json_data["p2Score"]
+    full_data["resultscore1"] = json_data["resultscore1"]
+    full_data["resultscore2"] = json_data["resultscore2"]
+    full_data["resultplayer1"] = json_data["resultplayer1"]
+    full_data["resultplayer2"] = json_data["resultplayer2"]
+    full_data["p1Country"] = json_data["p1Country"]
+    full_data["p2Country"] = json_data["p2Country"]
+    full_data["round"] = json_data["round"]
+    with open(stream_control_file, 'w', encoding="utf-8") as json_file:
+        json_file.write(json.dumps(json_data))
     top8.update_current_players_info(json_data)
+    return "200"
+
+
+@api.route('/updateNextPlayers', methods=['POST'])
+def update_next_players():
+    json_data = request.get_json()
+    full_data = read_file(stream_control_file)
+    full_data["nextplayer1"] = json_data["nextplayer1"]
+    full_data["nextplayer2"] = json_data["nextplayer2"]
+    full_data["nextteam1"] = json_data["nextteam1"]
+    full_data["nextteam2"] = json_data["nextteam2"]
+    full_data["nextcountry1"] = json_data["nextcountry1"]
+    full_data["nextcountry2"] = json_data["nextcountry2"]
+    with open(stream_control_file, 'w', encoding="utf-8") as json_file:
+        json_file.write(json.dumps(full_data))
     top8.update_next_players_info(json_data)
     return "200"
 
@@ -132,7 +169,7 @@ def replay_start():
         ts = str(time.time())   
         print(ts)        
         replay_file.write(ts)
-    return "200"    
+    return "200"
 
 
 @api.route('/replaystop', methods=['POST'])
@@ -140,7 +177,7 @@ def replay_stop():
     with open(replay_stop_file, 'w', encoding="utf-8") as replay_file:
         ts = str(time.time())
         replay_file.write(ts)
-    return "200"    
+    return "200"
 
 
 def add_to_score(score_key):
