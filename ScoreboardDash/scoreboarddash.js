@@ -4,17 +4,20 @@ var url = "http://127.0.0.1:8080/";
 
 var jsonData;
 
-fetch(url + 'getdata')
-	.then(function (response) {
-	jsonData = response.json();
-  return jsonData;
-})
-.then(function (data) {
-	populateData(data);
-  })
-.catch(function (err) {
-  console.log('error: ' + err);
-});
+function getDataFromServer() {
+    fetch(url + 'getdata')
+        .then(function (response) {
+        jsonData = response.json();
+      return jsonData;
+    })
+    .then(function (data) {
+        populateData(data);
+      })
+    .catch(function (err) {
+      console.log('error: ' + err);
+    });
+}
+
 function populateData(data) {
     console.log(data);
 	updateElement("form_name_1p", data.p1Name);
@@ -390,3 +393,26 @@ function sendJSON() {
 	// Sending data with the request
 	xhr.send(data);
 }
+
+function registerClientForRefresh() {
+    // Open a connection to the server
+    xhr.open("GET", url + "/registerClientRefresh", true);
+	// Set the request header i.e. which type of content you are sending
+	xhr.setRequestHeader("Content-Type", "application/json");
+
+    // Handle the response from the server
+    xhr.onreadystatechange = function() {
+		if (xhr.readyState === 4 && xhr.status === 200) {
+            // Update the UI with the new notification
+            getDataFromServer();
+            // Send another request to the server
+            registerClientForRefresh();
+        }
+    };
+
+    // Send the request
+    xhr.send();
+}
+
+getDataFromServer();
+registerClientForRefresh();

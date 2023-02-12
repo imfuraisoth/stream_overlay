@@ -12,7 +12,7 @@ import argparse
 server_info = open('../config/serverip.txt', 'r').readline().split(':')
 
 hostName = server_info[0]
-serverPort = server_info[1]
+serverPort = int(server_info[1])
 
 stream_control_file = "../data/scoreboard.json"
 player_1 = "../data/player1.txt"
@@ -36,6 +36,25 @@ player_info_update_window = 1
 auto_score_updater_st = AutoScoreUpdaterSt
 auto_score_updater_cvs2 = AutoScoreUpdaterCvs2
 top8 = Top8
+refresh_client = False
+
+
+@api.route('/registerClientRefresh', methods=['GET'])
+def register_client_refresh():
+    global refresh_client
+    while not refresh_client:
+        # Wait and do nothing
+        time.sleep(1)
+
+    refresh_client = False
+    return "", 200
+
+
+@api.route('/triggerClientRefresh', methods=['POST'])
+def trigger_client_refresh():
+    global refresh_client
+    refresh_client = True
+    return "200"
 
 
 @api.route('/getdata', methods=['GET'])
@@ -51,6 +70,46 @@ def get_top8_player_data():
 @api.route('/resetTop8', methods=['POST'])
 def reset_top8_data():
     top8.reset()
+    return "200"
+
+
+@api.route('/addPlayer1Score', methods=['POST'])
+def add_player1_score():
+    add_to_score("p1Score")
+    full_data = read_file(stream_control_file)
+    top8.update_current_players_info(full_data)
+    global refresh_client
+    refresh_client = True
+    return "200"
+
+
+@api.route('/addPlayer2Score', methods=['POST'])
+def add_player2_score():
+    add_to_score("p2Score")
+    full_data = read_file(stream_control_file)
+    top8.update_current_players_info(full_data)
+    global refresh_client
+    refresh_client = True
+    return "200"
+
+
+@api.route('/subPlayer1Score', methods=['POST'])
+def sub_player1_score():
+    sub_to_score("p1Score")
+    full_data = read_file(stream_control_file)
+    top8.update_current_players_info(full_data)
+    global refresh_client
+    refresh_client = True
+    return "200"
+
+
+@api.route('/subPlayer2Score', methods=['POST'])
+def sub_player2_score():
+    sub_to_score("p2Score")
+    full_data = read_file(stream_control_file)
+    top8.update_current_players_info(full_data)
+    global refresh_client
+    refresh_client = True
     return "200"
 
 
@@ -183,6 +242,13 @@ def replay_stop():
 def add_to_score(score_key):
     full_data = read_file(stream_control_file)
     full_data[score_key] = str(int(full_data[score_key]) + 1)
+    with open(stream_control_file, 'w', encoding="utf-8") as json_file:
+        json_file.write(json.dumps(full_data, ensure_ascii=False))
+
+
+def sub_to_score(score_key):
+    full_data = read_file(stream_control_file)
+    full_data[score_key] = str(max(int(full_data[score_key]) - 1, 0))
     with open(stream_control_file, 'w', encoding="utf-8") as json_file:
         json_file.write(json.dumps(full_data, ensure_ascii=False))
 
