@@ -6,6 +6,7 @@ Includes code for scoreboard UI, overlay for OBS, and backend server processing.
 Needed dependencies to be installed:
 sudo pip install PyAutoGUI
 sudo pip install Pillow --upgrade
+sudo pip install -U flask-cors
 sudo pip install opencv-python
 
 #Pi Reader Instructions:
