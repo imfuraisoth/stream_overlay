@@ -59,6 +59,12 @@ def trigger_client_refresh():
 
 @api.route('/getdata', methods=['GET'])
 def get_data():
+    global auto_score_updater_cvs2
+    global auto_score_updater_st
+    if auto_score_updater_cvs2.has_updated_score():
+        trigger_client_refresh()
+    elif auto_score_updater_st.has_updated_score():
+        trigger_client_refresh()
     return json.dumps(read_file(stream_control_file), ensure_ascii=False), 200
 
 

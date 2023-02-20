@@ -8,11 +8,12 @@ p1_win_condition = '../resources/st/p1_win.png'
 p1_win_condition_2 = '../resources/st/p1_win_no_damage.png'
 p2_win_condition = '../resources/st/p2_win.png'
 p2_win_condition_2 = '../resources/st/p2_win_no_damage.png'
-stream_control_file = "../scoreboard/sc/streamcontrol.json"
+stream_control_file = "../data/scoreboard.json"
 
 # Only allow player info to update once every 10 seconds
 player_info_update_window = 10
 last_score_update_timestamp = 0
+has_updated = False
 
 
 def auto_update_scores():
@@ -55,6 +56,14 @@ def add_to_score(score_key):
     full_data[score_key] = str(current_score + 1)
     with open(stream_control_file, 'w', encoding="utf-8") as json_file:
         json_file.write(json.dumps(full_data, ensure_ascii=False))
+
+
+def has_updated_score():
+    global has_updated
+    if has_updated:
+        has_updated = False
+        return True    
+    return has_updated
 
 
 def read_file(file_name):

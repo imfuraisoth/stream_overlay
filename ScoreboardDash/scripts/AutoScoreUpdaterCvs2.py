@@ -5,13 +5,15 @@ from io import open
 import pyautogui
 
 p1_win_condition = '../resources/cvs2/p1_win.png'
+p1_win_1_condition = '../resources/cvs2/p1_win_1.png'
 p2_win_condition = '../resources/cvs2/p2_win.png'
-stream_control_file = "../scoreboard/sc/streamcontrol.json"
+p2_win_1_condition = '../resources/cvs2/p2_win_1.png'
+stream_control_file = "../data/scoreboard.json"
 
 # Only allow player info to update once every 10 seconds
 player_info_update_window = 30
 last_score_update_timestamp = 0
-
+has_updated = False
 
 def auto_update_scores():
     print("Auto score updater for CVS2 enabled")
@@ -24,8 +26,14 @@ def check_win_conditions():
         if pyautogui.locateCenterOnScreen(p1_win_condition, confidence=0.8):
             print("Player 1 Wins!")
             add_to_score("p1Score")
+        elif pyautogui.locateCenterOnScreen(p1_win_1_condition, confidence=0.8):
+            print("Player 1 Wins!!")
+            add_to_score("p1Score")
         elif pyautogui.locateCenterOnScreen(p2_win_condition, confidence=0.8):
             print("Player 2 Wins!")
+            add_to_score("p2Score")
+        elif pyautogui.locateCenterOnScreen(p2_win_1_condition, confidence=0.8):
+            print("Player 2 Wins!!")
             add_to_score("p2Score")
         # Check once a second
         time.sleep(1)
@@ -47,6 +55,16 @@ def add_to_score(score_key):
     full_data[score_key] = str(current_score + 1)
     with open(stream_control_file, 'w', encoding="utf-8") as json_file:
         json_file.write(json.dumps(full_data, ensure_ascii=False))
+        global has_updated
+        has_updated = True
+
+
+def has_updated_score():
+    global has_updated
+    if has_updated:
+        has_updated = False
+        return True    
+    return has_updated
 
 
 def read_file(file_name):
