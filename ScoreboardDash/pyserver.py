@@ -44,27 +44,18 @@ def register_client_refresh():
     global refresh_client
     while not refresh_client:
         # Wait and do nothing
+        if auto_score_updater_cvs2.has_updated_score():
+            break
+        elif auto_score_updater_st.has_updated_score():
+            break
         time.sleep(1)
 
     refresh_client = False
     return "", 200
 
 
-@api.route('/triggerClientRefresh', methods=['POST'])
-def trigger_client_refresh():
-    global refresh_client
-    refresh_client = True
-    return "200"
-
-
 @api.route('/getdata', methods=['GET'])
 def get_data():
-    global auto_score_updater_cvs2
-    global auto_score_updater_st
-    if auto_score_updater_cvs2.has_updated_score():
-        trigger_client_refresh()
-    elif auto_score_updater_st.has_updated_score():
-        trigger_client_refresh()
     return json.dumps(read_file(stream_control_file), ensure_ascii=False), 200
 
 
@@ -208,6 +199,8 @@ def update_player1():
     elif previous_id == player_id and (current_time - player_info_update_window) > previous_timestamp:
         add_to_score("p1Score")
         previous_player_1 = (player_id, current_time)
+    global refresh_client
+    refresh_client = True
     return "200"
 
 
@@ -225,6 +218,8 @@ def update_player2():
     elif previous_id == player_id and (current_time - player_info_update_window) > previous_timestamp:
         add_to_score("p2Score")
         previous_player_2 = (player_id, current_time)
+    global refresh_client
+    refresh_client = True
     return "200"
 
 
