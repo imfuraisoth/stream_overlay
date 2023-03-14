@@ -1585,6 +1585,7 @@
 	height: 24px;
 	left: 1004px;
 	top: 556.135px;
+	font-size: 12px;
 }
 #dropdown_country_next2 {
 	fill: rgba(255,255,255,1);
@@ -1602,6 +1603,7 @@
 	height: 24px;
 	left: 1004px;
 	top: 671.135px;
+	font-size: 12px;
 }
 #button_text {
 	white-space: nowrap;
