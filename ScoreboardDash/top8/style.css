@@ -988,6 +988,7 @@
 	height: 24px;
 	left: 724px;
 	top: 194px;
+	font-size: 12px;
 }
 #dropdown_country_next1 {
 	fill: rgba(255,255,255,1);
@@ -1005,6 +1006,7 @@
 	height: 24px;
 	left: 1649px;
 	top: 424px;
+	font-size: 12px;
 }
 #dropdown_country_next2 {
 	fill: rgba(255,255,255,1);
@@ -1022,6 +1024,7 @@
 	height: 24px;
 	left: 1649px;
 	top: 540px;
+	font-size: 12px;
 }
 #dropdown_country_current_2 {
 	fill: rgba(255,255,255,1);
@@ -1039,6 +1042,7 @@
 	height: 24px;
 	left: 1137px;
 	top: 194px;
+	font-size: 12px;
 }
 #grid_winners_bracket {
 	fill: rgba(242,244,252,1);
@@ -2205,6 +2209,7 @@
 	height: 24px;
 	left: 234px;
 	top: 411px;
+	font-size: 12px;
 }
 #dropdown_country_w2 {
 	fill: rgba(255,255,255,1);
@@ -2222,6 +2227,7 @@
 	height: 24px;
 	left: 234px;
 	top: 454px;
+	font-size: 12px;
 }
 #dropdown_country_w3 {
 	fill: rgba(255,255,255,1);
@@ -2239,6 +2245,7 @@
 	height: 24px;
 	left: 234px;
 	top: 592px;
+	font-size: 12px;
 }
 #dropdown_country_w4 {
 	fill: rgba(255,255,255,1);
@@ -2256,6 +2263,7 @@
 	height: 24px;
 	left: 234px;
 	top: 635px;
+	font-size: 12px;
 }
 #dropdown_country_l1 {
 	fill: rgba(255,255,255,1);
@@ -2273,6 +2281,7 @@
 	height: 24px;
 	left: 234px;
 	top: 741px;
+	font-size: 12px;
 }
 #dropdown_country_l2 {
 	fill: rgba(255,255,255,1);
@@ -2290,6 +2299,7 @@
 	height: 24px;
 	left: 234px;
 	top: 784px;
+	font-size: 12px;
 }
 #dropdown_country_l3 {
 	fill: rgba(255,255,255,1);
@@ -2307,6 +2317,7 @@
 	height: 24px;
 	left: 234px;
 	top: 922px;
+	font-size: 12px;
 }
 #dropdown_country_l4 {
 	fill: rgba(255,255,255,1);
@@ -2324,6 +2335,7 @@
 	height: 24px;
 	left: 234px;
 	top: 965px;
+	font-size: 12px;
 }
 #text_results {
 	left: 1415.5px;
@@ -2998,7 +3010,7 @@
 	height: 30px;
 	left: 714px;
 	top: 384px;
-	font-size: 18px;
+	font-size: 16px;
 }
 #CASUALS {
 	left: 789px;
