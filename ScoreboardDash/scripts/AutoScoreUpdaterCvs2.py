@@ -6,8 +6,11 @@ import pyautogui
 
 p1_win_condition = '../resources/cvs2/p1_win.png'
 p1_win_1_condition = '../resources/cvs2/p1_win_1.png'
+p1_win_2_condition = '../resources/cvs2/p1_win_2.png'
 p2_win_condition = '../resources/cvs2/p2_win.png'
 p2_win_1_condition = '../resources/cvs2/p2_win_1.png'
+p2_win_2_condition = '../resources/cvs2/p2_win_2.png'
+p2_win_s_condition = '../resources/cvs2/p2_win_s.png'
 stream_control_file = "../data/scoreboard.json"
 
 # Only allow player info to update once every 10 seconds
@@ -29,11 +32,17 @@ def check_win_conditions():
         elif pyautogui.locateCenterOnScreen(p1_win_1_condition, confidence=0.8):
             print("Player 1 Wins!!")
             add_to_score("p1Score")
+        elif pyautogui.locateCenterOnScreen(p1_win_2_condition, confidence=0.8):
+            print("Player 1 Wins!!!")
+            add_to_score("p1Score")
         elif pyautogui.locateCenterOnScreen(p2_win_condition, confidence=0.8):
             print("Player 2 Wins!")
             add_to_score("p2Score")
         elif pyautogui.locateCenterOnScreen(p2_win_1_condition, confidence=0.8):
             print("Player 2 Wins!!")
+            add_to_score("p2Score")
+        elif pyautogui.locateCenterOnScreen(p2_win_2_condition, confidence=0.8):
+            print("Player 2 Wins!!!")
             add_to_score("p2Score")
         # Check once a second
         time.sleep(1)

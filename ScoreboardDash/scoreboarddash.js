@@ -1,6 +1,6 @@
 // Creating a XHR object
 var xhr = new XMLHttpRequest();
-var url = "http://192.168.0.128:8080/";
+var url = "http://192.168.0.131:8080/";
 
 var jsonData;
 
@@ -19,7 +19,6 @@ function getDataFromServer() {
 }
 
 function populateData(data) {
-    console.log(data);
 	updateElement("form_name_1p", data.p1Name);
 	updateElement("form_name_2p", data.p2Name);
 	updateElement("form_team_1p", data.p1Team);
@@ -272,6 +271,7 @@ function countryDropdown2() {
 }
 
 function nextRound() {
+	getDataFromServer();
 	jsonData.resultscore1 = document.getElementById("form_score_1p").value;
 	jsonData.resultscore2 = document.getElementById("form_score_2p").value;
 	jsonData.resultplayer1 = document.getElementById("form_name_1p").value;
