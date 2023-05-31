@@ -1,6 +1,6 @@
 // Creating a XHR object
 var xhr = new XMLHttpRequest();
-var url = "http://192.168.0.131:8080/";
+var url = "http://192.168.0.168:8080/";
 
 var jsonData;
 
@@ -271,11 +271,24 @@ function countryDropdown2() {
 }
 
 function nextRound() {
-	getDataFromServer();
-	jsonData.resultscore1 = document.getElementById("form_score_1p").value;
-	jsonData.resultscore2 = document.getElementById("form_score_2p").value;
-	jsonData.resultplayer1 = document.getElementById("form_name_1p").value;
-	jsonData.resultplayer2 = document.getElementById("form_name_2p").value;
+    fetch(url + 'getdata')
+        .then(function (response) {
+        jsonData = response.json();
+      return jsonData;
+    })
+    .then(function (data) {
+        nextRoundUpdate(data);
+      })
+    .catch(function (err) {
+      console.log('error: ' + err);
+    });
+}
+
+function nextRoundUpdate(data) {
+	jsonData.resultscore1 = data.p1Score;
+	jsonData.resultscore2 = data.p2Score;
+	jsonData.resultplayer1 = data.p1Name;
+	jsonData.resultplayer2 = data.p2Name;
 	document.getElementById("form_results_score_1p").value = jsonData.resultscore1;
 	document.getElementById("form_results_score_2p").value = jsonData.resultscore2;
 	document.getElementById("form_results_name_1p").value = jsonData.resultplayer1;
@@ -286,24 +299,18 @@ function nextRound() {
 	document.getElementById("form_results_name_1p").style.opacity  = 0.5;
 	document.getElementById("form_results_name_2p").style.opacity  = 0.5;
 	
-	var team1 = document.getElementById("form_next_round_team_1p").value;
-	var player1 = document.getElementById("form_next_round_name_1p").value;
-	var team2 = document.getElementById("form_next_round_team_2p").value;
-	var player2 = document.getElementById("form_next_round_name_2p").value;
-    var c1 = document.getElementById("dropdown_country_next1").value;
-    var c2 = document.getElementById("dropdown_country_next2").value;
-    document.getElementById("dropdown_country_1p").value = c1;
-    document.getElementById("dropdown_country_2p").value = c2;
-	document.getElementById("form_team_1p").value = team1;
-	document.getElementById("form_name_1p").value = player1;
-	document.getElementById("form_team_2p").value = team2;
-	document.getElementById("form_name_2p").value = player2;
-	jsonData.p1Team = team1;
-	jsonData.p2Team = team2;
-	jsonData.p1Name = player1;
-	jsonData.p2Name = player2;
-	jsonData.p1Country = c1;
-	jsonData.p2Country = c2;
+    document.getElementById("dropdown_country_1p").value = data.nextcountry1;
+    document.getElementById("dropdown_country_2p").value = data.nextcountry2;
+	document.getElementById("form_team_1p").value = data.nextteam1;
+	document.getElementById("form_name_1p").value = data.nextplayer1;
+	document.getElementById("form_team_2p").value = data.nextteam2;
+	document.getElementById("form_name_2p").value = data.nextplayer2;
+	jsonData.p1Team = data.nextteam1;
+	jsonData.p2Team = data.nextteam2;
+	jsonData.p1Name = data.nextplayer1;
+	jsonData.p2Name = data.nextplayer2;
+	jsonData.p1Country = data.nextcountry1;
+	jsonData.p2Country = data.nextcountry2;
 	document.getElementById("form_score_1p").value = "0";
 	document.getElementById("form_score_2p").value = "0";
     document.getElementById("dropdown_country_next1").value = "US";

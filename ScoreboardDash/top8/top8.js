@@ -1,6 +1,6 @@
 // Creating a XHR object
 var xhr = new XMLHttpRequest();
-var url = "http://192.168.0.131:8080/";
+var url = "http://192.168.0.168:8080/";
 
 var jsonData;
 var lastRoundSuffix = [];
