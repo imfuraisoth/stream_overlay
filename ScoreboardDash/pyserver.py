@@ -8,11 +8,17 @@ from scripts import AutoScoreUpdaterSt
 from scripts import AutoScoreUpdaterCvs2
 from scripts import Top8
 import argparse
+import socket
+hostname = socket.getfqdn()
+server_ip = socket.gethostbyname(hostname)
+print("Server IP: " + server_ip)
+port = "8080"
+serverPort = int(port)
 
-server_info = open('../config/serverip.txt', 'r').readline().split(':')
-
-hostName = server_info[0]
-serverPort = int(server_info[1])
+server_info = server_ip + ":" + port
+config_file = open('../config/serverip.txt', "w")
+config_file.write(server_info)
+config_file.close()
 
 stream_control_file = "../data/scoreboard.json"
 player_1 = "../data/player1.txt"
@@ -323,6 +329,6 @@ if __name__ == "__main__":
             else:
                 print("Auto scoring enabled but no game defined. Please choose with options [-st, -cvs2]")
 
-        api.run(host=hostName, port=serverPort)
+        api.run(host=server_ip, port=serverPort)
     except KeyboardInterrupt:
         pass
