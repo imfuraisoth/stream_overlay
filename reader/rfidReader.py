@@ -1,16 +1,19 @@
 import RPi.GPIO as GPIO
 from mfrc522 import SimpleMFRC522
 import http.client
-import json, time, traceback
+import json, time, traceback, socket
 
 #3 second window for sending score update requests
 input_window = 3
 
+SERVER_NAME = "stream-laptop"
+SERVER_PORT = 8080
 ENDPOINT = "/updateplayer1"
 
 rfid = SimpleMFRC522()
+server_ip = socket.gethostbyname(SERVER_NAME)
 
-client = http.client.HTTPConnection('192.168.0.133', 8080, timeout=3)
+client = http.client.HTTPConnection(str(server_ip), SERVER_PORT, timeout=3)
 headers = {'Content-type': 'application/json'}
 
 last_id = (0, 0.0)
