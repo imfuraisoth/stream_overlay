@@ -6,7 +6,7 @@ import json, time, traceback, socket
 #3 second window for sending score update requests
 input_window = 3
 
-SERVER_NAME = "stream-laptop"
+SERVER_NAME = "stream-laptop.local"
 SERVER_PORT = 8080
 ENDPOINT = "/updateplayer1"
 
