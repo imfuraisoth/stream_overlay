@@ -1,6 +1,6 @@
 import json
 from io import open
-from flask import Flask
+from flask import Flask, send_from_directory
 from flask import request
 from flask_cors import CORS
 import time
@@ -9,6 +9,7 @@ from scripts import AutoScoreUpdaterCvs2
 from scripts import Top8
 import argparse
 import socket
+import os
 hostname = socket.getfqdn()
 server_ip = socket.gethostbyname(hostname)
 print("Server IP: " + server_ip)
@@ -43,6 +44,18 @@ auto_score_updater_st = AutoScoreUpdaterSt
 auto_score_updater_cvs2 = AutoScoreUpdaterCvs2
 top8 = Top8
 refresh_client = False
+
+
+# Serve your webpage files from the same directory
+@api.route('/')
+def serve_webpage():
+    return send_from_directory(os.path.dirname(__file__), 'index.html')
+
+
+# Serve static files (CSS, JS)
+@api.route('/<path:filename>')
+def serve_static(filename):
+    return send_from_directory(os.path.dirname(__file__), filename)
 
 
 @api.route('/registerClientRefresh', methods=['GET'])

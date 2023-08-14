@@ -1,11 +1,8 @@
 // Creating a XHR object
 var xhr = new XMLHttpRequest();
-var url = "http://192.168.0.168:8080/";
-
-var jsonData;
 
 function getDataFromServer() {
-    fetch(url + 'getdata')
+    fetch('/getdata')
         .then(function (response) {
         jsonData = response.json();
       return jsonData;
@@ -271,7 +268,7 @@ function countryDropdown2() {
 }
 
 function nextRound() {
-    fetch(url + 'getdata')
+    fetch('/getdata')
         .then(function (response) {
         jsonData = response.json();
       return jsonData;
@@ -344,7 +341,7 @@ function updateResults() {
 
 function triggerReplay() {
 	// open a connection
-	xhr.open("POST", url + 'replaystart', true);
+	xhr.open("POST", '/replaystart', true);
 
 	// Set the request header i.e. which type of content you are sending
 	xhr.setRequestHeader("Content-Type", "application/json");
@@ -362,7 +359,7 @@ function triggerReplay() {
 
 function stopReplay() {
 	// open a connection
-	xhr.open("POST", url + 'replaystop', true);
+	xhr.open("POST", '/replaystop', true);
 
 	// Set the request header i.e. which type of content you are sending
 	xhr.setRequestHeader("Content-Type", "application/json");
@@ -380,7 +377,7 @@ function stopReplay() {
 
 function sendJSON() {
 	// open a connection
-	xhr.open("POST", url + 'updatealldata', true);
+	xhr.open("POST", '/updatealldata', true);
 
 	// Set the request header i.e. which type of content you are sending
 	xhr.setRequestHeader("Content-Type", "application/json");
@@ -403,7 +400,7 @@ function sendJSON() {
 
 function registerClientForRefresh() {
     // Open a connection to the server
-    xhr.open("GET", url + "/registerClientRefresh", true);
+    xhr.open("GET", "/registerClientRefresh", true);
 	// Set the request header i.e. which type of content you are sending
 	xhr.setRequestHeader("Content-Type", "application/json");
 

@@ -1,6 +1,5 @@
 // Creating a XHR object
 var xhr = new XMLHttpRequest();
-var url = "http://192.168.0.168:8080/";
 
 var jsonData;
 var lastRoundSuffix = [];
@@ -21,7 +20,7 @@ var roundSuffixMap = {
 }
 
 function getDataFromServer() {
-    fetch(url + 'getdata')
+    fetch('/getdata')
         .then(function (response) {
         jsonData = response.json();
       return jsonData;
@@ -34,7 +33,7 @@ function getDataFromServer() {
     });
 }
 
-fetch(url + 'getTop8PlayerData')
+fetch('/getTop8PlayerData')
 	.then(function (response) {
 	top8Data = response.json();
   return top8Data;
@@ -89,7 +88,7 @@ function populateTop8Player(suffix, data, round, player, includeCountry) {
 
 function setAsNextRound(round, suffix1, suffix2) {
     // open a connection
-    xhr.open("POST", url + 'setNextRound', true);
+    xhr.open("POST", '/setNextRound', true);
     // Set the request header i.e. which type of content you are sending
     xhr.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
     // Create a state change callback
@@ -432,7 +431,7 @@ function countryDropdown(id, round, player) {
 
 function updateTop8PlayerInfo(round, player, field, value) {
     // open a connection
-    xhr.open("POST", url + 'updateTop8playerInfo', true);
+    xhr.open("POST", '/updateTop8playerInfo', true);
     // Set the request header i.e. which type of content you are sending
     xhr.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
     // Create a state change callback
@@ -556,7 +555,7 @@ function updateCurrentAndNextInfoUpdatePlayerData(currentNextData) {
 
 function getJsonDataFromServerWithArgs(endpoint, callback, arg1, arg2, arg3) {
 	// open a connection
-	xhr.open("GET", url + endpoint, true);
+	xhr.open("GET", '/' + endpoint, true);
 
 	// Set the request header i.e. which type of content you are sending
 	xhr.setRequestHeader("Content-Type", "application/json");
@@ -574,7 +573,7 @@ function getJsonDataFromServerWithArgs(endpoint, callback, arg1, arg2, arg3) {
 
 function getJsonDataFromServer(endpoint, callback) {
 	// open a connection
-	xhr.open("GET", url + endpoint, true);
+	xhr.open("GET", '/' + endpoint, true);
 
 	// Set the request header i.e. which type of content you are sending
 	xhr.setRequestHeader("Content-Type", "application/json");
@@ -604,7 +603,7 @@ function updateResults() {
 
 function callServer(endpoint) {
 	// open a connection
-	xhr.open("POST", url + endpoint, true);
+	xhr.open("POST", '/' + endpoint, true);
 
 	// Set the request header i.e. which type of content you are sending
 	xhr.setRequestHeader("Content-Type", "application/json");
@@ -621,7 +620,7 @@ function callServer(endpoint) {
 
 function resetTop8() {
 	// open a connection
-	xhr.open("POST", url + 'resetTop8', true);
+	xhr.open("POST", '/resetTop8', true);
 
 	// Set the request header i.e. which type of content you are sending
 	xhr.setRequestHeader("Content-Type", "application/json");
@@ -651,7 +650,7 @@ function resetTop8() {
 
 function updateAllData(callback) {
     // open a connection
-	xhr.open("POST", url + 'updatealldata', true);
+	xhr.open("POST", '/updatealldata', true);
 
 	// Set the request header i.e. which type of content you are sending
 	xhr.setRequestHeader("Content-Type", "application/json");
@@ -682,7 +681,7 @@ function sendJsonToEndpoint(endpoint) {
 
 function sendJsonToEndpointWithCallback(callback, endpoint) {
     // open a connection
-	xhr.open("POST", url + endpoint, true);
+	xhr.open("POST", endpoint, true);
 
 	// Set the request header i.e. which type of content you are sending
 	xhr.setRequestHeader("Content-Type", "application/json");
@@ -705,7 +704,7 @@ function sendJsonToEndpointWithCallback(callback, endpoint) {
 
 function registerClientForRefresh() {
     // Open a connection to the server
-    xhr.open("GET", url + "/registerClientRefresh", true);
+    xhr.open("GET", "/registerClientRefresh", true);
 	// Set the request header i.e. which type of content you are sending
 	xhr.setRequestHeader("Content-Type", "application/json");
 

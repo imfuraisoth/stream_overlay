@@ -1,10 +1,9 @@
 // Creating a XHR object
 var xhr = new XMLHttpRequest();
-var url = "http://192.168.0.168:8080/";
 
 var jsonData;
 
-fetch(url + 'getdata')
+fetch('/getdata')
 	.then(function (response) {
 	jsonData = response.json();
   return jsonData;
@@ -68,7 +67,7 @@ function reverseCommentatorNames() {
 
 function sendJSON() {
 	// open a connection
-	xhr.open("POST", url + 'updatealldata', true);
+	xhr.open("POST", '/updatealldata', true);
 
 	// Set the request header i.e. which type of content you are sending
 	xhr.setRequestHeader("Content-Type", "application/json");
