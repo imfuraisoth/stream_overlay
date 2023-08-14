@@ -10,11 +10,13 @@ from scripts import Top8
 import argparse
 import socket
 import os
+import webbrowser
+
 hostname = socket.getfqdn()
 server_ip = socket.gethostbyname(hostname)
 print("Server IP: " + server_ip)
 port = "8080"
-serverPort = int(port)
+server_port = int(port)
 
 server_info = server_ip + ":" + port
 config_file = open('../config/serverip.txt', "w")
@@ -323,6 +325,10 @@ def read_file(file_name):
         return result
 
 
+def open_browser(url, chrome_path):
+    webbrowser.get(chrome_path).open(url)
+
+
 if __name__ == "__main__":
     try:
         print("Now we talk'n, server started ...")
@@ -330,9 +336,13 @@ if __name__ == "__main__":
         parser.add_argument("-a", "--AutoScore", action='store_true', dest='AutoScore', help="Enable auto scoring")
         parser.add_argument("-st", "--St", action='store_true', dest='St', help="Enables ST")
         parser.add_argument("-cvs2", "--Cvs2", action='store_true', dest='Cvs2', help="Enables CVS2")
+
+        parser.add_argument("-w", "--windows", action='store_true', dest='windows', help="Open browser for Windows")
+        parser.add_argument("-m", "--mac", action='store_true', dest='mac', help="Open browser for Mac")
+        parser.add_argument("-l", "--linux", action='store_true', dest='linus', help="Open browser for Linux")
+
         # Read arguments from command line
         args = parser.parse_args()
-
         if args.AutoScore:
             # Experimental
             if args.St:
@@ -342,6 +352,13 @@ if __name__ == "__main__":
             else:
                 print("Auto scoring enabled but no game defined. Please choose with options [-st, -cvs2]")
 
-        api.run(host=server_ip, port=serverPort)
+        if args.windows:
+            open_browser("http://" + server_info, 'C:/Program Files (x86)/Google/Chrome/Application/chrome.exe %s')
+        elif args.mac:
+            open_browser("http://" + server_info, 'open -a /Applications/Google\ Chrome.app %s')
+        elif args.linux:
+            open_browser("http://" + server_info, '/usr/bin/google-chrome %s')
+
+        api.run(host=server_ip, port=server_port)
     except KeyboardInterrupt:
         pass
