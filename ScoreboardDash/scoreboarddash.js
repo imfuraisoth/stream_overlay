@@ -286,6 +286,8 @@ function nextRoundUpdate(data) {
 	jsonData.resultscore2 = data.p2Score;
 	jsonData.resultplayer1 = data.p1Name;
 	jsonData.resultplayer2 = data.p2Name;
+	jsonData.round = data.round;
+	document.getElementById("dropdown_round").value = jsonData.round;
 	document.getElementById("form_results_score_1p").value = jsonData.resultscore1;
 	document.getElementById("form_results_score_2p").value = jsonData.resultscore2;
 	document.getElementById("form_results_name_1p").value = jsonData.resultplayer1;

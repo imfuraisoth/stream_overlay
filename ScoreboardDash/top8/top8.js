@@ -88,7 +88,7 @@ function populateTop8Player(suffix, data, round, player, includeCountry) {
 
 function setAsNextRound(round, suffix1, suffix2) {
     // open a connection
-    xhr.open("POST", '/setNextRound', true);
+    xhr.open("POST", '../setNextRound', true);
     // Set the request header i.e. which type of content you are sending
     xhr.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
     // Create a state change callback
@@ -431,7 +431,7 @@ function countryDropdown(id, round, player) {
 
 function updateTop8PlayerInfo(round, player, field, value) {
     // open a connection
-    xhr.open("POST", '/updateTop8playerInfo', true);
+    xhr.open("POST", '../updateTop8playerInfo', true);
     // Set the request header i.e. which type of content you are sending
     xhr.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
     // Create a state change callback
@@ -603,7 +603,7 @@ function updateResults() {
 
 function callServer(endpoint) {
 	// open a connection
-	xhr.open("POST", '/' + endpoint, true);
+	xhr.open("POST", '../' + endpoint, true);
 
 	// Set the request header i.e. which type of content you are sending
 	xhr.setRequestHeader("Content-Type", "application/json");
@@ -620,7 +620,7 @@ function callServer(endpoint) {
 
 function resetTop8() {
 	// open a connection
-	xhr.open("POST", '/resetTop8', true);
+	xhr.open("POST", '../resetTop8', true);
 
 	// Set the request header i.e. which type of content you are sending
 	xhr.setRequestHeader("Content-Type", "application/json");
@@ -650,7 +650,7 @@ function resetTop8() {
 
 function updateAllData(callback) {
     // open a connection
-	xhr.open("POST", '/updatealldata', true);
+	xhr.open("POST", '../updatealldata', true);
 
 	// Set the request header i.e. which type of content you are sending
 	xhr.setRequestHeader("Content-Type", "application/json");
@@ -681,7 +681,7 @@ function sendJsonToEndpoint(endpoint) {
 
 function sendJsonToEndpointWithCallback(callback, endpoint) {
     // open a connection
-	xhr.open("POST", endpoint, true);
+	xhr.open("POST", "../" + endpoint, true);
 
 	// Set the request header i.e. which type of content you are sending
 	xhr.setRequestHeader("Content-Type", "application/json");

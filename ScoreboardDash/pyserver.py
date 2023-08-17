@@ -47,11 +47,10 @@ auto_score_updater_cvs2 = AutoScoreUpdaterCvs2
 top8 = Top8
 refresh_client = False
 
-
 # Serve your webpage files from the same directory
-@api.route('/')
-def serve_webpage():
-    return send_from_directory(os.path.dirname(__file__), 'index.html')
+# @api.route('/')
+# def serve_webpage():
+#     return send_from_directory(os.path.dirname(__file__), 'index.html')
 
 
 # Serve static files (CSS, JS)
@@ -339,7 +338,7 @@ if __name__ == "__main__":
 
         parser.add_argument("-w", "--windows", action='store_true', dest='windows', help="Open browser for Windows")
         parser.add_argument("-m", "--mac", action='store_true', dest='mac', help="Open browser for Mac")
-        parser.add_argument("-l", "--linux", action='store_true', dest='linus', help="Open browser for Linux")
+        parser.add_argument("-l", "--linux", action='store_true', dest='linux', help="Open browser for Linux")
 
         # Read arguments from command line
         args = parser.parse_args()
