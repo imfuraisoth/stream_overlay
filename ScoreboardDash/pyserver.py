@@ -48,9 +48,9 @@ top8 = Top8
 refresh_client = False
 
 # Serve your webpage files from the same directory
-# @api.route('/')
-# def serve_webpage():
-#     return send_from_directory(os.path.dirname(__file__), 'index.html')
+@api.route('/')
+def serve_webpage():
+    return send_from_directory(os.path.dirname(__file__), 'index.html')
 
 
 # Serve static files (CSS, JS)
