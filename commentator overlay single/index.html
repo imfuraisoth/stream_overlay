@@ -23,8 +23,7 @@
         var request = new XMLHttpRequest();
         request.open("GET", "../config/serverip.txt", false);
         request.send(null);
-        var returnValue = request.responseText;
-        return returnValue;
+        return request.responseText;
     }
 
     function loadElements() {
