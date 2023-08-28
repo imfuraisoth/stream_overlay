@@ -14,6 +14,8 @@
     height: 50px;
     line-height: 100px;
     width: 250px;
+    user-select: none;
+    cursor: grab;
 }
 
 #socWrapper {
@@ -24,6 +26,18 @@
     height: 70px;
     line-height: 70px;
     width: 400px;
+    user-select: none;
+    cursor: grab;
+}
+
+#np1Div {
+    user-select: none;
+    cursor: grab;
+}
+
+#np2Div {
+    user-select: none;
+    cursor: grab;
 }
 
 #name1 {

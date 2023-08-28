@@ -9,15 +9,21 @@
     <link rel="stylesheet" href="https://use.typekit.net/ogo7pba.css">
     <title>Commentator Overlay</title>
     <link href="style.css" rel="stylesheet" type="text/css" />
+    <script src="https://code.jquery.com/jquery-3.6.0.js"></script>
+    <script src="https://code.jquery.com/ui/1.13.2/jquery-ui.js"></script>
     <script src="https://kit.fontawesome.com/2c93766a80.js" crossorigin="anonymous"></script>
   </head>
   <body>
+    <div draggable="true" id="comWrapper"></div>
+    <div draggable="true" id="socWrapper"></div>
+
     <script>
     var com1Value = "";
     var soc1Value = "";
     var nextPlayer1 = "";
     var nextPlayer2 = "";
     var serverIp = readServerIp();
+<!--  var serverIp = "???.???.???.???:8080";-->
 
     function readServerIp() {
         var request = new XMLHttpRequest();
@@ -111,6 +117,11 @@
               }
             }
           }
+
+        $(function() {
+          $( "#comWrapper" ).draggable();
+          $( "#socWrapper" ).draggable();
+        });
     }
 
     function fadeOutElement(element) {
@@ -130,6 +141,21 @@
     }
 
     window.setInterval(loadElements, 2000);
+
+    document.addEventListener('mouseup', () => {
+      var comWrapper = document.getElementById("comWrapper");
+      printElementLocation(comWrapper, "Com");
+      var socWrapper = document.getElementById("socWrapper");
+      printElementLocation(socWrapper, "Soc");
+    });
+
+    function printElementLocation(element, name) {
+      if (element != null) {
+        const left = element.getBoundingClientRect().left;
+        const top = element.getBoundingClientRect().top;
+        console.log(`${name} Position Left: ${left}px, ${name} Position Top: ${top}px`);
+      }
+    }
     </script>
   </body>
 </html>
