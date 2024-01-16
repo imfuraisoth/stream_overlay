@@ -16,9 +16,9 @@ has_updated = False
 
 # Get the screen resolution size
 screen_width, screen_height = pyautogui.size()
-p1_left, p1_top, p1_width, p1_height = int(screen_width * 29 / 100), 150, 150, 85
-p2_left, p2_top, p2_width, p2_height = int(screen_width * 65 / 100), 150, 150, 85
-check_regions = True
+p1_left, p1_top, p1_width, p1_height = int(screen_width * 29 / 100), 150, 90, 50
+p2_left, p2_top, p2_width, p2_height = int(screen_width * 62 / 100), 150, 90, 50
+check_regions = False
 
 
 def auto_update_scores():
