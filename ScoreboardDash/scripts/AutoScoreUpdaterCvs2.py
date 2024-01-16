@@ -44,9 +44,12 @@ last_score_update_timestamp = 0
 has_updated = False
 # Set a threshold to determine if the image is on the screen
 threshold = 0.8  # Adjust this threshold as needed
+
+# Get the screen resolution size
+screen_width, screen_height = pyautogui.size()
 # Set the region to capture (left, top, width, height)
-p1_region = (1700, 70, 200, 100)  # Update with your desired region
-p2_region = (2200, 70, 200, 100)  # Update with your desired region
+p1_region = (screen_width * 44 / 100, 70, 200, 100)  # Update with your desired region
+p2_region = (screen_width * 77 / 100, 70, 200, 100)  # Update with your desired region
 check_regions = True
 
 
@@ -67,7 +70,7 @@ def capture_screen(region):
 
 def show_regions():
     if check_regions:
-        capture_region = (0, 0, 3840, 2160)
+        capture_region = (0, 0, screen_width, screen_height)
         screen = capture_screen(capture_region)
         draw_region(screen, p1_region[0], p1_region[1], p1_region[2], p1_region[3])
         draw_region(screen, p2_region[0], p2_region[1], p2_region[2], p2_region[3])

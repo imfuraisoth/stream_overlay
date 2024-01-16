@@ -7,6 +7,7 @@ import time
 from scripts import AutoScoreUpdaterSt
 from scripts import AutoScoreUpdaterCvs2
 from scripts import Top8
+from scripts import AutoScoreUpdaterCPS1
 import argparse
 import socket
 import os
@@ -44,6 +45,7 @@ previous_player_2 = (0, 0.0)
 player_info_update_window = 1
 auto_score_updater_st = AutoScoreUpdaterSt
 auto_score_updater_cvs2 = AutoScoreUpdaterCvs2
+auto_score_updater_cps1 = AutoScoreUpdaterCPS1
 top8 = Top8
 refresh_client = False
 
@@ -335,6 +337,7 @@ if __name__ == "__main__":
         parser.add_argument("-a", "--AutoScore", action='store_true', dest='AutoScore', help="Enable auto scoring")
         parser.add_argument("-st", "--St", action='store_true', dest='St', help="Enables ST")
         parser.add_argument("-cvs2", "--Cvs2", action='store_true', dest='Cvs2', help="Enables CVS2")
+        parser.add_argument("-cps1", "--CPS1", action='store_true', dest='CPS1', help="Enables CPS1")
 
         parser.add_argument("-w", "--windows", action='store_true', dest='windows', help="Open browser for Windows")
         parser.add_argument("-m", "--mac", action='store_true', dest='mac', help="Open browser for Mac")
@@ -348,6 +351,8 @@ if __name__ == "__main__":
                 auto_score_updater_st.auto_update_scores()
             elif args.Cvs2:
                 auto_score_updater_cvs2.auto_update_scores()
+            elif args.CPS1:
+                auto_score_updater_cps1.auto_update_scores()
             else:
                 print("Auto scoring enabled but no game defined. Please choose with options [-st, -cvs2]")
 
