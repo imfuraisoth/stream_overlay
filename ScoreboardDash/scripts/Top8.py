@@ -192,16 +192,16 @@ defaultPlayerData = {
 player_data_file_name = "../data/top8_players.json"
 scoreboard_json_file = "../data/scoreboard.json"
 current_next_data_file = "../data/current_next.json"
-winner_round_progression_mapping = {1: "r7:p1", 2: "r7:p2", 3: "r5:p1", 4: "r6:p1", 5: "r8:p1", 6: "r8:p2", 7: "r10:p1", 8: "r9:p1", 9: "r10:p2"}
-losers_round_progression_mapping = {1: "r6:p2", 2: "r5:p2", 7: "r9:p2"}
+winner_round_progression_mapping = {1: "r7:p1", 2: "r7:p2", 3: "r5:p1", 4: "r6:p1", 5: "r10:p1", 6: "r8:p1", 7: "r8:p2", 8: "r9:p1", 9: "r10:p2"}
+losers_round_progression_mapping = {1: "r6:p2", 2: "r5:p2", 5: "r9:p2"}
 roundNamesMap = {
     1: "Winners Semis",
     2: "Winners Semis",
     3: "Losers Round 1",
     4: "Losers Round 1",
-    5: "Losers Quarters",
+    5: "Winners Finals",
     6: "Losers Quarters",
-    7: "Winners Finals",
+    7: "Losers Quarters",
     8: "Losers Semis",
     9: "Losers Finals",
     10: "Grand Finals",
@@ -306,7 +306,6 @@ def progress_to_next_round():
     if current_round >= 10:
         return update_final_round(global_player_data, current_next_data, p1_score_string, p2_score_string, current_round)
 
-    global winner_round_progression_mapping
     if p1_winner:
         update_winner_player_data(global_player_data, result1, current_round)
     else:
@@ -378,7 +377,14 @@ def progress_to_next_round():
 
 def add_placeholder_names(next_round):
     global current_next_data
-    if next_round == 9:
+    if next_round == 8:
+        if len(current_next_data["nextPlayer1"]["name"]) == 0:
+            current_next_data["nextPlayer1"]["name"] = "Winner"
+        else:
+            current_next_data["nextPlayer2"]["name"] = "Winner"
+        current_next_data["nextRound"] = 8
+        current_next_data["nextRoundOverride"] = True
+    elif next_round == 9:
         current_next_data["nextPlayer1"]["name"] = "Winner"
         current_next_data["nextRound"] = 9
         current_next_data["nextRoundOverride"] = True

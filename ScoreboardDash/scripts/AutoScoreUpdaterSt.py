@@ -3,17 +3,22 @@ import threading
 import time
 from io import open
 import pyautogui
+import cv2
+import numpy as np
 
-p1_win_condition = '../resources/st/p1_win.png'
-p1_win_condition_2 = '../resources/st/p1_win_no_damage.png'
-p2_win_condition = '../resources/st/p2_win.png'
-p2_win_condition_2 = '../resources/st/p2_win_no_damage.png'
+win_condition = '../resources/st/win.png'
 stream_control_file = "../data/scoreboard.json"
 
 # Only allow player info to update once every 10 seconds
-player_info_update_window = 10
+player_info_update_window = 15
 last_score_update_timestamp = 0
 has_updated = False
+
+# Get the screen resolution size
+screen_width, screen_height = pyautogui.size()
+p1_left, p1_top, p1_width, p1_height = int(screen_width * 29 / 100), 150, 90, 50
+p2_left, p2_top, p2_width, p2_height = int(screen_width * 62 / 100), 150, 90, 50
+check_regions = False
 
 
 def auto_update_scores():
@@ -22,47 +27,65 @@ def auto_update_scores():
     checker.start()
 
 
+def draw_region(image, x, y, width, height):
+    cv2.rectangle(image, (x, y), (x + width, y + height), (0, 255, 0), 2)  # Draw a green rectangle
+
+
+def capture_screen(region):
+    screenshot = cv2.cvtColor(np.array(pyautogui.screenshot(region=region)), cv2.COLOR_RGB2BGR)
+    return screenshot
+
+
+def show_regions():
+    if check_regions:
+        capture_region = (0, 0, screen_width, screen_height)
+        screen = capture_screen(capture_region)
+        draw_region(screen, p1_left, p1_top, p1_width, p1_height)
+        draw_region(screen, p2_left, p2_top, p2_width, p2_height)
+        cv2.imshow('Captured Screen', screen)
+        cv2.waitKey(0)
+
+
 def check_win_conditions():
+    show_regions()
     while True:
-        if pyautogui.locateCenterOnScreen(p1_win_condition_2, confidence=0.8):
-            print("Player 1 Wins! Perfect!")
-            add_to_score("p1Score")
-        elif pyautogui.locateCenterOnScreen(p1_win_condition, confidence=0.8):
+        if pyautogui.locateOnScreen(win_condition, region=(p1_left, p1_top, p1_width, p1_height), confidence=0.8):
             print("Player 1 Wins!")
-            add_to_score("p1Score")
-        elif pyautogui.locateCenterOnScreen(p2_win_condition_2, confidence=0.8):
-            print("Player 2 Wins! Perfect!")
-            add_to_score("p2Score")
-        elif pyautogui.locateCenterOnScreen(p2_win_condition, confidence=0.8):
+            add_to_score("p1Score", "p2Score")
+        elif pyautogui.locateOnScreen(win_condition, region=(p2_left, p2_top, p2_width, p2_height), confidence=0.8):
             print("Player 2 Wins!")
-            add_to_score("p2Score")
+            add_to_score("p2Score", "p1Score")
         # Check once a second
         time.sleep(1)
 
 
-def add_to_score(score_key):
+def add_to_score(score_to_add_key, other_player_score_key):
     global last_score_update_timestamp
     current_time = time.time()
     if current_time - player_info_update_window < last_score_update_timestamp:
         return
 
     full_data = read_file(stream_control_file)
-    current_score = int(full_data[score_key])
-    max_score = int(full_data["maxScore"])
-    if current_score >= max_score:
+    current_score = int(full_data.get(score_to_add_key, "0"))
+    other_score = int(full_data.get(other_player_score_key, "0"))
+    max_score = int(full_data.get('maxScore', "99"))
+    if current_score >= max_score or other_score >= max_score:
+        print("This game has already concluded. No more scores will be added")
         return
 
     last_score_update_timestamp = current_time
-    full_data[score_key] = str(current_score + 1)
+    full_data[score_to_add_key] = str(current_score + 1)
     with open(stream_control_file, 'w', encoding="utf-8") as json_file:
         json_file.write(json.dumps(full_data, ensure_ascii=False))
+        global has_updated
+        has_updated = True
 
 
 def has_updated_score():
     global has_updated
     if has_updated:
         has_updated = False
-        return True    
+        return True
     return has_updated
 
 

@@ -49,6 +49,7 @@ auto_score_updater_cps1 = AutoScoreUpdaterCPS1
 top8 = Top8
 refresh_client = False
 
+
 # Serve your webpage files from the same directory
 @api.route('/')
 def serve_webpage():
@@ -69,6 +70,8 @@ def register_client_refresh():
         if auto_score_updater_cvs2.has_updated_score():
             break
         elif auto_score_updater_st.has_updated_score():
+            break
+        elif auto_score_updater_cps1.has_updated_score():
             break
         time.sleep(1)
 

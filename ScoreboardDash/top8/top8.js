@@ -10,9 +10,9 @@ var roundSuffixMap = {
     2: ["w3", "w4"],
     3: ["l1", "l2"],
     4: ["l3", "l4"],
-    5: ["l1_lq", "l2_lq"],
-    6: ["l3_lq", "l4_lq"],
-    7: ["w1_wf", "w2_wf"],
+    5: ["w1_wf", "w2_wf"],
+    6: ["l1_lq", "l2_lq"],
+    7: ["l3_lq", "l4_lq"],
     8: ["l1_ls", "l2_ls"],
     9: ["l1_lf", "l2_lf"],
     10: ["w1_gf", "w2_gf"],
@@ -55,14 +55,14 @@ function populateTop8PlayerData(data) {
     populateTop8Player("l2", data, "r3", "p2", true)
     populateTop8Player("l3", data, "r4", "p1", true)
     populateTop8Player("l4", data, "r4", "p2", true)
-    populateTop8Player("w1_wf", data, "r7", "p1")
-    populateTop8Player("w2_wf", data, "r7", "p2")
+    populateTop8Player("w1_wf", data, "r5", "p1")
+    populateTop8Player("w2_wf", data, "r5", "p2")
     populateTop8Player("w1_gf", data, "r10", "p1")
     populateTop8Player("w2_gf", data, "r10", "p2")
-    populateTop8Player("l1_lq", data, "r5", "p1")
-    populateTop8Player("l2_lq", data, "r5", "p2")
-    populateTop8Player("l3_lq", data, "r6", "p1")
-    populateTop8Player("l4_lq", data, "r6", "p2")
+    populateTop8Player("l1_lq", data, "r6", "p1")
+    populateTop8Player("l2_lq", data, "r6", "p2")
+    populateTop8Player("l3_lq", data, "r7", "p1")
+    populateTop8Player("l4_lq", data, "r7", "p2")
     populateTop8Player("l1_ls", data, "r8", "p1")
     populateTop8Player("l2_ls", data, "r8", "p2")
     populateTop8Player("l1_lf", data, "r9", "p1")

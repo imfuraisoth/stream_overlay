@@ -19,9 +19,9 @@ def get_image_to_match(filename):
 
     # template = cv2.bitwise_not(template)
     # cv2.imwrite('template.png', template)
-    cv2.imwrite('image_to_detect.png', image_to_detect)
+    # cv2.imwrite('image_to_detect.png', image_to_detect)
     image_to_detect = cv2.cvtColor(image_to_detect, cv2.COLOR_BGR2GRAY)
-    cv2.imwrite('image_to_detect_gray.png', image_to_detect)
+    # cv2.imwrite('image_to_detect_gray.png', image_to_detect)
     return image_to_detect, image_to_detect
 
 
@@ -87,12 +87,12 @@ def check_win_conditions():
         screenshot = cv2.cvtColor(screenshot, cv2.COLOR_BGR2GRAY)
         if check_image(screenshot, win_condition_1, win_mask_1, threshold):
             print("Player 1 Wins!")
-            add_to_score("p1Score")
+            add_to_score("p1Score", "p2Score")
             time.sleep(1)
             continue
         elif check_image(screenshot, win_condition_2, win_mask_2, threshold):
             print("Player 1 Wins!!")
-            add_to_score("p1Score")
+            add_to_score("p1Score", "p2Score")
             time.sleep(1)
             continue
 
@@ -102,12 +102,12 @@ def check_win_conditions():
         screenshot = cv2.cvtColor(screenshot, cv2.COLOR_BGR2GRAY)
         if check_image(screenshot, win_condition_1, win_mask_1, threshold):
             print("Player 2 Wins!")
-            add_to_score("p2Score")
+            add_to_score("p2Score", "p1Score")
             time.sleep(1)
             continue
         elif check_image(screenshot, win_condition_2, win_mask_2, threshold):
             print("Player 2 Wins!!")
-            add_to_score("p2Score")
+            add_to_score("p2Score", "p1Score")
 
         # elif pyautogui.locateCenterOnScreen(p1_win_2_condition, confidence=0.8):
         #     print("Player 1 Wins!!!")
@@ -125,20 +125,22 @@ def check_win_conditions():
         time.sleep(1)
 
 
-def add_to_score(score_key):
+def add_to_score(score_to_add_key, other_player_score_key):
     global last_score_update_timestamp
     current_time = time.time()
     if current_time - player_info_update_window < last_score_update_timestamp:
         return
 
     full_data = read_file(stream_control_file)
-    current_score = int(full_data[score_key])
-    max_score = int(full_data["maxScore"])
-    if current_score >= max_score:
+    current_score = int(full_data.get(score_to_add_key, "0"))
+    other_score = int(full_data.get(other_player_score_key, "0"))
+    max_score = int(full_data.get('maxScore', "99"))
+    if current_score >= max_score or other_score >= max_score:
+        print("This game has already concluded. No more scores will be added")
         return
 
     last_score_update_timestamp = current_time
-    full_data[score_key] = str(current_score + 1)
+    full_data[score_to_add_key] = str(current_score + 1)
     with open(stream_control_file, 'w', encoding="utf-8") as json_file:
         json_file.write(json.dumps(full_data, ensure_ascii=False))
         global has_updated
