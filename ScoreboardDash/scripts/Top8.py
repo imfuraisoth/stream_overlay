@@ -192,8 +192,8 @@ defaultPlayerData = {
 player_data_file_name = "../data/top8_players.json"
 scoreboard_json_file = "../data/scoreboard.json"
 current_next_data_file = "../data/current_next.json"
-winner_round_progression_mapping = {1: "r7:p1", 2: "r7:p2", 3: "r5:p1", 4: "r6:p1", 5: "r10:p1", 6: "r8:p1", 7: "r8:p2", 8: "r9:p1", 9: "r10:p2"}
-losers_round_progression_mapping = {1: "r6:p2", 2: "r5:p2", 5: "r9:p2"}
+winner_round_progression_mapping = {1: "r5:p1", 2: "r5:p2", 3: "r6:p1", 4: "r7:p1", 5: "r10:p1", 6: "r8:p1", 7: "r8:p2", 8: "r9:p1", 9: "r10:p2"}
+losers_round_progression_mapping = {1: "r7:p2", 2: "r6:p2", 5: "r9:p2"}
 roundNamesMap = {
     1: "Winners Semis",
     2: "Winners Semis",
@@ -529,6 +529,8 @@ def reset():
 
 def update_current_players_info(scoreboard_json):
     global current_next_data
+    if not current_next_data["started"]:
+        return
     current_next_data["player1"]["name"] = scoreboard_json["p1Name"]
     current_next_data["player1"]["team"] = scoreboard_json["p1Team"]
     current_next_data["player1"]["score"] = scoreboard_json["p1Score"]

@@ -188,12 +188,12 @@ function updateNextTeam2() {
 
 function updateScore1() {
 	jsonData.p1Score = document.getElementById("form_score_1p").value;
-	sendJsonToEndpoint('updateCurrentPlayers');
+	sendJsonToEndpoint('updateP1score');
 }
 
 function updateScore2() {
 	jsonData.p2Score = document.getElementById("form_score_2p").value;
-	sendJsonToEndpoint('updateCurrentPlayers');
+	sendJsonToEndpoint('updateP2score');
 }
 
 function updateRound() {
@@ -218,7 +218,7 @@ function resetNamesAndScore() {
 	jsonData.p2Country = "";
 	jsonData.p1Score = "0";
 	jsonData.p2Score = "0";
-	sendJsonToEndpoint('updateCurrentPlayers');
+	sendJsonToEndpoint("updatealldata");
 }
 
 function reversePlayerNames() {
@@ -254,7 +254,7 @@ function reverseScores() {
 	document.getElementById("form_score_2p").value = p1;
 	jsonData.p1Score = p2;
 	jsonData.p2Score = p1;
-	sendJsonToEndpoint('updateCurrentPlayers');
+	sendJsonToEndpoint('updateCurrentScore');
 }
 
 function addScoreP1() {
@@ -262,7 +262,7 @@ function addScoreP1() {
 	score++;
 	jsonData.p1Score = score.toString();
 	document.getElementById("form_score_1p").value = jsonData.p1Score;
-	sendJsonToEndpoint('updateCurrentPlayers');
+	sendJsonToEndpoint('updateP1score');
 }
 
 function subtractScoreP1() {
@@ -273,7 +273,7 @@ function subtractScoreP1() {
 	score--;
 	jsonData.p1Score = score.toString();
 	document.getElementById("form_score_1p").value = jsonData.p1Score;
-	sendJsonToEndpoint('updateCurrentPlayers');
+	sendJsonToEndpoint('updateP1score');
 }
 
 function addScoreP2() {
@@ -281,7 +281,7 @@ function addScoreP2() {
 	score++;
 	jsonData.p2Score = score.toString();
 	document.getElementById("form_score_2p").value = jsonData.p2Score;
-	sendJsonToEndpoint('updateCurrentPlayers');
+	sendJsonToEndpoint('updateP2score');
 }
 
 function subtractScoreP2() {
@@ -292,7 +292,7 @@ function subtractScoreP2() {
 	score--;
 	jsonData.p2Score = score.toString();
 	document.getElementById("form_score_2p").value = jsonData.p2Score;
-	sendJsonToEndpoint('updateCurrentPlayers');
+	sendJsonToEndpoint('updateP2score');
 }
 
 function resetScores() {
@@ -300,7 +300,7 @@ function resetScores() {
 	document.getElementById("form_score_2p").value = "0";
 	jsonData.p1Score = "0";
 	jsonData.p2Score = "0";
-	sendJsonToEndpoint('updateCurrentPlayers');
+	sendJsonToEndpoint('updateCurrentScore');
 }
 
 function resetAll() {
@@ -669,10 +669,6 @@ function updateAllData(callback) {
 	var data = JSON.stringify(jsonData);
 	// Sending data with the request
 	xhr.send(data);
-}
-
-function sendJSON() {
-	updateAllData(function (){})
 }
 
 function sendJsonToEndpoint(endpoint) {

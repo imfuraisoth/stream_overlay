@@ -87,12 +87,12 @@ function updateNextTeam2() {
 
 function updateScore1() {
 	jsonData.p1Score = document.getElementById("form_score_1p").value;
-	sendJSON();
+	sendJsonToEndpoint("updateP1score");
 }
 
 function updateScore2() {
 	jsonData.p2Score = document.getElementById("form_score_2p").value;
-	sendJSON();
+	sendJsonToEndpoint("updateP2score");
 }
 
 function updateRound() {
@@ -132,7 +132,7 @@ function resetNamesAndScore() {
 	jsonData.p2Country = "";
 	jsonData.p1Score = "0";
 	jsonData.p2Score = "0";
-	sendJSON();
+	sendJsonToEndpoint("updatealldata");
 }
 
 function reversePlayerNames() {
@@ -162,7 +162,7 @@ function reverseScores() {
 	document.getElementById("form_score_2p").value = p1;
 	jsonData.p1Score = p2;
 	jsonData.p2Score = p1;
-	sendJSON();
+	sendJsonToEndpoint('updateCurrentScore');
 }
 
 function addScoreP1() {
@@ -170,7 +170,7 @@ function addScoreP1() {
 	score++;
 	jsonData.p1Score = score.toString();
 	document.getElementById("form_score_1p").value = jsonData.p1Score;
-	sendJSON();
+	sendJsonToEndpoint("updateP1score");
 }
 
 function subtractScoreP1() {
@@ -181,7 +181,7 @@ function subtractScoreP1() {
 	score--;
 	jsonData.p1Score = score.toString();
 	document.getElementById("form_score_1p").value = jsonData.p1Score;
-	sendJSON();
+	sendJsonToEndpoint("updateP1score");
 }
 
 function addScoreP2() {
@@ -189,7 +189,7 @@ function addScoreP2() {
 	score++;
 	jsonData.p2Score = score.toString();
 	document.getElementById("form_score_2p").value = jsonData.p2Score;
-	sendJSON();
+	sendJsonToEndpoint("updateP2score");
 }
 
 function subtractScoreP2() {
@@ -200,7 +200,7 @@ function subtractScoreP2() {
 	score--;
 	jsonData.p2Score = score.toString();
 	document.getElementById("form_score_2p").value = jsonData.p2Score;
-	sendJSON();
+	sendJsonToEndpoint("updateP2score");
 }
 
 function resetScores() {
@@ -208,7 +208,7 @@ function resetScores() {
 	document.getElementById("form_score_2p").value = "0";
 	jsonData.p1Score = "0";
 	jsonData.p2Score = "0";
-	sendJSON();
+	sendJsonToEndpoint('updateCurrentScore');
 }
 
 function resetAll() {
@@ -252,7 +252,7 @@ function resetAll() {
 	jsonData.resultscore2 = "";
 	jsonData.maxScore = "";
 	jsonData.round = "Casuals";
-	sendJSON();
+	sendJsonToEndpoint("updatealldata");
 }
 
 function countryDropdown1() {
@@ -330,7 +330,7 @@ function nextRoundUpdate(data) {
 	jsonData.nextplayer2 = "";
     jsonData.nextcountry1 = "US";
     jsonData.nextcountry2 = "US";
-	sendJSON();
+	sendJsonToEndpoint("updatealldata");
 }
 
 function updateResults() {
@@ -383,7 +383,7 @@ function stopReplay() {
 
 function sendJSON() {
 	// open a connection
-	xhr.open("POST", '/updatealldata', true);
+	xhr.open("POST", '/updatedatanoscores', true);
 
 	// Set the request header i.e. which type of content you are sending
 	xhr.setRequestHeader("Content-Type", "application/json");
@@ -393,6 +393,33 @@ function sendJSON() {
 		if (xhr.readyState === 4 && xhr.status === 200) {
 			// console.log("Server Okay");
 		}
+	};
+
+	// Set timestamp
+	jsonData.timestamp = Date.now();
+
+	// Converting JSON data to string
+	var data = JSON.stringify(jsonData);
+	// Sending data with the request
+	xhr.send(data);
+}
+
+function sendJsonToEndpoint(endpoint) {
+    sendJsonToEndpointWithCallback(function (){}, endpoint);
+}
+
+function sendJsonToEndpointWithCallback(callback, endpoint) {
+    // open a connection
+	xhr.open("POST", "../" + endpoint, true);
+
+	// Set the request header i.e. which type of content you are sending
+	xhr.setRequestHeader("Content-Type", "application/json");
+
+	// Create a state change callback
+	xhr.onreadystatechange = function () {
+		if (xhr.readyState === 4 && xhr.status === 200) {
+		    callback();
+        }
 	};
 
 	// Set timestamp
