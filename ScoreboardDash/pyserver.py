@@ -199,6 +199,8 @@ def update_data_no_scores():
     full_data["nextteam2"] = json_data.get("nextteam2", "")
     full_data["nextcountry1"] = json_data.get("nextcountry1", "")
     full_data["nextcountry2"] = json_data.get("nextcountry2", "")
+    full_data["maxScore"] = json_data.get("maxScore", "99")
+    full_data["timestamp"] = json_data.get("timestamp")
     with open(stream_control_file, 'w', encoding="utf-8") as json_file:
         json_file.write(json.dumps(full_data))
     return "200"
