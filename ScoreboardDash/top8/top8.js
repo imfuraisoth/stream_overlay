@@ -444,30 +444,27 @@ function updateTop8PlayerInfo(round, player, field, value) {
     xhr.send("round=" + round + "&player=" + player + "&field=" + field + "&value=" + value);
 }
 
-function nextRound() {
-    var p1Score = Number(document.getElementById("form_score_1p").value);
-    var p2Score = Number(document.getElementById("form_score_2p").value);
-    if (p1Score == p2Score) {
-        //Tie, cannot move to next round
-        alert("The scores are tied! Cannot move to next round.");
-        return;
-    }
+function nextRound(jsonData) {
+    fetch('/getdata')
+        .then(function (response) {
+        jsonData = response.json();
+      return jsonData;
+    })
+    .then(function (jsonData) {
+        document.getElementById("form_results_score_1p").value = jsonData.p1Score;
+        document.getElementById("form_results_score_2p").value = jsonData.p2Score;
+        document.getElementById("form_results_name_1p").value = jsonData.p1Name;
+        document.getElementById("form_results_name_2p").value = jsonData.p2Name;
 
-	jsonData.resultscore1 = document.getElementById("form_score_1p").value;
-	jsonData.resultscore2 = document.getElementById("form_score_2p").value;
-	jsonData.resultplayer1 = document.getElementById("form_name_1p").value;
-	jsonData.resultplayer2 = document.getElementById("form_name_2p").value;
-	document.getElementById("form_results_score_1p").value = jsonData.resultscore1;
-	document.getElementById("form_results_score_2p").value = jsonData.resultscore2;
-	document.getElementById("form_results_name_1p").value = jsonData.resultplayer1;
-	document.getElementById("form_results_name_2p").value = jsonData.resultplayer2;
-
-	document.getElementById("form_results_score_1p").style.opacity  = 0.5;
-	document.getElementById("form_results_score_2p").style.opacity  = 0.5;
-	document.getElementById("form_results_name_1p").style.opacity  = 0.5;
-	document.getElementById("form_results_name_2p").style.opacity  = 0.5;
-
-    getJsonDataFromServer("getNextRoundData", updateCurrentAndNextInfoUpdatePlayerData)
+        document.getElementById("form_results_score_1p").style.opacity  = 0.5;
+        document.getElementById("form_results_score_2p").style.opacity  = 0.5;
+        document.getElementById("form_results_name_1p").style.opacity  = 0.5;
+        document.getElementById("form_results_name_2p").style.opacity  = 0.5;
+        getJsonDataFromServer("getNextRoundData", updateCurrentAndNextInfoUpdatePlayerData)
+      })
+    .catch(function (err) {
+      console.log('error: ' + err);
+    });
 }
 
 function startTop8() {
@@ -598,7 +595,7 @@ function updateResults() {
 	jsonData.resultscore2 = document.getElementById("form_results_score_2p").value;
 	jsonData.resultplayer1 = document.getElementById("form_results_name_1p").value;
 	jsonData.resultplayer2 = document.getElementById("form_results_name_2p").value;
-	sendJsonToEndpoint('updateCurrentPlayers');
+	sendJsonToEndpoint('updateResults');
 }
 
 function callServer(endpoint) {
