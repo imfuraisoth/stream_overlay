@@ -92,7 +92,7 @@ def register_client_refresh():
 
 @api.route('/getdata', methods=['GET'])
 def get_data():
-    return json.dumps(full_data, ensure_ascii=False), 200
+    return json.dumps(read_file(stream_control_file), ensure_ascii=False), 200
 
 
 @api.route('/getTop8PlayerData', methods=['GET'])
@@ -168,6 +168,8 @@ def get_next_round_data():
     full_data["p2Country"] = player2["country"]
     full_data["p1Score"] = "0"
     full_data["p2Score"] = "0"
+    with open(stream_control_file, 'w', encoding="utf-8") as json_file:
+        json_file.write(json.dumps(full_data))
     return next_round_info, 200
 
 
@@ -386,6 +388,8 @@ def save_previous_results():
     full_data["resultscore2"] = full_data["p2Score"]
     full_data["resultplayer1"] = full_data["p1Name"]
     full_data["resultplayer2"] = full_data["p2Name"]
+    with open(stream_control_file, 'w', encoding="utf-8") as json_file:
+        json_file.write(json.dumps(full_data))
 
 
 def write_to_file(file_name, data_key, json_data):
