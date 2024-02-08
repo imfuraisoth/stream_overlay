@@ -96,7 +96,7 @@ defaultPlayerData = {
         }
     },
     "r5": {
-        "description": "losers quarter 1",
+        "description": "winners semis",
         "p1": {
             "name": "",
             "team": "",
@@ -111,7 +111,7 @@ defaultPlayerData = {
         }
     },
     "r6": {
-        "description": "losers quarter 2",
+        "description": "losers quarter 1",
         "p1": {
             "name": "",
             "team": "",
@@ -126,7 +126,7 @@ defaultPlayerData = {
         }
     },
     "r7": {
-        "description": "winners semis",
+        "description": "losers quarter 2",
         "p1": {
             "name": "",
             "team": "",

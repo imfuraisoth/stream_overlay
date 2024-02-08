@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta name1="viewport" content="width=device-width">
+    <meta social1="viewport" content="width=device-width">
+    <meta nextPlayer1="viewport" content="width=device-width">
+    <meta nextPlayer2="viewport" content="width=device-width">
+    <link rel="stylesheet" href="https://use.typekit.net/ogo7pba.css">
+    <title>Commentator Overlay</title>
+    <link href="style.css" rel="stylesheet" type="text/css" />
+    <script src="https://code.jquery.com/jquery-3.6.0.js"></script>
+    <script src="https://code.jquery.com/ui/1.13.2/jquery-ui.js"></script>
+    <script src="https://kit.fontawesome.com/2c93766a80.js" crossorigin="anonymous"></script>
+  </head>
+  <body>
+    <script>
+    var r1_name1 = "";
+    var r1_name2 = "";
+    var r2_name1 = "";
+    var r2_name2 = "";
+    var r3_name1 = "";
+    var r3_name2 = "";
+    var r4_name1 = "";
+    var r4_name2 = "";
+    var r5_name1 = "";
+    var r5_name2 = "";
+    var r6_name1 = "";
+    var r6_name2 = "";
+    var r7_name1 = "";
+    var r7_name2 = "";
+    var r8_name1 = "";
+    var r8_name2 = "";
+    var r9_name1 = "";
+    var r9_name2 = "";
+    var r10_name1 = "";
+    var r10_name2 = "";
+
+    var r1_score1 = "";
+    var r1_score2 = "";
+    var r2_score1 = "";
+    var r2_score2 = "";
+    var r3_score1 = "";
+    var r3_score2 = "";
+    var r4_score1 = "";
+    var r4_score2 = "";
+    var r5_score1 = "";
+    var r5_score2 = "";
+    var r6_score1 = "";
+    var r6_score2 = "";
+    var r7_score1 = "";
+    var r7_score2 = "";
+    var r8_score1 = "";
+    var r8_score2 = "";
+    var r9_score1 = "";
+    var r9_score2 = "";
+    var r10_score1 = "";
+    var r10_score2 = "";
+
+    var serverIp = readServerIp();
+<!--  var serverIp = "???.???.???.???:8080";-->
+
+    function readServerIp() {
+        var request = new XMLHttpRequest();
+        request.open("GET", "../config/serverip.txt", false);
+        request.send(null);
+        return request.responseText;
+    }
+
+    function loadElements() {
+      fetch('http://' + serverIp + '/getTop8PlayerData')
+          .then(function (response) {
+            return response.json();
+          })
+          .then(function (data) {
+              appendData(data);
+            })
+          .catch(function (err) {
+            console.log('error: ' + err);
+          });
+          function appendData(data) {
+            if (data.r1.p1.name !== r1_name1) {
+              var element = document.getElementById("r1_d_n1");
+              if (!!element) {
+                fadeOutElement(element);
+              }
+
+              r1_name1 = data.r1.p1.name;
+              if (data.r1.p1.name.length > 0) {
+                var name1 = document.createElement("span");
+                name1.setAttribute("id", "r1_n1");
+                name1.style.color = "#FFFFFF";
+                name1.innerHTML = r1_name1;
+                var div = document.createElement("div");
+                div.setAttribute("id", "r1_d_n1");
+                div.appendChild(name1);
+                document.body.appendChild(div);
+              }
+            }
+
+            if (data.r1.p1.score !== r1_score1) {
+              var element = document.getElementById("r1_d_s1");
+              if (!!element) {
+                fadeOutElement(element);
+              }
+
+              r1_score1 = data.r1.p1.score;
+              if (data.r1.p1.score.length > 0) {
+                var score1 = document.createElement("span");
+                score1.setAttribute("id", "r1_s1");
+                score1.style.color = "#FFFFFF";
+                score1.innerHTML = r1_score1;
+                var div = document.createElement("div");
+                div.setAttribute("id", "r1_d_s1");
+                div.appendChild(score1);
+                document.body.appendChild(div);
+              }
+            }
+
+            if (data.r1.p2.name !== r1_name2) {
+              var element = document.getElementById("r1_d_n2");
+              if (!!element) {
+                fadeOutElement(element);
+              }
+
+              r1_name2 = data.r1.p2.name;
+              if (data.r1.p2.name.length > 0) {
+                var name2 = document.createElement("span");
+                name2.setAttribute("id", "r1_n2");
+                name2.style.color = "#FFFFFF";
+                name2.innerHTML = r1_name2;
+                var div = document.createElement("div");
+                div.setAttribute("id", "r1_d_n2");
+                div.appendChild(name2);
+                document.body.appendChild(div);
+              }
+            }
+
+            if (data.r1.p2.score !== r1_score2) {
+              var element = document.getElementById("r1_d_s2");
+              if (!!element) {
+                fadeOutElement(element);
+              }
+
+              r1_score2 = data.r1.p2.score;
+              if (data.r1.p1.score.length > 0) {
+                var score2 = document.createElement("span");
+                score2.setAttribute("id", "r1_s2");
+                score2.style.color = "#FFFFFF";
+                score2.innerHTML = r1_score2;
+                var div = document.createElement("div");
+                div.setAttribute("id", "r1_d_s2");
+                div.appendChild(score2);
+                document.body.appendChild(div);
+              }
+            }
+
+            <!-- ******************************************************************* -->
+            if (data.r2.p1.name !== r2_name1) {
+              var element = document.getElementById("r2_d_n1");
+              if (!!element) {
+                fadeOutElement(element);
+              }
+
+              r2_name1 = data.r2.p1.name;
+              if (data.r2.p1.name.length > 0) {
+                var name3 = document.createElement("span");
+                name3.setAttribute("id", "r2_n1");
+                name3.style.color = "#FFFFFF";
+                name3.innerHTML = r2_name1;
+                var div = document.createElement("div");
+                div.setAttribute("id", "r2_d_n1");
+                div.appendChild(name3);
+                document.body.appendChild(div);
+              }
+            }
+
+            if (data.r2.p1.score !== r2_score1) {
+              var element = document.getElementById("r2_d_s1");
+              if (!!element) {
+                fadeOutElement(element);
+              }
+
+              r2_score1 = data.r2.p1.score;
+              if (data.r2.p1.score.length > 0) {
+                var score3 = document.createElement("span");
+                score3.setAttribute("id", "r2_s1");
+                score3.style.color = "#FFFFFF";
+                score3.innerHTML = r2_score1;
+                var div = document.createElement("div");
+                div.setAttribute("id", "r2_d_s1");
+                div.appendChild(score3);
+                document.body.appendChild(div);
+              }
+            }
+
+            if (data.r2.p2.name !== r2_name2) {
+              var element = document.getElementById("r2_d_n2");
+              if (!!element) {
+                fadeOutElement(element);
+              }
+
+              r2_name2 = data.r2.p2.name;
+              if (data.r2.p2.name.length > 0) {
+                var name4 = document.createElement("span");
+                name4.setAttribute("id", "r2_n2");
+                name4.style.color = "#FFFFFF";
+                name4.innerHTML = r2_name2;
+                var div = document.createElement("div");
+                div.setAttribute("id", "r2_d_n2");
+                div.appendChild(name4);
+                document.body.appendChild(div);
+              }
+            }
+
+            if (data.r2.p2.score !== r2_score2) {
+              var element = document.getElementById("r2_d_s2");
+              if (!!element) {
+                fadeOutElement(element);
+              }
+
+              r2_score2 = data.r2.p2.score;
+              if (data.r2.p1.score.length > 0) {
+                var score4 = document.createElement("span");
+                score4.setAttribute("id", "r2_s2");
+                score4.style.color = "#FFFFFF";
+                score4.innerHTML = r2_score2;
+                var div = document.createElement("div");
+                div.setAttribute("id", "r2_d_s2");
+                div.appendChild(score4);
+                document.body.appendChild(div);
+              }
+            }
+
+          }
+    }
+
+    function fadeOutElement(element) {
+        var op = 1;  // initial opacity
+        var timer = setInterval(function () {
+            if (op <= 0.1) {
+                clearInterval(timer);
+                element.style.display = 'none';
+                element.remove();
+                return;
+            } else {
+              element.style.opacity = op;
+              element.style.filter = 'alpha(opacity=' + op * 100 + ")";
+              op -= op * 0.1;
+            }
+        }, 30);
+    }
+
+    window.setInterval(loadElements, 2000);
+    </script>
+    <div id="r1_p1">
+      <span id="r1_n1" class="names"></span>
+      <span id="r1_s1" class="scores"></span>
+    </div>
+    <div id="r1_p2">
+      <span id="r1_n2" class="names"></span>
+      <span id="r1_s2" class="scores"></span>
+    </div>
+    <div id="r2_p1">
+      <span id="r2_n1" class="names"></span>
+      <span id="r2_s1" class="scores"></span>
+    </div>
+    <div id="r2_p2">
+      <span id="r2_n2" class="names"></span>
+      <span id="r2_s2" class="scores"></span>
+    </div>
+  </body>
+</html>
