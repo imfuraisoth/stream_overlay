@@ -87,13 +87,13 @@
 
               r1_name1 = data.r1.p1.name;
               if (data.r1.p1.name.length > 0) {
-                var name1 = document.createElement("span");
-                name1.setAttribute("id", "r1_n1");
-                name1.style.color = "#FFFFFF";
-                name1.innerHTML = r1_name1;
+                var name = document.createElement("span");
+                name.setAttribute("id", "r1_n1");
+                name.style.color = "#FFFFFF";
+                name.innerHTML = r1_name1;
                 var div = document.createElement("div");
                 div.setAttribute("id", "r1_d_n1");
-                div.appendChild(name1);
+                div.appendChild(name);
                 document.body.appendChild(div);
               }
             }
@@ -106,13 +106,13 @@
 
               r1_score1 = data.r1.p1.score;
               if (data.r1.p1.score.length > 0) {
-                var score1 = document.createElement("span");
-                score1.setAttribute("id", "r1_s1");
-                score1.style.color = "#FFFFFF";
-                score1.innerHTML = r1_score1;
+                var score = document.createElement("span");
+                score.setAttribute("id", "r1_s1");
+                score.style.color = "#FFFFFF";
+                score.innerHTML = r1_score1;
                 var div = document.createElement("div");
                 div.setAttribute("id", "r1_d_s1");
-                div.appendChild(score1);
+                div.appendChild(score);
                 document.body.appendChild(div);
               }
             }
@@ -125,13 +125,13 @@
 
               r1_name2 = data.r1.p2.name;
               if (data.r1.p2.name.length > 0) {
-                var name2 = document.createElement("span");
-                name2.setAttribute("id", "r1_n2");
-                name2.style.color = "#FFFFFF";
-                name2.innerHTML = r1_name2;
+                var name = document.createElement("span");
+                name.setAttribute("id", "r1_n2");
+                name.style.color = "#FFFFFF";
+                name.innerHTML = r1_name2;
                 var div = document.createElement("div");
                 div.setAttribute("id", "r1_d_n2");
-                div.appendChild(name2);
+                div.appendChild(name);
                 document.body.appendChild(div);
               }
             }
@@ -144,18 +144,19 @@
 
               r1_score2 = data.r1.p2.score;
               if (data.r1.p1.score.length > 0) {
-                var score2 = document.createElement("span");
-                score2.setAttribute("id", "r1_s2");
-                score2.style.color = "#FFFFFF";
-                score2.innerHTML = r1_score2;
+                var score = document.createElement("span");
+                score.setAttribute("id", "r1_s2");
+                score.style.color = "#FFFFFF";
+                score.innerHTML = r1_score2;
                 var div = document.createElement("div");
                 div.setAttribute("id", "r1_d_s2");
-                div.appendChild(score2);
+                div.appendChild(score);
                 document.body.appendChild(div);
               }
             }
 
             <!-- ******************************************************************* -->
+
             if (data.r2.p1.name !== r2_name1) {
               var element = document.getElementById("r2_d_n1");
               if (!!element) {
@@ -164,13 +165,13 @@
 
               r2_name1 = data.r2.p1.name;
               if (data.r2.p1.name.length > 0) {
-                var name3 = document.createElement("span");
-                name3.setAttribute("id", "r2_n1");
-                name3.style.color = "#FFFFFF";
-                name3.innerHTML = r2_name1;
+                var name = document.createElement("span");
+                name.setAttribute("id", "r2_n1");
+                name.style.color = "#FFFFFF";
+                name.innerHTML = r2_name1;
                 var div = document.createElement("div");
                 div.setAttribute("id", "r2_d_n1");
-                div.appendChild(name3);
+                div.appendChild(name);
                 document.body.appendChild(div);
               }
             }
@@ -183,13 +184,13 @@
 
               r2_score1 = data.r2.p1.score;
               if (data.r2.p1.score.length > 0) {
-                var score3 = document.createElement("span");
-                score3.setAttribute("id", "r2_s1");
-                score3.style.color = "#FFFFFF";
-                score3.innerHTML = r2_score1;
+                var score = document.createElement("span");
+                score.setAttribute("id", "r2_s1");
+                score.style.color = "#FFFFFF";
+                score.innerHTML = r2_score1;
                 var div = document.createElement("div");
                 div.setAttribute("id", "r2_d_s1");
-                div.appendChild(score3);
+                div.appendChild(score);
                 document.body.appendChild(div);
               }
             }
@@ -202,13 +203,13 @@
 
               r2_name2 = data.r2.p2.name;
               if (data.r2.p2.name.length > 0) {
-                var name4 = document.createElement("span");
-                name4.setAttribute("id", "r2_n2");
-                name4.style.color = "#FFFFFF";
-                name4.innerHTML = r2_name2;
+                var name = document.createElement("span");
+                name.setAttribute("id", "r2_n2");
+                name.style.color = "#FFFFFF";
+                name.innerHTML = r2_name2;
                 var div = document.createElement("div");
                 div.setAttribute("id", "r2_d_n2");
-                div.appendChild(name4);
+                div.appendChild(name);
                 document.body.appendChild(div);
               }
             }
@@ -221,17 +222,172 @@
 
               r2_score2 = data.r2.p2.score;
               if (data.r2.p1.score.length > 0) {
-                var score4 = document.createElement("span");
-                score4.setAttribute("id", "r2_s2");
-                score4.style.color = "#FFFFFF";
-                score4.innerHTML = r2_score2;
+                var score = document.createElement("span");
+                score.setAttribute("id", "r2_s2");
+                score.style.color = "#FFFFFF";
+                score.innerHTML = r2_score2;
                 var div = document.createElement("div");
                 div.setAttribute("id", "r2_d_s2");
-                div.appendChild(score4);
+                div.appendChild(score);
                 document.body.appendChild(div);
               }
             }
 
+            <!-- ******************************************************************* -->
+
+            if (data.r3.p1.name !== r3_name1) {
+              var element = document.getElementById("r3_d_n1");
+              if (!!element) {
+                fadeOutElement(element);
+              }
+
+              r3_name1 = data.r3.p1.name;
+              if (data.r3.p1.name.length > 0) {
+                var name = document.createElement("span");
+                name.setAttribute("id", "r3_n1");
+                name.style.color = "#FFFFFF";
+                name.innerHTML = r3_name1;
+                var div = document.createElement("div");
+                div.setAttribute("id", "r3_d_n1");
+                div.appendChild(name);
+                document.body.appendChild(div);
+              }
+            }
+
+            if (data.r3.p1.score !== r3_score1) {
+              var element = document.getElementById("r3_d_s1");
+              if (!!element) {
+                fadeOutElement(element);
+              }
+
+              r3_score1 = data.r3.p1.score;
+              if (data.r3.p1.score.length > 0) {
+                var score = document.createElement("span");
+                score.setAttribute("id", "r3_s1");
+                score.style.color = "#FFFFFF";
+                score.innerHTML = r3_score1;
+                var div = document.createElement("div");
+                div.setAttribute("id", "r3_d_s1");
+                div.appendChild(score);
+                document.body.appendChild(div);
+              }
+            }
+
+            if (data.r3.p2.name !== r3_name2) {
+              var element = document.getElementById("r3_d_n2");
+              if (!!element) {
+                fadeOutElement(element);
+              }
+
+              r3_name2 = data.r3.p2.name;
+              if (data.r3.p2.name.length > 0) {
+                var name = document.createElement("span");
+                name.setAttribute("id", "r3_n2");
+                name.style.color = "#FFFFFF";
+                name.innerHTML = r3_name2;
+                var div = document.createElement("div");
+                div.setAttribute("id", "r3_d_n2");
+                div.appendChild(name);
+                document.body.appendChild(div);
+              }
+            }
+
+            if (data.r3.p2.score !== r3_score2) {
+              var element = document.getElementById("r3_d_s2");
+              if (!!element) {
+                fadeOutElement(element);
+              }
+
+              r3_score2 = data.r3.p2.score;
+              if (data.r3.p1.score.length > 0) {
+                var score = document.createElement("span");
+                score.setAttribute("id", "r3_s2");
+                score.style.color = "#FFFFFF";
+                score.innerHTML = r3_score2;
+                var div = document.createElement("div");
+                div.setAttribute("id", "r3_d_s2");
+                div.appendChild(score);
+                document.body.appendChild(div);
+              }
+            }
+
+ <!-- ******************************************************************* -->
+
+            if (data.r4.p1.name !== r4_name1) {
+              var element = document.getElementById("r4_d_n1");
+              if (!!element) {
+                fadeOutElement(element);
+              }
+
+              r4_name1 = data.r4.p1.name;
+              if (data.r4.p1.name.length > 0) {
+                var name = document.createElement("span");
+                name.setAttribute("id", "r4_n1");
+                name.style.color = "#FFFFFF";
+                name.innerHTML = r4_name1;
+                var div = document.createElement("div");
+                div.setAttribute("id", "r4_d_n1");
+                div.appendChild(name);
+                document.body.appendChild(div);
+              }
+            }
+
+            if (data.r4.p1.score !== r4_score1) {
+              var element = document.getElementById("r4_d_s1");
+              if (!!element) {
+                fadeOutElement(element);
+              }
+
+              r4_score1 = data.r4.p1.score;
+              if (data.r4.p1.score.length > 0) {
+                var score = document.createElement("span");
+                score.setAttribute("id", "r4_s1");
+                score.style.color = "#FFFFFF";
+                score.innerHTML = r4_score1;
+                var div = document.createElement("div");
+                div.setAttribute("id", "r4_d_s1");
+                div.appendChild(score);
+                document.body.appendChild(div);
+              }
+            }
+
+            if (data.r4.p2.name !== r4_name2) {
+              var element = document.getElementById("r4_d_n2");
+              if (!!element) {
+                fadeOutElement(element);
+              }
+
+              r4_name2 = data.r4.p2.name;
+              if (data.r4.p2.name.length > 0) {
+                var name = document.createElement("span");
+                name.setAttribute("id", "r4_n2");
+                name.style.color = "#FFFFFF";
+                name.innerHTML = r4_name2;
+                var div = document.createElement("div");
+                div.setAttribute("id", "r4_d_n2");
+                div.appendChild(name);
+                document.body.appendChild(div);
+              }
+            }
+
+            if (data.r4.p2.score !== r4_score2) {
+              var element = document.getElementById("r4_d_s2");
+              if (!!element) {
+                fadeOutElement(element);
+              }
+
+              r4_score2 = data.r4.p2.score;
+              if (data.r4.p1.score.length > 0) {
+                var score = document.createElement("span");
+                score.setAttribute("id", "r4_s2");
+                score.style.color = "#FFFFFF";
+                score.innerHTML = r4_score2;
+                var div = document.createElement("div");
+                div.setAttribute("id", "r4_d_s2");
+                div.appendChild(score);
+                document.body.appendChild(div);
+              }
+            }
           }
     }
 

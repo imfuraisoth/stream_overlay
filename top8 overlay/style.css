@@ -46,7 +46,7 @@
   padding: 10px 0 3px;
   text-decoration-color: #FFFFFF;
   position: fixed;
-  top: 250px;
+  top: 254px;
   left: 145px;
   display:inline-block;
   font-size: 35px;
@@ -127,7 +127,7 @@
   padding: 10px 0 3px;
   text-decoration-color: #FFFFFF;
   position: fixed;
-  top: 501px;
+  top: 499px;
   display:inline-block;
   left: 145px;
   font-size: 35px;
@@ -147,6 +147,113 @@
   font-family: 'RigidSquareSemiBold', monospace;
 }
 
+#r3_n1 {
+  animation-duration: 2s;
+  animation-name: fadeIn;
+  text-align: left;
+  padding: 10px 0 3px;
+  text-decoration-color: #FFFFFF;
+  position: fixed;
+  top: 670px;
+  left: 145px;
+  display:inline-block;
+  font-size: 35px;
+  font-family: 'RigidSquareExtraBold', monospace;
+}
+
+#r3_s1 {
+  animation-duration: 2s;
+  animation-name: fadeIn;
+  text-align: left;
+  padding: 5px 0 5px;
+  text-decoration-color: #FFFFFF;
+  position: fixed;
+  top: 670px;
+  left: 457px;
+  font-size: 45px;
+  font-family: 'RigidSquareSemiBold', monospace;
+}
+
+#r3_n2 {
+  animation-duration: 2s;
+  animation-name: fadeIn;
+  text-align: left;
+  padding: 10px 0 3px;
+  text-decoration-color: #FFFFFF;
+  position: fixed;
+  top: 727px;
+  left: 145px;
+  display:inline-block;
+  font-size: 35px;
+  font-family: 'RigidSquareExtraBold', monospace;
+}
+
+#r3_s2 {
+  animation-duration: 2s;
+  animation-name: fadeIn;
+  text-align: left;
+  padding: 5px 0 5px;
+  text-decoration-color: #FFFFFF;
+  position: fixed;
+  top: 727px;
+  left: 457px;
+  font-size: 45px;
+  font-family: 'RigidSquareSemiBold', monospace;
+}
+
+#r4_n1 {
+  animation-duration: 2s;
+  animation-name: fadeIn;
+  text-align: left;
+  padding: 10px 0 3px;
+  text-decoration-color: #FFFFFF;
+  position: fixed;
+  top: 858px;
+  left: 145px;
+  display:inline-block;
+  font-size: 35px;
+  font-family: 'RigidSquareExtraBold', monospace;
+}
+
+#r4_s1 {
+  animation-duration: 2s;
+  animation-name: fadeIn;
+  text-align: left;
+  padding: 5px 0 5px;
+  text-decoration-color: #FFFFFF;
+  position: fixed;
+  top: 858px;
+  left: 457px;
+  font-size: 45px;
+  font-family: 'RigidSquareSemiBold', monospace;
+}
+
+#r4_n2 {
+  animation-duration: 2s;
+  animation-name: fadeIn;
+  text-align: left;
+  padding: 10px 0 3px;
+  text-decoration-color: #FFFFFF;
+  position: fixed;
+  top: 916px;
+  left: 145px;
+  display:inline-block;
+  font-size: 35px;
+  font-family: 'RigidSquareExtraBold', monospace;
+}
+
+#r4_s2 {
+  animation-duration: 2s;
+  animation-name: fadeIn;
+  text-align: left;
+  padding: 5px 0 5px;
+  text-decoration-color: #FFFFFF;
+  position: fixed;
+  top: 916px;
+  left: 457px;
+  font-size: 45px;
+  font-family: 'RigidSquareSemiBold', monospace;
+}
 
 .scores {
 	-webkit-text-stroke: 1px black;
