@@ -478,7 +478,7 @@
   padding: 10px 0 3px;
   text-decoration-color: #FFFFFF;
   position: fixed;
-  top: 620px;
+  top: 670px;
   left: 1435px;
   display:inline-block;
   font-size: 35px;
@@ -492,8 +492,8 @@
   padding: 5px 0 5px;
   text-decoration-color: #FFFFFF;
   position: fixed;
-  top: 620px;
-  left: 1749px;
+  top: 670px;
+  left: 1752px;
   font-size: 45px;
   font-family: 'RigidSquareSemiBold', monospace;
 }
@@ -505,7 +505,7 @@
   padding: 10px 0 3px;
   text-decoration-color: #FFFFFF;
   position: fixed;
-  top: 678px;
+  top: 727px;
   left: 1435px;
   display:inline-block;
   font-size: 35px;
@@ -519,8 +519,8 @@
   padding: 5px 0 5px;
   text-decoration-color: #FFFFFF;
   position: fixed;
-  top: 678px;
-  left: 1749px;
+  top: 727px;
+  left: 1752px;
   font-size: 45px;
   font-family: 'RigidSquareSemiBold', monospace;
 }
@@ -532,8 +532,8 @@
   padding: 10px 0 3px;
   text-decoration-color: #FFFFFF;
   position: fixed;
-  top: 343px;
-  left: 1145px;
+  top: 350px;
+  left: 1005px;
   display:inline-block;
   font-size: 35px;
   font-family: 'RigidSquareExtraBold', monospace;
@@ -546,8 +546,8 @@
   padding: 5px 0 5px;
   text-decoration-color: #FFFFFF;
   position: fixed;
-  top: 343px;
-  left: 1457px;
+  top: 350px;
+  left: 1317px;
   font-size: 45px;
   font-family: 'RigidSquareSemiBold', monospace;
 }
@@ -559,8 +559,8 @@
   padding: 10px 0 3px;
   text-decoration-color: #FFFFFF;
   position: fixed;
-  top: 401px;
-  left: 1145px;
+  top: 408px;
+  left: 1005px;
   display:inline-block;
   font-size: 35px;
   font-family: 'RigidSquareExtraBold', monospace;
@@ -573,8 +573,8 @@
   padding: 5px 0 5px;
   text-decoration-color: #FFFFFF;
   position: fixed;
-  top: 401px;
-  left: 1457px;
+  top: 410px;
+  left: 1317px;
   font-size: 45px;
   font-family: 'RigidSquareSemiBold', monospace;
 }
@@ -584,10 +584,10 @@
   animation-name: fadeIn;
   text-align: left;
   padding: 5px 0 5px;
-  text-decoration-color: #FFFFFF;
+  text-decoration-color: #FC0031;
   position: fixed;
-  top: 343px;
-  left: 1517px;
+  top: 350px;
+  left: 1377px;
   font-size: 45px;
   font-family: 'RigidSquareSemiBold', monospace;
 }
@@ -597,10 +597,10 @@
   animation-name: fadeIn;
   text-align: left;
   padding: 5px 0 5px;
-  text-decoration-color: #FFFFFF;
+  text-decoration-color: #FC0031;
   position: fixed;
-  top: 401px;
-  left: 1517px;
+  top: 410px;
+  left: 1377px;
   font-size: 45px;
   font-family: 'RigidSquareSemiBold', monospace;
 }
