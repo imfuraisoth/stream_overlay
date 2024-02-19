@@ -361,8 +361,7 @@ def replay_stop():
 
 @api.route('/getreplayvideos', methods=['GET'])
 def get_replay_folder():
-    global replays_folder
-    videos = os.listdir(replays_folder)
+    videos = [filename for filename in os.listdir(replays_folder) if filename.startswith(replay_prefix)]
     return jsonify(videos), 200
 
 
