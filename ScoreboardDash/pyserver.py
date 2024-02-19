@@ -13,6 +13,10 @@ import socket
 import os
 import webbrowser
 import shutil
+from datetime import datetime
+
+# Get today's date in YYYY-MM-DD format
+today_date = datetime.today().strftime('%Y-%m-%d')
 
 hostname = socket.getfqdn()
 server_ip = socket.gethostbyname(hostname)
@@ -25,7 +29,9 @@ config_file = open('../config/serverip.txt', "w")
 config_file.write(server_info)
 config_file.close()
 
+replay_prefix = "Replay"
 replays_folder = "replays"
+saved_replays_folder = "../../clips"
 stream_control_file = "../data/scoreboard.json"
 player_1 = "../data/player1.txt"
 player_2 = "../data/player2.txt"
@@ -365,13 +371,35 @@ def delete_clips():
     for filename in os.listdir(replays_folder):
         file_path = os.path.join(replays_folder, filename)
         try:
-            if os.path.isfile(file_path):
+            if filename.startswith(replay_prefix) and os.path.isfile(file_path):
                 os.unlink(file_path)
-            elif os.path.isdir(file_path):
-                shutil.rmtree(file_path)
         except Exception as e:
             print(f"Failed to delete {file_path}. Reason: {e}")
     return "200"
+
+
+@api.route('/saveclips', methods=['POST'])
+def save_clips():
+    # Check if the directory exists, if not, create it
+    destination = saved_replays_folder + "/" + today_date
+    if not os.path.exists(destination):
+        os.makedirs(destination)
+        print(f"Directory '{destination}' created successfully.")
+
+    move_files(replays_folder, destination)
+    return "200"
+
+
+def move_files(src_dir, dst_dir):
+    # Get a list of all files in the source directory
+    files = os.listdir(src_dir)
+
+    # Iterate over each file and move it to the destination directory
+    for file in files:
+        if file.startswith(replay_prefix):
+            src_file_path = os.path.join(src_dir, file)
+            dst_file_path = os.path.join(dst_dir, file)
+            shutil.move(src_file_path, dst_file_path)
 
 
 def add_to_score(score_key):
