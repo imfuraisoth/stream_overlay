@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Video Montage with Crossfade</title>
+    <style>
+    /* CSS styles for the video montage */
+    #videoMontage {
+        width: 100%;
+        text-align: center; /* Center the video horizontally */
+    }
+    video {
+        width: 100%;
+        height: auto;
+        position: absolute;
+        top: 0;
+        left: 0;
+        opacity: 1;
+        transition: opacity 1s ease-in-out;
+    }
+    video.hide {
+        opacity: 0;
+    }
+
+</style>
+</head>
+<body>
+<div id="videoMontage"></div>
+
+<script>
+window.onload = function() {
+    const videoFolder = '/replays/';
+    let videoFiles = []; // Array to store video file names
+    let currentVideoIndex = 0;
+    const videoMontage = document.getElementById('videoMontage');
+    const videoElement = document.createElement('video');
+    videoElement.controls = false;
+    videoElement.muted = true;
+
+    // Function to fetch video file names from server API
+    function fetchVideoFiles() {
+        fetch('/getreplayvideos')
+            .then(response => response.json())
+            .then(data => {
+                videoFiles = data; // Assuming the server returns an array of video file names
+                playVideos();
+            })
+            .catch(error => console.error('Error fetching video files:', error));
+    }
+    // Function to play the current video and crossfade to the next one
+    function playVideos() {
+        // Set the source of the current video
+        const currentVideoSrc = `${videoFolder}${videoFiles[currentVideoIndex]}`;
+        videoElement.src = currentVideoSrc;
+
+        // Play the current video
+        videoElement.play();
+
+        // Fade in the next video
+        videoElement.classList.remove('hide');
+
+        // Fade out the current video after the current one ends
+        videoElement.onended = function() {
+            videoElement.classList.add('hide');
+
+            // Update the current video index
+            currentVideoIndex = (currentVideoIndex + 1) % videoFiles.length;
+
+            // Repeat the process after a delay (duration of crossfade)
+            setTimeout(playVideos, 500); // Adjust the delay as needed (1 second = duration of crossfade)
+        };
+    }
+
+    // Append the video element to the video montage
+    videoMontage.appendChild(videoElement);
+
+    // Fetch video files from server API
+    fetchVideoFiles();
+};
+</script>
+</body>
+</html>

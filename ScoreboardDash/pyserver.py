@@ -1,6 +1,6 @@
 import json
 from io import open
-from flask import Flask, send_from_directory
+from flask import Flask, send_from_directory, jsonify
 from flask import request
 from flask_cors import CORS
 import time
@@ -12,6 +12,7 @@ import argparse
 import socket
 import os
 import webbrowser
+import shutil
 
 hostname = socket.getfqdn()
 server_ip = socket.gethostbyname(hostname)
@@ -24,6 +25,7 @@ config_file = open('../config/serverip.txt', "w")
 config_file.write(server_info)
 config_file.close()
 
+replays_folder = "replays"
 stream_control_file = "../data/scoreboard.json"
 player_1 = "../data/player1.txt"
 player_2 = "../data/player2.txt"
@@ -348,6 +350,27 @@ def replay_stop():
     with open(replay_stop_file, 'w', encoding="utf-8") as replay_file:
         ts = str(time.time())
         replay_file.write(ts)
+    return "200"
+
+
+@api.route('/getreplayvideos', methods=['GET'])
+def get_replay_folder():
+    global replays_folder
+    videos = os.listdir(replays_folder)
+    return jsonify(videos), 200
+
+
+@api.route('/deleteclips', methods=['POST'])
+def delete_clips():
+    for filename in os.listdir(replays_folder):
+        file_path = os.path.join(replays_folder, filename)
+        try:
+            if os.path.isfile(file_path):
+                os.unlink(file_path)
+            elif os.path.isdir(file_path):
+                shutil.rmtree(file_path)
+        except Exception as e:
+            print(f"Failed to delete {file_path}. Reason: {e}")
     return "200"
 
 

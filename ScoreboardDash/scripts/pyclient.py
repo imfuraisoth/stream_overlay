@@ -24,7 +24,9 @@ if __name__ == "__main__":
         parser.add_argument("-a2", "--a2", action='store_true', dest='AddP2Score', help="Add 1 to player 2 score")
         parser.add_argument("-s1", "--s1", action='store_true', dest='SubP1Score', help="Subtract 1 to player 1 score")
         parser.add_argument("-s2", "--s2", action='store_true', dest='SubP2Score', help="Subtract 1 to player 2 score")
-        # Read arguments from command line
+        parser.add_argument("-deleteclips", "--deleteclips", action='store_true', dest='DeleteClips', help="Deletes all the clip files out of the clips directory")
+
+    # Read arguments from command line
         args = parser.parse_args()
         if args.TriggerClientRefresh:
             call_endpoint("/triggerClientRefresh")
@@ -36,5 +38,7 @@ if __name__ == "__main__":
             call_endpoint("/subPlayer1Score")
         elif args.SubP2Score:
             call_endpoint("/subPlayer2Score")
+        elif args.DeleteClips:
+            call_endpoint("/deleteclips")
     except KeyboardInterrupt:
         pass
