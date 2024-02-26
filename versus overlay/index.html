@@ -85,6 +85,8 @@
                 name1bg.style.color = "#FFFFFF";
                 name1bg.style.textAlign = "center";
                 name1bg.innerHTML = data.p1Name;
+				fontSize = name1bg.fontSize;
+
                 var div1 = document.createElement("div");
                 div1.setAttribute("id", "name1DivBg");
                 div1.appendChild(name1bg);
@@ -146,6 +148,7 @@
             }
           }
     }
+	
 
     function fadeOutElement(element) {
         var op = 1;  // initial opacity

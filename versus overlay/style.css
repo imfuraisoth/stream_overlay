@@ -52,11 +52,11 @@ h2 {
   text-align: center;
   padding: 10px 0 3px;
   text-decoration-color: #FFFFFF;
+  white-space: nowrap;
   position: fixed;
   top: 130px;
-
   width: 100%;
-  font-size: 350px;
+  font-size: 270px;
   color: white;
   opacity: 0.5;
   -webkit-text-stroke-width: 1px;
@@ -64,16 +64,26 @@ h2 {
   font-family: 'RigidSquareExtraBold', monospace;
 }
 
+#name1DivBg {
+  width: 100%; /* or any width you desire */
+  overflow: hidden; /* to ensure text doesn't overflow */
+}
+
+#name2DivBg {
+  width: 100%; /* or any width you desire */
+  overflow: hidden; /* to ensure text doesn't overflow */
+}
+
 #p2NameBackground {
   animation: fadeIn 12s; 
   text-align: center;
   padding: 10px 0 3px;
   text-decoration-color: #FFFFFF;
-  position: fixed;
-  top: 460px;
-
+  white-space: nowrap;
+  position: fixed;  
+  top: 550px;
   width: 100%;
-  font-size: 410px;
+  font-size: 270px;
   color: white;
   opacity: 0.5;
   -webkit-text-stroke-width: 1px;
