@@ -100,13 +100,13 @@ defaultPlayerData = {
         "p1": {
             "name": "",
             "team": "",
-            "country": "US",
+            "country": "",
             "score": ""
         },
         "p2": {
             "name": "",
             "team": "",
-            "country": "US",
+            "country": "",
             "score": ""
         }
     },
@@ -115,13 +115,13 @@ defaultPlayerData = {
         "p1": {
             "name": "",
             "team": "",
-            "country": "US",
+            "country": "",
             "score": ""
         },
         "p2": {
             "name": "",
             "team": "",
-            "country": "US",
+            "country": "",
             "score": ""
         }
     },
@@ -130,13 +130,13 @@ defaultPlayerData = {
         "p1": {
             "name": "",
             "team": "",
-            "country": "US",
+            "country": "",
             "score": ""
         },
         "p2": {
             "name": "",
             "team": "",
-            "country": "US",
+            "country": "",
             "score": ""
         }
     },
@@ -145,13 +145,13 @@ defaultPlayerData = {
         "p1": {
             "name": "",
             "team": "",
-            "country": "US",
+            "country": "",
             "score": ""
         },
         "p2": {
             "name": "",
             "team": "",
-            "country": "US",
+            "country": "",
             "score": ""
         }
     },
@@ -160,13 +160,13 @@ defaultPlayerData = {
         "p1": {
             "name": "",
             "team": "",
-            "country": "US",
+            "country": "",
             "score": ""
         },
         "p2": {
             "name": "",
             "team": "",
-            "country": "US",
+            "country": "",
             "score": ""
         }
     },
@@ -175,14 +175,14 @@ defaultPlayerData = {
         "p1": {
             "name": "",
             "team": "",
-            "country": "US",
+            "country": "",
             "score": "",
             "score2": ""
         },
         "p2": {
             "name": "",
             "team": "",
-            "country": "US",
+            "country": "",
             "score": "",
             "score2": ""
         }

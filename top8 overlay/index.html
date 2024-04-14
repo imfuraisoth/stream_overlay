@@ -7,7 +7,7 @@
     <meta nextPlayer1="viewport" content="width=device-width">
     <meta nextPlayer2="viewport" content="width=device-width">
     <link rel="stylesheet" href="https://use.typekit.net/ogo7pba.css">
-    <title>Commentator Overlay</title>
+    <title>Top 8 Overlay</title>
     <link href="style.css" rel="stylesheet" type="text/css" />
     <script src="https://code.jquery.com/jquery-3.6.0.js"></script>
     <script src="https://code.jquery.com/ui/1.13.2/jquery-ui.js"></script>
@@ -36,6 +36,27 @@
     var r10_name1 = "";
     var r10_name2 = "";
 
+    var r1_country1 = "";
+    var r1_country2 = "";
+    var r2_country1 = "";
+    var r2_country2 = "";
+    var r3_country1 = "";
+    var r3_country2 = "";
+    var r4_country1 = "";
+    var r4_country2 = "";
+    var r5_country1 = "";
+    var r5_country2 = "";
+    var r6_country1 = "";
+    var r6_country2 = "";
+    var r7_country1 = "";
+    var r7_country2 = "";
+    var r8_country1 = "";
+    var r8_country2 = "";
+    var r9_country1 = "";
+    var r9_country2 = "";
+    var r10_country1 = "";
+    var r10_country2 = "";
+
     var r1_score1 = "";
     var r1_score2 = "";
     var r2_score1 = "";
@@ -59,6 +80,7 @@
     var r10_score1_2 = "";
     var r10_score2_2 = "";
 
+    var flagsDir = "../../resources/countries/iso/64shiny/";
     var serverIp = readServerIp();
 <!--  var serverIp = "???.???.???.???:8080";-->
 
@@ -896,7 +918,368 @@
                 document.body.appendChild(div);
               }
             }
+
+    <!-- *************************** Set Flag info ********************** -->
+          if (data.r1.p1.country !== r1_country1) {
+              var element = document.getElementById("r1_d_c1");
+              if (!!element) {
+                fadeOutElement(element);
+              }
+
+              r1_country1 = data.r1.p1.country;
+              if (data.r1.p1.country.length > 0) {
+                var country = document.createElement("img");
+                country.setAttribute("id", "r1_c1");
+                country.src = flagsDir + r1_country1 + ".png";
+                var div = document.createElement("div");
+                div.setAttribute("id", "r1_d_c1");
+                div.appendChild(country);
+                document.body.appendChild(div);
+              }
           }
+
+          if (data.r1.p2.country !== r1_country2) {
+              var element = document.getElementById("r1_d_c2");
+              if (!!element) {
+                fadeOutElement(element);
+              }
+
+              r1_country2 = data.r1.p2.country;
+              if (data.r1.p2.country.length > 0) {
+                var country = document.createElement("img");
+                country.setAttribute("id", "r1_c2");
+                country.src = flagsDir + r1_country2 + ".png";
+                var div = document.createElement("div");
+                div.setAttribute("id", "r1_d_c2");
+                div.appendChild(country);
+                document.body.appendChild(div);
+              }
+          }
+
+          if (data.r2.p1.country !== r2_country1) {
+              var element = document.getElementById("r2_d_c1");
+              if (!!element) {
+                fadeOutElement(element);
+              }
+
+              r2_country1 = data.r2.p1.country;
+              if (data.r2.p1.country.length > 0) {
+                var country = document.createElement("img");
+                country.setAttribute("id", "r2_c1");
+                country.src = flagsDir + r2_country1 + ".png";
+                var div = document.createElement("div");
+                div.setAttribute("id", "r2_d_c1");
+                div.appendChild(country);
+                document.body.appendChild(div);
+              }
+          }
+
+          if (data.r2.p2.country !== r2_country2) {
+              var element = document.getElementById("r2_d_c2");
+              if (!!element) {
+                fadeOutElement(element);
+              }
+
+              r2_country2 = data.r2.p2.country;
+              if (data.r2.p2.country.length > 0) {
+                var country = document.createElement("img");
+                country.setAttribute("id", "r2_c2");
+                country.src = flagsDir + r2_country2 + ".png";
+                var div = document.createElement("div");
+                div.setAttribute("id", "r2_d_c2");
+                div.appendChild(country);
+                document.body.appendChild(div);
+              }
+          }
+
+          if (data.r3.p1.country !== r3_country1) {
+              var element = document.getElementById("r3_d_c1");
+              if (!!element) {
+                fadeOutElement(element);
+              }
+
+              r3_country1 = data.r3.p1.country;
+              if (data.r3.p1.country.length > 0) {
+                var country = document.createElement("img");
+                country.setAttribute("id", "r3_c1");
+                country.src = flagsDir + r3_country1 + ".png";
+                var div = document.createElement("div");
+                div.setAttribute("id", "r3_d_c1");
+                div.appendChild(country);
+                document.body.appendChild(div);
+              }
+          }
+
+          if (data.r3.p2.country !== r3_country2) {
+              var element = document.getElementById("r3_d_c2");
+              if (!!element) {
+                fadeOutElement(element);
+              }
+
+              r3_country2 = data.r3.p2.country;
+              if (data.r3.p2.country.length > 0) {
+                var country = document.createElement("img");
+                country.setAttribute("id", "r3_c2");
+                country.src = flagsDir + r3_country2 + ".png";
+                var div = document.createElement("div");
+                div.setAttribute("id", "r3_d_c2");
+                div.appendChild(country);
+                document.body.appendChild(div);
+              }
+          }
+
+          if (data.r4.p1.country !== r4_country1) {
+              var element = document.getElementById("r4_d_c1");
+              if (!!element) {
+                fadeOutElement(element);
+              }
+
+              r4_country1 = data.r4.p1.country;
+              if (data.r4.p1.country.length > 0) {
+                var country = document.createElement("img");
+                country.setAttribute("id", "r4_c1");
+                country.src = flagsDir + r4_country1 + ".png";
+                var div = document.createElement("div");
+                div.setAttribute("id", "r4_d_c1");
+                div.appendChild(country);
+                document.body.appendChild(div);
+              }
+          }
+
+          if (data.r4.p2.country !== r4_country2) {
+              var element = document.getElementById("r4_d_c2");
+              if (!!element) {
+                fadeOutElement(element);
+              }
+
+              r4_country2 = data.r4.p2.country;
+              if (data.r4.p2.country.length > 0) {
+                var country = document.createElement("img");
+                country.setAttribute("id", "r4_c2");
+                country.src = flagsDir + r4_country2 + ".png";
+                var div = document.createElement("div");
+                div.setAttribute("id", "r4_d_c2");
+                div.appendChild(country);
+                document.body.appendChild(div);
+              }
+          }
+
+          if (data.r5.p1.country !== r5_country1) {
+              var element = document.getElementById("r5_d_c1");
+              if (!!element) {
+                fadeOutElement(element);
+              }
+
+              r5_country1 = data.r5.p1.country;
+              if (data.r5.p1.country.length > 0) {
+                var country = document.createElement("img");
+                country.setAttribute("id", "r5_c1");
+                country.src = flagsDir + r5_country1 + ".png";
+                var div = document.createElement("div");
+                div.setAttribute("id", "r5_d_c1");
+                div.appendChild(country);
+                document.body.appendChild(div);
+              }
+          }
+
+          if (data.r5.p2.country !== r5_country2) {
+              var element = document.getElementById("r5_d_c2");
+              if (!!element) {
+                fadeOutElement(element);
+              }
+
+              r5_country2 = data.r5.p2.country;
+              if (data.r5.p2.country.length > 0) {
+                var country = document.createElement("img");
+                country.setAttribute("id", "r5_c2");
+                country.src = flagsDir + r5_country2 + ".png";
+                var div = document.createElement("div");
+                div.setAttribute("id", "r5_d_c2");
+                div.appendChild(country);
+                document.body.appendChild(div);
+              }
+          }
+
+          if (data.r6.p1.country !== r6_country1) {
+              var element = document.getElementById("r6_d_c1");
+              if (!!element) {
+                fadeOutElement(element);
+              }
+
+              r6_country1 = data.r6.p1.country;
+              if (data.r6.p1.country.length > 0) {
+                var country = document.createElement("img");
+                country.setAttribute("id", "r6_c1");
+                country.src = flagsDir + r6_country1 + ".png";
+                var div = document.createElement("div");
+                div.setAttribute("id", "r6_d_c1");
+                div.appendChild(country);
+                document.body.appendChild(div);
+              }
+          }
+
+          if (data.r6.p2.country !== r6_country2) {
+              var element = document.getElementById("r6_d_c2");
+              if (!!element) {
+                fadeOutElement(element);
+              }
+
+              r6_country2 = data.r6.p2.country;
+              if (data.r6.p2.country.length > 0) {
+                var country = document.createElement("img");
+                country.setAttribute("id", "r6_c2");
+                country.src = flagsDir + r6_country2 + ".png";
+                var div = document.createElement("div");
+                div.setAttribute("id", "r6_d_c2");
+                div.appendChild(country);
+                document.body.appendChild(div);
+              }
+          }
+
+          if (data.r7.p1.country !== r7_country1) {
+              var element = document.getElementById("r7_d_c1");
+              if (!!element) {
+                fadeOutElement(element);
+              }
+
+              r7_country1 = data.r7.p1.country;
+              if (data.r7.p1.country.length > 0) {
+                var country = document.createElement("img");
+                country.setAttribute("id", "r7_c1");
+                country.src = flagsDir + r7_country1 + ".png";
+                var div = document.createElement("div");
+                div.setAttribute("id", "r7_d_c1");
+                div.appendChild(country);
+                document.body.appendChild(div);
+              }
+          }
+
+          if (data.r7.p2.country !== r7_country2) {
+              var element = document.getElementById("r7_d_c2");
+              if (!!element) {
+                fadeOutElement(element);
+              }
+
+              r7_country2 = data.r7.p2.country;
+              if (data.r7.p2.country.length > 0) {
+                var country = document.createElement("img");
+                country.setAttribute("id", "r7_c2");
+                country.src = flagsDir + r7_country2 + ".png";
+                var div = document.createElement("div");
+                div.setAttribute("id", "r7_d_c2");
+                div.appendChild(country);
+                document.body.appendChild(div);
+              }
+          }
+
+          if (data.r8.p1.country !== r8_country1) {
+              var element = document.getElementById("r8_d_c1");
+              if (!!element) {
+                fadeOutElement(element);
+              }
+
+              r8_country1 = data.r8.p1.country;
+              if (data.r8.p1.country.length > 0) {
+                var country = document.createElement("img");
+                country.setAttribute("id", "r8_c1");
+                country.src = flagsDir + r8_country1 + ".png";
+                var div = document.createElement("div");
+                div.setAttribute("id", "r8_d_c1");
+                div.appendChild(country);
+                document.body.appendChild(div);
+              }
+          }
+
+          if (data.r8.p2.country !== r8_country2) {
+              var element = document.getElementById("r8_d_c2");
+              if (!!element) {
+                fadeOutElement(element);
+              }
+
+              r8_country2 = data.r8.p2.country;
+              if (data.r8.p2.country.length > 0) {
+                var country = document.createElement("img");
+                country.setAttribute("id", "r8_c2");
+                country.src = flagsDir + r8_country2 + ".png";
+                var div = document.createElement("div");
+                div.setAttribute("id", "r8_d_c2");
+                div.appendChild(country);
+                document.body.appendChild(div);
+              }
+          }
+
+          if (data.r9.p1.country !== r9_country1) {
+              var element = document.getElementById("r9_d_c1");
+              if (!!element) {
+                fadeOutElement(element);
+              }
+
+              r9_country1 = data.r9.p1.country;
+              if (data.r9.p1.country.length > 0) {
+                var country = document.createElement("img");
+                country.setAttribute("id", "r9_c1");
+                country.src = flagsDir + r9_country1 + ".png";
+                var div = document.createElement("div");
+                div.setAttribute("id", "r9_d_c1");
+                div.appendChild(country);
+                document.body.appendChild(div);
+              }
+          }
+
+          if (data.r9.p2.country !== r9_country2) {
+              var element = document.getElementById("r9_d_c2");
+              if (!!element) {
+                fadeOutElement(element);
+              }
+
+              r9_country2 = data.r9.p2.country;
+              if (data.r9.p2.country.length > 0) {
+                var country = document.createElement("img");
+                country.setAttribute("id", "r9_c2");
+                country.src = flagsDir + r9_country2 + ".png";
+                var div = document.createElement("div");
+                div.setAttribute("id", "r9_d_c2");
+                div.appendChild(country);
+                document.body.appendChild(div);
+              }
+          }
+
+          if (data.r10.p1.country !== r10_country1) {
+              var element = document.getElementById("r10_d_c1");
+              if (!!element) {
+                fadeOutElement(element);
+              }
+
+              r10_country1 = data.r10.p1.country;
+              if (data.r10.p1.country.length > 0) {
+                var country = document.createElement("img");
+                country.setAttribute("id", "r10_c1");
+                country.src = flagsDir + r10_country1 + ".png";
+                var div = document.createElement("div");
+                div.setAttribute("id", "r10_d_c1");
+                div.appendChild(country);
+                document.body.appendChild(div);
+              }
+          }
+
+          if (data.r10.p2.country !== r10_country2) {
+              var element = document.getElementById("r10_d_c2");
+              if (!!element) {
+                fadeOutElement(element);
+              }
+
+              r10_country2 = data.r10.p2.country;
+              if (data.r10.p2.country.length > 0) {
+                var country = document.createElement("img");
+                country.setAttribute("id", "r10_c2");
+                country.src = flagsDir + r10_country2 + ".png";
+                var div = document.createElement("div");
+                div.setAttribute("id", "r10_d_c2");
+                div.appendChild(country);
+                document.body.appendChild(div);
+              }
+          }
+       }
     }
 
     function fadeOutElement(element) {

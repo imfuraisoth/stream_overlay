@@ -605,6 +605,186 @@
   font-family: 'RigidSquareSemiBold', monospace;
 }
 
+#r1_c1 {
+  animation-duration: 2s;
+  animation-name: fadeIn;
+  padding: 5px 0 5px;
+  position: fixed;
+  left: 80px;
+  top: 263px;
+}
+
+#r1_c2 {
+  animation-duration: 2s;
+  animation-name: fadeIn;
+  padding: 5px 0 5px;
+  position: fixed;
+  left: 80px;
+  top: 313px;
+}
+
+#r2_c1 {
+  animation-duration: 2s;
+  animation-name: fadeIn;
+  padding: 5px 0 5px;
+  position: fixed;
+  left: 80px;
+  top: 450px;
+}
+
+#r2_c2 {
+  animation-duration: 2s;
+  animation-name: fadeIn;
+  padding: 5px 0 5px;
+  position: fixed;
+  left: 80px;
+  top: 500px;
+}
+
+#r3_c1 {
+  animation-duration: 2s;
+  animation-name: fadeIn;
+  padding: 5px 0 5px;
+  position: fixed;
+  left: 80px;
+  top: 675px;
+}
+
+#r3_c2 {
+  animation-duration: 2s;
+  animation-name: fadeIn;
+  padding: 5px 0 5px;
+  position: fixed;
+  left: 80px;
+  top: 725px;
+}
+
+#r4_c1 {
+  animation-duration: 2s;
+  animation-name: fadeIn;
+  padding: 5px 0 5px;
+  position: fixed;
+  left: 80px;
+  top: 875px;
+}
+
+#r4_c2 {
+  animation-duration: 2s;
+  animation-name: fadeIn;
+  padding: 5px 0 5px;
+  position: fixed;
+  left: 80px;
+  top: 925px;
+}
+
+#r5_c1 {
+  animation-duration: 2s;
+  animation-name: fadeIn;
+  padding: 5px 0 5px;
+  position: fixed;
+  left: 500px;
+  top: 355px;
+}
+
+#r5_c2 {
+  animation-duration: 2s;
+  animation-name: fadeIn;
+  padding: 5px 0 5px;
+  position: fixed;
+  left: 500px;
+  top: 410px;
+}
+
+#r6_c1 {
+  animation-duration: 2s;
+  animation-name: fadeIn;
+  padding: 5px 0 5px;
+  position: fixed;
+  left: 500px;
+  top: 680px;
+}
+
+#r6_c2 {
+  animation-duration: 2s;
+  animation-name: fadeIn;
+  padding: 5px 0 5px;
+  position: fixed;
+  left: 500px;
+  top: 730px;
+}
+
+#r7_c1 {
+  animation-duration: 2s;
+  animation-name: fadeIn;
+  padding: 5px 0 5px;
+  position: fixed;
+  left: 500px;
+  top: 860px;
+}
+
+#r7_c2 {
+  animation-duration: 2s;
+  animation-name: fadeIn;
+  padding: 5px 0 5px;
+  position: fixed;
+  left: 500px;
+  top: 915px;
+}
+
+#r8_c1 {
+  animation-duration: 2s;
+  animation-name: fadeIn;
+  padding: 5px 0 5px;
+  position: fixed;
+  left: 927px;
+  top: 775px;
+}
+
+#r8_c2 {
+  animation-duration: 2s;
+  animation-name: fadeIn;
+  padding: 5px 0 5px;
+  position: fixed;
+  left: 927px;
+  top: 825px;
+}
+
+#r9_c1 {
+  animation-duration: 2s;
+  animation-name: fadeIn;
+  padding: 5px 0 5px;
+  position: fixed;
+  left: 1365px;
+  top: 678px;
+}
+
+#r9_c2 {
+  animation-duration: 2s;
+  animation-name: fadeIn;
+  padding: 5px 0 5px;
+  position: fixed;
+  left: 1365px;
+  top: 728px;
+}
+
+#r10_c1 {
+  animation-duration: 2s;
+  animation-name: fadeIn;
+  padding: 5px 0 5px;
+  position: fixed;
+  left: 930px;
+  top: 355px;
+}
+
+#r10_c2 {
+  animation-duration: 2s;
+  animation-name: fadeIn;
+  padding: 5px 0 5px;
+  position: fixed;
+  left: 930px;
+  top: 410px;
+}
+
 .scores {
 	-webkit-text-stroke: 1px black;
 	font-family: "RigidSquareExtraBold";
