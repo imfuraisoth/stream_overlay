@@ -567,3 +567,7 @@ def set_reverse_names():
     current_next_data["reverseNames"] = not current_next_data["reverseNames"]
     with open(current_next_data_file, 'w', encoding="utf-8") as json_file:
         json_file.write(json.dumps(current_next_data, ensure_ascii=False))
+
+
+def get_current_next_data():
+    return read_file(current_next_data_file)

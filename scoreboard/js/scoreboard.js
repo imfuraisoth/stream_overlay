@@ -2,7 +2,7 @@ window.onload = init;
 var enableFlags = true;
 
 function init(){
-
+	
 	var xhr = new XMLHttpRequest(); //AJAX data request sent to server(in this case server being local json file)
 	var streamJSON = '../sc/streamcontrol.json'; //specifies path for streamcontrol output json
 	var scObj; //variable to hold data extracted from parsed json
@@ -20,38 +20,43 @@ function init(){
 	var gameHold;
 	var countryHold1;
 	var countryHold2;
-	var flagsDir = '../../../resources/countries/iso/64shiny/';
-
-	xhr.overrideMimeType('application/json'); //explicitly declares that json should always be processed as a json filetype
-
+	var flagsDir = '../../../../resources/countries/iso/64shiny/';
+	
+	var serverIp = readServerIp();
+	//var serverIp = "???.???.???.???:8080";
+	
+	function readServerIp() {
+        var request = new XMLHttpRequest();
+        request.open("GET", "../../config/serverip.txt", false);
+        request.send(null);
+        return request.responseText;
+    }
+	
 	function pollJSON() {
-		//xhr.open('GET',streamJSON+'?v='+cBust,true); //string query-style cache busting, forces non-cached new version of json to be opened each time
-		//xhr.open('GET', "http://192.168.0.249:8080/getdata"); //Go to local server
-		xhr.open('GET', "http://192.168.0.169:8080/getdata"); //Go to local server
-		xhr.send();
-		cBust++;
+      fetch('http://' + serverIp + '/getdata')
+          .then(function (response) {
+            return response.json();
+          })
+          .then(function (data) {
+			  scObj = data;
+				if(animated == true){
+					scoreboard(); //runs scoreboard function each time readyState reports back as 4 as long as it has already run once and changed animated value to false
+				}
+            })
+          .catch(function (err) {
+            console.log('error: ' + err);
+          });	
 	}
-
+	
 	pollJSON();
 	setInterval(function(){pollJSON();},1000); //runs polling function twice per second
-
-	xhr.onreadystatechange = parseJSON; //runs parseJSON function every time XMLHttpRequest ready state changes
-
-	function parseJSON() {
-		if(xhr.readyState === 4){ //loads data from json into scObj variable each time that XMLHttpRequest ready state reports back as '4'(successful)
-			scObj = JSON.parse(xhr.responseText);
-			if(animated == true){
-				scoreboard(); //runs scoreboard function each time readyState reports back as 4 as long as it has already run once and changed animated value to false
-			}
-		}
-	}
-
+	
 	function scoreboard(){
-
+		
 		if(startup == true){
 			game = scObj['game'];
 			gameHold = game; //sets 'game' value into placeholder div
-
+			
 			if(game == 'BBTAG' || game == 'SFVAE' || game == 'TEKKEN7' || game == 'UNIST'){
 				$('#scoreboardVid').attr('src','../webm/scoreboard_1.webm');
 			}
@@ -65,7 +70,7 @@ function init(){
 				TweenMax.set('#leftWrapper',{css:{y: adjust3}});
 				TweenMax.set('#rightWrapper',{css:{y: adjust3}});
 			}
-			else{
+			else{				
 				$('#scoreboardVid').attr('src','../webm/scoreboard_2.webm');
 				TweenMax.set('#leftWrapper',{css:{y: adjust2}}); //if 'game' value is anything other than specified above it defaults to 2nd webm/placement
 				TweenMax.set('#rightWrapper',{css:{y: adjust2}});
@@ -75,9 +80,9 @@ function init(){
 				var adjustLgH = parseFloat($('.logos').css('height')) * adjustLg[2];
 				TweenMax.set('.logos',{css:{x: adjustLg[0], y: adjustLg[1], width: adjustLgW, height: adjustLgH}});
 			}
-
+			
 			//document.getElementById('scoreboardVid').play(); //plays scoreboard video
-
+			
 			getData(); //runs function that sets data polled from json into html objects
 			setTimeout(logoLoop,logoTime); //sets logoLoop function out in time specified in logoTime variable in scoreboard.html
 			startup = false; //flags that the scoreboard/getData functions have run their first pass
@@ -87,11 +92,11 @@ function init(){
 			getData(); //if startup is not set to true, only the getData function is run each time scoreboard function runs
 		}
 	}
-
+	
 	setTimeout(scoreboard,300);
-
+	
 	function getData(){
-
+		
 		var p1Name = scObj['p1Name']; //creates local variables to store data parsed from json
 		var p2Name = scObj['p2Name'];
 		var p1Team = scObj['p1Team'];
@@ -107,13 +112,13 @@ function init(){
         var resultScore2 = scObj['resultscore2'];
         var nextPlayer1 = scObj['nextplayer1'];
         var nextPlayer2 = scObj['nextplayer2'];
-
+		
 		if(startup == true){
-
+			
 			TweenMax.set('#p1Wrapper',{css:{x: p1Move}}); //sets name/round wrappers to starting positions for them to animate from
 			TweenMax.set('#p2Wrapper',{css:{x: p2Move}});
 			TweenMax.set('#round',{css:{y: rdMove}});
-
+			
 			$('#p1Name').html(p1Name); //changes html object values to values stored in local variables
 			$('#p2Name').html(p2Name);
 			$('#p1Team').html(p1Team);
@@ -134,12 +139,12 @@ function init(){
 				$("#p1Country").attr("src", flagsDir + countryFlag(p1Country) + ".png").on("error",function(){
 					$("#p1Country").attr("src",flagsDir + "US.png");
 				});
-
+				
 				$("#p2Country").attr("src",flagsDir + countryFlag(p2Country) + ".png").on("error",function(){
 					$("#p2Country").attr("src",flagsDir + "US.png");
 				});
 			}
-
+						
 			p1Wrap.each(function(i, p1Wrap){ //function to resize font if text string is too long and causes div to overflow its width/height boundaries
 				while(p1Wrap.scrollWidth > p1Wrap.offsetWidth || p1Wrap.scrollHeight > p1Wrap.offsetHeight){
 					var newFontSize = parseInt(parseFloat($("#p1Name").css('font-size').slice(0,-2)) * .95) + 'px';
@@ -148,7 +153,7 @@ function init(){
 					$("#p1Team").css('font-size', newTeamFontSize);
 				}
 			});
-
+			
 			p2Wrap.each(function(i, p2Wrap){
 				while(p2Wrap.scrollWidth > p2Wrap.offsetWidth || p2Wrap.scrollHeight > p2Wrap.offsetHeight){
 					var newFontSize = parseInt(parseFloat($("#p2Name").css('font-size').slice(0,-2)) * .95) + 'px';
@@ -158,7 +163,7 @@ function init(){
 				}
 				return true;
 			});
-
+			
 			rdResize.each(function(i, rdResize){
 				while(rdResize.scrollWidth > rdResize.offsetWidth || rdResize.scrollHeight > rdResize.offsetHeight){
 					var newFontSize = (parseFloat($(rdResize).css('font-size').slice(0,-2)) * .95) + 'px';
@@ -211,8 +216,8 @@ function init(){
 			TweenMax.to('#results2',nameTime,{css:{opacity: 1},ease:Quad.easeOut,delay:nameDelay}); //fading them in, timing/delay based on variables set in scoreboard.html
 			TweenMax.to('#next1',nameTime,{css:{opacity: 1},ease:Quad.easeOut,delay:nameDelay}); //fading them in, timing/delay based on variables set in scoreboard.html
             TweenMax.to('#next2',nameTime,{css:{opacity: 1},ease:Quad.easeOut,delay:nameDelay}); //fading them in, timing/delay based on variables set in scoreboard.html
-
-// Disabling toggle between flag and team
+			
+// Disabling toggle between flag and team			
 //			TweenMax.to("#p1Country",1,{css:{opacity: 0},delay:10,repeat:-1,repeatDelay:10,yoyo:true});
 //			TweenMax.to("#p1TFlag",1,{css:{opacity: 1},delay:10,repeat:-1,repeatDelay:10,yoyo:true});
 //			TweenMax.to("#p2Country",1,{css:{opacity: 0},delay:10,repeat:-1,repeatDelay:10,yoyo:true});
@@ -220,12 +225,12 @@ function init(){
 		}
 		else{
 			game = scObj['game']; //if this is after the first time that getData function has run, changes the value of the local game variable to current json output
-
+			
 			if($('#p1Name').text() != p1Name || $('#p1Team').text() != p1Team){ //if either name or team do not match, fades out wrapper and updates them both
 				TweenMax.to('#p1Wrapper',.3,{css:{x: p1Move, opacity: 0},ease:Quad.easeOut,delay:0,onComplete:function(){ //uses onComplete parameter to execute function after TweenMax
 					$('#p1Name').css('font-size',nameSize).html(p1Name); //updates name and team html objects with current json values
 					$('#p1Team').css('font-size', teamNameSize).html(p1Team);
-
+			
 					p1Wrap.each(function(i, p1Wrap){//same resize functions from above
 						while(p1Wrap.scrollWidth > p1Wrap.offsetWidth || p1Wrap.scrollHeight > p1Wrap.offsetHeight){
 							var newFontSize = parseInt(parseFloat($("#p1Name").css('font-size').slice(0,-2)) * .95) + 'px';
@@ -234,16 +239,16 @@ function init(){
 							$("#p1Team").css('font-size', newTeamFontSize);
 						}
 					});
-
+					
 					TweenMax.to('#p1Wrapper',.3,{css:{x: '+0px', opacity: 1},ease:Quad.easeOut,delay:.2}); //fades name wrapper back in while moving to original position
 				}});
 			}
-
+			
 			if($('#p2Name').text() != p2Name || $('#p2Team').text() != p2Team){
 				TweenMax.to('#p2Wrapper',.3,{css:{x: p2Move, opacity: 0},ease:Quad.easeOut,delay:0,onComplete:function(){
 					$('#p2Name').css('font-size', nameSize).html(p2Name);
 					$('#p2Team').css('font-size', teamNameSize).html(p2Team);
-
+			
 					p2Wrap.each(function(i, p2Wrap){
 						while(p2Wrap.scrollWidth > p2Wrap.offsetWidth || p2Wrap.scrollHeight > p2Wrap.offsetHeight){
 							var newFontSize = parseInt(parseFloat($("#p2Name").css('font-size').slice(0,-2)) * .95) + 'px';
@@ -252,30 +257,30 @@ function init(){
 							$("#p2Team").css('font-size', newTeamFontSize);
 						}
 					});
-
+					
 					TweenMax.to('#p2Wrapper',.3,{css:{x: '+0px', opacity: 1},ease:Quad.easeOut,delay:.2});
 				}});
 			}
-
+			
 			if($('#round').text() != round){
 				TweenMax.to('#round',.3,{css:{opacity: 0},ease:Quad.easeOut,delay:0,onComplete:function(){ //same format as changing names just no change in positioning, only fade in/out
 					$('#round').html(round);
 					TweenMax.to('#round',.3,{css:{opacity: 1},ease:Quad.easeOut,delay:.2});
 				}});
 			}
-
+			
 			if($('#p1Score').text() != p1Score){ //same as round, no postioning changes just fade out, update text, fade back in
 				TweenMax.to('#p1Score',.3,{css:{opacity: 0},ease:Quad.easeOut,delay:0,onComplete:function(){
 					$('#p1Score').html(p1Score);
-
+					
 					TweenMax.to('#p1Score',.3,{css:{opacity: 1},ease:Quad.easeOut,delay:.2});
 				}});
 			}
-
+			
 			if($('#p2Score').text() != p2Score){
 				TweenMax.to('#p2Score',.3,{css:{opacity: 0},ease:Quad.easeOut,delay:0,onComplete:function(){
 					$('#p2Score').html(p2Score);
-
+					
 					TweenMax.to('#p2Score',.3,{css:{opacity: 1},ease:Quad.easeOut,delay:.2});
 				}});
 			}
@@ -373,7 +378,7 @@ function init(){
 					TweenMax.to("#f1Wrapper",.3,{css:{opacity: 1},delay:.2});
 				}});
 			}
-
+			
 			if(enableFlags && countryHold2 != p2Country){
 				TweenMax.to("#f2Wrapper",.3,{css:{opacity: 0},delay:0,onComplete:function(){
 					$("#p2Country").attr("src",flagsDir + countryFlag(p2Country) + ".png").on("error",function(){

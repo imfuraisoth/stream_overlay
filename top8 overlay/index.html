@@ -6,7 +6,7 @@
     <meta social1="viewport" content="width=device-width">
     <meta nextPlayer1="viewport" content="width=device-width">
     <meta nextPlayer2="viewport" content="width=device-width">
-    <link rel="stylesheet" href="https://use.typekit.net/ogo7pba.css">
+	<link rel="stylesheet" href="https://use.typekit.net/vsy6ybb.css">
     <title>Top 8 Overlay</title>
     <link href="style.css" rel="stylesheet" type="text/css" />
     <script src="https://code.jquery.com/jquery-3.6.0.js"></script>
@@ -79,10 +79,12 @@
     var r10_score2 = "";
     var r10_score1_2 = "";
     var r10_score2_2 = "";
+	
+	var current_round = 0;
 
-    var flagsDir = "../../resources/countries/iso/64shiny/";
-    var serverIp = readServerIp();
-<!--  var serverIp = "???.???.???.???:8080";-->
+    var flagsDir = "../../../resources/countries/iso/64shiny/";
+    //var serverIp = readServerIp();
+   var serverIp = "192.168.0.169:8080";
 
     function readServerIp() {
         var request = new XMLHttpRequest();
@@ -90,8 +92,25 @@
         request.send(null);
         return request.responseText;
     }
+	
+	function markNextPlayers() {
+      fetch('http://' + serverIp + '/getTop8CurrentNextData')
+          .then(function (response) {
+            return response.json();
+          })
+          .then(function (data) {
+              appendData(data);
+            })
+          .catch(function (err) {
+            console.log('error: ' + err);
+          });
+          function appendData(data) {
+			current_round = data.currentRound;
+		  }}
 
     function loadElements() {
+		markNextPlayers();
+		  
       fetch('http://' + serverIp + '/getTop8PlayerData')
           .then(function (response) {
             return response.json();
@@ -115,10 +134,12 @@
                 name.setAttribute("id", "r1_n1");
                 name.style.color = "#FFFFFF";
                 name.innerHTML = r1_name1;
+				name.classList.add("names");
                 var div = document.createElement("div");
                 div.setAttribute("id", "r1_d_n1");
                 div.appendChild(name);
                 document.body.appendChild(div);
+				modifyNames(name);
               }
             }
 
@@ -153,10 +174,12 @@
                 name.setAttribute("id", "r1_n2");
                 name.style.color = "#FFFFFF";
                 name.innerHTML = r1_name2;
+				name.classList.add("names");
                 var div = document.createElement("div");
                 div.setAttribute("id", "r1_d_n2");
                 div.appendChild(name);
                 document.body.appendChild(div);
+				modifyNames(name);
               }
             }
 
@@ -193,10 +216,12 @@
                 name.setAttribute("id", "r2_n1");
                 name.style.color = "#FFFFFF";
                 name.innerHTML = r2_name1;
+				name.classList.add("names");
                 var div = document.createElement("div");
                 div.setAttribute("id", "r2_d_n1");
                 div.appendChild(name);
                 document.body.appendChild(div);
+				modifyNames(name);
               }
             }
 
@@ -231,10 +256,12 @@
                 name.setAttribute("id", "r2_n2");
                 name.style.color = "#FFFFFF";
                 name.innerHTML = r2_name2;
+				name.classList.add("names");
                 var div = document.createElement("div");
                 div.setAttribute("id", "r2_d_n2");
                 div.appendChild(name);
                 document.body.appendChild(div);
+				modifyNames(name);
               }
             }
 
@@ -271,10 +298,12 @@
                 name.setAttribute("id", "r3_n1");
                 name.style.color = "#FFFFFF";
                 name.innerHTML = r3_name1;
+				name.classList.add("names");
                 var div = document.createElement("div");
                 div.setAttribute("id", "r3_d_n1");
                 div.appendChild(name);
                 document.body.appendChild(div);
+				modifyNames(name);
               }
             }
 
@@ -309,10 +338,12 @@
                 name.setAttribute("id", "r3_n2");
                 name.style.color = "#FFFFFF";
                 name.innerHTML = r3_name2;
+				name.classList.add("names");
                 var div = document.createElement("div");
                 div.setAttribute("id", "r3_d_n2");
                 div.appendChild(name);
                 document.body.appendChild(div);
+				modifyNames(name);
               }
             }
 
@@ -349,10 +380,12 @@
                 name.setAttribute("id", "r4_n1");
                 name.style.color = "#FFFFFF";
                 name.innerHTML = r4_name1;
+				name.classList.add("names");
                 var div = document.createElement("div");
                 div.setAttribute("id", "r4_d_n1");
                 div.appendChild(name);
                 document.body.appendChild(div);
+				modifyNames(name);
               }
             }
 
@@ -387,10 +420,12 @@
                 name.setAttribute("id", "r4_n2");
                 name.style.color = "#FFFFFF";
                 name.innerHTML = r4_name2;
+				name.classList.add("names");
                 var div = document.createElement("div");
                 div.setAttribute("id", "r4_d_n2");
                 div.appendChild(name);
                 document.body.appendChild(div);
+				modifyNames(name);
               }
             }
 
@@ -427,10 +462,12 @@
                 name.setAttribute("id", "r5_n1");
                 name.style.color = "#FFFFFF";
                 name.innerHTML = r5_name1;
+				name.classList.add("names");
                 var div = document.createElement("div");
                 div.setAttribute("id", "r5_d_n1");
                 div.appendChild(name);
                 document.body.appendChild(div);
+				modifyNames(name);
               }
             }
 
@@ -465,10 +502,12 @@
                 name.setAttribute("id", "r5_n2");
                 name.style.color = "#FFFFFF";
                 name.innerHTML = r5_name2;
+				name.classList.add("names");
                 var div = document.createElement("div");
                 div.setAttribute("id", "r5_d_n2");
                 div.appendChild(name);
                 document.body.appendChild(div);
+				modifyNames(name);
               }
             }
 
@@ -505,10 +544,12 @@
                 name.setAttribute("id", "r6_n1");
                 name.style.color = "#FFFFFF";
                 name.innerHTML = r6_name1;
+				name.classList.add("names");
                 var div = document.createElement("div");
                 div.setAttribute("id", "r6_d_n1");
                 div.appendChild(name);
                 document.body.appendChild(div);
+				modifyNames(name);
               }
             }
 
@@ -543,10 +584,12 @@
                 name.setAttribute("id", "r6_n2");
                 name.style.color = "#FFFFFF";
                 name.innerHTML = r6_name2;
+				name.classList.add("names");
                 var div = document.createElement("div");
                 div.setAttribute("id", "r6_d_n2");
                 div.appendChild(name);
                 document.body.appendChild(div);
+				modifyNames(name);
               }
             }
 
@@ -583,10 +626,12 @@
                 name.setAttribute("id", "r7_n1");
                 name.style.color = "#FFFFFF";
                 name.innerHTML = r7_name1;
+				name.classList.add("names");
                 var div = document.createElement("div");
                 div.setAttribute("id", "r7_d_n1");
                 div.appendChild(name);
                 document.body.appendChild(div);
+				modifyNames(name);
               }
             }
 
@@ -621,10 +666,12 @@
                 name.setAttribute("id", "r7_n2");
                 name.style.color = "#FFFFFF";
                 name.innerHTML = r7_name2;
+				name.classList.add("names");
                 var div = document.createElement("div");
                 div.setAttribute("id", "r7_d_n2");
                 div.appendChild(name);
                 document.body.appendChild(div);
+				modifyNames(name);
               }
             }
 
@@ -661,10 +708,12 @@
                 name.setAttribute("id", "r8_n1");
                 name.style.color = "#FFFFFF";
                 name.innerHTML = r8_name1;
+				name.classList.add("names");
                 var div = document.createElement("div");
                 div.setAttribute("id", "r8_d_n1");
                 div.appendChild(name);
                 document.body.appendChild(div);
+				modifyNames(name);
               }
             }
 
@@ -699,10 +748,12 @@
                 name.setAttribute("id", "r8_n2");
                 name.style.color = "#FFFFFF";
                 name.innerHTML = r8_name2;
+				name.classList.add("names");
                 var div = document.createElement("div");
                 div.setAttribute("id", "r8_d_n2");
                 div.appendChild(name);
                 document.body.appendChild(div);
+				modifyNames(name);
               }
             }
 
@@ -739,10 +790,12 @@
                 name.setAttribute("id", "r9_n1");
                 name.style.color = "#FFFFFF";
                 name.innerHTML = r9_name1;
+				name.classList.add("names");
                 var div = document.createElement("div");
                 div.setAttribute("id", "r9_d_n1");
                 div.appendChild(name);
                 document.body.appendChild(div);
+				modifyNames(name);
               }
             }
 
@@ -777,10 +830,12 @@
                 name.setAttribute("id", "r9_n2");
                 name.style.color = "#FFFFFF";
                 name.innerHTML = r9_name2;
+				name.classList.add("names");
                 var div = document.createElement("div");
                 div.setAttribute("id", "r9_d_n2");
                 div.appendChild(name);
                 document.body.appendChild(div);
+				modifyNames(name);
               }
             }
 
@@ -817,10 +872,12 @@
                 name.setAttribute("id", "r10_n1");
                 name.style.color = "#FFFFFF";
                 name.innerHTML = r10_name1;
+				name.classList.add("names");
                 var div = document.createElement("div");
                 div.setAttribute("id", "r10_d_n1");
                 div.appendChild(name);
                 document.body.appendChild(div);
+				modifyNames(name);
               }
             }
 
@@ -855,10 +912,12 @@
                 name.setAttribute("id", "r10_n2");
                 name.style.color = "#FFFFFF";
                 name.innerHTML = r10_name2;
+				name.classList.add("names");
                 var div = document.createElement("div");
                 div.setAttribute("id", "r10_d_n2");
                 div.appendChild(name);
                 document.body.appendChild(div);
+				modifyNames(name);
               }
             }
 
@@ -891,7 +950,7 @@
               if (data.r10.p1.score2.length > 0) {
                 var score = document.createElement("span");
                 score.setAttribute("id", "r10_s1_2");
-                score.style.color = "#FC0031";
+                score.style.color = "#FFFFFF";
                 score.innerHTML = r10_score1_2;
                 var div = document.createElement("div");
                 div.setAttribute("id", "r10_d_s1_2");
@@ -910,7 +969,7 @@
               if (data.r10.p2.score2.length > 0) {
                 var score = document.createElement("span");
                 score.setAttribute("id", "r10_s2_2");
-                score.style.color = "#FC0031";
+                score.style.color = "#FFFFFF";
                 score.innerHTML = r10_score2_2;
                 var div = document.createElement("div");
                 div.setAttribute("id", "r10_d_s2_2");
@@ -1297,8 +1356,29 @@
             }
         }, 30);
     }
+	
+
+	function modifyNames(nameElement) {
+		var max_width = parseInt(parseFloat($('.names').css('width').slice(0, -2)));
+		var computedStyle = window.getComputedStyle(nameElement);
+		var fontSize = parseFloat(computedStyle.getPropertyValue('font-size').slice(0, -2));
+		while(nameElement.scrollWidth > max_width){
+			fontSize = parseInt(fontSize * .95);
+			nameElement.style.fontSize = fontSize + "px";
+		}
+		flashNextPlayerNames(nameElement);
+	}
+	
+	function flashNextPlayerNames(nameElement) {
+		var id = nameElement.id;
+		var round = parseInt(id.match(/\d+/)[0]);
+		if (current_round == round && round < 10) {
+			nameElement.classList.add("current_match");
+		}
+	}
 
     window.setInterval(loadElements, 2000);
     </script>
+
   </body>
 </html>

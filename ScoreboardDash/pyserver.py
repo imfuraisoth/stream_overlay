@@ -108,6 +108,11 @@ def get_top8_player_data():
     return top8.get_all_player_data(), 200
 
 
+@api.route('/getTop8CurrentNextData', methods=['GET'])
+def get_top8_current_next_data():
+    return top8.get_current_next_data(), 200
+
+
 @api.route('/resetTop8', methods=['POST'])
 def reset_top8_data():
     top8.reset()
