@@ -123,11 +123,10 @@ a, a:hover, a:visited, a:active {
 	overflow: visible;
 }
 #ABOUT {
-	left: 948px;
-	top: 1033.992px;
-	position: absolute;
+	position: flex;
 	overflow: visible;
 	width: 43px;
+	text-decoration: underline;
 	margin-top: -2px !important;
 	font-size: 20px !important;
 }
@@ -717,7 +716,18 @@ a, a:hover, a:visited, a:active {
 	font-size: 28px;
 	text-shadow: rgba(232, 232, 232, 0.7) 1px 3px 10px;
 }
-
+#currentPlayerInfoDisplay {
+	opacity: 1;
+	transition: opacity 1s ease-in-out;
+	white-space: nowrap;
+	text-shadow: rgba(232, 232, 232, 0.7) 1px 3px 10px;
+}
+#currentScoreInfoDisplay {
+	opacity: 1;
+	transition: opacity 1s ease-in-out;
+	white-space: nowrap;
+	text-shadow: rgba(232, 232, 232, 0.7) 1px 3px 10px;
+}
 #text_name {
 	overflow: visible;
 	white-space: nowrap;

@@ -67,11 +67,21 @@ function updateCurrentPlayerDisplay() {
 	var scores = jsonData.p1Score + " - " + jsonData.p2Score;
 	if (currentPlayerInfoDisplay != names) {
 		currentPlayerInfoDisplay = names;
-		document.getElementById("currentPlayerInfoDisplay").innerHTML  = currentPlayerInfoDisplay;
+		var nameElement = document.getElementById("currentPlayerInfoDisplay");
+		nameElement.style.opacity = "0";
+		setTimeout(function() {
+			nameElement.textContent = currentPlayerInfoDisplay;
+			nameElement.style.opacity = "1";
+		  }, 1000);
 	}
 	if (currentScoreInfoDisplay != scores) {
 		currentScoreInfoDisplay = scores;
-		document.getElementById("currentScoreInfoDisplay").innerHTML  = currentScoreInfoDisplay;
+		var scoreElement = document.getElementById("currentScoreInfoDisplay");
+		scoreElement.style.opacity = "0";
+		setTimeout(function() {
+			scoreElement.textContent = currentScoreInfoDisplay;
+			scoreElement.style.opacity = "1";
+		  }, 1000);
 	}
 }
 
