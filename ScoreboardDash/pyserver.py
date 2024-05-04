@@ -33,6 +33,7 @@ replay_prefix = "Replay"
 replays_folder = "replays"
 saved_replays_folder = "../../clips"
 stream_control_file = "../data/scoreboard.json"
+commentators_file = "../data/commentators.json"
 player_1 = "../data/player1.txt"
 player_2 = "../data/player2.txt"
 next_player_1 = "../data/nextplayer1.txt"
@@ -117,6 +118,11 @@ def get_top8_current_next_data():
 def reset_top8_data():
     top8.reset()
     return "200"
+
+
+@api.route('/getCommentators', methods=['GET'])
+def get_commentators():
+    return json.dumps(read_file(commentators_file), ensure_ascii=False), 200
 
 
 @api.route('/addPlayer1Score', methods=['POST'])

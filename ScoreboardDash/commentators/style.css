@@ -373,6 +373,23 @@
 	left: 1097.5px;
 	top: 199.627px;
 }
+#soc1_dropdown {
+	position: absolute;
+	overflow: visible;
+	width: 130px;
+	height: 25px;
+	left: 687px;
+	top: 235.627px;
+}
+#soc2_dropdown {
+	position: absolute;
+	overflow: visible;
+	width: 130px;
+	height: 25px;
+	left: 1097.5px;
+	top: 235.627px;
+}
+
 #button_reverse_names {
 	position: absolute;
 	width: 100px;

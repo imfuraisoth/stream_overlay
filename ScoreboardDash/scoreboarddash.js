@@ -37,6 +37,18 @@ function populateData(data) {
 	updateElement("form_results_score_2p", data.resultscore2);
 	updateElement("form_ft", data.maxScore);
 	jsonData = data;
+	if (jsonData.p1Name == undefined) {
+	    jsonData.p1Name = "";
+	}
+    if (jsonData.p2Name == undefined) {
+        jsonData.p2Name = "";
+    }
+    if (jsonData.p1Score == undefined) {
+        jsonData.p1Score = "0";
+    }
+    if (jsonData.p2Score == undefined) {
+        jsonData.p2Score = "0";
+    }
 	updateCurrentPlayerDisplay();
 }
 
