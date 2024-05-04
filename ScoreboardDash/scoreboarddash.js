@@ -37,10 +37,13 @@ function populateData(data) {
 	updateElement("form_results_score_2p", data.resultscore2);
 	updateElement("form_ft", data.maxScore);
 	jsonData = data;
+	updateCurrentPlayerDisplay();
 }
 
 const countriesDropDownList = ['US', 'CA', 'JP', 'KR', 'MX', 'GB', 'ES', 'FR', 'FI', 'SE', 'PR'];
 const dropDownSelects = ['dropdown_country_1p', 'dropdown_country_2p', 'dropdown_country_next1', 'dropdown_country_next2'];
+var currentPlayerInfoDisplay = "";
+var currentScoreInfoDisplay = "";
 
 function populateCountrySelectDropDown() {
   dropDownSelects.forEach(selectId => {
@@ -59,13 +62,28 @@ function updateElement(id, value) {
 	}
 }
 
+function updateCurrentPlayerDisplay() {
+	var names = jsonData.p1Name + " vs " + jsonData.p2Name;
+	var scores = jsonData.p1Score + " - " + jsonData.p2Score;
+	if (currentPlayerInfoDisplay != names) {
+		currentPlayerInfoDisplay = names;
+		document.getElementById("currentPlayerInfoDisplay").innerHTML  = currentPlayerInfoDisplay;
+	}
+	if (currentScoreInfoDisplay != scores) {
+		currentScoreInfoDisplay = scores;
+		document.getElementById("currentScoreInfoDisplay").innerHTML  = currentScoreInfoDisplay;
+	}
+}
+
 function updatePlayer1() {
 	jsonData.p1Name = document.getElementById("form_name_1p").value;
+	updateCurrentPlayerDisplay();
 	sendJSON();
 }
 
 function updatePlayer2() {
 	jsonData.p2Name = document.getElementById("form_name_2p").value;
+	updateCurrentPlayerDisplay();
 	sendJSON();
 }
 
@@ -101,11 +119,13 @@ function updateNextTeam2() {
 
 function updateScore1() {
 	jsonData.p1Score = document.getElementById("form_score_1p").value;
+	updateCurrentPlayerDisplay();
 	sendJsonToEndpoint("updateP1score");
 }
 
 function updateScore2() {
 	jsonData.p2Score = document.getElementById("form_score_2p").value;
+	updateCurrentPlayerDisplay();
 	sendJsonToEndpoint("updateP2score");
 }
 
@@ -146,6 +166,7 @@ function resetNamesAndScore() {
 	jsonData.p2Country = "";
 	jsonData.p1Score = "0";
 	jsonData.p2Score = "0";
+	updateCurrentPlayerDisplay();
 	sendJsonToEndpoint("updatealldata");
 }
 
@@ -166,6 +187,7 @@ function reversePlayerNames() {
 	jsonData.p2Name = p1;
 	jsonData.p1Team = t2;
 	jsonData.p2Team = t1;
+	updateCurrentPlayerDisplay();
 	sendJSON();
 }
 
@@ -176,6 +198,7 @@ function reverseScores() {
 	document.getElementById("form_score_2p").value = p1;
 	jsonData.p1Score = p2;
 	jsonData.p2Score = p1;
+	updateCurrentPlayerDisplay();
 	sendJsonToEndpoint('updateCurrentScore');
 }
 
@@ -184,6 +207,7 @@ function addScoreP1() {
 	score++;
 	jsonData.p1Score = score.toString();
 	document.getElementById("form_score_1p").value = jsonData.p1Score;
+	updateCurrentPlayerDisplay();
 	sendJsonToEndpoint("updateP1score");
 }
 
@@ -195,6 +219,7 @@ function subtractScoreP1() {
 	score--;
 	jsonData.p1Score = score.toString();
 	document.getElementById("form_score_1p").value = jsonData.p1Score;
+	updateCurrentPlayerDisplay();
 	sendJsonToEndpoint("updateP1score");
 }
 
@@ -203,6 +228,7 @@ function addScoreP2() {
 	score++;
 	jsonData.p2Score = score.toString();
 	document.getElementById("form_score_2p").value = jsonData.p2Score;
+	updateCurrentPlayerDisplay();
 	sendJsonToEndpoint("updateP2score");
 }
 
@@ -214,6 +240,7 @@ function subtractScoreP2() {
 	score--;
 	jsonData.p2Score = score.toString();
 	document.getElementById("form_score_2p").value = jsonData.p2Score;
+	updateCurrentPlayerDisplay();
 	sendJsonToEndpoint("updateP2score");
 }
 
@@ -222,6 +249,7 @@ function resetScores() {
 	document.getElementById("form_score_2p").value = "0";
 	jsonData.p1Score = "0";
 	jsonData.p2Score = "0";
+	updateCurrentPlayerDisplay();
 	sendJsonToEndpoint('updateCurrentScore');
 }
 
@@ -266,6 +294,7 @@ function resetAll() {
 	jsonData.resultscore2 = "";
 	jsonData.maxScore = "";
 	jsonData.round = "Casuals";
+	updateCurrentPlayerDisplay();
 	sendJsonToEndpoint("updatealldata");
 }
 
@@ -344,6 +373,7 @@ function nextRoundUpdate(data) {
 	jsonData.nextplayer2 = "";
     jsonData.nextcountry1 = "US";
     jsonData.nextcountry2 = "US";
+	updateCurrentPlayerDisplay();
 	sendJsonToEndpoint("updatealldata");
 }
 

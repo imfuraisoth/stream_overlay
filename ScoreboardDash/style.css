@@ -690,6 +690,10 @@ a, a:hover, a:visited, a:active {
 	height: auto;
 	padding: 5px 0px;
 	font-size: 14px;
+	color: black;
+}
+#dropdown_round option {
+	color: black;
 }
 .dropdown_round {
 	overflow: visible;
@@ -1077,6 +1081,10 @@ a, a:hover, a:visited, a:active {
 	height: auto;
 	padding: 0px 8px;
 	font-size: .8em;
+	color: black;
+}
+#dropdown_country_1p option {
+	color: black;
 }
 .dropdown_country_1p {
 	overflow: visible;
@@ -1117,6 +1125,10 @@ a, a:hover, a:visited, a:active {
 	shape-rendering: auto;
 	padding: 0px 8px;
 	font-size: .8em;
+	color: black;
+}
+#dropdown_country_2p option{
+	color: black;
 }
 .dropdown_country_2p {
 	overflow: visible;
@@ -1547,6 +1559,10 @@ a, a:hover, a:visited, a:active {
 	shape-rendering: auto;
 	padding: 0px 8px;
 	font-size: .8em;
+	color: black;
+}
+#dropdown_country_next1 option {
+	color: black;
 }
 .dropdown_country_next1 {
 	overflow: visible;
@@ -1561,6 +1577,10 @@ a, a:hover, a:visited, a:active {
 	shape-rendering: auto;
 	padding: 0px 8px;
 	font-size: .8em;
+	color: black;
+}
+#dropdown_country_next2 option {
+	color: black;
 }
 .dropdown_country_next2 {
 	overflow: visible;
