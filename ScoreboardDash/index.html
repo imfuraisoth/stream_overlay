@@ -5,6 +5,9 @@
 	<meta charset="utf-8">
 	<link rel="stylesheet" href="https://use.typekit.net/ogo7pba.css">
 	<title>Scoreboard Dashboard</title>
+	<link rel="preconnect" href="https://fonts.googleapis.com">
+	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+	<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+Vithkuqi:wght@400;500;600;700&display=swap" rel="stylesheet">
 	<link href="style.css" rel="stylesheet" type="text/css" />
 	<link rel="icon" type="image/png" href="images/V.png">
 	<script src="https://kit.fontawesome.com/2c93766a80.js" crossorigin="anonymous"></script>
@@ -13,58 +16,289 @@
 <body>
 	<div class="container">
 		<div id="event_page">
-			<svg class="background">
-				<rect id="background" rx="0" ry="0" x="0" y="0" width=100% height=1080px>
-				</rect>
-			</svg>
-			<svg class="grid_bottom_bar">
-				<rect id="grid_bottom_bar" rx="0" ry="0" x="0" y="0" width=100% height="61">
-				</rect>
-			</svg>
-			<svg class="grid_top_bar">
-				<rect id="grid_top_bar" rx="0" ry="0" x="0" y="0" width=100% height="61">
-				</rect>
-			</svg>
-			<div id="Commentators">
-				<a href="commentators/commentators.html" style="text-decoration: none">Commentators</a>
+
+
+			<div class="top-navbar-container">
+				<div id="Commentators" class="header-item">
+					<a href="commentators/commentators.html" style="text-decoration: none">Commentators</a>
+				</div>
+				<div id="Top_8" class="header-item">
+					<a href="top8/top8.html" style="text-decoration: none">Top 8</a>
+				</div>
+				<div id="Event_Dashboard" class="header-item">
+					<a href="index.html" style="text-decoration: none">Event Dashboard</a>
+				</div>	
 			</div>
-			<div id="Top_8">
-				<a href="top8/top8.html" style="text-decoration: none">Top 8</a>
+
+			<!-- EVENT DASHBOARD CONTENT -->
+			
+			<!-- MATCH META DATA CURRENT MATCH -->
+			<div class="event-dashboard-content">			
+
+			<!-- HEADER -->
+			<div class="dashboard-header">
+				<div class="contents-item">
+					<button class="rectangle_button" id="rectangle_button" onclick='resetAll();'>
+						<text id="button_text">RESET ALL</text>
+					</button>
+				</div>
+				<div class="contents-item">
+					<h2 id="eventDashText">EVENT DASHBOARD</h2>
+				</div>
+				<div class="contents-item">
+					<button class="rectangle_button" id="rectangle_button_1" onclick='resetNamesAndScore();'>
+						<text id="button_text_2">RESET NAMES & SCORES </text>
+					</button>
+				</div>	
 			</div>
-			<div id="Event_Dashboard">
-				<a href="index.html" style="text-decoration: none">Event Dashboard</a>
+
+			<div class="matchMetaDataContainer">
+
+				<div class="matchItem playerCard-p1">
+					<div class="cardHeader"> 
+						<div id="text_1p">
+							<span class="text-shadow">PLAYER 1</span>
+						</div>
+						<div class="current1p">	
+							<div class="playerCardItem">
+								<span>Name</span>
+							</div>
+							<input class="form_name_1p" type="text" id="form_name_1p" value="" placeholder="P1 Name" onchange="updatePlayer1();">
+							<div class="playerCardItem">
+								<span>Team</span>
+							</div>
+							<input class="form_team_1p" type="text" id="form_team_1p" value="" placeholder="P1 Team" onchange="updateTeam1();">
+						</div>
+					</div>
+					<div class="playerCardItem">
+						<span>Country</span>
+						<select id="dropdown_country_1p" onchange="countryDropdown1()">
+						</select>
+					</div>
+					<div class="playerCardItem">
+						<span>Score</span>
+						<div class="cardScoreItem">
+							<button class="scoreButton" onclick='subtractScoreP1();'> <span class="minus"> - </span> </button>
+							<input class="form_score_1p" type="text" id="form_score_1p" value="0" onchange="updateScore1();">
+							<button class="scoreButton" onclick='addScoreP1();'> <span> + </span></button>
+						</div>
+					</div>
+				</div>
+				<div class="currentMatchInfoDisplay">
+					<div id="text_current_match">
+						<span>CURRENT MATCH</span>
+					</div>
+					<div id="button_reverse_names">
+						<button class="rectangle_button" id="rectangle_button_7" onclick='reversePlayerNames();'>
+							<text id="button_text_4"><-Reverse Names-></text>
+						</button>
+					</div>
+					<div class="matchInfoCenterDisplay">
+						<div class="playerInfoDisplay">
+							<!-- UPDATE NAMES AND SCORE TO BE DYNAMIC -->
+							<span> Vodka GOLBAOLSL vs. Briyou Golblasky </span>
+							<div>
+								10 - 3
+							</div>
+						</div>
+					</div>
+					<div class="matchInfo-todo"></div>
+					<div id="button_reverse_scores">
+						<button class="rectangle_button" id="rectangle_button_2" onclick='reverseScores();'>
+							<text id="button_text_4"><-Reverse Scores-></text>
+						</button>
+					</div>
+					<div id="button_reset_scores">
+						<button class="rectangle_button" id="rectangle_button_3" onclick='resetScores();'>
+							<text id="button_text_4">Reset Scores</text>
+						</button>
+					</div>
+				</div>
+				<div class="matchItem playerCard-p2">
+					<div class="cardHeader">
+						<div id="text_2p">
+							<span class="text-shadow">PLAYER 2</span>
+						</div>
+						<div class="playerCardItem">
+							<span>Name</span>
+						</div>
+						<input class="form_name_2p" type="text" id="form_name_2p" value="" placeholder="P2 Name" onchange="updatePlayer2();">	
+						<div class="playerCardItem">
+							<span>Team</span>
+						</div>
+							<input class="form_team_2p" type="text" id="form_team_2p" value="" placeholder="P2 Team" onchange="updateTeam2();">
+					</div>
+					<div class="cardCountry">
+						<div class="playerCardItem">
+							<span>Country</span>
+						</div>
+						<select id="dropdown_country_2p" class="dropdown_country_2p" onchange = "countryDropdown2()">
+						</select>
+					</div>
+					<div class="playerCardItem">
+						<span>Score</span>
+
+						<div class="cardScoreItem">
+							<button class="scoreButton" onclick='subtractScoreP2();'>
+								<span class="minus"> - </span>
+							</button>
+							<input class="form_score_2p" type="text" id="form_score_2p" value="0" onchange="updateScore2();">
+							<button class="scoreButton" onclick='addScoreP2();'>
+								<span> + </span>
+							</button>
+						</div>
+						
+					</div>
+				</div>
+
 			</div>
-			<div id="ABOUT">
-				<a href="https://www.theshilluminati.com/" style="text-decoration: none" target="_blank">ABOUT</a>
+
+			<!-- LAST SECTION -->
+			<div class="extraSectionContainer">
+				<div class="leftSectionContainer">
+
+				<!-- ROUND -->
+				<div class="round-section-container">
+					<div class="round-contents">
+						<div class="contents-item-dropdown">
+							<div class="header-type text-shadow">Round Type</div>
+							<div id="round">
+								<select id="dropdown_round" class="dropdown_round" onchange="updateRound();">
+									<option>Casuals</option>
+									<option>Pools</option>
+									<option>Winners Round 1</option>
+									<option>Winners Round 2</option>
+									<option>Winners Round 3</option>
+									<option>Winners Round 4</option>
+									<option>Winners Quarters</option>
+									<option>Winners Semis</option>
+									<option>Winners Finals</option>
+									<option>Grand Finals</option>
+									<option>Losers Round 1</option>
+									<option>Losers Round 2</option>
+									<option>Losers Round 3</option>
+									<option>Losers Round 4</option>
+									<option>Losers Quarters</option>
+									<option>Losers Semis</option>
+									<option>Losers Finals</option>
+									<option>Exhibitions</option>
+									<option>FT3</option>
+									<option>FT5</option>
+									<option>FT10</option>
+									<option>FT?</option>
+								</select>
+							</div>		
+						</div>
+					</div>		
 			</div>
-			<svg class="grid_background">
-				<rect id="grid_background" rx="0" ry="0" x="0" y="0" width="660" height="958">
-				</rect>
-			</svg>
-			<svg class="grid_round">
-				<rect id="grid_round" rx="0" ry="0" x="0" y="0" width="660" height="82.627">
-				</rect>
-			</svg>
-			<svg class="grid_current_match">
-				<rect id="grid_current_match" rx="0" ry="0" x="0" y="0" width="660" height="350">
-				</rect>
-			</svg>
-			<svg class="grid_ft">
-				<rect id="grid_ft" rx="0" ry="0" x="0" y="0" width="170" height="149">
-				</rect>
-			</svg>
-			<svg class="grid_next_round">
-				<rect id="grid_next_round" rx="0" ry="0" x="0" y="0" width="260" height="304">
-				</rect>
-			</svg>
-			<svg class="grid_results">
-				<rect id="grid_results" rx="0" ry="0" x="0" y="0" width="230" height="304">
-				</rect>
-			</svg>
-			<svg class="grid_replays">
-				<rect id="grid_replays" rx="0" ry="0" x="0" y="0" width="170" height="156">
-				</rect>
-			</svg>
+
+
+					<div class="replaysContainer">
+						<div id="text_replays">
+							<span class="text-shadow">Replays</span>
+						</div>
+						<div id="button_start_replay">
+							<button class="rectangle_button" id="rectangle_button_4" onclick='triggerReplay();'>
+								<text x="14" y="19" id="button_text_4">Start Replay ▶︎▶︎</text>
+							</button>
+			
+						</div>
+		
+						<div id="button_stop_replay">
+							<button class="rectangle_button" id="rectangle_button_5" onclick='stopReplay();'>
+								<text x="14" y="19" id="button_text_4">Stop Replay  ⏹</text>
+							</button>
+						</div>
+					</div>
+
+					<div class="ftContainer">
+						<div id="text_ft">
+							<span class="text-shadow">First to #</span>
+						</div>
+						<div id="ftx">
+							<input placeholder="0" class="form_ft" type="text" id="form_ft" style="float: left;" value="" onchange="updateMaxScore();">
+						</div>
+					</div>
+				</div>
+
+				<div class="nextRoundContainer">
+					<div>
+						<h3 class="finalSectionHeaderText text-shadow">NEXT ROUND</h3>
+					</div>
+
+					<div class="nextRoundConsoleContainer">
+						<!-- 1st player -->
+						<div class="nextRound-1p">
+							<div id="text_next_round_1p">
+								<span class="text-shadow">Player 1</span>
+							</div>
+							<div class="nextRoundItem" id="text_next_round_name_1p">
+								<span>Name</span>
+							</div>
+							<input class="form_next_round_name_1p" type="text" id="form_next_round_name_1p" value="" placeholder="Next P1 Name" onchange="updateNextPlayer1();">
+							<div class="nextRoundItem" id="text_next_round_team_1p">
+								<span>Team</span>
+							</div>
+							<input class="form_next_round_team_1p" type="text" id="form_next_round_team_1p" value="" placeholder="Next P1 Team" onchange="updateNextTeam1();">
+							<div class="nextRoundItem">
+								<span>Country</span>
+								<select id="dropdown_country_next1" class="dropdown_country_next1" onchange="updateNextCountry1();">
+								</select>
+							</div>
+						</div>
+						
+						<!-- 2nd Player -->
+						<div class="nextRound-2p">
+							<div id="text_next_round_2p">
+								<span class="text-shadow">Player 2</span>
+							</div>
+							<div class="nextRoundItem" id="text_next_round_name_2p">
+								<span>Name</span>
+							</div>
+							<input class="form_next_round_name_2p" type="text" id="form_next_round_name_2p" value="" placeholder="Next P1 Name" onchange="updateNextPlayer2();">
+
+							<div class="nextRoundItem" id="text_next_round_team_2p">
+								<span>Team</span>
+							</div>
+							<input class="form_next_round_team_2p" type="text" id="form_next_round_team_2p" value="" placeholder="Next P1 Team" onchange="updateNextTeam2();">
+
+							<div class="nextRoundItem">
+								<span> Country </span>
+								<select id="dropdown_country_next2" class="dropdown_country_next2" onchange="updateNextCountry2();">
+								</select>
+							</div>
+						</div>
+					</div>
+					
+					<div id="button_next_round">
+						<button class="rectangle_button" id="rectangle_button_6" onclick='nextRound();'>
+							<text x="18" y="19" id="button_text_4">Next Round</text>
+						</button>
+					</div>
+					
+				</div>
+
+				<div class="resultsContainer">
+					<h2 class="text-shadow"> Results </h2>
+					<div id="text_results_1p">
+						<span>1P</span>
+					</div>
+					<div id="result1p">
+						<input placeholder="P1 Name" class="form_results_name_1p" type="text" id="form_results_name_1p" style="float: left;" value="" onchange="updateResults();">
+						<input placeholder="0" class="form_results_score_1p" type="text" id="form_results_score_1p" style="float: left;" value="" onchange="updateResults();">
+					</div>
+					<div id="text_results_2p">
+						<span>2P</span>
+					</div>
+					<div id="result2p">
+						<input placeholder="P2 Name"class="form_results_name_2p" type="text" id="form_results_name_2p" style="float: left; " value="" onchange="updateResults();">
+						<input placeholder="0" class="form_results_score_2p" type="text" id="form_results_score_2p" style="float: left;" value="" onchange="updateResults();">
+					</div>
+				</div>
+			</div>
+
+
+
 			<svg class="line_commentators" viewBox="0 0 132 2">
 				<path id="line_commentators" d="M 0 0 L 132 0">
 				</path>
@@ -82,243 +316,11 @@
 				</path>
 			</svg>
 
-			<!-- Text fields -->
 
-			<div id="text_1p">
-				<span>1P</span>
-			</div>
-			<div id="text_2p">
-				<span>2P</span>
-			</div>
-			<div id="text_round">
-				<span>ROUND</span>
-			</div>
-			<div id="text_current_match">
-				<span>Current Match</span>
-			</div>
-			<div id="text_name">
-				<span>Name</span>
-			</div>
-			<div id="text_team">
-				<span>Team</span>
-			</div>
-			<div id="text_country">
-				<span>Country</span>
-			</div>
-			<div id="text_score">
-				<span>Score</span>
-			</div>
-			<div id="text_next_round_cs">
-				<span>Next Round</span>
-			</div>
-			<div id="text_next_round_1p">
-				<span>1P</span>
-			</div>
-			<div id="text_next_round_name_1p">
-				<span>Name</span>
-			</div>
-			<div id="text_next_round_team_1p">
-				<span>Team</span>
-			</div>
-			<div id="text_next_round_2p">
-				<span>2P</span>
-			</div>
-			<div id="text_next_round_name_2p">
-				<span>Name</span>
-			</div>
-			<div id="text_next_round_team_2p">
-				<span>Team</span>
-			</div>
-			<div id="text_results">
-				<span>RESULTS</span>
-			</div>
-			<div id="text_results_1p">
-				<span>1P</span>
-			</div>
-			<div id="text_results_2p">
-				<span>2P</span>
-			</div>
-			<div id="text_replays">
-				<span>Replays</span>
-			</div>
-			<div id="text_ft">
-				<span>First to #</span>
+			<div id="ABOUT" class="header-item">
+				<a href="https://www.theshilluminati.com/" style="text-decoration: none" target="_blank">ABOUT</a>
 			</div>
 
-			<!-- Buttons -->
-			<div id="button_reset_all">
-				<button class="rectangle_button" id="rectangle_button" onclick='resetAll();'>
-					<text x="25" y="19" id="button_text">Reset All</text>
-				</button>
-			</div>
-
-			<div id="button_reset_names_scores">
-				<button class="rectangle_button" id="rectangle_button_1" onclick='resetNamesAndScore();'>
-					<text x="5" y="19" id="button_text_2">Reset Names & Scores</text>
-				</button>
-			</div>
-			<div id="button_score_sub_2p">
-				<button class="rectangle_button_small" onclick='subtractScoreP2();'>
-					<text x="6" y="16" id="button_text_3">-</text>
-				</button>
-			</div>
-			<div id="button_score_add_1p">
-				<button class="rectangle_button_small" onclick='addScoreP1();'>
-					<text x="6" y="17" id="button_text_3">+</text>
-				</button>
-			</div>
-			<div id="button_score_sub_1p">
-				<button class="rectangle_button_small" onclick='subtractScoreP1();'>
-					<text x="6" y="16" id="button_text_3">-</text>
-				</button>
-			</div>
-			<div id="button_score_add_2p">
-				<button class="rectangle_button_small" onclick='addScoreP2();'>
-					<text x="6" y="17" id="button_text_3">+</text>
-				</button>
-			</div>
-			<div id="button_reverse_scores">
-				<button class="rectangle_button" id="rectangle_button_2" onclick='reverseScores();'>
-					<text x="0" y="19" id="button_text_4"><-Reverse Scores-></text>
-				</button>
-			</div>
-			<div id="button_reset_scores">
-				<button class="rectangle_button" id="rectangle_button_3" onclick='resetScores();'>
-					<text x="18" y="19" id="button_text_4">Reset Scores</text>
-				</button>
-			</div>
-			<div id="button_start_replay">
-				<button class="rectangle_button" id="rectangle_button_4" onclick='triggerReplay();'>
-					<text x="14" y="19" id="button_text_4">Start Replay ⏵</text>
-				</button>
-
-			</div>
-
-			<div id="button_stop_replay">
-				<button class="rectangle_button" id="rectangle_button_5" onclick='stopReplay();'>
-					<text x="14" y="19" id="button_text_4">Stop Replay  ⏹</text>
-				</button>
-			</div>
-
-			<div id="button_next_round">
-				<button class="rectangle_button" id="rectangle_button_6" onclick='nextRound();'>
-					<text x="18" y="19" id="button_text_4">Next Round</text>
-				</button>
-			</div>
-			<div id="button_reverse_names">
-				<button class="rectangle_button" id="rectangle_button_7" onclick='reversePlayerNames();'>
-					<text x="0" y="19" id="button_text_4"><-Reverse Names-></text>
-				</button>
-			</div>
-
-			<!-- Forms -->
-			<div id="round">
-				<select id = "dropdown_round" class="dropdown_round" onchange = "updateRound();">
-					<option>Casuals</option>
-					<option>Pools</option>
-					<option>Winners Round 1</option>
-					<option>Winners Round 2</option>
-					<option>Winners Round 3</option>
-					<option>Winners Round 4</option>
-					<option>Winners Quarters</option>
-					<option>Winners Semis</option>
-					<option>Winners Finals</option>
-					<option>Grand Finals</option>
-					<option>Losers Round 1</option>
-					<option>Losers Round 2</option>
-					<option>Losers Round 3</option>
-					<option>Losers Round 4</option>
-					<option>Losers Quarters</option>
-					<option>Losers Semis</option>
-					<option>Losers Finals</option>
-					<option>Exhibitions</option>
-					<option>FT3</option>
-					<option>FT5</option>
-					<option>FT10</option>
-					<option>FT?</option>
-				</select>
-			</div>
-			<div id="current1p">
-				<input class="form_name_1p" type="text" id="form_name_1p" value="" placeholder="P1 Name" onchange="updatePlayer1();">
-				<input class="form_team_1p" type="text" id="form_team_1p" value="" placeholder="P1 Team" onchange="updateTeam1();">
-				<input class="form_score_1p" type="text" id="form_score_1p" value="0" onchange="updateScore1();">
-				<select id = "dropdown_country_1p" class="dropdown_country_1p" onchange = "countryDropdown1()">
-					<option>US</option>
-					<option>CA</option>
-					<option>JP</option>
-					<option>KR</option>
-					<option>MX</option>
-					<option>GB</option>
-					<option>ES</option>
-					<option>FR</option>
-					<option>FI</option>
-					<option>SE</option>
-					<option>PR</option>
-				</select>
-			</div>
-			<div id="current2p">
-				<input class="form_name_2p" type="text" id="form_name_2p" value="" placeholder="P2 Name" onchange="updatePlayer2();">
-				<input class="form_team_2p" type="text" id="form_team_2p" value="" placeholder="P2 Team" onchange="updateTeam2();">
-				<input class="form_score_2p" type="text" id="form_score_2p" value="0" onchange="updateScore2();">
-				<select id = "dropdown_country_2p" class="dropdown_country_2p" onchange = "countryDropdown2()">
-					<option>US</option>
-					<option>CA</option>
-					<option>JP</option>
-					<option>KR</option>
-					<option>MX</option>
-					<option>GB</option>
-					<option>ES</option>
-					<option>FR</option>
-					<option>FI</option>
-					<option>SE</option>
-					<option>PR</option>
-				</select>
-			</div>
-			<div id="result1p">
-				<input class="form_results_score_1p" type="text" id="form_results_score_1p" style="float: left;" value="" onchange="updateResults();">
-				<input class="form_results_name_1p" type="text" id="form_results_name_1p" style="float: left;" value="" onchange="updateResults();">
-			</div>
-			<div id="result2p">
-				<input class="form_results_score_2p" type="text" id="form_results_score_2p" style="float: left;" value="" onchange="updateResults();">
-				<input class="form_results_name_2p" type="text" id="form_results_name_2p" style="float: left; " value="" onchange="updateResults();">
-			</div>
-			<div id="next1p">
-				<select id = "dropdown_country_next1" class="dropdown_country_next1" onchange = "updateNextCountry1();">
-					<option>US</option>
-					<option>CA</option>
-					<option>JP</option>
-					<option>KR</option>
-					<option>MX</option>
-					<option>GB</option>
-					<option>ES</option>
-					<option>FR</option>
-					<option>FI</option>
-					<option>SE</option>
-					<option>PR</option>
-				</select>
-				<input class="form_next_round_team_1p" type="text" id="form_next_round_team_1p" value="" placeholder="Next P1 Team" onchange="updateNextTeam1();">
-				<input class="form_next_round_name_1p" type="text" id="form_next_round_name_1p" value="" placeholder="Next P1 Name" onchange="updateNextPlayer1();">
-			</div>
-			<div id="next2p">
-				<select id = "dropdown_country_next2" class="dropdown_country_next2" onchange = "updateNextCountry2();">
-					<option>US</option>
-					<option>CA</option>
-					<option>JP</option>
-					<option>KR</option>
-					<option>MX</option>
-					<option>GB</option>
-					<option>ES</option>
-					<option>FR</option>
-					<option>FI</option>
-					<option>SE</option>
-					<option>PR</option>
-				</select>
-				<input class="form_next_round_team_2p" type="text" id="form_next_round_team_2p" value="" placeholder="Next P1 Team" onchange="updateNextTeam2();">
-				<input class="form_next_round_name_2p" type="text" id="form_next_round_name_2p" value="" placeholder="Next P1 Name" onchange="updateNextPlayer2();">
-			</div>
-			<div id="ftx">
-				<input class="form_ft" type="text" id="form_ft" style="float: left;" value="" onchange="updateMaxScore();">
-			</div>
 		</div>
 	</div>
 </body>

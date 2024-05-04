@@ -39,6 +39,20 @@ function populateData(data) {
 	jsonData = data;
 }
 
+const countriesDropDownList = ['US', 'CA', 'JP', 'KR', 'MX', 'GB', 'ES', 'FR', 'FI', 'SE', 'PR'];
+const dropDownSelects = ['dropdown_country_1p', 'dropdown_country_2p', 'dropdown_country_next1', 'dropdown_country_next2'];
+
+function populateCountrySelectDropDown() {
+  dropDownSelects.forEach(selectId => {
+	const selectElement = document.getElementById(selectId);
+	countriesDropDownList.forEach(country => {
+	  const option = document.createElement('option');
+	  option.textContent = country;
+	  selectElement.appendChild(option);
+	});
+  });
+}
+
 function updateElement(id, value) {
 	if (value != null && value.length > 0) {
 		document.getElementById(id).value = value;
@@ -451,5 +465,6 @@ function registerClientForRefresh() {
     xhr.send();
 }
 
+populateCountrySelectDropDown();
 getDataFromServer();
 registerClientForRefresh();
