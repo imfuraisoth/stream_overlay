@@ -18,5 +18,6 @@ Install following packages:
 sudo pip install mfrc522
 sudo pip install RPi.GPIO
 sudo pip install python-http-client
+sudo pip install requests
 
 Add python run path to /etc/profile to run script on start up
