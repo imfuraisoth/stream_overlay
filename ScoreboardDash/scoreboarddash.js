@@ -474,6 +474,19 @@ function sendJsonToEndpoint(endpoint) {
     sendJsonToEndpointWithCallback(function (){}, endpoint);
 }
 
+function sendJsonToEndpoint(data, endpoint) {
+// open a connection
+	xhr.open("POST", "../" + endpoint, true);
+
+	// Set the request header i.e. which type of content you are sending
+	xhr.setRequestHeader("Content-Type", "application/json");
+
+	// Converting JSON data to string
+	var dataToSend = JSON.stringify(data);
+	// Sending data with the request
+	xhr.send(dataToSend);
+}
+
 function sendJsonToEndpointWithCallback(callback, endpoint) {
     // open a connection
 	xhr.open("POST", "../" + endpoint, true);
@@ -515,6 +528,32 @@ function registerClientForRefresh() {
 
     // Send the request
     xhr.send();
+}
+
+// For pop up dialogue
+document.getElementById('openPopupBtn').addEventListener('click', function() {
+    document.getElementById('popup').style.display = 'block';
+});
+
+document.getElementById('closePopupBtn').addEventListener('click', function() {
+    document.getElementById('popup').style.display = 'none';
+});
+
+window.addEventListener('click', function(event) {
+    if (event.target == document.getElementById('popup')) {
+        document.getElementById('popup').style.display = 'none';
+    }
+});
+
+function saveStartggInfo() {
+    var tournamentName = document.getElementById('tournamentName').value
+    var streamName = document.getElementById('streamName').value
+    let tournamentInfo = {
+        "tournament": tournamentName,
+        "stream": streamName
+    };
+    document.getElementById('popup').style.display = 'none';
+    sendJsonToEndpoint(tournamentInfo, "setTournamentInfo")
 }
 
 populateCountrySelectDropDown();

@@ -9,6 +9,7 @@
 	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 	<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+Vithkuqi:wght@400;500;600;700&display=swap" rel="stylesheet">
 	<link href="style.css" rel="stylesheet" type="text/css" />
+	<link href="popup.css" rel="stylesheet" type="text/css" />
 	<link rel="icon" type="image/png" href="images/V.png">
 	<script src="https://kit.fontawesome.com/2c93766a80.js" crossorigin="anonymous"></script>
 	<script class="u-script" type="text/javascript" src="scoreboarddash.js" defer=""></script>
@@ -296,11 +297,22 @@
 				</div>
 			</div>
 
+			<div id="popup" class="popup">
+				<div class="popup-content">
+					<span id="closePopupBtn" class="close">&times;</span>
+					<form id="tournament">
+						<h3>Tournament Info</h3>
+						<input type="text" id="tournamentName" name="tournamentName" required>
+						<input type="text" id="streamName" name="streamName" required>
+						<button type="submit" onclick="saveStartggInfo();">Submit</button>
+					</form>
+				</div>
+			</div>
 
 			<div id="ABOUT" class="header-item">
 				<a href="https://www.theshilluminati.com/" style="text-decoration: none" target="_blank">ABOUT</a>
 			</div>
-
+			</div>
 		</div>
 	</div>
 </body>

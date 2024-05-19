@@ -59,7 +59,7 @@ auto_score_updater_cps1 = AutoScoreUpdaterCPS1
 top8 = Top8
 refresh_client = False
 event_name = ""
-tournament_name = ""
+tournament_info = None
 
 
 def read_file(file_name):
@@ -130,26 +130,16 @@ def get_commentators():
 
 @api.route('/getNextPlayers', methods=['GET'])
 def get_next_players():
-    if event_name == "":
-        return "{}", 200
     global full_data
     full_data = read_file(stream_control_file)
     current_player_1 = full_data["p1Name"]
     current_player_2 = full_data["p2Name"]
-    return startgg_client.get_next_players(event_name, current_player_1, current_player_2), 200
+    return startgg_client.get_next_players(current_player_1, current_player_2), 200
 
 
-@api.route('/setTournamentName', methods=['POST'])
-def set_tournament_name():
-    global tournament_name
-    tournament_name = request.get_json().get("tournament", "")
-    return "200"
-
-
-@api.route('/setEventName', methods=['POST'])
-def set_event_name():
-    global event_name
-    event_name = request.get_json().get("event", "")
+@api.route('/setTournamentInfo', methods=['POST'])
+def set_tournament_info():
+    startgg_client.save_start_gg_info(request.get_json())
     return "200"
 
 

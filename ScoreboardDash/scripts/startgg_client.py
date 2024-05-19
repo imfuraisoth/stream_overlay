@@ -3,6 +3,7 @@ import json
 from io import open
 
 token_file = "../../data/startgg_token.txt"
+start_gg_file = "../data/startgg_info.txt"
 url = 'https://api.start.gg/gql/alpha'
 
 
@@ -66,7 +67,18 @@ def get_events(tournament_name):
     return json.dumps(events_list)
 
 
-def get_next_players(event_name, current_player1, current_player2):
+def get_next_players(current_player1, current_player2):
+    startgg_info = get_start_gg_info()
+    if startgg_info is None:
+        print("No tournament information found, returning empty")
+        return "{}"
+    tournament = startgg_info["tournament"]
+    stream = startgg_info["stream"]
+    print("Tournament: " + tournament + " stream: " + stream)
+    return get_next_players_from_tournament(tournament, stream, current_player1, current_player2)
+
+
+def get_next_players_from_tournament(tournament_name, stream_name, current_player1, current_player2):
     token = get_token()
     query = '''
     query StreamQueueOnTournament($tourneySlug: String!) {
@@ -89,7 +101,7 @@ def get_next_players(event_name, current_player1, current_player2):
       }
     }
     '''
-    slug = "tournament/" + event_name
+    slug = "tournament/" + tournament_name
     variables = {
         "tourneySlug": slug
     }
@@ -100,16 +112,20 @@ def get_next_players(event_name, current_player1, current_player2):
 
     response = requests.post(url, json={'query': query, 'variables': variables}, headers=headers)
     result = response.json()
+    print(result)
     matches = []
     stream_queue = result["data"]["tournament"]["streamQueue"]
     if stream_queue is not None and len(stream_queue) > 0:
-        sets = stream_queue[0]["sets"]
-        for s in sets:
-            slots = s["slots"]
-            if slots is not None and len(slots) == 2:
-                match = Match(create_player(slots[0]), create_player(slots[1]))
-                if not match.contains_players(current_player1, current_player2):
-                    matches.append(match.to_json())
+        for stream in stream_queue:
+            if stream['stream']['streamName'] == stream_name:
+                print("Found stream queue data for: " + stream_name)
+                sets = stream["sets"]
+                for s in sets:
+                    slots = s["slots"]
+                    if slots is not None and len(slots) == 2:
+                        match = Match(create_player(slots[0]), create_player(slots[1]))
+                        if not match.contains_players(current_player1, current_player2):
+                            matches.append(match.to_json())
     json_dicts = [json.loads(match) for match in matches]
     return json.dumps(json_dicts, indent=4)
 
@@ -126,6 +142,37 @@ def create_player(slot):
     return Player(name, team)
 
 
+def save_start_gg_info(data):
+    try:
+        with open(start_gg_file, 'a+'):
+            pass
+    finally:
+        pass
+    with open(start_gg_file, 'w', encoding="utf-8") as json_file:
+        json_file.write(json.dumps(data))
+
+
+def get_start_gg_info():
+    try:
+        with open(start_gg_file, 'a+'):
+            pass
+    finally:
+        pass
+
+    try:
+        with open(start_gg_file, 'r') as file:
+            try:
+                line = file.readline()
+                if not line:
+                    return None
+                return json.loads(file.readline())
+            except json.JSONDecodeError as e:
+                print(f"Error parsing JSON: {e}")
+                return None
+    except FileNotFoundError:
+        print(f"The file {start_gg_file} does not exist.")
+
+
 if __name__ == "__main__":
     print(get_events("test-tournament-1330"))
-    print(get_next_players("test-tournament-1330", "a8", "b1"))
+    print(get_next_players_from_tournament("test-tournament-1330", "riz0ne", "a8", "b1"))
