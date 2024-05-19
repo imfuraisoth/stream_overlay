@@ -147,7 +147,7 @@ def set_tournament_name():
 
 
 @api.route('/setEventName', methods=['POST'])
-def set_tournament_name():
+def set_event_name():
     global event_name
     event_name = request.get_json().get("event", "")
     return "200"
