@@ -2,7 +2,7 @@ import requests
 import json
 from io import open
 
-token_file = "../../data/startgg_token.txt"
+token_file = "../data/startgg_token.txt"
 start_gg_file = "../data/startgg_info.txt"
 url = 'https://api.start.gg/gql/alpha'
 
@@ -71,7 +71,7 @@ def get_next_players(current_player1, current_player2):
     startgg_info = get_start_gg_info()
     if startgg_info is None:
         print("No tournament information found, returning empty")
-        return "{}"
+        return []
     tournament = startgg_info["tournament"]
     stream = startgg_info["stream"]
     print("Tournament: " + tournament + " stream: " + stream)
@@ -112,7 +112,6 @@ def get_next_players_from_tournament(tournament_name, stream_name, current_playe
 
     response = requests.post(url, json={'query': query, 'variables': variables}, headers=headers)
     result = response.json()
-    print(result)
     matches = []
     stream_queue = result["data"]["tournament"]["streamQueue"]
     if stream_queue is not None and len(stream_queue) > 0:
@@ -159,18 +158,15 @@ def get_start_gg_info():
     finally:
         pass
 
-    try:
-        with open(start_gg_file, 'r') as file:
-            try:
-                line = file.readline()
-                if not line:
-                    return None
-                return json.loads(file.readline())
-            except json.JSONDecodeError as e:
-                print(f"Error parsing JSON: {e}")
-                return None
-    except FileNotFoundError:
-        print(f"The file {start_gg_file} does not exist.")
+    return read_file(start_gg_file)
+
+
+def read_file(file_name):
+    with open(file_name) as json_file:
+        line = json_file.readline()
+        result = json.loads(line)
+        json_file.close()
+        return result
 
 
 if __name__ == "__main__":

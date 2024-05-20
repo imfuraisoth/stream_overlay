@@ -132,3 +132,4 @@ dmypy.json
 .idea
 /stream_overlay.iml
 /data/startgg_token.txt
+/data/startgg_info.txt

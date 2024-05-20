@@ -495,6 +495,17 @@ a, a:hover, a:visited, a:active {
 	width: 100px;
 	height: 30px;
 	overflow: visible;
+	margin-left: 50px;
+	margin-right: 50px;
+	align: center;
+}
+#button_fetch_next_players {
+    margin-left: 50px;
+    margin-right: 50px;
+	width: 100px;
+	height: 30px;
+	overflow: visible;
+	align: center;
 }
 #METADATA {
 	display: none;
@@ -587,6 +598,24 @@ a, a:hover, a:visited, a:active {
  	stroke-miterlimit: 4;
  	shape-rendering: auto;
  }
+ #rectangle_button_startgg_stream_queue {
+  	fill: rgba(103,82,103,1);
+  	stroke: rgba(0,0,0,0);
+  	stroke-width: 1px;
+  	stroke-linejoin: miter;
+  	stroke-linecap: butt;
+  	stroke-miterlimit: 4;
+  	shape-rendering: auto;
+ 	font-size: 1em;
+ 	margin-right: 50px;
+  }
+.bottom-button-container {
+  display: flex;
+  gap: 10px; /* Optional: Adds space between buttons */
+}
+.bottom-button-container rectangle_button {
+  padding: 10px 20px;
+}
 .rectangle_button {
 	overflow: visible;
 	width: auto;
@@ -1625,4 +1654,7 @@ input[type=text], select {
 	border-radius: 5px;
 	box-sizing: border-box;
 	color: black;
+}
+datalist {
+    display: block;
 }

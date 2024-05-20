@@ -18,7 +18,6 @@
 	<div class="container">
 		<div id="event_page">
 
-
 			<div class="top-navbar-container">
 				<div id="Commentators" class="header-item">
 					<a href="commentators/commentators.html" style="text-decoration: none">Commentators</a>
@@ -227,6 +226,10 @@
 					</div>
 
 					<div class="nextRoundConsoleContainer">
+						<datalist id="next_player_suggestions">
+							<!-- Options will be populated dynamically -->
+						</datalist>
+
 						<!-- 1st player -->
 						<div class="nextRound-1p">
 							<div id="text_next_round_1p">
@@ -235,11 +238,12 @@
 							<div class="nextRoundItem" id="text_next_round_name_1p">
 								<span>Name</span>
 							</div>
-							<input class="form_next_round_name_1p" type="text" id="form_next_round_name_1p" value="" placeholder="Next P1 Name" onchange="updateNextPlayer1();">
+							<input class="form_next_round_name_1p" type="text" id="form_next_round_name_1p" value="" placeholder="Next P1 Name" list="next_player_suggestions" onchange="updateNextPlayer1();">
 							<div class="nextRoundItem" id="text_next_round_team_1p">
 								<span>Team</span>
 							</div>
 							<input class="form_next_round_team_1p" type="text" id="form_next_round_team_1p" value="" placeholder="Next P1 Team" onchange="updateNextTeam1();">
+
 							<div class="nextRoundItem">
 								<span>Country</span>
 								<select id="dropdown_country_next1" class="dropdown_country_next1" onchange="updateNextCountry1();">
@@ -255,7 +259,7 @@
 							<div class="nextRoundItem" id="text_next_round_name_2p">
 								<span>Name</span>
 							</div>
-							<input class="form_next_round_name_2p" type="text" id="form_next_round_name_2p" value="" placeholder="Next P1 Name" onchange="updateNextPlayer2();">
+							<input class="form_next_round_name_2p" type="text" id="form_next_round_name_2p" value="" placeholder="Next P1 Name" list="next_player_suggestions" onchange="updateNextPlayer2();">
 
 							<div class="nextRoundItem" id="text_next_round_team_2p">
 								<span>Team</span>
@@ -269,13 +273,19 @@
 							</div>
 						</div>
 					</div>
-					
-					<div id="button_next_round">
-						<button class="rectangle_button" id="rectangle_button_6" onclick='nextRound();'>
-							<text x="18" y="19" id="button_text_4">Next Round</text>
-						</button>
+
+					<div class="bottom-button-container">
+						<div id="button_next_round">
+							<button class="rectangle_button" id="rectangle_button_6" onclick='nextRound();'>
+								<text x="18" y="19" id="button_text_4">Next Round</text>
+							</button>
+						</div>
+						<div id="button_fetch_next_players">
+							<button class="rectangle_button" id="rectangle_button_startgg_stream_queue" onclick='getNextPlayersFromStartgg();'>
+								<text x="18" y="19" id="button_text_4">Fetch Next Players</text>
+							</button>
+						</div>
 					</div>
-					
 				</div>
 
 				<div class="resultsContainer">
@@ -294,21 +304,22 @@
 						<input placeholder="P2 Name"class="form_results_name_2p" type="text" id="form_results_name_2p" style="float: left; " value="" onchange="updateResults();">
 						<input placeholder="0" class="form_results_score_2p" type="text" id="form_results_score_2p" style="float: left;" value="" onchange="updateResults();">
 					</div>
+					<button class="rectangle_button" id="openPopupBtn" onclick="getStartggInfo();">Set Start.gg Info</button>
+
+					<div id="popup" class="popup">
+						<div class="popup-content">
+							<span id="closePopupBtn" class="close">&times;</span>
+							<form id="tournament">
+								<h3>Tournament Name:</h3>
+								<input type="text" id="tournamentName" name="tournamentName" required>
+								<h3>Stream Name: </h3>
+								<input type="text" id="streamName" name="streamName" required>
+								<button type="submit" onclick="saveStartggInfo();">Submit</button>
+							</form>
+						</div>
+					</div>
 				</div>
 			</div>
-
-			<div id="popup" class="popup">
-				<div class="popup-content">
-					<span id="closePopupBtn" class="close">&times;</span>
-					<form id="tournament">
-						<h3>Tournament Info</h3>
-						<input type="text" id="tournamentName" name="tournamentName" required>
-						<input type="text" id="streamName" name="streamName" required>
-						<button type="submit" onclick="saveStartggInfo();">Submit</button>
-					</form>
-				</div>
-			</div>
-
 			<div id="ABOUT" class="header-item">
 				<a href="https://www.theshilluminati.com/" style="text-decoration: none" target="_blank">ABOUT</a>
 			</div>

@@ -121,12 +121,50 @@ function updateTeam2() {
 
 function updateNextPlayer1() {
 	jsonData.nextplayer1 = document.getElementById("form_next_round_name_1p").value;
+	if (nextPlayersMap.has(jsonData.nextplayer1)) {
+        // Auto set team name and player 2 name to the opponent's name
+        match = nextPlayersMap.get(jsonData.nextplayer1);
+        player1Info = getPlayerInfo(match, jsonData.nextplayer1);
+        player2Info = getOtherPlayerInfo(match, jsonData.nextplayer1);
+        jsonData.nextteam1 = player1Info.team;
+        document.getElementById("form_next_round_team_1p").value = jsonData.nextteam1;
+        jsonData.nextplayer2 = player2Info.name;
+        document.getElementById("form_next_round_name_2p").value = jsonData.nextplayer2;
+        jsonData.nextteam2 = player2Info.team;
+        document.getElementById("form_next_round_team_2p").value = jsonData.nextteam2;
+	}
 	sendJSON();
 }
 
 function updateNextPlayer2() {
 	jsonData.nextplayer2 = document.getElementById("form_next_round_name_2p").value;
+    if (nextPlayersMap.has(jsonData.nextplayer2)) {
+        // Auto set team name and player 1 name to the opponent's name
+        match = nextPlayersMap.get(jsonData.nextplayer2);
+        player2Info = getPlayerInfo(match, jsonData.nextplayer2);
+        player1Info = getOtherPlayerInfo(match, jsonData.nextplayer2);
+        jsonData.nextteam2 = player2Info.team;
+        document.getElementById("form_next_round_team_2p").value = jsonData.nextteam2;
+        jsonData.nextplayer1 = player1Info.name;
+        document.getElementById("form_next_round_name_1p").value = jsonData.nextplayer1;
+        jsonData.nextteam1 = player1Info.team;
+        document.getElementById("form_next_round_team_1p").value = jsonData.nextteam1;
+    }
 	sendJSON();
+}
+
+function getPlayerInfo(match, playerName) {
+    if (match.player1.name === playerName) {
+        return match.player1;
+    }
+    return match.player2;
+}
+
+function getOtherPlayerInfo(match, playerName) {
+    if (match.player1.name === playerName) {
+        return match.player2;
+    }
+    return match.player1;
 }
 
 function updateNextTeam1() {
@@ -381,20 +419,37 @@ function nextRoundUpdate(data) {
 	jsonData.p2Country = data.nextcountry2;
 	document.getElementById("form_score_1p").value = "0";
 	document.getElementById("form_score_2p").value = "0";
-    document.getElementById("dropdown_country_next1").value = "US";
-    document.getElementById("dropdown_country_next2").value = "US";
+
 	jsonData.p1Score = "0";
 	jsonData.p2Score = "0";
-	document.getElementById("form_next_round_team_1p").value = "";
-	document.getElementById("form_next_round_name_1p").value = "";
-	document.getElementById("form_next_round_team_2p").value = "";
-	document.getElementById("form_next_round_name_2p").value = "";
-	jsonData.nextteam1 = "";
-	jsonData.nextplayer1 = "";
-	jsonData.nextteam2 = "";
-	jsonData.nextplayer2 = "";
+    nextPlayersMap.delete(document.getElementById("form_next_round_name_1p").value)
+    nextPlayersMap.delete(document.getElementById("form_next_round_name_2p").value)
+    if (nextPlayersMap.size > 0) {
+        // select next players from queue
+        // Get the iterator
+        let iterator = nextPlayersMap.entries();
+
+        // Get the first key-value pair
+        let firstEntry = iterator.next().value[1];
+        jsonData.nextteam1 = firstEntry.player1.team;
+        jsonData.nextplayer1 = firstEntry.player1.name;
+        jsonData.nextteam2 = firstEntry.player2.team;
+        jsonData.nextplayer2 = firstEntry.player2.name;
+    } else {
+    	jsonData.nextteam1 = "";
+    	jsonData.nextplayer1 = "";
+    	jsonData.nextteam2 = "";
+    	jsonData.nextplayer2 = "";
+    }
     jsonData.nextcountry1 = "US";
     jsonData.nextcountry2 = "US";
+    document.getElementById("form_next_round_team_1p").value = jsonData.nextteam1;
+    document.getElementById("form_next_round_name_1p").value = jsonData.nextplayer1;
+    document.getElementById("form_next_round_team_2p").value = jsonData.nextteam2;
+    document.getElementById("form_next_round_name_2p").value = jsonData.nextplayer2;
+    document.getElementById("dropdown_country_next1").value = jsonData.nextcountry1;
+    document.getElementById("dropdown_country_next2").value = jsonData.nextcountry2;
+
 	updateCurrentPlayerDisplay();
 	sendJsonToEndpoint("updatealldata");
 }
@@ -474,7 +529,7 @@ function sendJsonToEndpoint(endpoint) {
     sendJsonToEndpointWithCallback(function (){}, endpoint);
 }
 
-function sendJsonToEndpoint(data, endpoint) {
+function sendJsonDataToEndpoint(data, endpoint) {
 // open a connection
 	xhr.open("POST", "../" + endpoint, true);
 
@@ -548,14 +603,97 @@ window.addEventListener('click', function(event) {
 function saveStartggInfo() {
     var tournamentName = document.getElementById('tournamentName').value
     var streamName = document.getElementById('streamName').value
-    let tournamentInfo = {
-        "tournament": tournamentName,
-        "stream": streamName
-    };
+    startggInfo.tournament = tournamentName;
+    startggInfo.stream = streamName;
     document.getElementById('popup').style.display = 'none';
-    sendJsonToEndpoint(tournamentInfo, "setTournamentInfo")
+    sendJsonDataToEndpoint(startggInfo, "setTournamentInfo")
+}
+
+function getNextPlayersFromStartgg() {
+    fetch('/getNextPlayers')
+        .then(function (response) {
+        nextPlayerData = response.json();
+      return nextPlayerData;
+    })
+    .then(function (nextPlayerData) {
+        if (nextPlayerData.length === 0) {
+            nextPlayersMap.clear();
+            // Clear all options from the datalist
+            nextPlaySuggestions.innerHTML = '';
+            return;
+        }
+        jsonData.nextplayer1 = nextPlayerData[0].player1.name;
+        jsonData.nextplayer2 = nextPlayerData[0].player2.name;
+        jsonData.nextteam1 = nextPlayerData[0].player1.team;
+        jsonData.nextteam2 = nextPlayerData[0].player2.team;
+        nextPlaySuggestions = document.getElementById('next_player_suggestions');
+        // Clear all options from the nextPlaySuggestions
+        nextPlaySuggestions.innerHTML = '';
+        // Filter and add suggestions to next player list
+        nextPlayerData.forEach(set => {
+            const option1 = document.createElement('option');
+            option1.value = set.player1.name;
+            const option2 = document.createElement('option');
+            option2.value = set.player2.name;
+            nextPlaySuggestions.appendChild(option1);
+            nextPlaySuggestions.appendChild(option2);
+            nextPlayersMap.set(set.player1.name, set);
+            nextPlayersMap.set(set.player2.name, set);
+        });
+        updateElement("form_next_round_team_1p", jsonData.nextteam1);
+        updateElement("form_next_round_name_1p", jsonData.nextplayer1);
+        updateElement("form_next_round_team_2p", jsonData.nextteam2);
+        updateElement("form_next_round_name_2p", jsonData.nextplayer2);
+      })
+    .catch(function (err) {
+      console.log('error: ' + err);
+    });
+}
+
+var startggInfo;
+var nextPlayersMap = new Map();
+
+function getStartggInfo() {
+    fetch('/getTournamentInfo')
+        .then(function (response) {
+        jsonData = response.json();
+      return jsonData;
+    })
+    .then(function (data) {
+        if (Object.keys(data).length != 0) {
+            startggInfo = data;
+        }
+        document.getElementById('tournamentName').value = startggInfo.tournament;
+        document.getElementById('streamName').value = startggInfo.stream;
+      })
+    .catch(function (err) {
+      console.log('error: ' + err);
+    });
+}
+
+function addEventListenersForNextRound(id) {
+    const nextRoundName = document.getElementById(id);
+    let previousValue = '';
+
+    nextRoundName.addEventListener('focus', (event) => {
+        if (nextPlayersMap.size > 0) {
+            previousValue = event.target.value;
+            event.target.value = '';
+        }
+    });
+
+    nextRoundName.addEventListener('blur', (event) => {
+        if (nextPlayersMap.size > 0) {
+            if (!event.target.value) {
+                event.target.value = previousValue;
+            }
+        }
+    });
 }
 
 populateCountrySelectDropDown();
 getDataFromServer();
+getStartggInfo();
+addEventListenersForNextRound('form_next_round_name_1p');
+addEventListenersForNextRound('form_next_round_name_2p');
 registerClientForRefresh();

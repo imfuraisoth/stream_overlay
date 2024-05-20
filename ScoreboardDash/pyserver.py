@@ -143,6 +143,14 @@ def set_tournament_info():
     return "200"
 
 
+@api.route('/getTournamentInfo', methods=['GET'])
+def get_tournament_info():
+    result = startgg_client.get_start_gg_info()
+    if result is None:
+        return json.dumps("{}", ensure_ascii=False), 200
+    return result, 200
+
+
 @api.route('/addPlayer1Score', methods=['POST'])
 def add_player1_score():
     add_to_score("p1Score")
