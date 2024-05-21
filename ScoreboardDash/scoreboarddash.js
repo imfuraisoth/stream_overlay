@@ -68,6 +68,12 @@ function populateCountrySelectDropDown() {
   });
 }
 
+function updateElementEmptyOkay(id, value) {
+	if (value != null) {
+		document.getElementById(id).value = value;
+	}
+}
+
 function updateElement(id, value) {
 	if (value != null && value.length > 0) {
 		document.getElementById(id).value = value;
@@ -128,10 +134,14 @@ function updateNextPlayer1() {
         player2Info = getOtherPlayerInfo(match, jsonData.nextplayer1);
         jsonData.nextteam1 = player1Info.team;
         document.getElementById("form_next_round_team_1p").value = jsonData.nextteam1;
+        jsonData.nextcountry1 = player1Info.country;
+        document.getElementById("dropdown_country_next1").value = jsonData.nextcountry1;
         jsonData.nextplayer2 = player2Info.name;
         document.getElementById("form_next_round_name_2p").value = jsonData.nextplayer2;
         jsonData.nextteam2 = player2Info.team;
         document.getElementById("form_next_round_team_2p").value = jsonData.nextteam2;
+        jsonData.nextcountry2 = player2Info.country;
+        document.getElementById("dropdown_country_next2").value = jsonData.nextcountry2;
 	}
 	sendJSON();
 }
@@ -145,10 +155,14 @@ function updateNextPlayer2() {
         player1Info = getOtherPlayerInfo(match, jsonData.nextplayer2);
         jsonData.nextteam2 = player2Info.team;
         document.getElementById("form_next_round_team_2p").value = jsonData.nextteam2;
+        jsonData.nextcountry2 = player2Info.country;
+        document.getElementById("dropdown_country_next2").value = jsonData.nextcountry2;
         jsonData.nextplayer1 = player1Info.name;
         document.getElementById("form_next_round_name_1p").value = jsonData.nextplayer1;
         jsonData.nextteam1 = player1Info.team;
         document.getElementById("form_next_round_team_1p").value = jsonData.nextteam1;
+        jsonData.nextcountry1 = player1Info.country;
+        document.getElementById("dropdown_country_next1").value = jsonData.nextcountry1;
     }
 	sendJSON();
 }
@@ -433,16 +447,18 @@ function nextRoundUpdate(data) {
         let firstEntry = iterator.next().value[1];
         jsonData.nextteam1 = firstEntry.player1.team;
         jsonData.nextplayer1 = firstEntry.player1.name;
+        jsonData.nextcountry1 = firstEntry.player1.country;
         jsonData.nextteam2 = firstEntry.player2.team;
         jsonData.nextplayer2 = firstEntry.player2.name;
+        jsonData.nextcountry2 = firstEntry.player2.country;
     } else {
     	jsonData.nextteam1 = "";
     	jsonData.nextplayer1 = "";
     	jsonData.nextteam2 = "";
     	jsonData.nextplayer2 = "";
+        jsonData.nextcountry1 = "US";
+        jsonData.nextcountry2 = "US";
     }
-    jsonData.nextcountry1 = "US";
-    jsonData.nextcountry2 = "US";
     document.getElementById("form_next_round_team_1p").value = jsonData.nextteam1;
     document.getElementById("form_next_round_name_1p").value = jsonData.nextplayer1;
     document.getElementById("form_next_round_team_2p").value = jsonData.nextteam2;
@@ -626,6 +642,8 @@ function getNextPlayersFromStartgg() {
         jsonData.nextplayer2 = nextPlayerData[0].player2.name;
         jsonData.nextteam1 = nextPlayerData[0].player1.team;
         jsonData.nextteam2 = nextPlayerData[0].player2.team;
+        jsonData.nextcountry1 = nextPlayerData[0].player1.country;
+        jsonData.nextcountry2 = nextPlayerData[0].player2.country;
         nextPlaySuggestions = document.getElementById('next_player_suggestions');
         // Clear all options from the nextPlaySuggestions
         nextPlaySuggestions.innerHTML = '';
@@ -640,10 +658,13 @@ function getNextPlayersFromStartgg() {
             nextPlayersMap.set(set.player1.name, set);
             nextPlayersMap.set(set.player2.name, set);
         });
-        updateElement("form_next_round_team_1p", jsonData.nextteam1);
-        updateElement("form_next_round_name_1p", jsonData.nextplayer1);
-        updateElement("form_next_round_team_2p", jsonData.nextteam2);
-        updateElement("form_next_round_name_2p", jsonData.nextplayer2);
+        updateElementEmptyOkay("form_next_round_team_1p", jsonData.nextteam1);
+        updateElementEmptyOkay("form_next_round_name_1p", jsonData.nextplayer1);
+        updateElementEmptyOkay("dropdown_country_next1", jsonData.nextcountry1);
+        updateElementEmptyOkay("form_next_round_team_2p", jsonData.nextteam2);
+        updateElementEmptyOkay("form_next_round_name_2p", jsonData.nextplayer2);
+        updateElementEmptyOkay("dropdown_country_next2", jsonData.nextcountry2);
+        sendJSON();
       })
     .catch(function (err) {
       console.log('error: ' + err);

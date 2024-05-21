@@ -2,9 +2,21 @@ import requests
 import json
 from io import open
 
+country_prop_file = "resources/country_map.properties"
 token_file = "../data/startgg_token.txt"
 start_gg_file = "../data/startgg_info.txt"
 url = 'https://api.start.gg/gql/alpha'
+
+
+def read_file(file_name):
+    with open(file_name) as json_file:
+        line = json_file.readline()
+        result = json.loads(line)
+        json_file.close()
+        return result
+
+
+country_code_map = read_file(country_prop_file)
 
 
 class Match:
@@ -21,9 +33,10 @@ class Match:
 
 
 class Player:
-    def __init__(self, name, team):
+    def __init__(self, name, team, country):
         self.name = name
         self.team = team
+        self.country = country
 
 
 def get_token():
@@ -94,6 +107,17 @@ def get_next_players_from_tournament(tournament_name, stream_name, current_playe
             slots {
                 entrant {
                     name
+                    team {
+                        name
+                        }
+                    participants {
+                        gamerTag
+                        user {
+                            location {
+                                country
+                            }
+                        }
+                    }
                 }
             }
           }
@@ -112,6 +136,7 @@ def get_next_players_from_tournament(tournament_name, stream_name, current_playe
 
     response = requests.post(url, json={'query': query, 'variables': variables}, headers=headers)
     result = response.json()
+    print(result)
     matches = []
     stream_queue = result["data"]["tournament"]["streamQueue"]
     if stream_queue is not None and len(stream_queue) > 0:
@@ -131,14 +156,26 @@ def get_next_players_from_tournament(tournament_name, stream_name, current_playe
 
 def create_player(slot):
     if slot["entrant"] is None or slot["entrant"]["name"] is None or slot["entrant"]["name"].strip() == "":
-        return Player("Winner", "")
+        return Player("TBD", "", "US")
 
     name = slot["entrant"]["name"]
     team = ""
     if " | " in name:
         team, name = slot["entrant"]["name"].split(" | ")
+    user = slot["entrant"]["participants"][0]["user"]
+    country_code = "US"
+    if user:
+        location = user["location"]
+        if location:
+            country = location["country"]
+            if country:
+                country_code = country_code_map[country]
+                if country_code is None:
+                    # Couldn't find the country code from country code map, default back to US
+                    print("Couldn't find country code for country: " + country)
+                    country_code = "US"
 
-    return Player(name, team)
+    return Player(name, team, country_code)
 
 
 def save_start_gg_info(data):
@@ -159,14 +196,6 @@ def get_start_gg_info():
         pass
 
     return read_file(start_gg_file)
-
-
-def read_file(file_name):
-    with open(file_name) as json_file:
-        line = json_file.readline()
-        result = json.loads(line)
-        json_file.close()
-        return result
 
 
 if __name__ == "__main__":
