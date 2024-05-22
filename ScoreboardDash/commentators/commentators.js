@@ -67,7 +67,7 @@ function reverseCommentatorNames() {
 
 function sendJSON() {
 	// open a connection
-	xhr.open("POST", '/updatealldata', true);
+	xhr.open("POST", '/updatecommdata', true);
 
 	// Set the request header i.e. which type of content you are sending
 	xhr.setRequestHeader("Content-Type", "application/json");

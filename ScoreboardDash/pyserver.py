@@ -228,8 +228,22 @@ def update_all_data():
     return "200"
 
 
+@api.route('/updatecommdata', methods=['POST'])
+def update_comm_data():
+    json_data = request.get_json()
+    global full_data
+    full_data["com1"] = json_data.get("com1", "")
+    full_data["soc1"] = json_data.get("soc1", "")
+    full_data["com2"] = json_data.get("com2", "")
+    full_data["soc2"] = json_data.get("soc2", "")
+    with open(stream_control_file, 'w', encoding="utf-8") as json_file:
+        json_file.write(json.dumps(full_data))
+    return "200"
+
+
 @api.route('/updatedatanoscores', methods=['POST'])
 def update_data_no_scores():
+    global full_data
     json_data = request.get_json()
     full_data["p1Name"] = json_data.get("p1Name", "")
     full_data["p2Name"] = json_data.get("p2Name", "")
