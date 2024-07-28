@@ -1,3 +1,5 @@
 @echo off
-python.exe "D:\stream_overlay\ScoreboardDash\scripts\pyclient.py"  "-a1"
+set CURRENT_DIR=%~dp0
+set FILE_PATH=%CURRENT_DIR%\pyclient.py
+python.exe %FILE_PATH%  "-a1"
 pause

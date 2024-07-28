@@ -1,3 +1,5 @@
 @echo off
-python.exe "D:\stream_overlay\ScoreboardDash\scripts\pyclient.py"  "-deleteclips"
+set CURRENT_DIR=%~dp0
+set FILE_PATH=%CURRENT_DIR%\pyclient.py
+python.exe %FILE_PATH%  "-deleteclips"
 pause

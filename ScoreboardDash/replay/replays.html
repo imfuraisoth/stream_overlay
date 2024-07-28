@@ -27,10 +27,9 @@
 </head>
 <body>
 <div id="videoMontage"></div>
-
 <script>
 window.onload = function() {
-    const videoFolder = '/replays/';
+    const videoFolder = '/recordings/replays/';
     let videoFiles = []; // Array to store video file names
     let currentVideoIndex = 0;
     const videoMontage = document.getElementById('videoMontage');
@@ -53,7 +52,7 @@ window.onload = function() {
         // Set the source of the current video
         const currentVideoSrc = `${videoFolder}${videoFiles[currentVideoIndex]}`;
         videoElement.src = currentVideoSrc;
-
+		console.log(currentVideoSrc);
         // Play the current video
         videoElement.play();
 
@@ -66,7 +65,6 @@ window.onload = function() {
 
             // Update the current video index
             currentVideoIndex = (currentVideoIndex + 1) % videoFiles.length;
-
             // Repeat the process after a delay (duration of crossfade)
             setTimeout(playVideos, 500); // Adjust the delay as needed (1 second = duration of crossfade)
         };

@@ -31,7 +31,7 @@ config_file.write(server_info)
 config_file.close()
 
 replay_prefix = "Replay"
-replays_folder = "replays"
+replays_folder = "recordings/replays"
 saved_replays_folder = "../../clips"
 stream_control_file = "../data/scoreboard.json"
 commentators_file = "../data/commentators.json"
