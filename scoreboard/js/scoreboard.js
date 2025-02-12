@@ -1,5 +1,5 @@
 window.onload = init;
-var enableFlags = true;
+var enableFlags = false;
 
 function init(){
 	

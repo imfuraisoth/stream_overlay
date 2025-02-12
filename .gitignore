@@ -6,6 +6,12 @@ __pycache__/
 # C extensions
 *.so
 
+# Folders
+ScoreboardDash/recordings
+config/*
+scoreboard/imgs/countries/
+scoreboard/sc/
+
 # Distribution / packaging
 .Python
 build/

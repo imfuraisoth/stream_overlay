@@ -2,8 +2,11 @@ import http.client
 from io import open
 import json
 import argparse
+import os
 
-server_info = open('../../config/serverip.txt', 'r').readline().split(':')
+current_directory = os.path.dirname(os.path.abspath(__file__)) 
+
+server_info = open(current_directory + '/../../config/serverip.txt', 'r').readline().split(':')
 
 hostName = server_info[0]
 serverPort = int(server_info[1])

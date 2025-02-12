@@ -1016,6 +1016,7 @@
   text-shadow: 2px 2px 4px #FFFFFF;
   width: 220px;
   vertical-align: middle;
+  white-space: nowrap;
 }
 
 .current_match {
