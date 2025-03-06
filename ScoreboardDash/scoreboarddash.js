@@ -610,9 +610,20 @@ document.getElementById('closePopupBtn').addEventListener('click', function() {
     document.getElementById('popup').style.display = 'none';
 });
 
+document.getElementById('openPopupTop8Btn').addEventListener('click', function() {
+    document.getElementById('popupTop8').style.display = 'block';
+});
+
+document.getElementById('closePopupTop8Btn').addEventListener('click', function() {
+    document.getElementById('popupTop8').style.display = 'none';
+});
+
 window.addEventListener('click', function(event) {
     if (event.target == document.getElementById('popup')) {
         document.getElementById('popup').style.display = 'none';
+    }
+    if (event.target == document.getElementById('popupTop8')) {
+        document.getElementById('popupTop8').style.display = 'none';
     }
 });
 
@@ -623,6 +634,14 @@ function saveStartggInfo() {
     startggInfo.stream = streamName;
     document.getElementById('popup').style.display = 'none';
     sendJsonDataToEndpoint(startggInfo, "setTournamentInfo")
+}
+
+function fetchStartggTop8Info() {
+    var tournamentName = document.getElementById('tournamentNameTop8').value
+    var eventName = document.getElementById('eventNameTop8').value
+    const jsonData = { tournament: tournamentName, event: eventName };
+    document.getElementById('popup').style.display = 'none';
+    sendJsonDataToEndpoint(jsonData, "fetchStartggTop8Info")
 }
 
 function getNextPlayersFromStartgg() {
@@ -677,8 +696,8 @@ var nextPlayersMap = new Map();
 function getStartggInfo() {
     fetch('/getTournamentInfo')
         .then(function (response) {
-        jsonData = response.json();
-      return jsonData;
+        startggData = response.json();
+      return startggData;
     })
     .then(function (data) {
         if (Object.keys(data).length != 0) {

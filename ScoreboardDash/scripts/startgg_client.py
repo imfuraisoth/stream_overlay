@@ -1,16 +1,22 @@
 import requests
 import json
 from io import open
+import math
+from scripts import PlayerStats
 
 country_prop_file = "resources/country_map.properties"
 token_file = "../data/startgg_token.txt"
 start_gg_file = "../data/startgg_info.txt"
 url = 'https://api.start.gg/gql/alpha'
+player_stats = PlayerStats
+entrants_per_page = 25
 
 
-def read_file(file_name):
+def read_file(file_name, default):
     with open(file_name) as json_file:
         line = json_file.readline()
+        if not line:
+            return default
         result = json.loads(line)
         json_file.close()
         return result
@@ -78,6 +84,79 @@ def get_events(tournament_name):
         if event_name is not None and event_name.strip() != "":
             events_list.append(event_name)
     return json.dumps(events_list)
+
+
+def get_num_entrants_for_event(tournament_name, event_name):
+    token = get_token()
+    query = '''
+            query EventEntrants($eventSlug:String!) {
+              event(slug: $eventSlug) {
+                numEntrants
+              }
+            }
+        '''
+    variables = {
+        "eventSlug": "tournament/" + tournament_name + "/event/" + event_name,
+    }
+
+    headers = {
+        'Authorization': 'Bearer ' + token
+    }
+
+    response = requests.post(url, json={'query': query, 'variables': variables}, headers=headers)
+    result = response.json()
+    return result["data"]["event"]["numEntrants"]
+
+
+def get_top_8_entrants(tournament_name, event_name, page):
+    global entrants_per_page
+    token = get_token()
+    query = '''
+            query EventEntrants($eventSlug:String!, $page: Int!, $perPage: Int!) {
+              event(slug: $eventSlug) {
+                name
+                entrants(query: {
+                  page: $page
+                  perPage: $perPage
+                }) {
+                  nodes {
+                    standing {
+                      placement
+                    }
+                    participants {
+                      gamerTag
+                    }
+                  }
+                }
+              }
+            }
+        '''
+    variables = {
+        "eventSlug": "tournament/" + tournament_name + "/event/" + event_name,
+        "page": page,
+        "perPage": entrants_per_page
+    }
+
+    headers = {
+        'Authorization': 'Bearer ' + token
+    }
+
+    response = requests.post(url, json={'query': query, 'variables': variables}, headers=headers)
+    result = response.json()
+    entrants = result["data"]["event"]["entrants"]["nodes"]
+    if entrants is None or len(entrants) == 0:
+        print("No entrants found for event: " + event_name + " in start.gg for tournament: " + tournament_name)
+        return "[]"
+    entrants_map = {}
+    entrant_count = 0
+    for entrant in entrants:
+        entrant_count = entrant_count + 1
+        placement = entrant["standing"]["placement"]
+        if placement <= 8:
+            gamer_tag = entrant["participants"][0]["gamerTag"]
+            if gamer_tag is not None and gamer_tag.strip() != "":
+                entrants_map[gamer_tag] = {event_name: PlayerStats.EventData(placement, 0, 0)}
+    return entrants_map
 
 
 def get_next_players(current_player1, current_player2):
@@ -195,9 +274,20 @@ def get_start_gg_info():
     finally:
         pass
 
-    return read_file(start_gg_file)
+    return read_file(start_gg_file, "{\"tournament\":\"\",\"stream\":\"\"}")
+
+
+def get_top_8_entrants_for_event(tournament_name, event_name):
+    pages = math.ceil(get_num_entrants_for_event(tournament_name, event_name) / entrants_per_page)
+    entrants = {}
+    for page in range(1, pages + 1):
+        entrants.update(get_top_8_entrants(tournament_name, event_name, page))
+    print(entrants)
+    return entrants
 
 
 if __name__ == "__main__":
-    print(get_events("test-tournament-1330"))
-    print(get_next_players_from_tournament("test-tournament-1330", "riz0ne", "a8", "b1"))
+    result = get_top_8_entrants_for_event("texas-showdown-2024", "super-street-fighter-ii-turbo")
+    print(result)
+    # player_stats.write_to_file(result)
+    # print(get_next_players_from_tournament("test-tournament-1330", "riz0ne", "a8", "b1"))

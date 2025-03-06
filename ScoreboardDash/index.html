@@ -305,7 +305,6 @@
 						<input placeholder="0" class="form_results_score_2p" type="text" id="form_results_score_2p" style="float: left;" value="" onchange="updateResults();">
 					</div>
 					<button class="rectangle_button" id="openPopupBtn" onclick="getStartggInfo();">Set Start.gg Info</button>
-
 					<div id="popup" class="popup">
 						<div class="popup-content">
 							<span id="closePopupBtn" class="close">&times;</span>
@@ -315,6 +314,19 @@
 								<h3>Stream Name: </h3>
 								<input type="text" id="streamName" name="streamName" required>
 								<button type="submit" onclick="saveStartggInfo();">Submit</button>
+							</form>
+						</div>
+					</div>
+					<button class="rectangle_button" id="openPopupTop8Btn">Fetch Top 8 Results</button>
+					<div id="popupTop8" class="popup">
+						<div class="popup-content">
+							<span id="closePopupTop8Btn" class="close">&times;</span>
+							<form id="FetchTop8">
+								<h3>Tournament Name:</h3>
+								<input type="text" id="tournamentNameTop8" name="tournamentNameTop8" required>
+								<h3>Event Name: </h3>
+								<input type="text" id="eventNameTop8" name="eventNameTop8" required>
+								<button type="submit" onclick="fetchStartggTop8Info();">Submit</button>
 							</form>
 						</div>
 					</div>

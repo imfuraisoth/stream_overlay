@@ -609,6 +609,17 @@ a, a:hover, a:visited, a:active {
  	font-size: 1em;
  	margin-right: 50px;
   }
+ #rectangle_button_startgg_fetch_top_8_results {
+  	fill: rgba(103,82,103,1);
+  	stroke: rgba(0,0,0,0);
+  	stroke-width: 1px;
+  	stroke-linejoin: miter;
+  	stroke-linecap: butt;
+  	stroke-miterlimit: 4;
+  	shape-rendering: auto;
+ 	font-size: 1em;
+ 	margin-right: 50px;
+  }
 .bottom-button-container {
   display: flex;
   gap: 10px; /* Optional: Adds space between buttons */

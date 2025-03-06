@@ -138,7 +138,9 @@ dmypy.json
 .idea
 /stream_overlay.iml
 /data/startgg_token.txt
-<<<<<<< Updated upstream
 /data/startgg_info.txt
-=======
->>>>>>> Stashed changes
+config/serverip.txt
+/data/*
+/config/*
+ScoreboardDash/replays/
+resources/Fonts/

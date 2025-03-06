@@ -15,6 +15,7 @@ import os
 import webbrowser
 import shutil
 from datetime import datetime
+from scripts import PlayerStats
 
 # Get today's date in YYYY-MM-DD format
 today_date = datetime.today().strftime('%Y-%m-%d')
@@ -60,6 +61,7 @@ top8 = Top8
 refresh_client = False
 event_name = ""
 tournament_info = None
+player_stats = PlayerStats
 
 
 def read_file(file_name):
@@ -141,6 +143,22 @@ def get_next_players():
 def set_tournament_info():
     startgg_client.save_start_gg_info(request.get_json())
     return "200"
+
+
+@api.route('/fetchStartggTop8Info', methods=['POST'])
+def fetch_startgg_tournament_info():
+    data = request.get_json()
+    player_stats.write_to_file(startgg_client.get_top_8_entrants_for_event(data["tournament"], data["event"]))
+    return "200"
+
+
+@api.route('/getPlayerPlacement', methods=['GET'])
+def get_player_placement():
+    data = request.get_json()
+    placement = player_stats.get_placement(data["gamerTag"], data["event"])
+    if not placement:
+        return ""
+    return str(placement)
 
 
 @api.route('/getTournamentInfo', methods=['GET'])
