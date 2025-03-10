@@ -34,7 +34,7 @@ config_file.close()
 replay_prefix = "Replay"
 replays_folder = "recordings/replays"
 saved_replays_folder = "../../clips"
-stream_control_file = "../data/scoreboard.json"
+scoreboard_data_file = "../data/scoreboard.json"
 commentators_file = "../data/commentators.json"
 player_1 = "../data/player1.txt"
 player_2 = "../data/player2.txt"
@@ -72,7 +72,7 @@ def read_file(file_name):
         return result
 
 
-full_data = read_file(stream_control_file)
+full_data = read_file(scoreboard_data_file)
 
 
 # Serve your webpage files from the same directory
@@ -106,7 +106,7 @@ def register_client_refresh():
 
 @api.route('/getdata', methods=['GET'])
 def get_data():
-    return json.dumps(read_file(stream_control_file), ensure_ascii=False), 200
+    return json.dumps(read_file(scoreboard_data_file), ensure_ascii=False), 200
 
 
 @api.route('/getTop8PlayerData', methods=['GET'])
@@ -133,7 +133,7 @@ def get_commentators():
 @api.route('/getNextPlayers', methods=['GET'])
 def get_next_players():
     global full_data
-    full_data = read_file(stream_control_file)
+    full_data = read_file(scoreboard_data_file)
     current_player_1 = full_data["p1Name"]
     current_player_2 = full_data["p2Name"]
     return startgg_client.get_next_players(current_player_1, current_player_2), 200
@@ -152,6 +152,13 @@ def fetch_startgg_tournament_info():
     return "200"
 
 
+@api.route('/addStartggTop8Info', methods=['POST'])
+def add_startgg_tournament_info():
+    data = request.get_json()
+    player_stats.add_to_file(startgg_client.get_top_8_entrants_for_event(data["tournament"], data["event"]))
+    return "200"
+
+
 @api.route('/getPlayerPlacement', methods=['GET'])
 def get_player_placement():
     data = request.get_json()
@@ -159,6 +166,31 @@ def get_player_placement():
     if not placement:
         return ""
     return str(placement)
+
+
+@api.route('/deletePlayerStats', methods=['POST'])
+def delete_player_stats():
+    player_stats.delete_stats()
+    return "200"
+
+
+@api.route('/addPlayerStat', methods=['POST'])
+def add_player_stat():
+    data = request.get_json()
+    player_stats.add_player_data(data["gamerTag"], data["event"], data["placement"], data["wins"], data["losses"])
+    return "200"
+
+
+@api.route('/getEventsWithStats', methods=['GET'])
+def get_events_with_stats():
+    return jsonify(player_stats.get_all_events_with_stats()), 200
+
+
+@api.route('/setEventForStats', methods=['POST'])
+def set_event_for_stats():
+    data = request.get_json()
+    player_stats.set_current_event(data["event"])
+    return "200"
 
 
 @api.route('/getTournamentInfo', methods=['GET'])
@@ -220,7 +252,7 @@ def reverse_names():
 def get_next_round_data():
     next_round_info = top8.progress_to_next_round()
     global full_data
-    full_data = read_file(stream_control_file)
+    full_data = read_file(scoreboard_data_file)
     player1 = next_round_info["player1"]
     player2 = next_round_info["player2"]
     full_data["p1Name"] = player1["name"]
@@ -231,7 +263,7 @@ def get_next_round_data():
     full_data["p2Country"] = player2["country"]
     full_data["p1Score"] = "0"
     full_data["p2Score"] = "0"
-    with open(stream_control_file, 'w', encoding="utf-8") as json_file:
+    with open(scoreboard_data_file, 'w', encoding="utf-8") as json_file:
         json_file.write(json.dumps(full_data))
     return next_round_info, 200
 
@@ -241,7 +273,7 @@ def update_all_data():
     json_data = request.get_json()
     global full_data
     full_data = json_data
-    with open(stream_control_file, 'w', encoding="utf-8") as json_file:
+    with open(scoreboard_data_file, 'w', encoding="utf-8") as json_file:
         json_file.write(json.dumps(full_data))
     return "200"
 
@@ -254,7 +286,7 @@ def update_comm_data():
     full_data["soc1"] = json_data.get("soc1", "")
     full_data["com2"] = json_data.get("com2", "")
     full_data["soc2"] = json_data.get("soc2", "")
-    with open(stream_control_file, 'w', encoding="utf-8") as json_file:
+    with open(scoreboard_data_file, 'w', encoding="utf-8") as json_file:
         json_file.write(json.dumps(full_data))
     return "200"
 
@@ -282,7 +314,7 @@ def update_data_no_scores():
     full_data["nextcountry2"] = json_data.get("nextcountry2", "")
     full_data["maxScore"] = json_data.get("maxScore", "99")
     full_data["timestamp"] = json_data.get("timestamp")
-    with open(stream_control_file, 'w', encoding="utf-8") as json_file:
+    with open(scoreboard_data_file, 'w', encoding="utf-8") as json_file:
         json_file.write(json.dumps(full_data))
     return "200"
 
@@ -292,7 +324,7 @@ def update_p1_score():
     json_data = request.get_json()
 
     full_data["p1Score"] = json_data.get("p1Score", "0")
-    with open(stream_control_file, 'w', encoding="utf-8") as json_file:
+    with open(scoreboard_data_file, 'w', encoding="utf-8") as json_file:
         json_file.write(json.dumps(full_data))
     top8.update_current_players_info(full_data)
     return "200"
@@ -303,7 +335,7 @@ def update_p2_score():
     json_data = request.get_json()
 
     full_data["p2Score"] = json_data.get("p2Score", "0")
-    with open(stream_control_file, 'w', encoding="utf-8") as json_file:
+    with open(scoreboard_data_file, 'w', encoding="utf-8") as json_file:
         json_file.write(json.dumps(full_data))
     top8.update_current_players_info(full_data)
     return "200"
@@ -314,7 +346,7 @@ def update_current_scores():
     json_data = request.get_json()
     full_data["p1Score"] = json_data.get("p1Score", "0")
     full_data["p2Score"] = json_data.get("p2Score", "0")
-    with open(stream_control_file, 'w', encoding="utf-8") as json_file:
+    with open(scoreboard_data_file, 'w', encoding="utf-8") as json_file:
         json_file.write(json.dumps(full_data))
     top8.update_current_players_info(full_data)
     return "200"
@@ -330,7 +362,7 @@ def update_current_players():
     full_data["p1Country"] = json_data["p1Country"]
     full_data["p2Country"] = json_data["p2Country"]
     full_data["round"] = json_data["round"]
-    with open(stream_control_file, 'w', encoding="utf-8") as json_file:
+    with open(scoreboard_data_file, 'w', encoding="utf-8") as json_file:
         json_file.write(json.dumps(full_data))
     top8.update_current_players_info(full_data)
     return "200"
@@ -343,7 +375,7 @@ def update_results():
     full_data["resultscore2"] = json_data["resultscore2"]
     full_data["resultplayer1"] = json_data["resultplayer1"]
     full_data["resultplayer2"] = json_data["resultplayer2"]
-    with open(stream_control_file, 'w', encoding="utf-8") as json_file:
+    with open(scoreboard_data_file, 'w', encoding="utf-8") as json_file:
         json_file.write(json.dumps(full_data))
     return "200"
 
@@ -357,7 +389,7 @@ def update_next_players():
     full_data["nextteam2"] = json_data["nextteam2"]
     full_data["nextcountry1"] = json_data["nextcountry1"]
     full_data["nextcountry2"] = json_data["nextcountry2"]
-    with open(stream_control_file, 'w', encoding="utf-8") as json_file:
+    with open(scoreboard_data_file, 'w', encoding="utf-8") as json_file:
         json_file.write(json.dumps(full_data))
     top8.update_next_players_info(full_data)
     return "200"
@@ -472,13 +504,13 @@ def move_files(src_dir, dst_dir):
 
 def add_to_score(score_key):
     full_data[score_key] = str(int(full_data[score_key]) + 1)
-    with open(stream_control_file, 'w', encoding="utf-8") as json_file:
+    with open(scoreboard_data_file, 'w', encoding="utf-8") as json_file:
         json_file.write(json.dumps(full_data, ensure_ascii=False))
 
 
 def sub_to_score(score_key):
     full_data[score_key] = str(max(int(full_data[score_key]) - 1, 0))
-    with open(stream_control_file, 'w', encoding="utf-8") as json_file:
+    with open(scoreboard_data_file, 'w', encoding="utf-8") as json_file:
         json_file.write(json.dumps(full_data, ensure_ascii=False))
 
 
@@ -494,7 +526,7 @@ def update_player_name(player_name_key, team_name_key, file_name, player_id):
     full_data["p1Score"] = "0"
     full_data["p2Score"] = "0"
     write_to_file(file_name, player_name_key, full_data)
-    with open(stream_control_file, 'w', encoding="utf-8") as json_file:
+    with open(scoreboard_data_file, 'w', encoding="utf-8") as json_file:
         json_file.write(json.dumps(full_data, ensure_ascii=False))
 
 
@@ -507,7 +539,7 @@ def save_previous_results():
     full_data["resultscore2"] = full_data["p2Score"]
     full_data["resultplayer1"] = full_data["p1Name"]
     full_data["resultplayer2"] = full_data["p2Name"]
-    with open(stream_control_file, 'w', encoding="utf-8") as json_file:
+    with open(scoreboard_data_file, 'w', encoding="utf-8") as json_file:
         json_file.write(json.dumps(full_data))
 
 

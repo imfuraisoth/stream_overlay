@@ -1599,6 +1599,25 @@ a, a:hover, a:visited, a:active {
 	top: 1064.261px;
 	transform: matrix(1,0,0,1,0,0);
 }
+.horizontal-button-container {
+    display: flex;
+    gap: 10px; /* Adds space between buttons */
+}
+.form-center-align {
+    text-align: center;
+}
+.events-with-stats-dropdown {
+    box-sizing: border-box;
+    overflow: visible;
+    padding: 5px;
+    width: 170px;
+}
+#eventStatsSelect {
+    fill: rgba(255,255,255,1);
+    stroke: rgba(112,112,112,1);
+    shape-rendering: auto
+    color: black;
+}
 #dropdown_country_next1 {
 	fill: rgba(255,255,255,1);
 	stroke: rgba(112,112,112,1);

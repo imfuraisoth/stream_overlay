@@ -22,7 +22,7 @@ def read_file(file_name, default):
         return result
 
 
-country_code_map = read_file(country_prop_file)
+country_code_map = read_file(country_prop_file, "{}")
 
 
 class Match:

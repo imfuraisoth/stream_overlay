@@ -301,7 +301,7 @@
 						<span>2P</span>
 					</div>
 					<div id="result2p">
-						<input placeholder="P2 Name"class="form_results_name_2p" type="text" id="form_results_name_2p" style="float: left; " value="" onchange="updateResults();">
+						<input placeholder="P2 Name" class="form_results_name_2p" type="text" id="form_results_name_2p" style="float: left; " value="" onchange="updateResults();">
 						<input placeholder="0" class="form_results_score_2p" type="text" id="form_results_score_2p" style="float: left;" value="" onchange="updateResults();">
 					</div>
 					<button class="rectangle_button" id="openPopupBtn" onclick="getStartggInfo();">Set Start.gg Info</button>
@@ -326,11 +326,41 @@
 								<input type="text" id="tournamentNameTop8" name="tournamentNameTop8" required>
 								<h3>Event Name: </h3>
 								<input type="text" id="eventNameTop8" name="eventNameTop8" required>
-								<button type="submit" onclick="fetchStartggTop8Info();">Submit</button>
+								<div class="horizontal-button-container">
+									<button type="submit" onclick="fetchStartggTop8Info();">Get Single Event</button>
+									<button onclick="addStartggTop8Info();">Add Event</button>
+									<button onclick="deletePlayerStats();">Clear Data</button>
+								</div>
 							</form>
 						</div>
 					</div>
-				</div>
+					<button class="rectangle_button" id="openAddPlayerStatBtn">Add Player Stat</button>
+					<div id="addPlayerStat" class="popup">
+						<div class="popup-content">
+							<span id="closeAddPlayerStatBtn" class="close">&times;</span>
+							<form id="PlayerStat">
+								<h3>Gamer Tag:</h3>
+								<input type="text" id="playerName" name="playerName" required>
+								<h3>Event Name: </h3>
+								<input type="text" id="eventName" name="eventName" required>
+								<div class="horizontal-button-container">
+									<h3>Placement: </h3>
+									<input type="text" class="form-center-align" id="placement" name="placement" required>
+									<h3>Wins: </h3>
+									<input type="text" class="form-center-align" id="wins" name="wins" value="0">
+									<h3>Losses: </h3>
+									<input type="text" class="form-center-align" id="losses" name="losses" value="0">
+								</div>
+								<button onclick="addPlayStats();">Submit</button>
+							</form>
+						</div>
+					</div>
+					<div id="eventStatsContainer" align="center">
+						<span>Select Event For Stats</span>
+						<select id="eventStatsSelect" onchange="setEventForStats()">
+							<option value="" selected disabled>Select Event For Stats</option>
+						</select>
+					</div>
 			</div>
 			<div id="ABOUT" class="header-item">
 				<a href="https://www.theshilluminati.com/" style="text-decoration: none" target="_blank">ABOUT</a>

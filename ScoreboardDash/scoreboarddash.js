@@ -546,11 +546,35 @@ function sendJsonToEndpoint(endpoint) {
 }
 
 function sendJsonDataToEndpoint(data, endpoint) {
+    sendJsonToEndpoint(data, endpoint, "");
+}
+
+function sendJsonDataToEndpoint(data, endpoint, message) {
 // open a connection
 	xhr.open("POST", "../" + endpoint, true);
 
 	// Set the request header i.e. which type of content you are sending
 	xhr.setRequestHeader("Content-Type", "application/json");
+
+    // Handle the response
+    xhr.onreadystatechange = function() {
+        if (xhr.readyState === 4) {  // 4 means request is done
+            if (xhr.status === 200 && message.trim() != "") {  // 200 means OK
+                alert(message);
+            } else if (xhr.status === 400) {
+                console.log("Bad request. Please check your data.");
+            } else if (xhr.status === 500) {
+                console.log("Server error. Please try again later.");
+            } else {
+                console.log("Something went wrong. Status:", xhr.status);
+            }
+        }
+    };
+
+    // Handle network errors
+    xhr.onerror = function() {
+        console.log("Request failed due to network error.");
+    };
 
 	// Converting JSON data to string
 	var dataToSend = JSON.stringify(data);
@@ -618,12 +642,17 @@ document.getElementById('closePopupTop8Btn').addEventListener('click', function(
     document.getElementById('popupTop8').style.display = 'none';
 });
 
+document.getElementById('openAddPlayerStatBtn').addEventListener('click', function() {
+    document.getElementById('addPlayerStat').style.display = 'block';
+});
+
+document.getElementById('closeAddPlayerStatBtn').addEventListener('click', function() {
+    document.getElementById('addPlayerStat').style.display = 'none';
+});
+
 window.addEventListener('click', function(event) {
     if (event.target == document.getElementById('popup')) {
         document.getElementById('popup').style.display = 'none';
-    }
-    if (event.target == document.getElementById('popupTop8')) {
-        document.getElementById('popupTop8').style.display = 'none';
     }
 });
 
@@ -633,15 +662,36 @@ function saveStartggInfo() {
     startggInfo.tournament = tournamentName;
     startggInfo.stream = streamName;
     document.getElementById('popup').style.display = 'none';
-    sendJsonDataToEndpoint(startggInfo, "setTournamentInfo")
+    sendJsonDataToEndpoint(startggInfo, "setTournamentInfo");
 }
 
 function fetchStartggTop8Info() {
     var tournamentName = document.getElementById('tournamentNameTop8').value
     var eventName = document.getElementById('eventNameTop8').value
     const jsonData = { tournament: tournamentName, event: eventName };
-    document.getElementById('popup').style.display = 'none';
-    sendJsonDataToEndpoint(jsonData, "fetchStartggTop8Info")
+    document.getElementById('popupTop8').style.display = 'none';
+    sendJsonDataToEndpoint(jsonData, "fetchStartggTop8Info");
+}
+
+function addStartggTop8Info() {
+    var tournamentName = document.getElementById('tournamentNameTop8').value
+    var eventName = document.getElementById('eventNameTop8').value
+    const jsonData = { tournament: tournamentName, event: eventName };
+    sendJsonDataToEndpoint(jsonData, "addStartggTop8Info", "Player stats for event added!");
+}
+
+function addPlayStats() {
+    var playerName = document.getElementById('playerName').value
+    var eventName = document.getElementById('eventName').value
+    var placementValue = document.getElementById('placement').value
+    var winsValue = document.getElementById('wins').value
+    var lossesValue = document.getElementById('losses').value
+    const jsonData = { gamerTag: playerName, event: eventName, placement: placementValue, wins: winsValue, losses: lossesValue };
+    sendJsonDataToEndpoint(jsonData, "addPlayerStat", playerName + " stat for " + eventName + " added!");
+}
+
+function deletePlayerStats() {
+    sendJsonDataToEndpoint({}, "deletePlayerStats", "Player stats deleted!");
 }
 
 function getNextPlayersFromStartgg() {
@@ -731,9 +781,55 @@ function addEventListenersForNextRound(id) {
     });
 }
 
+function setEventForStats() {
+	var eventStats = document.getElementById("eventStatsSelect");
+	selected = eventStats.options[eventStats.selectedIndex].text;
+	eventStats.value = selected;
+	jsonData = { event: selected };
+	sendJsonDataToEndpoint(jsonData, "setEventForStats")
+}
+
+function createEventsWithStatsDropdown() {
+    fetch('/getEventsWithStats')
+        .then(function (response) {
+        jsonData = response.json();
+      return jsonData;
+    })
+    .then(function (events) {
+        // Get the container where the dropdown will be inserted
+        const container = document.getElementById("eventStatsContainer");
+
+        // Create the <select> element
+        const select = document.getElementById("eventStatsSelect");
+        select.classList.add("events-with-stats-dropdown");
+
+        // Loop through the list of strings and create <option> elements
+        events.forEach(event => {
+            // Create an <option> element for each string
+            const option = document.createElement("option");
+            option.value = event;  // Set the value of the option
+            option.textContent = event;          // Set the text inside the option
+            option.style.color = "black";
+            select.appendChild(option);          // Append the option to the select element
+        });
+        // Append the <select> element to the container
+        container.appendChild(select);
+        // Add event listener to handle selection change
+        select.addEventListener("change", function() {
+            const selectedOption = select.options[select.selectedIndex];
+            selectedOption.textContent = select.value
+        });
+      })
+    .catch(function (err) {
+      console.log('error: ' + err);
+    });
+
+}
+
 populateCountrySelectDropDown();
 getDataFromServer();
 getStartggInfo();
+createEventsWithStatsDropdown();
 addEventListenersForNextRound('form_next_round_name_1p');
 addEventListenersForNextRound('form_next_round_name_2p');
 registerClientForRefresh();
