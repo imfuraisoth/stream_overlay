@@ -47,6 +47,20 @@ function init(){
             console.log('error: ' + err);
           });	
 	}
+
+	function checkPlacement(name) {
+	    fetch('http://' + serverIp + '/getPlayerPlacement?param='+ name)
+	    .then(function (response) {
+            jsonData = response.json();
+          return jsonData;
+        })
+        .then(function (data) {
+            //TODO: do something with the placement data
+          })
+        .catch(function (err) {
+          console.log('error: ' + err);
+        });
+	}
 	
 	pollJSON();
 	setInterval(function(){pollJSON();},1000); //runs polling function twice per second
@@ -132,7 +146,8 @@ function init(){
             $('result2').html(resultScore2);
             $('nextPlayer1').html(nextPlayer1);
             $('nextPlayer2').html(nextPlayer2);
-
+			checkPlacement(p1Name);
+			checkPlacement(p2Name);
 			countryHold1 = p1Country;
 			countryHold2 = p2Country;
 			if (enableFlags) {
@@ -242,6 +257,8 @@ function init(){
 					
 					TweenMax.to('#p1Wrapper',.3,{css:{x: '+0px', opacity: 1},ease:Quad.easeOut,delay:.2}); //fades name wrapper back in while moving to original position
 				}});
+
+				checkPlacement(p1Name);
 			}
 			
 			if($('#p2Name').text() != p2Name || $('#p2Team').text() != p2Team){
@@ -260,6 +277,8 @@ function init(){
 					
 					TweenMax.to('#p2Wrapper',.3,{css:{x: '+0px', opacity: 1},ease:Quad.easeOut,delay:.2});
 				}});
+
+				checkPlacement(p2Name);
 			}
 			
 			if($('#round').text() != round){
