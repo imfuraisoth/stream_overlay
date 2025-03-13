@@ -162,10 +162,12 @@ def add_startgg_tournament_info():
 @api.route('/getPlayerPlacement', methods=['GET'])
 def get_player_placement():
     gamer_tag = request.args.get('param')
+    if not gamer_tag:
+        return jsonify({}), 200
     placement = player_stats.get_placement(gamer_tag)
     if not placement:
-        return "{}"
-    return str(placement)
+        return jsonify({}), 200
+    return jsonify(placement), 200
 
 
 @api.route('/deletePlayerStats', methods=['POST'])

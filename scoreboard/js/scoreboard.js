@@ -21,6 +21,7 @@ function init(){
 	var countryHold1;
 	var countryHold2;
 	var flagsDir = '../../../../resources/countries/iso/64shiny/';
+	var placementDir = '../../../../resources/placement/';
 	
 	var serverIp = readServerIp();
 	//var serverIp = "???.???.???.???:8080";
@@ -48,24 +49,77 @@ function init(){
           });	
 	}
 
-	function checkPlacement(name) {
+	function checkPlacement(name, player) {
 	    fetch('http://' + serverIp + '/getPlayerPlacement?param='+ name)
 	    .then(function (response) {
             jsonData = response.json();
           return jsonData;
         })
-        .then(function (data) {
-            //TODO: do something with the placement data
+        .then(function (placementData) {
+            displayPlacement(placementData, player);
           })
         .catch(function (err) {
           console.log('error: ' + err);
         });
 	}
+
+	function displayPlacement(placementData, player) {
+	    removePlacement(player);
+	    if (Object.keys(placementData).length === 0) {
+            return;
+	    }
+	    var placement = placementData['placement'];
+	    var displayText = "";
+	    switch(placement) {
+            case 1:
+                displayText = "2024 Winner";
+                break;
+            case 2:
+                displayText = "2024 2nd Place";
+                break;
+            case 3:
+                displayText = "2024 3rd Place";
+                break;
+            case 4:
+            case 5:
+            case 6:
+            case 7:
+                displayText = "2024 Top 8";
+                break;
+            default:
+                return;
+	    }
+        let element = document.createElement('div');
+        element.classList.add('fade-out');
+        element.setAttribute('id', 'placementElementText' + player);
+        element.innerText = displayText;
+        document.body.appendChild(element);
+
+        // Apply styles dynamically to trigger the transition
+        setTimeout(() => {
+            element.style.opacity = "1";
+            element.style.transform = "translateY(0)"; // Moves to normal position
+        }, 100);
+	}
+
+	function removePlacement(player) {
+        let element = document.getElementById('placementElementText' + player);
+        if (element != null) {
+            // Add the 'fade' class to trigger the fade-out effect
+            setTimeout(() => {
+                element.style.opacity = "0";
+            }, 100);
+            // Wait for the fade-out transition to finish, then remove the element
+            setTimeout(() => {
+                element.remove(); // Remove the element from the DOM
+            }, 1000); // 1000ms matches the duration of the fade-out transition
+        }
+	}
 	
 	pollJSON();
 	setInterval(function(){pollJSON();},1000); //runs polling function twice per second
 	
-	function scoreboard(){
+	function scoreboard() {
 		
 		if(startup == true){
 			game = scObj['game'];
@@ -127,7 +181,7 @@ function init(){
         var nextPlayer1 = scObj['nextplayer1'];
         var nextPlayer2 = scObj['nextplayer2'];
 		
-		if(startup == true){
+		if (startup == true) {
 			
 			TweenMax.set('#p1Wrapper',{css:{x: p1Move}}); //sets name/round wrappers to starting positions for them to animate from
 			TweenMax.set('#p2Wrapper',{css:{x: p2Move}});
@@ -146,8 +200,8 @@ function init(){
             $('result2').html(resultScore2);
             $('nextPlayer1').html(nextPlayer1);
             $('nextPlayer2').html(nextPlayer2);
-			checkPlacement(p1Name);
-			checkPlacement(p2Name);
+			checkPlacement(p1Name, 1);
+			checkPlacement(p2Name, 2);
 			countryHold1 = p1Country;
 			countryHold2 = p2Country;
 			if (enableFlags) {
@@ -167,6 +221,7 @@ function init(){
 					var newTeamFontSize = parseInt(parseFloat($("#p1Team").css('font-size').slice(0,-2)) * .95) + 'px';
 					$("#p1Team").css('font-size', newTeamFontSize);
 				}
+                return true;
 			});
 			
 			p2Wrap.each(function(i, p2Wrap){
@@ -258,7 +313,7 @@ function init(){
 					TweenMax.to('#p1Wrapper',.3,{css:{x: '+0px', opacity: 1},ease:Quad.easeOut,delay:.2}); //fades name wrapper back in while moving to original position
 				}});
 
-				checkPlacement(p1Name);
+				checkPlacement(p1Name, 1);
 			}
 			
 			if($('#p2Name').text() != p2Name || $('#p2Team').text() != p2Team){
@@ -278,7 +333,7 @@ function init(){
 					TweenMax.to('#p2Wrapper',.3,{css:{x: '+0px', opacity: 1},ease:Quad.easeOut,delay:.2});
 				}});
 
-				checkPlacement(p2Name);
+				checkPlacement(p2Name, 2);
 			}
 			
 			if($('#round').text() != round){

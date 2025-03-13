@@ -74,15 +74,11 @@ def get_placement(player_id):
 
 def get_placement_for_event(player_id, event_id):
     global player_data
-    player = player_data[player_id]
+    player = player_data.get(player_id, None)
     if player is None:
         return None
 
-    event = player[event_id]
-    if event is None:
-        return None
-
-    return event.placement
+    return player.get(event_id, None)
 
 
 def delete_stats():
