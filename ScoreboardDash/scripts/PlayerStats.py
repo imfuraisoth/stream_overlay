@@ -5,6 +5,7 @@ from dataclasses import dataclass
 
 player_data_file_name = "../data/player_data.json"
 player_data_backup_file_name = "../data/player_data_backup.json"
+placement_file_name = "../data/placement_strings.json"
 current_event = ""
 
 
@@ -12,7 +13,7 @@ def read_file(file_name):
     file_path = Path(file_name)
     if not file_path.exists():
         file_path.write_text("{}")  # Creates the file
-        print("Player data file created successfully.")
+        print(file_name + " file created successfully.")
 
     try:
         with open(file_name) as json_file:
@@ -26,6 +27,7 @@ def read_file(file_name):
 
 
 player_data = read_file(player_data_file_name)
+placement_map = read_file(placement_file_name)
 
 
 def write_to_file(json_data):
@@ -48,11 +50,19 @@ def add_to_file(json_data):
     write_to_file(player_data)
 
 
-@dataclass
+@dataclass(init=False)
 class EventData:
     placement: int
     wins: int
     losses: int
+    message: str
+
+    def __init__(self, placement: int, wins: int, losses: int):
+        global placement_map
+        self.placement = placement
+        self.wins = wins
+        self.losses = losses
+        self.message = placement_map.get(str(placement), "")
 
 
 def add_player_data(player_id, event_id, placement, wins, loses):

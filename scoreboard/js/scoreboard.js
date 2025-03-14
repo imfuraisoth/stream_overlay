@@ -68,27 +68,10 @@ function init(){
 	    if (Object.keys(placementData).length === 0) {
             return;
 	    }
-	    var placement = placementData['placement'];
-	    var displayText = "";
-	    switch(placement) {
-            case 1:
-                displayText = "2024 Winner";
-                break;
-            case 2:
-                displayText = "2024 2nd Place";
-                break;
-            case 3:
-                displayText = "2024 3rd Place";
-                break;
-            case 4:
-            case 5:
-            case 6:
-            case 7:
-                displayText = "2024 Top 8";
-                break;
-            default:
-                return;
-	    }
+	    var displayText = placementData["message"];
+        if (displayText == null || displayText === "") {
+            return;
+        }
         let element = document.createElement('div');
         element.classList.add('fade-out');
         element.setAttribute('id', 'placementElementText' + player);
