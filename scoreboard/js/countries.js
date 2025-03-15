@@ -85,6 +85,7 @@ var countryFlag = function(country){
 			}
 		}
 	}
+	return "unknown"
 };
 
 var countryName = function(country){
@@ -95,4 +96,5 @@ var countryName = function(country){
 			}
 		}
 	}
+	return "unknown"
 };

@@ -287,22 +287,43 @@ body {
 
 #placementElementText1 {
     position: absolute;
-    top: 0;
-    left: 20;
+    top: 7;
+    left: 45;
 	opacity: 0;
+	color: #86480D;
+	opacity: 0;
+	font-weight: bold;
 }
 
 #placementElementText2 {
     position: absolute;
-    top: 0;
-    right: 20;
+    top: 7;
+    right: 45;
 	opacity: 0;
+	color: #86480D;
+	font-weight: bold;
+}
+
+#placementImage1 {
+    position: absolute;
+    top: 0;
+    left: 0;
+	opacity: 0;
+	width: 297px;
+}
+
+#placementImage2 {
+    position: absolute;
+    top: 0;
+    right: 0;
+	opacity: 0;
+	width: 297px;
 }
 
 /* Initial state of the element */
 .fade-out {
 	opacity: 1;
-    transform: translateY(-20px); /* Start slightly raised */
+    transform: translateY(-40px); /* Start slightly raised */
     transition: opacity 1s ease-in, transform 1s ease-in;
 	font-size: 30px;
 }

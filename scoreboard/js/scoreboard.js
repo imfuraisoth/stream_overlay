@@ -50,7 +50,10 @@ function init(){
 	}
 
 	function checkPlacement(name, player) {
-	    fetch('http://' + serverIp + '/getPlayerPlacement?param='+ name)
+        const url = new URL("http://" + serverIp + "/getPlayerPlacement");
+        url.searchParams.append("gamerTag", name);
+        url.searchParams.append("player", player);
+	    fetch(url)
 	    .then(function (response) {
             jsonData = response.json();
           return jsonData;
@@ -72,21 +75,40 @@ function init(){
         if (displayText == null || displayText === "") {
             return;
         }
+        let imageElement = createPlacementImage(placementData, player);
         let element = document.createElement('div');
         element.classList.add('fade-out');
         element.setAttribute('id', 'placementElementText' + player);
         element.innerText = displayText;
         document.body.appendChild(element);
 
+
         // Apply styles dynamically to trigger the transition
         setTimeout(() => {
             element.style.opacity = "1";
             element.style.transform = "translateY(0)"; // Moves to normal position
+            imageElement.style.opacity = "1";
+            imageElement.style.transform = "translateY(0)"; // Moves to normal position
         }, 100);
 	}
 
+    function createPlacementImage(placementData, player) {
+        let imageElement = document.createElement('img');
+        imageElement.src = placementDir + placementData["image"];
+        imageElement.classList.add('fade-out');
+        imageElement.id = 'placementImage' + player;
+        document.body.appendChild(imageElement);
+        return imageElement;
+    }
+
 	function removePlacement(player) {
         let element = document.getElementById('placementElementText' + player);
+        removeElement(element, 700);
+        let imageElement = document.getElementById('placementImage' + player);
+        removeElement(imageElement, 1000);
+	}
+
+	function removeElement(element, transition) {
         if (element != null) {
             // Add the 'fade' class to trigger the fade-out effect
             setTimeout(() => {
@@ -95,10 +117,10 @@ function init(){
             // Wait for the fade-out transition to finish, then remove the element
             setTimeout(() => {
                 element.remove(); // Remove the element from the DOM
-            }, 1000); // 1000ms matches the duration of the fade-out transition
+            }, transition); // 1000ms matches the duration of the fade-out transition
         }
 	}
-	
+
 	pollJSON();
 	setInterval(function(){pollJSON();},1000); //runs polling function twice per second
 	

@@ -161,10 +161,11 @@ def add_startgg_tournament_info():
 
 @api.route('/getPlayerPlacement', methods=['GET'])
 def get_player_placement():
-    gamer_tag = request.args.get('param')
-    if not gamer_tag:
+    gamer_tag = request.args.get('gamerTag')
+    player = request.args.get('player')
+    if not gamer_tag or not player:
         return jsonify({}), 200
-    placement = player_stats.get_placement(gamer_tag)
+    placement = player_stats.get_placement(gamer_tag, player)
     if not placement:
         return jsonify({}), 200
     return jsonify(placement), 200

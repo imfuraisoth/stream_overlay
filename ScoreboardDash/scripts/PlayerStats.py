@@ -7,6 +7,10 @@ player_data_file_name = "../data/player_data.json"
 player_data_backup_file_name = "../data/player_data_backup.json"
 placement_file_name = "../data/placement_strings.json"
 current_event = ""
+first_placement_image_p1 = "In-Game_Cam_Left_Champ.png"
+top_8_placement_image_p1 = "In-Game_Cam_Left_Red.png"
+first_placement_image_p2 = "In-Game_Cam_Right_Champ.png"
+top_8_placement_image_p2 = "In-Game_Cam_Right_Red.png"
 
 
 def read_file(file_name):
@@ -56,6 +60,7 @@ class EventData:
     wins: int
     losses: int
     message: str
+    image: str
 
     def __init__(self, placement: int, wins: int, losses: int):
         global placement_map
@@ -77,18 +82,31 @@ def add_player_data(player_id, event_id, placement, wins, loses):
     write_to_file(player_data)
 
 
-def get_placement(player_id):
+def get_placement(player_id, p1_or_p2):
     global current_event
-    return get_placement_for_event(player_id, current_event)
+    return get_placement_for_event(player_id, current_event, p1_or_p2)
 
 
-def get_placement_for_event(player_id, event_id):
+def get_placement_for_event(player_id, event_id, p1_or_p2):
     global player_data
     player = player_data.get(player_id, None)
     if player is None:
         return None
 
-    return player.get(event_id, None)
+    event_data = player.get(event_id, None)
+    if event_data:
+        event_data["image"] = get_image_location(p1_or_p2, event_data["placement"])
+    return event_data
+
+
+def get_image_location(p1_or_p2, placement):
+    images = {
+        (1, 1): first_placement_image_p1,
+        (2, 1): first_placement_image_p2,
+        (1, 8): top_8_placement_image_p1,
+        (2, 8): top_8_placement_image_p2
+    }
+    return images.get((int(p1_or_p2), 1 if placement == 1 else 8), "")
 
 
 def delete_stats():
