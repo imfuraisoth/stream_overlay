@@ -13,6 +13,29 @@ first_placement_image_p2 = "In-Game_Cam_Right_Champ.png"
 top_8_placement_image_p2 = "In-Game_Cam_Right_Red.png"
 
 
+@dataclass(init=False)
+class EventData:
+    placement: int
+    wins: int
+    losses: int
+    message: str
+    image: str
+
+    def __init__(self, placement: int, wins: int, losses: int):
+        global placement_map
+        self.placement = placement
+        self.wins = wins
+        self.losses = losses
+        self.message = placement_map.get(str(placement), "")
+        self.image = ""
+
+
+def event_data_decoder(dct):
+    if 'placement' in dct and 'wins' in dct and 'losses' in dct:  # Check for required keys
+        return EventData(dct['placement'], dct['wins'], dct['losses'])
+    return dct
+
+
 def read_file(file_name):
     file_path = Path(file_name)
     if not file_path.exists():
@@ -22,7 +45,7 @@ def read_file(file_name):
     try:
         with open(file_name) as json_file:
             line = json_file.readline()
-            result = json.loads(line)
+            result = json.loads(line, object_hook=event_data_decoder)
             json_file.close()
             return result
     except Exception as e:
@@ -30,8 +53,8 @@ def read_file(file_name):
         return {}
 
 
-player_data = read_file(player_data_file_name)
 placement_map = read_file(placement_file_name)
+player_data = read_file(player_data_file_name)
 
 
 def write_to_file(json_data):
@@ -52,22 +75,6 @@ def add_to_file(json_data):
         else:
             player_data[key] = json_data[key]
     write_to_file(player_data)
-
-
-@dataclass(init=False)
-class EventData:
-    placement: int
-    wins: int
-    losses: int
-    message: str
-    image: str
-
-    def __init__(self, placement: int, wins: int, losses: int):
-        global placement_map
-        self.placement = placement
-        self.wins = wins
-        self.losses = losses
-        self.message = placement_map.get(str(placement), "")
 
 
 def add_player_data(player_id, event_id, placement, wins, loses):
@@ -95,7 +102,7 @@ def get_placement_for_event(player_id, event_id, p1_or_p2):
 
     event_data = player.get(event_id, None)
     if event_data:
-        event_data["image"] = get_image_location(p1_or_p2, event_data["placement"])
+        event_data.image = get_image_location(p1_or_p2, event_data.placement)
     return event_data
 
 

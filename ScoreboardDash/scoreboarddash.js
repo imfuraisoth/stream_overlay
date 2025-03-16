@@ -236,8 +236,8 @@ function resetNamesAndScore() {
 	jsonData.p2Name = "";
 	jsonData.p1Team = "";
 	jsonData.p2Team = "";
-	jsonData.p1Country = "";
-	jsonData.p2Country = "";
+	jsonData.p1Country = "US";
+	jsonData.p2Country = "US";
 	jsonData.p1Score = "0";
 	jsonData.p2Score = "0";
 	updateCurrentPlayerDisplay();
@@ -785,8 +785,8 @@ function setEventForStats() {
 	var eventStats = document.getElementById("eventStatsSelect");
 	selected = eventStats.options[eventStats.selectedIndex].text;
 	eventStats.value = selected;
-	jsonData = { event: selected };
-	sendJsonDataToEndpoint(jsonData, "setEventForStats")
+	eventData = { event: selected };
+	sendJsonDataToEndpoint(eventData, "setEventForStats")
 }
 
 function createEventsWithStatsDropdown() {

@@ -282,7 +282,6 @@ def get_top_8_entrants_for_event(tournament_name, event_name):
     entrants = {}
     for page in range(1, pages + 1):
         entrants.update(get_top_8_entrants(tournament_name, event_name, page))
-    print(entrants)
     return entrants
 
 
