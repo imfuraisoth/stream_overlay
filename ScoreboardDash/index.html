@@ -190,32 +190,23 @@
 						</div>
 					</div>		
 			</div>
-
-
-					<div class="replaysContainer">
-						<div id="text_replays">
-							<span class="text-shadow">Replays</span>
-						</div>
-						<div id="button_start_replay">
-							<button class="rectangle_button" id="rectangle_button_4" onclick='triggerReplay();'>
-								<text x="14" y="19" id="button_text_4">Start Replay ▶︎▶︎</text>
-							</button>
-			
-						</div>
-		
-						<div id="button_stop_replay">
-							<button class="rectangle_button" id="rectangle_button_5" onclick='stopReplay();'>
-								<text x="14" y="19" id="button_text_4">Stop Replay  ⏹</text>
-							</button>
-						</div>
-					</div>
-
 					<div class="ftContainer">
 						<div id="text_ft">
 							<span class="text-shadow">First to #</span>
 						</div>
 						<div id="ftx">
 							<input placeholder="0" class="form_ft" type="text" id="form_ft" style="float: left;" value="" onchange="updateMaxScore();">
+						</div>
+					</div>
+
+					<div class="fetchContainer">
+						<div id="text_startgg">
+							<span class="text-shadow">Start.gg</span>
+						</div>
+						<div id="button_fetch_next_players">
+							<button class="rectangle_button" id="rectangle_button_startgg_stream_queue" onclick='getNextPlayersFromStartgg();'>
+								<text x="18" y="19" id="button_text_4">Fetch Next Players</text>
+							</button>
 						</div>
 					</div>
 				</div>
@@ -278,11 +269,6 @@
 						<div id="button_next_round">
 							<button class="rectangle_button" id="rectangle_button_6" onclick='nextRound();'>
 								<text x="18" y="19" id="button_text_4">Next Round</text>
-							</button>
-						</div>
-						<div id="button_fetch_next_players">
-							<button class="rectangle_button" id="rectangle_button_startgg_stream_queue" onclick='getNextPlayersFromStartgg();'>
-								<text x="18" y="19" id="button_text_4">Fetch Next Players</text>
 							</button>
 						</div>
 					</div>

@@ -380,13 +380,13 @@ a, a:hover, a:visited, a:active {
 	flex-direction: column;
 }
 
-.replaysContainer {
+.fetchContainer {
 	display: flex;
 	flex: 1;
 	flex-direction: column;
+	justify-content: flex-start;
 	align-items: center;
 	border: 1px solid black;
-	justify-content: center;
 	padding: 15px 0px;
 }
 
@@ -399,23 +399,13 @@ a, a:hover, a:visited, a:active {
 	padding: 15px 0px;
 }
 
-#text_replays {
+#text_startgg {
 	overflow: visible;
 	white-space: nowrap;
 	font-style: normal;
 	font-weight: normal;
 	font-size: 18px;
 	color: rgb(0, 0, 0);
-}
-
-#button_start_replay {
-	overflow: visible;
-	margin: 10px 0px;
-}
-
-#button_stop_replay {
-	overflow: visible;
-	margin: 10px 0px;
 }
 
 /* NEXT ROUND */
@@ -500,8 +490,8 @@ a, a:hover, a:visited, a:active {
 	align: center;
 }
 #button_fetch_next_players {
-    margin-left: 50px;
-    margin-right: 50px;
+    margin-left: 0px;
+    margin-right: 55px;
 	width: 100px;
 	height: 30px;
 	overflow: visible;
@@ -1441,16 +1431,6 @@ a, a:hover, a:visited, a:active {
 	font-weight: normal;
 	font-size: 3px;
 }
-#text_start_replayy {
-	overflow: visible;
-	width: 57px;
-	white-space: nowrap;
-	text-align: left;
-	font-style: normal;
-	font-weight: normal;
-	font-size: 10px;
-	color: rgba(255,255,255,1);
-}
 #icon_play {
 	fill: rgba(255,255,255,1);
 	stroke: rgba(255,255,255,1);
@@ -1479,16 +1459,6 @@ a, a:hover, a:visited, a:active {
 	font-style: normal;
 	font-weight: normal;
 	font-size: 3px;
-}
-#text_stop_replay {
-	overflow: visible;
-	width: 57px;
-	white-space: nowrap;
-	text-align: left;
-	font-style: normal;
-	font-weight: normal;
-	font-size: 10px;
-	color: rgba(255,255,255,1);
 }
 #icon_stop {
 	fill: rgba(255,255,255,1);
