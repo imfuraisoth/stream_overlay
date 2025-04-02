@@ -261,6 +261,8 @@ function reversePlayerNames() {
 	jsonData.p2Name = p1;
 	jsonData.p1Team = t2;
 	jsonData.p2Team = t1;
+    jsonData.p1Country = c2;
+    jsonData.p2Country = c1;
 	updateCurrentPlayerDisplay();
 	sendJSON();
 }
