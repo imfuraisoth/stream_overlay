@@ -393,11 +393,23 @@ function nextRound() {
       return jsonData;
     })
     .then(function (data) {
-        nextRoundUpdate(data);
+        if (compareScores(data)) {
+            nextRoundUpdate(data);
+        }
       })
     .catch(function (err) {
       console.log('error: ' + err);
     });
+}
+
+function compareScores(data) {
+	document.getElementById("form_score_1p").value = data.p1Score;
+	document.getElementById("form_score_2p").value = data.p2Score;
+    if (data.p1Score == data.p2Score) {
+        alert("Player 1 and player 2 scores same value: " + data.p1Score + ". Update scores then try again.");
+        return false;
+    }
+    return true;
 }
 
 function nextRoundUpdate(data) {

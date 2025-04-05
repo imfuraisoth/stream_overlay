@@ -17,9 +17,9 @@ def read_file(file_name, default):
         line = json_file.readline()
         if not line:
             return default
-        result = json.loads(line)
+        response_json = json.loads(line)
         json_file.close()
-        return result
+        return response_json
 
 
 country_code_map = read_file(country_prop_file, "{}")
@@ -29,6 +29,13 @@ class Match:
     def __init__(self, player1, player2):
         self.player1 = player1
         self.player2 = player2
+
+    def already_played(self, previous_matches_map):
+        opponent = previous_matches_map.get(self.player1.name)
+        if opponent and opponent == self.player2.name:
+            return True
+        opponent = previous_matches_map.get(self.player2.name)
+        return opponent and opponent == self.player1.name
 
     def contains_players(self, name1, name2):
         return self.player1.name == name1 or self.player1.name == name2 \
@@ -73,8 +80,8 @@ def get_events(tournament_name):
     }
 
     response = requests.post(url, json={'query': query, 'variables': variables}, headers=headers)
-    result = response.json()
-    events = result["data"]["tournament"]["events"]
+    response_json = response.json()
+    events = response_json["data"]["tournament"]["events"]
     if events is None or len(events) == 0:
         print("No events found in start.gg for tournament: " + tournament_name)
         return "[]"
@@ -104,8 +111,8 @@ def get_num_entrants_for_event(tournament_name, event_name):
     }
 
     response = requests.post(url, json={'query': query, 'variables': variables}, headers=headers)
-    result = response.json()
-    return result["data"]["event"]["numEntrants"]
+    response_json = response.json()
+    return response_json["data"]["event"]["numEntrants"]
 
 
 def get_top_8_entrants(tournament_name, event_name, page):
@@ -142,8 +149,8 @@ def get_top_8_entrants(tournament_name, event_name, page):
     }
 
     response = requests.post(url, json={'query': query, 'variables': variables}, headers=headers)
-    result = response.json()
-    entrants = result["data"]["event"]["entrants"]["nodes"]
+    response_json = response.json()
+    entrants = response_json["data"]["event"]["entrants"]["nodes"]
     if entrants is None or len(entrants) == 0:
         print("No entrants found for event: " + event_name + " in start.gg for tournament: " + tournament_name)
         return "[]"
@@ -159,7 +166,7 @@ def get_top_8_entrants(tournament_name, event_name, page):
     return entrants_map
 
 
-def get_next_players(current_player1, current_player2):
+def get_next_players(current_player1, current_player2, previous_matches_map):
     startgg_info = get_start_gg_info()
     if startgg_info is None:
         print("No tournament information found, returning empty")
@@ -167,10 +174,10 @@ def get_next_players(current_player1, current_player2):
     tournament = startgg_info["tournament"]
     stream = startgg_info["stream"]
     print("Tournament: " + tournament + " stream: " + stream)
-    return get_next_players_from_tournament(tournament, stream, current_player1, current_player2)
+    return get_next_players_from_tournament(tournament, stream, current_player1, current_player2, previous_matches_map)
 
 
-def get_next_players_from_tournament(tournament_name, stream_name, current_player1, current_player2):
+def get_next_players_from_tournament(tournament_name, stream_name, current_player1, current_player2, previous_matches_map):
     token = get_token()
     query = '''
     query StreamQueueOnTournament($tourneySlug: String!) {
@@ -214,10 +221,10 @@ def get_next_players_from_tournament(tournament_name, stream_name, current_playe
     }
 
     response = requests.post(url, json={'query': query, 'variables': variables}, headers=headers)
-    result = response.json()
-    print(result)
+    response_json = response.json()
+    print(response_json)
     matches = []
-    stream_queue = result["data"]["tournament"]["streamQueue"]
+    stream_queue = response_json["data"]["tournament"]["streamQueue"]
     if stream_queue is not None and len(stream_queue) > 0:
         for stream in stream_queue:
             if stream['stream']['streamName'] == stream_name:
@@ -227,7 +234,7 @@ def get_next_players_from_tournament(tournament_name, stream_name, current_playe
                     slots = s["slots"]
                     if slots is not None and len(slots) == 2:
                         match = Match(create_player(slots[0]), create_player(slots[1]))
-                        if not match.contains_players(current_player1, current_player2):
+                        if not match.contains_players(current_player1, current_player2) and not match.already_played(previous_matches_map):
                             matches.append(match.to_json())
     json_dicts = [json.loads(match) for match in matches]
     return json.dumps(json_dicts, indent=4)

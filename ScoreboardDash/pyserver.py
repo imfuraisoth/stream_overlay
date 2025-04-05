@@ -16,6 +16,7 @@ import webbrowser
 import shutil
 from datetime import datetime
 from scripts import PlayerStats
+from scripts import TTLCache
 
 # Get today's date in YYYY-MM-DD format
 today_date = datetime.today().strftime('%Y-%m-%d')
@@ -60,6 +61,7 @@ refresh_client = False
 event_name = ""
 tournament_info = None
 player_stats = PlayerStats
+previous_matches_cache = TTLCache.SimpleTTLCache(1800)  # 30 minutes TTL
 
 
 def read_file(file_name):
@@ -134,7 +136,7 @@ def get_next_players():
     full_data = read_file(scoreboard_data_file)
     current_player_1 = full_data["p1Name"]
     current_player_2 = full_data["p2Name"]
-    return startgg_client.get_next_players(current_player_1, current_player_2), 200
+    return startgg_client.get_next_players(current_player_1, current_player_2, previous_matches_cache), 200
 
 
 @api.route('/setTournamentInfo', methods=['POST'])
@@ -274,6 +276,7 @@ def update_all_data():
     json_data = request.get_json()
     global full_data
     full_data = json_data
+    add_result_players_to_cache(json_data)
     with open(scoreboard_data_file, 'w', encoding="utf-8") as json_file:
         json_file.write(json.dumps(full_data))
     return "200"
@@ -543,6 +546,15 @@ def get_player_info_from_id_map(player_id):
 
 def open_browser(url, chrome_path):
     webbrowser.get(chrome_path).open(url)
+
+
+def add_result_players_to_cache(json_data):
+    global previous_matches_cache
+    result_player_1 = json_data.get("resultplayer1", "")
+    result_player_2 = json_data.get("resultplayer2", "")
+    if all(s.strip() for s in [result_player_1, result_player_2]):
+        previous_matches_cache.set(result_player_1, result_player_2)
+        previous_matches_cache.set(result_player_2, result_player_1)
 
 
 if __name__ == "__main__":
