@@ -804,6 +804,36 @@ function createEventsWithStatsDropdown() {
 
 }
 
+function removeNextPlayers() {
+    var p1_name = document.getElementById("form_next_round_name_1p").value;
+    var p2_name = document.getElementById("form_next_round_name_2p").value;
+    if (p1_name.trim() != "") {
+        removeNextPlayer(p1_name);
+    }
+    if (p2_name.trim() != "") {
+        removeNextPlayer(p2_name);
+    }
+}
+
+function removeNextPlayer(name) {
+    var select = document.getElementById('next_player_suggestions');
+    var options = select.options;
+    for (var i = 0; i < options.length; i++) {
+      if (options[i].value == name) {
+        select.remove(i);  // Removes the option with name
+        nextPlayersMap.delete(name);
+        break;
+      }
+    }
+}
+
+function clearNextPlayers() {
+    nextPlaySuggestions = document.getElementById('next_player_suggestions');
+    // Clear all options from the nextPlaySuggestions
+    nextPlaySuggestions.innerHTML = '';
+    nextPlayersMap.clear();
+}
+
 populateCountrySelectDropDown();
 getDataFromServer();
 getStartggInfo();

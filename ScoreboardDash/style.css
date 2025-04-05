@@ -382,7 +382,7 @@ a, a:hover, a:visited, a:active {
 
 .fetchContainer {
 	display: flex;
-	flex: 1;
+	flex: 0.2;
 	flex-direction: column;
 	justify-content: flex-start;
 	align-items: center;
@@ -392,11 +392,11 @@ a, a:hover, a:visited, a:active {
 
 .ftContainer {
 	display: flex;
-	flex: 1;
+	flex: 0.2;
 	flex-direction: column;
 	align-items: center;
 	border: 1px solid black;
-	padding: 15px 0px;
+	padding: 12px 0px;
 }
 
 #text_startgg {
@@ -490,7 +490,24 @@ a, a:hover, a:visited, a:active {
 	align: center;
 }
 #button_fetch_next_players {
-    margin-left: 0px;
+    margin-right: 55px;
+    margin-bottom: 15px;
+	width: 100px;
+	height: 30px;
+	overflow: visible;
+	align: center;
+}
+#button_remove_next_players {
+    margin-top: 5px;
+    margin-right: 55px;
+	width: 100px;
+	height: 30px;
+	overflow: visible;
+	align: center;
+	margin-bottom: 15px;
+}
+#button_clear_next_players {
+    margin-top: 5px;
     margin-right: 55px;
 	width: 100px;
 	height: 30px;
