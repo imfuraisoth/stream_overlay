@@ -143,9 +143,12 @@ def get_next_players():
 def report_winner():
     winner_data = request.get_json()
     set_id = winner_data.get("setId", 0)
-    entrant_id = winner_data.get("entrantId", 0)
-    if set_id != 0 and entrant_id != 0:
-        return str(startgg_client.report_winner(set_id, entrant_id)), 200
+    winner_id = winner_data.get("winnerId", 0)
+    loser_id = winner_data.get("loserId", 0)
+    entrant_1_score = winner_data.get("entrant1Score", 0)
+    entrant_2_score = winner_data.get("entrant2Score", 0)
+    if set_id != 0 and winner_id != 0 and loser_id != 0:
+        return str(startgg_client.report_winner(set_id, winner_id, loser_id, entrant_1_score, entrant_2_score)), 200
     return "False", 200
 
 

@@ -440,10 +440,14 @@ function reportScoresToStartgg(data) {
         return;
     }
     var setId = currentSet.set_id
-    var entrantId = p2win ? currentSet.player2.entrant_id : currentSet.player1.entrant_id;
+    var winnerId = p2win ? currentSet.player2.entrant_id : currentSet.player1.entrant_id;
+    var loserId = p2win ? currentSet.player1.entrant_id : currentSet.player2.entrant_id;
     const winnerData = {
       setId: setId,
-      entrantId: entrantId
+      winnerId: winnerId,
+      loserId: loserId,
+      entrant1Score: data.p1Score,
+      entrant2Score: data.p2Score
     };
 
     sendJsonDataToEndpoint(winnerData, "reportWinnerToStartgg");

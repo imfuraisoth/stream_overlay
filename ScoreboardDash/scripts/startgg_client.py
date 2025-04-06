@@ -245,11 +245,11 @@ def get_next_players_from_tournament(tournament_name, stream_name, current_playe
     return json.dumps(json_dicts, indent=4)
 
 
-def report_winner(set_id, winner_id):
+def report_winner(set_id, winner_id, loser_id, entrant_1_score, entrant_2_score):
     token = get_token()
     query = '''
-        mutation reportSet($setId: ID!, $winnerId: ID!) {
-          reportBracketSet(setId: $setId, winnerId: $winnerId) {
+        mutation reportSet($setId: ID!, $winnerId: ID!, $gameData: [BracketSetGameDataInput]) {
+          reportBracketSet(setId: $setId, winnerId: $winnerId, gameData: $gameData) {
             id
             state
           }
@@ -257,7 +257,8 @@ def report_winner(set_id, winner_id):
     '''
     variables = {
         "setId": set_id,
-        "winnerId": winner_id
+        "winnerId": winner_id,
+        "gameData": create_results_data(winner_id, loser_id, int(entrant_1_score), int(entrant_2_score))
     }
     headers = {
         'Authorization': 'Bearer ' + token
@@ -271,6 +272,39 @@ def report_winner(set_id, winner_id):
         print("Failed to report score!", e)
         return False
     return True
+
+
+def create_results_data(winner_id, loser_id, entrant_1_score, entrant_2_score):
+    games = []
+    game_num = 1
+    id_1 = winner_id
+    id_2 = loser_id
+    if entrant_2_score > entrant_1_score:
+        id_1 = loser_id
+        id_2 = winner_id
+    total_games = max(entrant_1_score, entrant_2_score) + 1
+    for counter in range(1, total_games):
+        if entrant_1_score > 0:
+            game = {
+                "winnerId": id_1,
+                "gameNum": game_num,
+                "entrant1Score": 1,
+                "entrant2Score": 0
+            }
+            games.append(game)
+            game_num = game_num + 1
+            entrant_1_score = entrant_1_score - 1
+        if entrant_2_score > 0:
+            game = {
+                "winnerId": id_2,
+                "gameNum": game_num,
+                "entrant1Score": 0,
+                "entrant2Score": 1
+            }
+            games.append(game)
+            game_num = game_num + 1
+            entrant_2_score = entrant_2_score - 1
+    return games
 
 
 def create_player(slot):
