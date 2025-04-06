@@ -394,6 +394,7 @@ function nextRound() {
     })
     .then(function (data) {
         if (compareScores(data)) {
+            reportScoresToStartgg(data)
             nextRoundUpdate(data);
         }
       })
@@ -403,6 +404,11 @@ function nextRound() {
 }
 
 function compareScores(data) {
+    if (data.p1Name.trim() === "" && data.p2Name.trim() === "") {
+        // No names, just pass
+        return true;
+    }
+
 	document.getElementById("form_score_1p").value = data.p1Score;
 	document.getElementById("form_score_2p").value = data.p2Score;
     if (data.p1Score == data.p2Score) {
@@ -410,6 +416,37 @@ function compareScores(data) {
         return false;
     }
     return true;
+}
+
+function reportScoresToStartgg(data) {
+    var winner = data.p1Name;
+    var p2win = false;
+    if (data.p2Score > data.p1Score) {
+        winner = data.p2Name;
+        p2win = true;
+    }
+
+    if (currentSet == null) {
+        // We don't know about this set in start.gg so just ignore it
+        return;
+    }
+    // Check the names in the set matches
+    if (data.p1Name != currentSet.player1.name && data.p1Name != currentSet.player2.name) {
+        // Names don't match, don't report it
+        return;
+    }
+    if (data.p2Name != currentSet.player2.name && data.p2Name != currentSet.player2.name) {
+        // Names don't match, don't report it
+        return;
+    }
+    var setId = currentSet.set_id
+    var entrantId = p2win ? currentSet.player2.entrant_id : currentSet.player1.entrant_id;
+    const winnerData = {
+      setId: setId,
+      entrantId: entrantId
+    };
+
+    sendJsonDataToEndpoint(winnerData, "reportWinnerToStartgg");
 }
 
 function nextRoundUpdate(data) {
@@ -450,8 +487,13 @@ function nextRoundUpdate(data) {
 
 	jsonData.p1Score = "0";
 	jsonData.p2Score = "0";
+	currentSet = nextPlayersMap.get(data.nextplayer1);
+	if (currentSet == null) {
+	    currentSet = nextPlayersMap.get(data.nextplayer2);
+	}
     nextPlayersMap.delete(document.getElementById("form_next_round_name_1p").value)
     nextPlayersMap.delete(document.getElementById("form_next_round_name_2p").value)
+    removeNextPlayersSuggestionOptionByValue(data.nextplayer1, data.nextplayer2);
     if (nextPlayersMap.size > 0) {
         // select next players from queue
         // Get the iterator
@@ -537,7 +579,7 @@ function sendJsonDataToEndpoint(data, endpoint, message) {
     // Handle the response
     xhr.onreadystatechange = function() {
         if (xhr.readyState === 4) {  // 4 means request is done
-            if (xhr.status === 200 && message.trim() != "") {  // 200 means OK
+            if (xhr.status === 200 && message != null && message.trim() != "") {  // 200 means OK
                 alert(message);
             } else if (xhr.status === 400) {
                 console.log("Bad request. Please check your data.");
@@ -679,6 +721,7 @@ function getNextPlayersFromStartgg() {
       return nextPlayerData;
     })
     .then(function (nextPlayerData) {
+        nextPlaySuggestions = document.getElementById('next_player_suggestions');
         if (nextPlayerData.length === 0) {
             nextPlayersMap.clear();
             // Clear all options from the datalist
@@ -691,7 +734,6 @@ function getNextPlayersFromStartgg() {
         jsonData.nextteam2 = nextPlayerData[0].player2.team;
         jsonData.nextcountry1 = nextPlayerData[0].player1.country;
         jsonData.nextcountry2 = nextPlayerData[0].player2.country;
-        nextPlaySuggestions = document.getElementById('next_player_suggestions');
         // Clear all options from the nextPlaySuggestions
         nextPlaySuggestions.innerHTML = '';
         // Filter and add suggestions to next player list
@@ -718,8 +760,18 @@ function getNextPlayersFromStartgg() {
     });
 }
 
+function removeNextPlayersSuggestionOptionByValue(p1, p2) {
+    const select = document.getElementById("next_player_suggestions");
+    for (let i = 0; i < select.options.length; i++) {
+        if (select.options[i].value === p1 || select.options[i].value === p2) {
+            select.remove(i);
+        }
+    }
+}
+
 var startggInfo;
 var nextPlayersMap = new Map();
+var currentSet = null;
 
 function getStartggInfo() {
     fetch('/getTournamentInfo')

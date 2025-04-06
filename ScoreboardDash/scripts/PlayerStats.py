@@ -3,9 +3,10 @@ from io import open
 from pathlib import Path
 from dataclasses import dataclass
 
-player_data_file_name = "../data/player_data.json"
-player_data_backup_file_name = "../data/player_data_backup.json"
-placement_file_name = "../data/placement_strings.json"
+root_dir = ""
+player_data_file_name = root_dir + "../data/player_data.json"
+player_data_backup_file_name = root_dir + "../data/player_data_backup.json"
+placement_file_name = root_dir + "../data/placement_strings.json"
 current_event = ""
 first_placement_image_p1 = "In-Game_Cam_Left_Champ.png"
 top_8_placement_image_p1 = "In-Game_Cam_Left_Red.png"

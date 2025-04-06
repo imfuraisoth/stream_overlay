@@ -139,6 +139,16 @@ def get_next_players():
     return startgg_client.get_next_players(current_player_1, current_player_2, previous_matches_cache), 200
 
 
+@api.route('/reportWinnerToStartgg', methods=['POST'])
+def report_winner():
+    winner_data = request.get_json()
+    set_id = winner_data.get("setId", 0)
+    entrant_id = winner_data.get("entrantId", 0)
+    if set_id != 0 and entrant_id != 0:
+        return str(startgg_client.report_winner(set_id, entrant_id)), 200
+    return "False", 200
+
+
 @api.route('/setTournamentInfo', methods=['POST'])
 def set_tournament_info():
     startgg_client.save_start_gg_info(request.get_json())

@@ -4,9 +4,10 @@ from io import open
 import math
 from scripts import PlayerStats
 
-country_prop_file = "resources/country_map.properties"
-token_file = "../data/startgg_token.txt"
-start_gg_file = "../data/startgg_info.txt"
+root_dir = ""
+country_prop_file = root_dir + "resources/country_map.properties"
+token_file = root_dir + "../data/startgg_token.txt"
+start_gg_file = root_dir + "../data/startgg_info.txt"
 url = 'https://api.start.gg/gql/alpha'
 player_stats = PlayerStats
 entrants_per_page = 25
@@ -26,9 +27,10 @@ country_code_map = read_file(country_prop_file, "{}")
 
 
 class Match:
-    def __init__(self, player1, player2):
+    def __init__(self, player1, player2, set_id):
         self.player1 = player1
         self.player2 = player2
+        self.set_id = set_id
 
     def already_played(self, previous_matches_map):
         opponent = previous_matches_map.get(self.player1.name)
@@ -46,9 +48,10 @@ class Match:
 
 
 class Player:
-    def __init__(self, name, team, country):
+    def __init__(self, name, entrant_id, team, country):
         self.name = name
         self.team = team
+        self.entrant_id = entrant_id
         self.country = country
 
 
@@ -192,11 +195,12 @@ def get_next_players_from_tournament(tournament_name, stream_name, current_playe
             id
             slots {
                 entrant {
+                    id
                     name
                     team {
                         name
-                        }
-                    participants {
+                    }
+                    participants {                      
                         gamerTag
                         user {
                             location {
@@ -231,18 +235,47 @@ def get_next_players_from_tournament(tournament_name, stream_name, current_playe
                 print("Found stream queue data for: " + stream_name)
                 sets = stream["sets"]
                 for s in sets:
+                    set_id = s["id"]
                     slots = s["slots"]
                     if slots is not None and len(slots) == 2:
-                        match = Match(create_player(slots[0]), create_player(slots[1]))
+                        match = Match(create_player(slots[0]), create_player(slots[1]), set_id)
                         if not match.contains_players(current_player1, current_player2) and not match.already_played(previous_matches_map):
                             matches.append(match.to_json())
     json_dicts = [json.loads(match) for match in matches]
     return json.dumps(json_dicts, indent=4)
 
 
+def report_winner(set_id, winner_id):
+    token = get_token()
+    query = '''
+        mutation reportSet($setId: ID!, $winnerId: ID!) {
+          reportBracketSet(setId: $setId, winnerId: $winnerId) {
+            id
+            state
+          }
+        }
+    '''
+    variables = {
+        "setId": set_id,
+        "winnerId": winner_id
+    }
+    headers = {
+        'Authorization': 'Bearer ' + token
+    }
+
+    try:
+        response = requests.post(url, json={'query': query, 'variables': variables}, headers=headers)
+        response_json = response.json()
+        print(response_json)
+    except Exception as e:
+        print("Failed to report score!", e)
+        return False
+    return True
+
+
 def create_player(slot):
     if slot["entrant"] is None or slot["entrant"]["name"] is None or slot["entrant"]["name"].strip() == "":
-        return Player("TBD", "", "US")
+        return Player("TBD", "TBD", "", "US")
 
     name = slot["entrant"]["name"]
     team = ""
@@ -250,6 +283,7 @@ def create_player(slot):
         team, name = slot["entrant"]["name"].split(" | ")
     user = slot["entrant"]["participants"][0]["user"]
     country_code = "US"
+    entrant_id = slot["entrant"]["id"]
     if user:
         location = user["location"]
         if location:
@@ -261,7 +295,7 @@ def create_player(slot):
                     print("Couldn't find country code for country: " + country)
                     country_code = "US"
 
-    return Player(name, team, country_code)
+    return Player(name, entrant_id, team, country_code)
 
 
 def save_start_gg_info(data):
@@ -296,4 +330,6 @@ if __name__ == "__main__":
     result = get_top_8_entrants_for_event("texas-showdown-2024", "super-street-fighter-ii-turbo")
     print(result)
     # player_stats.write_to_file(result)
-    # print(get_next_players_from_tournament("test-tournament-1330", "riz0ne", "a8", "b1"))
+    # cache = TTLCache.SimpleTTLCache(10)
+    # print(get_next_players_from_tournament("test-tournament-1330", "riz0ne", "a8", "b1", cache))
+    # report_score(74947317, 16679609)
