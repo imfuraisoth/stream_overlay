@@ -1,0 +1,5 @@
+PyAutoGUI
+Pillow
+flask-cors
+opencv-python
+requests
