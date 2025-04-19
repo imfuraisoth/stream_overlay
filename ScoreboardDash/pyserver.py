@@ -22,6 +22,7 @@ today_date = datetime.today().strftime('%Y-%m-%d')
 
 hostname = socket.getfqdn()
 server_ip = socket.gethostbyname(hostname)
+#server_ip = "localhost"
 print("Server IP: " + server_ip)
 port = "8080"
 server_port = int(port)
@@ -598,5 +599,6 @@ if __name__ == "__main__":
             open_browser("http://" + server_info, '/usr/bin/google-chrome %s')
 
         api.run(host=server_ip, port=server_port)
+        #api.run(host="0.0.0.0", port=server_port)
     except KeyboardInterrupt:
         pass
