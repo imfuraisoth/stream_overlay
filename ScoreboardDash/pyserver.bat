@@ -11,6 +11,6 @@ if not exist "venv" (
     call venv\Scripts\activate
 )
 
-python pyserver.py -w
+python pyserver.py
 
 pause

@@ -3,6 +3,9 @@ For twitch stream overlays with player score updating
 
 Includes code for scoreboard UI, overlay for OBS, and backend server processing.
 
+To run, use 'pyserver.bat'
+
+
 Needed dependencies to be installed:
 sudo pip install PyAutoGUI<br />
 sudo pip install Pillow --upgrade<br />
