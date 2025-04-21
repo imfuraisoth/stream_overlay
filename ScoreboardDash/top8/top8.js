@@ -31,6 +31,19 @@ function getDataFromServer() {
     .catch(function (err) {
       console.log('error: ' + err);
     });
+    fetch('/getTop8CurrentNextData')
+        .then(function (response) {
+        jsonData = response.json();
+      return jsonData;
+    })
+    .then(function (data) {
+        updateTop8StartedButton(data);
+        highlightNextRoundForms(data.nextRound)
+        highlightCurrentRoundForms(data.currentRound)
+      })
+    .catch(function (err) {
+      console.log('error: ' + err);
+    });
 }
 
 fetch('/getTop8PlayerData')
@@ -47,30 +60,30 @@ fetch('/getTop8PlayerData')
 
 function populateTop8PlayerData(data) {
     console.log(data);
-    populateTop8Player("w1", data, "r1", "p1", true)
-    populateTop8Player("w2", data, "r1", "p2", true)
-    populateTop8Player("w3", data, "r2", "p1", true)
-    populateTop8Player("w4", data, "r2", "p2", true)
-    populateTop8Player("l1", data, "r3", "p1", true)
-    populateTop8Player("l2", data, "r3", "p2", true)
-    populateTop8Player("l3", data, "r4", "p1", true)
-    populateTop8Player("l4", data, "r4", "p2", true)
-    populateTop8Player("w1_wf", data, "r5", "p1")
-    populateTop8Player("w2_wf", data, "r5", "p2")
-    populateTop8Player("w1_gf", data, "r10", "p1")
-    populateTop8Player("w2_gf", data, "r10", "p2")
-    populateTop8Player("l1_lq", data, "r6", "p1")
-    populateTop8Player("l2_lq", data, "r6", "p2")
-    populateTop8Player("l3_lq", data, "r7", "p1")
-    populateTop8Player("l4_lq", data, "r7", "p2")
-    populateTop8Player("l1_ls", data, "r8", "p1")
-    populateTop8Player("l2_ls", data, "r8", "p2")
-    populateTop8Player("l1_lf", data, "r9", "p1")
-    populateTop8Player("l2_lf", data, "r9", "p2")
+    populateTop8Player("w1", data, "r1", "p1", true);
+    populateTop8Player("w2", data, "r1", "p2", true);
+    populateTop8Player("w3", data, "r2", "p1", true);
+    populateTop8Player("w4", data, "r2", "p2", true);
+    populateTop8Player("l1", data, "r3", "p1", true);
+    populateTop8Player("l2", data, "r3", "p2", true);
+    populateTop8Player("l3", data, "r4", "p1", true);
+    populateTop8Player("l4", data, "r4", "p2", true);
+    populateTop8Player("w1_wf", data, "r5", "p1");
+    populateTop8Player("w2_wf", data, "r5", "p2");
+    populateTop8Player("w1_gf", data, "r10", "p1");
+    populateTop8Player("w2_gf", data, "r10", "p2");
+    populateTop8Player("l1_lq", data, "r6", "p1");
+    populateTop8Player("l2_lq", data, "r6", "p2");
+    populateTop8Player("l3_lq", data, "r7", "p1");
+    populateTop8Player("l4_lq", data, "r7", "p2");
+    populateTop8Player("l1_ls", data, "r8", "p1");
+    populateTop8Player("l2_ls", data, "r8", "p2");
+    populateTop8Player("l1_lf", data, "r9", "p1");
+    populateTop8Player("l2_lf", data, "r9", "p2");
 }
 
 function populateTop8Player(suffix, data, round, player) {
-    populateTop8Player(suffix, data, round, player, false)
+    populateTop8Player(suffix, data, round, player, false);
 }
 
 function populateTop8Player(suffix, data, round, player, includeCountry) {
@@ -415,6 +428,7 @@ function resetAll() {
 	jsonData.resultscore2 = "";
 	jsonData.maxScore = "";
 	jsonData.round = "Casuals";
+	setButtonColourAndText("rectangle_button_18", "#675267", "Start Top 8");
 	updateAllData(resetTop8);
 }
 
@@ -471,6 +485,22 @@ function startTop8() {
     getJsonDataFromServer("getNextRoundData", updateCurrentAndNextInfo)
 }
 
+function updateTop8StartedButton(currentNextData) {
+    var top8Started = currentNextData.started;
+    if (top8Started) {
+        setButtonColourAndText("rectangle_button_18", "#14BF01", "In Progress");
+    } else {
+        setButtonColourAndText("rectangle_button_18", "#675267", "Start Top 8");
+    }
+}
+
+function setButtonColourAndText(id, bgColour, text) {
+    var element = document.getElementById(id);
+    element.style.background = bgColour;
+    element.innerText = text;
+    element.style.color = "white";
+}
+
 function updateCurrentAndNextInfo(currentNextData) {
     document.getElementById("form_next_round_team_1p").value = currentNextData.nextPlayer1.team;
     document.getElementById("form_next_round_name_1p").value = currentNextData.nextPlayer1.name;
@@ -487,12 +517,7 @@ function updateCurrentAndNextInfo(currentNextData) {
     document.getElementById("form_score_1p").value = "0";
     document.getElementById("form_score_2p").value = "0";
     document.getElementById("dropdown_round").value = currentNextData.currentRoundName;
-    var top8Started = currentNextData.started;
-    if (top8Started) {
-        document.getElementById("rectangle_button_18").style.background = "#14BF01";
-    } else {
-        document.getElementById("rectangle_button_18").style.background = "#675267";
-    }
+    updateTop8StartedButton(currentNextData);
     highlightNextRoundForms(currentNextData.nextRound)
     highlightCurrentRoundForms(currentNextData.currentRound)
 
