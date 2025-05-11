@@ -497,7 +497,7 @@ function nextRoundUpdate(data) {
 	}
     nextPlayersMap.delete(document.getElementById("form_next_round_name_1p").value)
     nextPlayersMap.delete(document.getElementById("form_next_round_name_2p").value)
-    removeNextPlayersSuggestionOptionByValue(data.nextplayer1, data.nextplayer2);
+    rebuildPlayerSuggestion();
     if (nextPlayersMap.size > 0) {
         // select next players from queue
         // Get the iterator
@@ -764,13 +764,27 @@ function getNextPlayersFromStartgg() {
     });
 }
 
-function removeNextPlayersSuggestionOptionByValue(p1, p2) {
-    const select = document.getElementById("next_player_suggestions");
-    for (let i = 0; i < select.options.length; i++) {
-        if (select.options[i].value === p1 || select.options[i].value === p2) {
-            select.remove(i);
+function rebuildPlayerSuggestion() {
+        nextPlaySuggestions = document.getElementById('next_player_suggestions');
+        nextPlaySuggestions.innerHTML = '';
+        if (nextPlayersMap.size === 0) {
+            return;
         }
-    }
+        // Filter and add suggestions to next player list
+        const names = new Set();
+        nextPlayersMap.forEach((set, name) => {
+            if (names.has(name)) {
+                return;
+            }
+            const option1 = document.createElement('option');
+            option1.value = set.player1.name;
+            const option2 = document.createElement('option');
+            option2.value = set.player2.name;
+            names.add(option1.value);
+            names.add(option2.value);
+            nextPlaySuggestions.appendChild(option1);
+            nextPlaySuggestions.appendChild(option2);
+        });
 }
 
 var startggInfo;
