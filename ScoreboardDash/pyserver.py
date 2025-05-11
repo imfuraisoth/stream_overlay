@@ -299,10 +299,14 @@ def update_all_data():
 def update_comm_data():
     json_data = request.get_json()
     global full_data
-    full_data["com1"] = json_data.get("com1", "")
-    full_data["soc1"] = json_data.get("soc1", "")
-    full_data["com2"] = json_data.get("com2", "")
-    full_data["soc2"] = json_data.get("soc2", "")
+    if "com1" in json_data:
+        full_data["com1"] = json_data.get("com1", "")
+    if "com2" in json_data:
+        full_data["com2"] = json_data.get("com2", "")
+    if "soc1" in json_data:
+        full_data["soc1"] = json_data.get("soc1", "")
+    if "soc2" in json_data:
+        full_data["soc2"] = json_data.get("soc2", "")
     with open(scoreboard_data_file, 'w', encoding="utf-8") as json_file:
         json_file.write(json.dumps(full_data))
     return "200"
