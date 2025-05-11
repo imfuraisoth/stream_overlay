@@ -261,13 +261,24 @@ function reverseNames() {
 }
 
 function reverseScores() {
-	var p1 = document.getElementById("form_score_1p").value;
-	var p2 = document.getElementById("form_score_2p").value;
-	document.getElementById("form_score_1p").value = p2;
-	document.getElementById("form_score_2p").value = p1;
-	jsonData.p1Score = p2;
-	jsonData.p2Score = p1;
-	sendJsonToEndpoint('updateCurrentScore');
+    fetch('/getdata')
+        .then(function (response) {
+        jsonData = response.json();
+      return jsonData;
+    }).then(function (data) {
+        updateElement("form_score_1p", data.p1Score);
+        updateElement("form_score_2p", data.p2Score);
+        var p1 = document.getElementById("form_score_1p").value;
+        var p2 = document.getElementById("form_score_2p").value;
+        document.getElementById("form_score_1p").value = p2;
+        document.getElementById("form_score_2p").value = p1;
+        jsonData.p1Score = p2;
+        jsonData.p2Score = p1;
+        sendJsonToEndpoint('updateCurrentScore');
+    })
+        .catch(function (err) {
+        console.log('error: ' + err);
+    });
 }
 
 function addScoreP1() {
