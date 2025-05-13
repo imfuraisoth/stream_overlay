@@ -224,6 +224,32 @@
 				<div class="nextRoundContainer">
 					<div>
 						<h3 class="finalSectionHeaderText text-shadow">NEXT ROUND</h3>
+						<div id="next_round">
+							<select id="dropdown_next_round" class="dropdown_round" onchange="updateNextRound();">
+								<option>Casuals</option>
+								<option>Pools</option>
+								<option>Winners Round 1</option>
+								<option>Winners Round 2</option>
+								<option>Winners Round 3</option>
+								<option>Winners Round 4</option>
+								<option>Winners Quarters</option>
+								<option>Winners Semis</option>
+								<option>Winners Finals</option>
+								<option>Grand Finals</option>
+								<option>Losers Round 1</option>
+								<option>Losers Round 2</option>
+								<option>Losers Round 3</option>
+								<option>Losers Round 4</option>
+								<option>Losers Quarters</option>
+								<option>Losers Semis</option>
+								<option>Losers Finals</option>
+								<option>Exhibitions</option>
+								<option>FT3</option>
+								<option>FT5</option>
+								<option>FT10</option>
+								<option>FT?</option>
+							</select>
+						</div>
 					</div>
 
 					<div class="nextRoundConsoleContainer">
@@ -275,7 +301,7 @@
 						</div>
 					</div>
 
-					<div class="bottom-button-container">
+					<div id="next-round-button-container" class="bottom-button-container">
 						<div id="button_next_round">
 							<button class="rectangle_button" id="rectangle_button_6" onclick='nextRound();'>
 								<text x="18" y="19" id="button_text_4">Next Round</text>

@@ -335,6 +335,7 @@ def update_data_no_scores():
     full_data["nextcountry2"] = json_data.get("nextcountry2", "")
     full_data["maxScore"] = json_data.get("maxScore", "99")
     full_data["timestamp"] = json_data.get("timestamp")
+    full_data["nextRound"] = json_data.get("nextRound", full_data["round"])
     with open(scoreboard_data_file, 'w', encoding="utf-8") as json_file:
         json_file.write(json.dumps(full_data))
     return "200"

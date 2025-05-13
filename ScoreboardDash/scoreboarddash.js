@@ -21,6 +21,7 @@ function populateData(data) {
 	updateElement("form_team_1p", data.p1Team);
 	updateElement("form_team_2p", data.p2Team);
 	updateElement("dropdown_round", data.round);
+	updateElement("dropdown_next_round", data.nextRound);
 	updateElement("form_score_1p", data.p1Score);
 	updateElement("form_score_2p", data.p2Score);
 	updateElement("dropdown_country_1p", data.p1Country);
@@ -208,6 +209,11 @@ function updateRound() {
 	sendJSON();
 }
 
+function updateNextRound() {
+	jsonData.nextRound = document.getElementById("dropdown_next_round").value;
+	sendJSON();
+}
+
 function updateMaxScore() {
 	jsonData.maxScore = document.getElementById("form_ft").value;
 	sendJSON();
@@ -366,7 +372,6 @@ function resetAll() {
 	jsonData.p2Team = "";
 	jsonData.p1Score = "0";
 	jsonData.p2Score = "0";
-	jsonData.round = "";
 	jsonData.p1Country = "US";
 	jsonData.p2Country = "US";
 	jsonData.nextplayer1 = "";
@@ -381,6 +386,7 @@ function resetAll() {
 	jsonData.resultscore2 = "";
 	jsonData.maxScore = "";
 	jsonData.round = "Casuals";
+	jsonData.nextRound = "Casuals";
 	updateCurrentPlayerDisplay();
 	sendJsonToEndpoint("updatealldata");
 }
@@ -473,7 +479,9 @@ function nextRoundUpdate(data) {
     jsonData.com2 = data.com2;
     jsonData.soc1 = data.soc1;
     jsonData.soc2 = data.soc2;
-	jsonData.round = data.round;
+    document.getElementById("dropdown_round").value = data.nextRound;
+    jsonData.round = data.nextRound;
+
 	document.getElementById("dropdown_round").value = jsonData.round;
 	document.getElementById("form_results_score_1p").value = jsonData.resultscore1;
 	document.getElementById("form_results_score_2p").value = jsonData.resultscore2;

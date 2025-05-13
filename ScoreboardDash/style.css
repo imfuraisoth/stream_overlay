@@ -362,7 +362,7 @@ a, a:hover, a:visited, a:active {
 
 .finalSectionHeaderText {
 	font-size: 24px;
-	padding: 15px 0px;
+	padding: 10px 0px;
 }
 
 .extraSectionContainer {
@@ -459,7 +459,7 @@ a, a:hover, a:visited, a:active {
 	display: flex;
 	align-items: center;
 	flex-direction: column;
-	padding: 5px 0px;
+	padding: 0px 0px;
 }
 
 .resultsContainer {
@@ -629,7 +629,6 @@ a, a:hover, a:visited, a:active {
   }
 .bottom-button-container {
   display: flex;
-  gap: 10px; /* Optional: Adds space between buttons */
 }
 .bottom-button-container rectangle_button {
   padding: 10px 20px;
@@ -724,25 +723,33 @@ a, a:hover, a:visited, a:active {
 	font-size: 10px;
 	color: rgba(0,0,0,1);
 }
-#dropdown_round {
-	fill: rgba(255,255,255,1);
-	stroke: rgba(112,112,112,1);
-	stroke-width: 1px;
-	stroke-linejoin: miter;
-	stroke-linecap: butt;
-	stroke-miterlimit: 4;
-	shape-rendering: auto;
-	text-align: center;
-	height: auto;
-	padding: 5px 0px;
-	font-size: 14px;
-	color: black;
-}
+
 #dropdown_round option {
 	color: black;
 }
+
+#dropdown_next_round option {
+	color: black;
+}
+
+#next_round {
+    padding-bottom: 10px;
+}
+
 .dropdown_round {
 	overflow: visible;
+    fill: rgba(255,255,255,1);
+    stroke: rgba(112,112,112,1);
+    stroke-width: 1px;
+    stroke-linejoin: miter;
+    stroke-linecap: butt;
+    stroke-miterlimit: 4;
+    shape-rendering: auto;
+    text-align: center;
+    height: auto;
+    padding: 5px 0px;
+    font-size: 14px;
+    color: black;
 }
 #CASUALS {
 	overflow: visible;
