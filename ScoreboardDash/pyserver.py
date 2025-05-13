@@ -17,6 +17,7 @@ import shutil
 from datetime import datetime
 from scripts import PlayerStats
 from scripts import TTLCache
+from scripts import ReplayUtils
 
 # Get today's date in YYYY-MM-DD format
 today_date = datetime.today().strftime('%Y-%m-%d')
@@ -61,6 +62,7 @@ refresh_client = False
 event_name = ""
 tournament_info = None
 player_stats = PlayerStats
+replay_utils = ReplayUtils
 previous_matches_cache = TTLCache.SimpleTTLCache(1800)  # 30 minutes TTL
 
 
@@ -466,8 +468,8 @@ def update_player2():
 
 
 @api.route('/getreplayvideos', methods=['GET'])
-def get_replay_folder():
-    videos = [filename for filename in os.listdir(replays_folder) if filename.startswith(replay_prefix)]
+def get_replay_videos():
+    videos = replay_utils.get_replay_videos(replay_prefix, replays_folder)
     return jsonify(videos), 200
 
 
