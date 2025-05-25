@@ -3,8 +3,8 @@ import os
 import time
 
 date_time_format = "%Y-%m-%d %H-%M-%S"
-# set to 10 minutes
-auto_delete_window = 60 * 1000 * 10
+# set to 1 minute
+auto_delete_window = 60 * 1000 * 1
 last_replay_delete_time = 0
 
 
