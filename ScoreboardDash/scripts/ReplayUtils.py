@@ -14,8 +14,7 @@ def get_replay_videos(prefix, replays_folder):
     current_time_in_ms = int(time.time() * 1000)
     if last_replay_delete_time == 0:
         last_replay_delete_time = current_time_in_ms
-    if last_replay_delete_time + auto_delete_window > current_time_in_ms:
-        # Not enough time has elapsed, don't delete any files
+        # First time checking, just return the videos
         return videos
     files_to_delete = []
     result = []
