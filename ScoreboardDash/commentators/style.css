@@ -445,6 +445,21 @@
     top: 330px;
     overflow: visible;
 }
+#rectangle_button_delete_commentator {
+	fill: rgba(103,82,103,1);
+	stroke: rgba(0,0,0,0);
+	stroke-width: 1px;
+	stroke-linejoin: miter;
+	stroke-linecap: butt;
+	stroke-miterlimit: 4;
+	shape-rendering: auto;
+    position: absolute;
+    width: 100px;
+    height: 30px;
+    left: 1110px;
+    top: 330px;
+    overflow: visible;
+}
 .rectangle_button {
 	position: absolute;
 	overflow: visible;
@@ -462,6 +477,10 @@
 .rectangle_button:active {
   background-color: #675267;
   transform: translateY(2px);
+}
+.horizontal-button-container {
+    display: flex;
+    gap: 10px; /* Adds space between buttons */
 }
 #text_reverse_names {
 	left: 4px;

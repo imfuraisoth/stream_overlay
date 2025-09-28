@@ -144,7 +144,7 @@ def add_commentator():
 
 @api.route('/deleteCommentators', methods=['POST'])
 def delete_commentator():
-    commentator_names = request.get_json().get("names")
+    commentator_names = request.get_json()
     commentators = read_file(commentators_file)
     for name in commentator_names:
         del commentators[name]

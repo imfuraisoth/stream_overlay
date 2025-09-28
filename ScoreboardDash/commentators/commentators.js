@@ -73,14 +73,55 @@ function addCommentator() {
       soc: social_value
     };
     document.getElementById('popupAdd').style.display = 'none';
-    sendJsonDataToEndpoint(commentator_data, "addCommentator", name_value + " Added", populateCommentatorDropdown);
+    sendJsonDataToEndpoint(commentator_data, "addCommentator", populateCommentatorDropdown);
 }
 
 function deleteCommentator() {
+    const checkboxes = document.querySelectorAll("#commentatorsList input[type='checkbox']");
+    const selectedNames = Array.from(checkboxes)
+        .filter(checkbox => checkbox.checked)
+        .map(checkbox => {
+            const label = document.querySelector(`label[for="${checkbox.id}"]`);
+            return label ? label.textContent.trim() : "";  // trim spaces
+        })
+        .filter(name => name !== ""); // remove empty strings
 
+    document.getElementById('popupDelete').style.display = 'none';
+    sendJsonDataToEndpoint(selectedNames, "deleteCommentators", populateCommentatorDropdown);
 }
 
-function sendJsonDataToEndpoint(data, endpoint, message, callback) {
+function createCommentatorList() {
+    fetch('/getCommentators')
+        .then(function (response) {
+        jsonData = response.json();
+      return jsonData;
+    })
+    .then(function (data) {
+        const commentatorsList = document.getElementById('commentatorsList');
+        // Clear all existing items
+        commentatorsList.innerHTML = '';
+        Object.keys(data).forEach(key => {
+            const li = document.createElement('li');
+
+            const checkbox = document.createElement('input');
+            checkbox.type = 'checkbox';
+            checkbox.id = key;
+            const label = document.createElement('label');
+            label.htmlFor = checkbox.id;
+            label.textContent = key;
+
+            li.appendChild(checkbox);
+            li.appendChild(label);
+            commentatorsList.appendChild(li);
+        });
+        document.getElementById('popupDelete').style.display = 'block';
+      })
+    .catch(function (err) {
+      console.log('error: ' + err);
+    });
+}
+
+function sendJsonDataToEndpoint(data, endpoint, callback) {
 // open a connection
 	xhr.open("POST", "../" + endpoint, true);
 
@@ -91,7 +132,6 @@ function sendJsonDataToEndpoint(data, endpoint, message, callback) {
     xhr.onreadystatechange = function() {
         if (xhr.readyState === 4) {  // 4 means request is done
             if (xhr.status === 200 && message != null && message.trim() != "") {  // 200 means OK
-                alert(message);
                 callback();
             } else if (xhr.status === 400) {
                 console.log("Bad request. Please check your data.");
@@ -158,6 +198,7 @@ function populateCommentatorDropdown() {
 
 function generateDropdown(elementId, selectId, data, callback) {
     var dropdownContainer = document.getElementById(elementId);
+
     // Create a select element
     var select = document.createElement("select");
     select.setAttribute("id", selectId);
@@ -212,9 +253,16 @@ function updateFromDropdown2(value) {
 document.getElementById('rectangle_button_add_commentator').addEventListener('click', function() {
     document.getElementById('popupAdd').style.display = 'block';
 });
+document.getElementById('rectangle_button_delete_commentator').addEventListener('click', function() {
+    createCommentatorList();
+});
 
 document.getElementById('closeAddBtn').addEventListener('click', function() {
     document.getElementById('popupAdd').style.display = 'none';
+});
+
+document.getElementById('closeDelBtn').addEventListener('click', function() {
+    document.getElementById('popupDelete').style.display = 'none';
 });
 
 window.addEventListener('click', function(event) {

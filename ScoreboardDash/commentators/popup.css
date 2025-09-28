@@ -28,6 +28,9 @@
     box-shadow: 0 4px 8px rgba(10, 0, 0, 0.2);
 }
 
+input[type="checkbox"] {
+  margin-right: 10px; /* adjust as needed */
+}
 .close {
     color: #aaa;
     float: right;
@@ -85,7 +88,17 @@ form button {
     border-radius: 4px;
     cursor: pointer;
 }
-
+#submitDeleteButton {
+    padding: 10px 20px;
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
+#submitDeleteButton:hover {
+    background-color: #45a049;
+}
 form button:hover {
     background-color: #45a049;
 }

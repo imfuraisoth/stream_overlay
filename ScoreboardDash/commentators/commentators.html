@@ -104,6 +104,19 @@
 					</form>
 				</div>
 			</div>
+
+			<button class="rectangle_button" id="rectangle_button_delete_commentator">
+				<text x="18" y="19" id="button_text">Delete Commentator</text>
+			</button>
+			<div id="popupDelete" class="popup">
+				<div class="popup-content">
+					<span id="closeDelBtn" class="close">&times;</span>
+					<ul id="commentatorsList"></ul>
+					<div class="horizontal-button-container">
+						<button type="submit" id="submitDeleteButton" onclick="deleteCommentator();">Submit</button>
+					</div>
+				</div>
+			</div>
 			
 			<!-- Forms -->
 			<div id="com_primary">
