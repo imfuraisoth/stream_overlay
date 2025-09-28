@@ -430,6 +430,21 @@
 	stroke-miterlimit: 4;
 	shape-rendering: auto;
 }
+#rectangle_button_add_commentator {
+	fill: rgba(103,82,103,1);
+	stroke: rgba(0,0,0,0);
+	stroke-width: 1px;
+	stroke-linejoin: miter;
+	stroke-linecap: butt;
+	stroke-miterlimit: 4;
+	shape-rendering: auto;
+    position: absolute;
+    width: 100px;
+    height: 30px;
+    left: 710px;
+    top: 330px;
+    overflow: visible;
+}
 .rectangle_button {
 	position: absolute;
 	overflow: visible;

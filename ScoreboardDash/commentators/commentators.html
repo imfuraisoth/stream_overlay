@@ -5,6 +5,7 @@
     <link rel="stylesheet" href="https://use.typekit.net/ogo7pba.css">
     <title>Commentators Dashboard</title>
     <link href="style.css" rel="stylesheet" type="text/css" />
+	<link href="popup.css" rel="stylesheet" type="text/css" />
 	<link rel="icon" type="image/png" href="../images/V.png">
     <script src="https://kit.fontawesome.com/2c93766a80.js" crossorigin="anonymous"></script>
 	<script class="u-script" type="text/javascript" src="commentators.js" defer=""></script>
@@ -84,6 +85,24 @@
 				<button class="rectangle_button" id="rectangle_button" onclick='reverseCommentatorNames();'>
 					<text x="0" y="19" id="button_text"><-Reverse Names-></text>
 				</button>
+			</div>
+
+			<button class="rectangle_button" id="rectangle_button_add_commentator">
+				<text x="18" y="19" id="button_text">Add Commentator</text>
+			</button>
+			<div id="popupAdd" class="popup">
+				<div class="popup-content">
+					<span id="closeAddBtn" class="close">&times;</span>
+					<form id="AddCommentator">
+						<h3>Name:</h3>
+						<input type="text" id="commentator_name" name="commentator_name" required>
+						<h3>Social: </h3>
+						<input type="text" id="commentator_social" name="commentator_social" required>
+						<div class="horizontal-button-container">
+							<button type="submit" id="submitButton" onclick="addCommentator();">Submit</button>
+						</div>
+					</form>
+				</div>
 			</div>
 			
 			<!-- Forms -->

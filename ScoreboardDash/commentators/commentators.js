@@ -65,6 +65,55 @@ function reverseCommentatorNames() {
 	sendJSON();
 }
 
+function addCommentator() {
+    var name_value = document.getElementById("commentator_name").value;
+    var social_value = document.getElementById("commentator_social").value;
+    const commentator_data = {
+      name: name_value,
+      soc: social_value
+    };
+    document.getElementById('popupAdd').style.display = 'none';
+    sendJsonDataToEndpoint(commentator_data, "addCommentator", name_value + " Added", populateCommentatorDropdown);
+}
+
+function deleteCommentator() {
+
+}
+
+function sendJsonDataToEndpoint(data, endpoint, message, callback) {
+// open a connection
+	xhr.open("POST", "../" + endpoint, true);
+
+	// Set the request header i.e. which type of content you are sending
+	xhr.setRequestHeader("Content-Type", "application/json");
+
+    // Handle the response
+    xhr.onreadystatechange = function() {
+        if (xhr.readyState === 4) {  // 4 means request is done
+            if (xhr.status === 200 && message != null && message.trim() != "") {  // 200 means OK
+                alert(message);
+                callback();
+            } else if (xhr.status === 400) {
+                console.log("Bad request. Please check your data.");
+            } else if (xhr.status === 500) {
+                console.log("Server error. Please try again later.");
+            } else {
+                console.log("Something went wrong. Status:", xhr.status);
+            }
+        }
+    };
+
+    // Handle network errors
+    xhr.onerror = function() {
+        console.log("Request failed due to network error.");
+    };
+
+	// Converting JSON data to string
+	var dataToSend = JSON.stringify(data);
+	// Sending data with the request
+	xhr.send(dataToSend);
+}
+
 function sendJSON() {
 	// open a connection
 	xhr.open("POST", '/updatecommdata', true);
@@ -89,6 +138,10 @@ function sendJSON() {
 }
 
 window.onload = function() {
+    populateCommentatorDropdown();
+};
+
+function populateCommentatorDropdown() {
     fetch('/getCommentators')
         .then(function (response) {
         jsonData = response.json();
@@ -101,7 +154,7 @@ window.onload = function() {
     .catch(function (err) {
       console.log('error: ' + err);
     });
-};
+}
 
 function generateDropdown(elementId, selectId, data, callback) {
     var dropdownContainer = document.getElementById(elementId);
@@ -154,3 +207,18 @@ function updateFromDropdown2(value) {
     jsonData.soc1 = document.getElementById("form_social_1").value;
     sendJSON();
 }
+
+// For pop up dialogue
+document.getElementById('rectangle_button_add_commentator').addEventListener('click', function() {
+    document.getElementById('popupAdd').style.display = 'block';
+});
+
+document.getElementById('closeAddBtn').addEventListener('click', function() {
+    document.getElementById('popupAdd').style.display = 'none';
+});
+
+window.addEventListener('click', function(event) {
+    if (event.target == document.getElementById('popup')) {
+        document.getElementById('popup').style.display = 'none';
+    }
+});

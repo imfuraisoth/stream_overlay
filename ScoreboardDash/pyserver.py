@@ -132,6 +132,27 @@ def get_commentators():
     return json.dumps(read_file(commentators_file), ensure_ascii=False), 200
 
 
+@api.route('/addCommentator', methods=['POST'])
+def add_commentator():
+    commentator_data = request.get_json()
+    commentators = read_file(commentators_file)
+    commentators[commentator_data.get("name")] = commentator_data
+    with open(commentators_file, 'w', encoding="utf-8") as json_file:
+        json_file.write(json.dumps(commentators))
+    return "200"
+
+
+@api.route('/deleteCommentators', methods=['POST'])
+def delete_commentator():
+    commentator_names = request.get_json().get("names")
+    commentators = read_file(commentators_file)
+    for name in commentator_names:
+        del commentators[name]
+    with open(commentators_file, 'w', encoding="utf-8") as json_file:
+        json_file.write(json.dumps(commentators))
+    return "200"
+
+
 @api.route('/getNextPlayers', methods=['GET'])
 def get_next_players():
     global full_data
