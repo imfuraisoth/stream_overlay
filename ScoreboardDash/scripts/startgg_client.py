@@ -201,7 +201,7 @@ def get_next_players_from_tournament(tournament_name, stream_name, current_playe
                         name
                     }
                     participants {                      
-                        gamerTag
+                        gamerTag,
                         user {
                             location {
                                 country
@@ -274,6 +274,59 @@ def report_winner(set_id, winner_id, loser_id, entrant_1_score, entrant_2_score)
     return True
 
 
+def get_players_from_tournament(tournament_name, event_name, page):
+    global entrants_per_page
+    token = get_token()
+    query = '''
+            query EventEntrants($eventSlug:String!, $page: Int!, $perPage: Int!) {
+              event(slug: $eventSlug) {
+                name
+                entrants(query: {
+                  page: $page
+                  perPage: $perPage
+                }) {
+                  nodes {
+                    id,
+                    participants {
+                      gamerTag,
+                      prefix,
+                      user {
+                        location {
+                          country
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+        '''
+    variables = {
+        "eventSlug": "tournament/" + tournament_name + "/event/" + event_name,
+        "page": page,
+        "perPage": entrants_per_page
+    }
+
+    headers = {
+        'Authorization': 'Bearer ' + token
+    }
+
+    response = requests.post(url, json={'query': query, 'variables': variables}, headers=headers)
+    response_json = response.json()
+    entrants = response_json["data"]["event"]["entrants"]["nodes"]
+    if entrants is None or len(entrants) == 0:
+        print("No entrants found for event: " + event_name + " in start.gg for tournament: " + tournament_name)
+        return "[]"
+    entrants_list = []
+    for entrant in entrants:
+        entrant_id = entrant["id"]
+        gamer_tag = entrant["participants"][0]["gamerTag"]
+        team = entrant["participants"][0]["prefix"]
+        country = get_country(entrant["participants"][0])
+        entrants_list.append(Player(gamer_tag, entrant_id, team or "", country))
+    return entrants_list
+
+
 def create_results_data(winner_id, loser_id, entrant_1_score, entrant_2_score):
     games = []
     game_num = 1
@@ -315,9 +368,14 @@ def create_player(slot):
     team = ""
     if " | " in name:
         team, name = slot["entrant"]["name"].split(" | ")
-    user = slot["entrant"]["participants"][0]["user"]
-    country_code = "US"
+    country_code = get_country(slot["entrant"]["participants"][0])
     entrant_id = slot["entrant"]["id"]
+    return Player(name, entrant_id, team, country_code)
+
+
+def get_country(participant):
+    user = participant["user"]
+    country_code = "US"
     if user:
         location = user["location"]
         if location:
@@ -328,8 +386,7 @@ def create_player(slot):
                     # Couldn't find the country code from country code map, default back to US
                     print("Couldn't find country code for country: " + country)
                     country_code = "US"
-
-    return Player(name, entrant_id, team, country_code)
+    return country_code
 
 
 def save_start_gg_info(data):
@@ -360,10 +417,20 @@ def get_top_8_entrants_for_event(tournament_name, event_name):
     return entrants
 
 
+def get_all_players_from_tournament(tournament_name, event_name):
+    pages = math.ceil(get_num_entrants_for_event(tournament_name, event_name) / entrants_per_page)
+    entrants = []
+    for page in range(1, pages + 1):
+        entrants += get_players_from_tournament(tournament_name, event_name, page)
+    return entrants
+
+
 if __name__ == "__main__":
-    result = get_top_8_entrants_for_event("texas-showdown-2024", "super-street-fighter-ii-turbo")
-    print(result)
+    # result = get_top_8_entrants_for_event("texas-showdown-2024", "super-street-fighter-ii-turbo")
+    # print(result)
     # player_stats.write_to_file(result)
     # cache = TTLCache.SimpleTTLCache(10)
     # print(get_next_players_from_tournament("test-tournament-1330", "riz0ne", "a8", "b1", cache))
     # report_score(74947317, 16679609)
+    result = get_all_players_from_tournament("texas-showdown-2024", "super-street-fighter-ii-turbo")
+    print(json.dumps([item.__dict__ for item in result], indent=4))
