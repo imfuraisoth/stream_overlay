@@ -143,6 +143,12 @@ function updateNextPlayer1() {
         document.getElementById("form_next_round_team_2p").value = jsonData.nextteam2;
         jsonData.nextcountry2 = player2Info.country;
         document.getElementById("dropdown_country_next2").value = jsonData.nextcountry2;
+	} else if (playersMap.has(jsonData.nextplayer1)) {
+	    player = playersMap.get(jsonData.nextplayer1);
+        jsonData.nextteam1 = player.team;
+        document.getElementById("form_next_round_team_1p").value = jsonData.nextteam1;
+        jsonData.nextcountry1 = player.country;
+        document.getElementById("dropdown_country_next1").value = jsonData.nextcountry1;
 	}
 	sendJSON();
 }
@@ -164,6 +170,12 @@ function updateNextPlayer2() {
         document.getElementById("form_next_round_team_1p").value = jsonData.nextteam1;
         jsonData.nextcountry1 = player1Info.country;
         document.getElementById("dropdown_country_next1").value = jsonData.nextcountry1;
+    } else if (playersMap.has(jsonData.nextplayer2)) {
+        player = playersMap.get(jsonData.nextplayer2);
+        jsonData.nextteam2 = player.team;
+        document.getElementById("form_next_round_team_2p").value = jsonData.nextteam2;
+        jsonData.nextcountry2 = player.country;
+        document.getElementById("dropdown_country_next2").value = jsonData.nextcountry2;
     }
 	sendJSON();
 }
@@ -669,14 +681,6 @@ function registerClientForRefresh() {
 }
 
 // For pop up dialogue
-document.getElementById('openPopupBtn').addEventListener('click', function() {
-    document.getElementById('popup').style.display = 'block';
-});
-
-document.getElementById('closePopupBtn').addEventListener('click', function() {
-    document.getElementById('popup').style.display = 'none';
-});
-
 document.getElementById('openPopupTop8Btn').addEventListener('click', function() {
     document.getElementById('popupTop8').style.display = 'block';
 });
@@ -693,6 +697,26 @@ document.getElementById('closeAddPlayerStatBtn').addEventListener('click', funct
     document.getElementById('addPlayerStat').style.display = 'none';
 });
 
+document.getElementById('openStartggBtn').addEventListener('click', function() {
+    document.getElementById('startggPopup').style.display = 'block';
+});
+
+document.getElementById('closeStartggBtn').addEventListener('click', function() {
+    document.getElementById('startggPopup').style.display = 'none';
+});
+
+document.getElementById('tournamentName').addEventListener('change', function() {
+    saveStartggInfo();
+});
+
+document.getElementById('currentEventName').addEventListener('change', function() {
+    saveStartggInfo();
+});
+
+document.getElementById('streamName').addEventListener('change', function() {
+    saveStartggInfo();
+});
+
 window.addEventListener('click', function(event) {
     if (event.target == document.getElementById('popup')) {
         document.getElementById('popup').style.display = 'none';
@@ -701,8 +725,10 @@ window.addEventListener('click', function(event) {
 
 function saveStartggInfo() {
     var tournamentName = document.getElementById('tournamentName').value
+    var eventName = document.getElementById('currentEventName').value
     var streamName = document.getElementById('streamName').value
     startggInfo.tournament = tournamentName;
+    startggInfo.event = eventName;
     startggInfo.stream = streamName;
     document.getElementById('popup').style.display = 'none';
     sendJsonDataToEndpoint(startggInfo, "setTournamentInfo");
@@ -737,7 +763,49 @@ function deletePlayerStats() {
     sendJsonDataToEndpoint({}, "deletePlayerStats", "Player stats deleted!");
 }
 
-function getNextPlayersFromStartgg() {
+function getAllPlayersForTournament(event) {
+    event.preventDefault();
+    event.stopPropagation();
+    loadPlayerData(false);
+}
+
+function loadPlayerData(fromCache) {
+    var param1 = encodeURIComponent(startggInfo.tournament);
+    var param2 = encodeURIComponent(startggInfo.event);
+    var param3 = fromCache;
+    var url = `/getAllPlayersForTournament?tournament=${param1}&event=${param2}&fromCache=${param3}`;
+    fetch(url)
+      .then(function(response) {
+         if (!response.ok) throw new Error("Network response was not ok");
+           return response.json();
+         })
+        .then(function (playersData) {
+            nextPlaySuggestions = document.getElementById('next_player_suggestions');
+            playersMap.clear();
+            if (playersData.length === 0) {
+                // Clear all options from the datalist
+                nextPlaySuggestions.innerHTML = '';
+                return;
+            }
+
+            // Clear all options from the nextPlaySuggestions
+            nextPlaySuggestions.innerHTML = '';
+            // Filter and add suggestions to next player list
+            playersData.forEach(player => {
+                playersMap.set(player.name, player);
+                const option = document.createElement('option');
+                option.value = player.name;
+                nextPlaySuggestions.appendChild(option);
+            });
+        })
+        .catch(function (err) {
+              console.log('error: ' + err);
+            });
+}
+
+function getNextPlayersFromStartgg(event) {
+    event.preventDefault();
+    event.stopPropagation();
     fetch('/getNextPlayers')
         .then(function (response) {
         nextPlayerData = response.json();
@@ -808,6 +876,7 @@ function rebuildPlayerSuggestion() {
 
 var startggInfo;
 var nextPlayersMap = new Map();
+var playersMap = new Map();
 var currentSet = null;
 
 function getStartggInfo() {
@@ -822,6 +891,8 @@ function getStartggInfo() {
         }
         document.getElementById('tournamentName').value = startggInfo.tournament;
         document.getElementById('streamName').value = startggInfo.stream;
+        document.getElementById('currentEventName').value = startggInfo.event;
+        loadPlayerData(true);
       })
     .catch(function (err) {
       console.log('error: ' + err);
@@ -893,7 +964,9 @@ function createEventsWithStatsDropdown() {
 
 }
 
-function removeNextPlayers() {
+function removeNextPlayers(event) {
+    event.preventDefault();
+    event.stopPropagation();
     var p1_name = document.getElementById("form_next_round_name_1p").value;
     var p2_name = document.getElementById("form_next_round_name_2p").value;
     if (p1_name.trim() != "") {
@@ -916,11 +989,15 @@ function removeNextPlayer(name) {
     }
 }
 
-function clearNextPlayers() {
+function clearNextPlayers(event) {
+    event.preventDefault();
+    event.stopPropagation();
     nextPlaySuggestions = document.getElementById('next_player_suggestions');
     // Clear all options from the nextPlaySuggestions
     nextPlaySuggestions.innerHTML = '';
     nextPlayersMap.clear();
+    playersMap.clear();
+    sendJsonToEndpoint("clearPlayersList");
 }
 
 populateCountrySelectDropDown();

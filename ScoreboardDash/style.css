@@ -489,8 +489,19 @@ a, a:hover, a:visited, a:active {
 	margin-right: 50px;
 	align: center;
 }
+#button_fetch_all_players {
+    margin-top: 5px;
+    margin-bottom: 15px;
+	width: 100px;
+	height: 30px;
+	overflow: visible;
+	align: center;
+}
+#openPopupTop8Btn {
+    margin-top: 10px;
+}
 #button_fetch_next_players {
-    margin-right: 55px;
+    margin-top: 5px;
     margin-bottom: 15px;
 	width: 100px;
 	height: 30px;
@@ -499,16 +510,16 @@ a, a:hover, a:visited, a:active {
 }
 #button_remove_next_players {
     margin-top: 5px;
-    margin-right: 55px;
+	margin-bottom: 15px;
 	width: 100px;
 	height: 30px;
 	overflow: visible;
 	align: center;
-	margin-bottom: 15px;
 }
 #button_clear_next_players {
     margin-top: 5px;
-    margin-right: 55px;
+    margin-top: 5px;
+    margin-bottom: 15px;
 	width: 100px;
 	height: 30px;
 	overflow: visible;
@@ -595,6 +606,7 @@ a, a:hover, a:visited, a:active {
  	stroke-miterlimit: 4;
  	shape-rendering: auto;
 	font-size: 1em;
+	margin-top: -10px;
  }
  #rectangle_button_7 {
  	fill: rgba(103,82,103,1);
@@ -605,17 +617,6 @@ a, a:hover, a:visited, a:active {
  	stroke-miterlimit: 4;
  	shape-rendering: auto;
  }
- #rectangle_button_startgg_stream_queue {
-  	fill: rgba(103,82,103,1);
-  	stroke: rgba(0,0,0,0);
-  	stroke-width: 1px;
-  	stroke-linejoin: miter;
-  	stroke-linecap: butt;
-  	stroke-miterlimit: 4;
-  	shape-rendering: auto;
- 	font-size: 1em;
- 	margin-right: 50px;
-  }
  #rectangle_button_startgg_fetch_top_8_results {
   	fill: rgba(103,82,103,1);
   	stroke: rgba(0,0,0,0);
@@ -1680,5 +1681,6 @@ input[type=text], select {
 	color: black;
 }
 datalist {
-    display: block;
+    max-height: 150px;  /* max height when dropdown is open */
+    overflow-y: auto;   /* scroll if content exceeds height */
 }

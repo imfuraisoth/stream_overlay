@@ -406,7 +406,7 @@ def get_start_gg_info():
     finally:
         pass
 
-    return read_file(start_gg_file, "{\"tournament\":\"\",\"stream\":\"\"}")
+    return read_file(start_gg_file, "{\"tournament\":\"\",\"event\":\"\",\"stream\":\"\"}")
 
 
 def get_top_8_entrants_for_event(tournament_name, event_name):

@@ -46,6 +46,7 @@ result1 = "../data/result1.txt"
 result2 = "../data/result2.txt"
 result_name_1 = "../data/resultname1.txt"
 result_name_2 = "../data/resultname2.txt"
+players_list = []
 
 api = Flask(__name__)
 CORS(api)
@@ -238,6 +239,29 @@ def get_tournament_info():
     if result is None:
         return json.dumps("{}", ensure_ascii=False), 200
     return result, 200
+
+
+@api.route('/getAllPlayersForTournament', methods=['GET'])
+def get_all_players_for_tournament():
+    global players_list
+    from_cache = parse_bool(request.args.get("fromCache"), False)
+    if from_cache:
+        # Return cache value
+        return jsonify(players_list), 200
+    tournament = request.args.get("tournament")
+    event = request.args.get("event")
+    result = startgg_client.get_all_players_from_tournament(tournament, event)
+    if result is None:
+        return json.dumps("[]", ensure_ascii=False), 200
+    players_list = [player.__dict__ for player in result]
+    return jsonify(players_list), 200
+
+
+@api.route('/clearPlayersList', methods=['POST'])
+def clear_players_list():
+    global players_list
+    players_list = []
+    return "200"
 
 
 @api.route('/addPlayer1Score', methods=['POST'])
@@ -596,6 +620,17 @@ def add_result_players_to_cache(json_data):
     if all(s.strip() for s in [result_player_1, result_player_2]):
         previous_matches_cache.set(result_player_1, result_player_2)
         previous_matches_cache.set(result_player_2, result_player_1)
+
+
+def parse_bool(value, default=None):
+    if value is None:
+        return default
+    value = value.strip().lower()
+    if value in ("true", "1", "yes", "on"):
+        return True
+    if value in ("false", "0", "no", "off"):
+        return False
+    return default   # fallback for unexpected strings
 
 
 if __name__ == "__main__":
