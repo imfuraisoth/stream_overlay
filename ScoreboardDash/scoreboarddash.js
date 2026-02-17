@@ -791,7 +791,10 @@ function loadPlayerData(fromCache) {
             // Clear all options from the nextPlaySuggestions
             nextPlaySuggestions.innerHTML = '';
             // Filter and add suggestions to next player list
-            playersData.forEach(player => {
+            playersData
+              .slice() // optional: avoids mutating the original array
+              .sort((a, b) => a.name.localeCompare(b.name))
+              .forEach(player => {
                 playersMap.set(player.name, player);
                 const option = document.createElement('option');
                 option.value = player.name;
