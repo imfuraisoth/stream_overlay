@@ -68,11 +68,8 @@ previous_matches_cache = TTLCache.SimpleTTLCache(1800)  # 30 minutes TTL
 
 
 def read_file(file_name):
-    with open(file_name) as json_file:
-        line = json_file.readline()
-        result = json.loads(line)
-        json_file.close()
-        return result
+    with open(file_name, "r", encoding="utf-8") as json_file:
+        return json.load(json_file)
 
 
 full_data = read_file(scoreboard_data_file)
@@ -596,7 +593,7 @@ def save_previous_results():
 
 
 def write_to_file(file_name, data_key, json_data):
-    file = open(file_name, "w")
+    file = open(file_name, "w", encoding="utf-8")
     file.write(json_data[data_key])
     file.close()
 
