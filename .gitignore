@@ -8,7 +8,8 @@ __pycache__/
 
 # Folders
 ScoreboardDash/recordings
-config/*
+config/
+data/
 scoreboard/imgs/countries/
 scoreboard/sc/
 

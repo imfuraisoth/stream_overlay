@@ -6,6 +6,7 @@ date_time_format = "%Y-%m-%d %H-%M-%S"
 # set to 1 minute
 auto_delete_window = 60 * 1000 * 1
 last_replay_delete_time = 0
+enable_auto_delete = True
 
 
 def get_replay_videos(prefix, replays_folder):
@@ -45,6 +46,10 @@ def convert_file_name_to_epoc_time(file_name, prefix):
 
 
 def delete_replays(videos, replays_folder, prefix):
+    global enable_auto_delete
+    if not enable_auto_delete:
+        return
+
     for filename in videos:
         file_path = os.path.join(replays_folder, filename)
         try:

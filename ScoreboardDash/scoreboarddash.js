@@ -718,8 +718,8 @@ document.getElementById('streamName').addEventListener('change', function() {
 });
 
 window.addEventListener('click', function(event) {
-    if (event.target == document.getElementById('popup')) {
-        document.getElementById('popup').style.display = 'none';
+    if (event.target == document.getElementById('startggPopup')) {
+        document.getElementById('startggPopup').style.display = 'none';
     }
 });
 
@@ -730,7 +730,7 @@ function saveStartggInfo() {
     startggInfo.tournament = tournamentName;
     startggInfo.event = eventName;
     startggInfo.stream = streamName;
-    document.getElementById('popup').style.display = 'none';
+    document.getElementById('startggPopup').style.display = 'none';
     sendJsonDataToEndpoint(startggInfo, "setTournamentInfo");
 }
 
@@ -852,26 +852,27 @@ function getNextPlayersFromStartgg(event) {
 }
 
 function rebuildPlayerSuggestion() {
-        nextPlaySuggestions = document.getElementById('next_player_suggestions');
-        nextPlaySuggestions.innerHTML = '';
-        if (nextPlayersMap.size === 0) {
+    if (nextPlayersMap.size === 0) {
+        return;
+    }
+    nextPlaySuggestions = document.getElementById('next_player_suggestions');
+    nextPlaySuggestions.innerHTML = '';
+
+    // Filter and add suggestions to next player list
+    const names = new Set();
+    nextPlayersMap.forEach((set, name) => {
+        if (names.has(name)) {
             return;
         }
-        // Filter and add suggestions to next player list
-        const names = new Set();
-        nextPlayersMap.forEach((set, name) => {
-            if (names.has(name)) {
-                return;
-            }
-            const option1 = document.createElement('option');
-            option1.value = set.player1.name;
-            const option2 = document.createElement('option');
-            option2.value = set.player2.name;
-            names.add(option1.value);
-            names.add(option2.value);
-            nextPlaySuggestions.appendChild(option1);
-            nextPlaySuggestions.appendChild(option2);
-        });
+        const option1 = document.createElement('option');
+        option1.value = set.player1.name;
+        const option2 = document.createElement('option');
+        option2.value = set.player2.name;
+        names.add(option1.value);
+        names.add(option2.value);
+        nextPlaySuggestions.appendChild(option1);
+        nextPlaySuggestions.appendChild(option2);
+    });
 }
 
 var startggInfo;
