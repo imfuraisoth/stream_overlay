@@ -214,11 +214,8 @@ def get_all_player_data():
 
 
 def read_file(file_name):
-    with open(file_name) as json_file:
-        line = json_file.readline()
-        result = json.loads(line)
-        json_file.close()
-        return result
+    with open(file_name, "r", encoding="utf-8") as json_file:
+        return json.load(json_file)
 
 
 current_next_data = read_file(current_next_data_file)
