@@ -2559,14 +2559,6 @@
 	top: 135.5px;
 	transform: matrix(1,0,0,1,0,0);
 }
-#button_stop_replay {
-	position: absolute;
-	width: 100px;
-	height: 30px;
-	left: 442px;
-	top: 179px;
-	overflow: visible;
-}
 #METADATA_fd {
 	display: none;
 	left: -803.378px;

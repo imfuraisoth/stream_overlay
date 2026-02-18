@@ -454,7 +454,25 @@ function countryDropdown(id, round, player) {
     updateTop8PlayerInfo(round, player, "country", value.options[value.selectedIndex].text)
 }
 
-function updateTop8PlayerInfo(round, player, field, value) {
+function updateTop8PlayerInfo(round, player_id, field, value) {
+    updateTop8PlayerInfo(round, player_id, field, value, null);
+}
+
+function updateTop8PlayerInfo(round, player_id, field, value, position) {
+    if (position != null && 'name' === field) {
+        // Check to see if it's a part of our players map
+        if (playersMap.has(value)) {
+    	    player = playersMap.get(value);
+            document.getElementById("form_team_" + position).value = player.team;
+            updateTop8PlayerInfoCallServer(round, player_id, "team", player.team);
+            document.getElementById("dropdown_country_" + position).value = player.country;
+            updateTop8PlayerInfoCallServer(round, player_id, "country", player.country);
+    	}
+    }
+    updateTop8PlayerInfoCallServer(round, player_id, field, value);
+}
+
+function updateTop8PlayerInfoCallServer(round, player, field, value) {
     // open a connection
     xhr.open("POST", '../updateTop8playerInfo', true);
     // Set the request header i.e. which type of content you are sending
@@ -462,7 +480,7 @@ function updateTop8PlayerInfo(round, player, field, value) {
     // Create a state change callback
     xhr.onreadystatechange = function () {
         if (xhr.readyState === 4 && xhr.status === 200) {
-            // console.log("Server Okay");
+           // console.log("Server Okay");
         }
     };
     // Sending data with the request
@@ -751,5 +769,63 @@ function registerClientForRefresh() {
     xhr.send();
 }
 
+var startggInfo;
+var playersMap = new Map();
+
+function getStartggInfo() {
+    fetch('/getTournamentInfo')
+        .then(function (response) {
+        startggData = response.json();
+      return startggData;
+    })
+    .then(function (data) {
+        if (Object.keys(data).length != 0) {
+            startggInfo = data;
+        }
+        loadPlayerData(true);
+      })
+    .catch(function (err) {
+      console.log('error: ' + err);
+    });
+}
+
+function loadPlayerData(fromCache) {
+    var param1 = encodeURIComponent(startggInfo.tournament);
+    var param2 = encodeURIComponent(startggInfo.event);
+    var param3 = fromCache;
+    var url = `/getAllPlayersForTournament?tournament=${param1}&event=${param2}&fromCache=${param3}`;
+    fetch(url)
+      .then(function(response) {
+         if (!response.ok) throw new Error("Network response was not ok");
+           return response.json();
+         })
+        .then(function (playersData) {
+            nextPlaySuggestions = document.getElementById('next_player_suggestions');
+            playersMap.clear();
+            if (playersData.length === 0) {
+                // Clear all options from the datalist
+                nextPlaySuggestions.innerHTML = '';
+                return;
+            }
+
+            // Clear all options from the nextPlaySuggestions
+            nextPlaySuggestions.innerHTML = '';
+            // Filter and add suggestions to next player list
+            playersData
+              .slice() // optional: avoids mutating the original array
+              .sort((a, b) => a.name.localeCompare(b.name))
+              .forEach(player => {
+                playersMap.set(player.name, player);
+                const option = document.createElement('option');
+                option.value = player.name;
+                nextPlaySuggestions.appendChild(option);
+            });
+        })
+        .catch(function (err) {
+              console.log('error: ' + err);
+            });
+}
+
 getDataFromServer();
+getStartggInfo();
 registerClientForRefresh();
