@@ -3,14 +3,12 @@ import os
 import time
 
 date_time_format = "%Y-%m-%d %H-%M-%S"
-# set to 1 minute
-auto_delete_window = 60 * 1000 * 1
 last_replay_delete_time = 0
 enable_auto_delete = True
 
 
 def get_replay_videos(prefix, replays_folder):
-    global auto_delete_window, last_replay_delete_time
+    global last_replay_delete_time
     videos = [filename for filename in os.listdir(replays_folder) if filename.startswith(prefix)]
     current_time_in_ms = int(time.time() * 1000)
     if last_replay_delete_time == 0:
