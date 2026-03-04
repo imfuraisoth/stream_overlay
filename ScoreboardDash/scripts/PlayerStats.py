@@ -1,4 +1,4 @@
-import json
+import json, csv
 from io import open
 from pathlib import Path
 from dataclasses import dataclass
@@ -12,6 +12,8 @@ first_placement_image_p1 = "In-Game_Cam_Left_Champ.png"
 top_8_placement_image_p1 = "In-Game_Cam_Left_Red.png"
 first_placement_image_p2 = "In-Game_Cam_Right_Champ.png"
 top_8_placement_image_p2 = "In-Game_Cam_Right_Red.png"
+league_stats_h2h_file = "braacket_league-head2head.csv"
+league_stats_ranking_file = "braacket_league-ranking.csv"
 
 
 @dataclass(init=False)
@@ -152,3 +154,53 @@ def get_all_events_with_stats():
             events.add(event)
 
     return list(events)
+
+
+def get_league_h2h_stats(directory):
+    if not directory:
+        return
+    file_path = Path("../../data/league/" + directory + "/" + league_stats_h2h_file)
+    if not file_path.exists():
+        print("Could not locate head to head file in directory: " + directory)
+        return {}
+
+    league_data = {}
+    with file_path.open("r", newline="", encoding="utf-8") as f:
+        reader = list(csv.reader(f))
+
+        # Second row contains column player names (skip first 2 columns)
+        column_names = reader[1][2:]
+
+        # Remaining rows contain match data
+        for row in reader[2:]:
+            row_player = row[1]           # Player name for this row
+            match_results = row[2:]       # Results vs others
+
+            league_data[row_player] = {}
+
+            for opponent, result in zip(column_names, match_results):
+                league_data[row_player][opponent] = result.strip()
+    return league_data
+
+
+def get_league_ranking_stats(directory):
+    if not directory:
+        return
+    file_path = Path("../../data/league/" + directory + "/" + league_stats_ranking_file)
+    if not file_path.exists():
+        print("Could not locate ranking file in directory: " + directory)
+        return {}
+
+    league_data = {}
+    with file_path.open("r", newline="", encoding="utf-8") as f:
+        reader = csv.DictReader(f)
+
+    for row in reader:
+        player_name = row["Player"]
+
+        # Optional: convert numeric fields
+        row["Rank"] = int(row["Rank"])
+        row["Points"] = int(row["Points"])
+
+        league_data[player_name] = row
+    return league_data

@@ -11,6 +11,7 @@ start_gg_file = root_dir + "../data/startgg_info.txt"
 url = 'https://api.start.gg/gql/alpha'
 player_stats = PlayerStats
 entrants_per_page = 25
+max_seed = 8
 
 
 def read_file(file_name, default):
@@ -48,11 +49,12 @@ class Match:
 
 
 class Player:
-    def __init__(self, name, entrant_id, team, country):
+    def __init__(self, name, entrant_id, team, country, seed):
         self.name = name
         self.team = team
         self.entrant_id = entrant_id
         self.country = country
+        self.seed = seed
 
 
 def get_token():
@@ -192,7 +194,10 @@ def get_next_players_from_tournament(tournament_name, stream_name, current_playe
             streamName
           }
           sets {
-            id
+            id,
+            event {
+              name
+            },
             slots {
                 entrant {
                     id
@@ -207,7 +212,15 @@ def get_next_players_from_tournament(tournament_name, stream_name, current_playe
                                 country
                             }
                         }
-                    }
+                    },
+                    seeds {
+                      entrant {
+                        event {
+                         name
+                        }
+                      }
+                      seedNum                      
+                    }                    
                 }
             }
           }
@@ -237,8 +250,9 @@ def get_next_players_from_tournament(tournament_name, stream_name, current_playe
                 for s in sets:
                     set_id = s["id"]
                     slots = s["slots"]
+                    event_name = s["event"]["name"]
                     if slots is not None and len(slots) == 2:
-                        match = Match(create_player(slots[0]), create_player(slots[1]), set_id)
+                        match = Match(create_player(slots[0], event_name), create_player(slots[1], event_name), set_id)
                         if not match.contains_players(current_player1, current_player2) and not match.already_played(previous_matches_map):
                             matches.append(match.to_json())
     json_dicts = [json.loads(match) for match in matches]
@@ -295,6 +309,14 @@ def get_players_from_tournament(tournament_name, event_name, page):
                           country
                         }
                       }
+                    },
+                    seeds {
+                      entrant {
+                        event {
+                         name
+                        }
+                      }
+                      seedNum                        
                     }
                   }
                 }
@@ -314,6 +336,7 @@ def get_players_from_tournament(tournament_name, event_name, page):
     response = requests.post(url, json={'query': query, 'variables': variables}, headers=headers)
     response_json = response.json()
     entrants = response_json["data"]["event"]["entrants"]["nodes"]
+    event_name = response_json["data"]["event"]["name"]
     if entrants is None or len(entrants) == 0:
         print("No entrants found for event: " + event_name + " in start.gg for tournament: " + tournament_name)
         return "[]"
@@ -323,7 +346,8 @@ def get_players_from_tournament(tournament_name, event_name, page):
         gamer_tag = entrant["participants"][0]["gamerTag"]
         team = entrant["participants"][0]["prefix"]
         country = get_country(entrant["participants"][0])
-        entrants_list.append(Player(gamer_tag, entrant_id, team or "", country))
+        seed = get_seed(entrant["seeds"], event_name)
+        entrants_list.append(Player(gamer_tag, entrant_id, team or "", country, seed))
     return entrants_list
 
 
@@ -360,9 +384,9 @@ def create_results_data(winner_id, loser_id, entrant_1_score, entrant_2_score):
     return games
 
 
-def create_player(slot):
+def create_player(slot, event_name):
     if slot["entrant"] is None or slot["entrant"]["name"] is None or slot["entrant"]["name"].strip() == "":
-        return Player("TBD", "TBD", "", "US")
+        return Player("TBD", "TBD", "", "US", "")
 
     name = slot["entrant"]["name"]
     team = ""
@@ -370,7 +394,19 @@ def create_player(slot):
         team, name = slot["entrant"]["name"].split(" | ")
     country_code = get_country(slot["entrant"]["participants"][0])
     entrant_id = slot["entrant"]["id"]
-    return Player(name, entrant_id, team, country_code)
+    seed = get_seed(slot["entrant"]["seeds"], event_name)
+    return Player(name, entrant_id, team, country_code, seed)
+
+
+def get_seed(seeds, event_name):
+    global max_seed
+    for seed in seeds:
+        this_event_name = seed["entrant"]["event"]["name"]
+        if this_event_name == event_name:
+            seed_num = seed["seedNum"]
+            if seed_num > max_seed:
+                return ""
+            return str(seed_num)
 
 
 def get_country(participant):
