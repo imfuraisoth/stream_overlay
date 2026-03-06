@@ -1663,6 +1663,7 @@ a, a:hover, a:visited, a:active {
 #league_suggestions {
     fill: rgba(255,255,255,1);
     stroke: rgba(112,112,112,1);
+    margin-top: 3px;
     shape-rendering: auto
     color: black;
 	width: 200px;
