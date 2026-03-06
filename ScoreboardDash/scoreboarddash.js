@@ -605,7 +605,7 @@ function sendJsonDataToEndpoint(data, endpoint) {
 }
 
 function sendJsonDataToEndpoint(data, endpoint, message) {
-// open a connection
+    // open a connection
 	xhr.open("POST", "../" + endpoint, true);
 
 	// Set the request header i.e. which type of content you are sending
@@ -722,6 +722,68 @@ window.addEventListener('click', function(event) {
         document.getElementById('startggPopup').style.display = 'none';
     }
 });
+
+document.getElementById('openStatsBtn').addEventListener('click', function() {
+    document.getElementById('statsPopup').style.display = 'block';
+});
+
+document.getElementById('closeStatsBtn').addEventListener('click', function() {
+    document.getElementById('statsPopup').style.display = 'none';
+});
+
+window.addEventListener('click', function(event) {
+    if (event.target == document.getElementById('statsPopup')) {
+        document.getElementById('statsPopup').style.display = 'none';
+    }
+});
+
+function loadLeagueStats() {
+    const value = document.getElementById('league_suggestions').value;
+    fetch("/loadLeagueData", {
+        method: "POST",
+        body: new URLSearchParams({
+            path: value
+        })
+    });
+}
+
+function getLeagueDirs() {
+    fetch('/getLeagueDirs')
+            .then(function (response) {
+            jsonData = response.json();
+          return jsonData;
+        })
+        .then(function (data) {
+            leagues = document.getElementById('league_suggestions');
+            if (data.length === 0) {
+                // Clear all options from the datalist
+                leagues.innerHTML = '';
+                return;
+            }
+
+            // Clear all options from the leagues
+            leagues.innerHTML = '';
+            // Filter and add leagues
+            const option = document.createElement('option');
+            option.textContent = "Select Event For Stats";
+            option.selected = true;
+            option.disabled = true;
+            leagues.appendChild(option);
+            data
+              .slice() // optional: avoids mutating the original array
+              .sort((a, b) => a.localeCompare(b))
+              .forEach(league => {
+                const option = document.createElement('option');
+                option.value = league;
+                option.textContent = league;
+                option.style.color = "black";
+                leagues.appendChild(option);
+            });
+          })
+        .catch(function (err) {
+          console.log('error: ' + err);
+        });
+}
 
 function saveStartggInfo() {
     var tournamentName = document.getElementById('tournamentName').value

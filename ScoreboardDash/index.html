@@ -346,49 +346,72 @@
 						<input placeholder="P2 Name" class="form_results_name_2p" type="text" id="form_results_name_2p" style="float: left; " value="" onchange="updateResults();">
 						<input placeholder="0" class="form_results_score_2p" type="text" id="form_results_score_2p" style="float: left;" value="" onchange="updateResults();">
 					</div>
-					<button class="rectangle_button" id="openPopupTop8Btn">Fetch Top 8 Results</button>
-					<div id="popupTop8" class="popup">
-						<div class="popup-content">
-							<span id="closePopupTop8Btn" class="close">&times;</span>
-							<form id="FetchTop8">
-								<h3>Tournament Name:</h3>
-								<input type="text" id="tournamentNameTop8" name="tournamentNameTop8" required>
-								<h3>Event Name: </h3>
-								<input type="text" id="eventNameTop8" name="eventNameTop8" required>
-								<div class="horizontal-button-container">
-									<button type="submit" onclick="fetchStartggTop8Info();">Get Single Event</button>
-									<button onclick="addStartggTop8Info();">Add Event</button>
-									<button onclick="deletePlayerStats();">Clear Data</button>
-								</div>
-							</form>
+					<div class="statsContainer">
+						<div id="text_stats_container">
+							<span class="text-shadow">Stats</span>
 						</div>
-					</div>
-					<button class="rectangle_button" id="openAddPlayerStatBtn">Add Player Stat</button>
-					<div id="addPlayerStat" class="popup">
-						<div class="popup-content">
-							<span id="closeAddPlayerStatBtn" class="close">&times;</span>
-							<form id="PlayerStat">
-								<h3>Gamer Tag:</h3>
-								<input type="text" id="playerName" name="playerName" required>
-								<h3>Event Name: </h3>
-								<input type="text" id="eventName" name="eventName" required>
-								<div class="horizontal-button-container">
-									<h3>Placement: </h3>
-									<input type="text" class="form-center-align" id="placement" name="placement" required>
-									<h3>Wins: </h3>
-									<input type="text" class="form-center-align" id="wins" name="wins" value="0">
-									<h3>Losses: </h3>
-									<input type="text" class="form-center-align" id="losses" name="losses" value="0">
+						<button class="rectangle_button" id="openStatsBtn" onclick="getLeagueDirs();">Stats Controls</button>
+						<div id="statsPopup" class="popup">
+							<div class="popup-content">
+								<span id="closeStatsBtn" class="close">&times;</span>
+								<div id="fetchTop8div">
+								<h3>Fetch Top 8 Results</h3>
+									<button class="rectangle_button" id="openPopupTop8Btn">Fetch Top 8 Results</button>
+									<div id="popupTop8" class="popup">
+										<div class="popup-content">
+											<span id="closePopupTop8Btn" class="close">&times;</span>
+											<form id="FetchTop8">
+												<h3>Tournament Name:</h3>
+												<input type="text" id="tournamentNameTop8" name="tournamentNameTop8" required>
+												<h3>Event Name: </h3>
+												<input type="text" id="eventNameTop8" name="eventNameTop8" required>
+												<div class="horizontal-button-container">
+													<button type="submit" onclick="fetchStartggTop8Info();">Get Single Event</button>
+													<button onclick="addStartggTop8Info();">Add Event</button>
+													<button onclick="deletePlayerStats();">Clear Data</button>
+												</div>
+											</form>
+										</div>
+									</div>
 								</div>
-								<button onclick="addPlayStats();">Submit</button>
-							</form>
+								<div id="addPlayerStatDiv">
+									<h3>Add Player Stat</h3>
+									<button class="rectangle_button" id="openAddPlayerStatBtn">Add Player Stat</button>
+									<div id="addPlayerStat" class="popup">
+										<div class="popup-content">
+											<span id="closeAddPlayerStatBtn" class="close">&times;</span>
+											<form id="PlayerStat">
+												<h3>Gamer Tag:</h3>
+												<input type="text" id="playerName" name="playerName" required>
+												<h3>Event Name: </h3>
+												<input type="text" id="eventName" name="eventName" required>
+												<div class="horizontal-button-container">
+													<h3>Placement: </h3>
+													<input type="text" class="form-center-align" id="placement" name="placement" required>
+													<h3>Wins: </h3>
+													<input type="text" class="form-center-align" id="wins" name="wins" value="0">
+													<h3>Losses: </h3>
+													<input type="text" class="form-center-align" id="losses" name="losses" value="0">
+												</div>
+												<button onclick="addPlayStats();">Submit</button>
+											</form>
+										</div>
+									</div>
+								</div>
+								<div id="leagueStatsDiv">
+									<h3>Select League for Stats</h3>
+									<select id="league_suggestions" onchange="loadLeagueStats();">
+										<!-- Options will be populated dynamically -->
+									</select>
+								</div>
+								<div id="eventStatsContainer" align="left">
+									<h3>Select Event For Stats</h3>
+									<select id="eventStatsSelect" onchange="setEventForStats()">
+										<option value="" selected disabled>Select Event For Stats</option>
+									</select>
+								</div>
+							</div>
 						</div>
-					</div>
-					<div id="eventStatsContainer" align="center">
-						<span>Select Event For Stats</span>
-						<select id="eventStatsSelect" onchange="setEventForStats()">
-							<option value="" selected disabled>Select Event For Stats</option>
-						</select>
 					</div>
 				</div>
 			</div>

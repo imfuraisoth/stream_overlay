@@ -7,6 +7,7 @@ root_dir = ""
 player_data_file_name = root_dir + "../data/player_data.json"
 player_data_backup_file_name = root_dir + "../data/player_data_backup.json"
 placement_file_name = root_dir + "../data/placement_strings.json"
+league_directory = "../data/league/"
 current_event = ""
 first_placement_image_p1 = "In-Game_Cam_Left_Champ.png"
 top_8_placement_image_p1 = "In-Game_Cam_Left_Red.png"
@@ -157,9 +158,10 @@ def get_all_events_with_stats():
 
 
 def get_league_h2h_stats(directory):
+    global league_directory
     if not directory:
         return
-    file_path = Path("../../data/league/" + directory + "/" + league_stats_h2h_file)
+    file_path = Path(league_directory + directory + "/" + league_stats_h2h_file)
     if not file_path.exists():
         print("Could not locate head to head file in directory: " + directory)
         return {}
@@ -180,13 +182,15 @@ def get_league_h2h_stats(directory):
 
             for opponent, result in zip(column_names, match_results):
                 league_data[row_player][opponent] = result.strip()
+        print("League h2h stats loaded in: " + directory)
     return league_data
 
 
 def get_league_ranking_stats(directory):
+    global league_directory
     if not directory:
         return
-    file_path = Path("../../data/league/" + directory + "/" + league_stats_ranking_file)
+    file_path = Path(league_directory + directory + "/" + league_stats_ranking_file)
     if not file_path.exists():
         print("Could not locate ranking file in directory: " + directory)
         return {}
@@ -194,13 +198,17 @@ def get_league_ranking_stats(directory):
     league_data = {}
     with file_path.open("r", newline="", encoding="utf-8") as f:
         reader = csv.DictReader(f)
+        for row in reader:
+            player_name = row["Player"]
 
-    for row in reader:
-        player_name = row["Player"]
+            # Optional: convert numeric fields
+            row["Rank"] = int(row["Rank"])
+            row["Points"] = int(row["Points"])
 
-        # Optional: convert numeric fields
-        row["Rank"] = int(row["Rank"])
-        row["Points"] = int(row["Points"])
-
-        league_data[player_name] = row
+            league_data[player_name] = row
+    print("League rank stats loaded in: " + directory)
     return league_data
+
+
+def list_league_stats_directories():
+    return [p.name for p in Path(league_directory).iterdir() if p.is_dir()]

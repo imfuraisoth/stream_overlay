@@ -65,6 +65,8 @@ tournament_info = None
 player_stats = PlayerStats
 replay_utils = ReplayUtils
 previous_matches_cache = TTLCache.SimpleTTLCache(1800)  # 30 minutes TTL
+league_rank_dict = {}
+league_h2h_dict = {}
 
 
 def read_file(file_name):
@@ -537,6 +539,23 @@ def save_clips():
 
     move_files(replays_folder, destination)
     return "200"
+
+
+@api.route('/loadLeagueData', methods=['POST'])
+def fetch_league_data():
+    global league_h2h_dict, league_rank_dict
+    directory = request.form['path']
+    if not directory:
+        print("Invalid directory")
+        return "200"
+    league_h2h_dict = player_stats.get_league_h2h_stats(directory)
+    league_rank_dict = player_stats.get_league_ranking_stats(directory)
+    return "200"
+
+
+@api.route('/getLeagueDirs', methods=['GET'])
+def get_league_dirs():
+    return jsonify(player_stats.list_league_stats_directories()), 200
 
 
 def move_files(src_dir, dst_dir):

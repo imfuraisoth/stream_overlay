@@ -378,6 +378,7 @@ a, a:hover, a:visited, a:active {
 	display: flex;
 	flex: .5;
 	flex-direction: column;
+	border: 1px solid black;
 }
 
 .fetchContainer {
@@ -386,8 +387,18 @@ a, a:hover, a:visited, a:active {
 	flex-direction: column;
 	justify-content: flex-start;
 	align-items: center;
-	border: 1px solid black;
+	padding: 30px 0px;
+}
+
+.statsContainer {
+    width: 100%;
+	display: flex;
+	flex: 0.2;
+	flex-direction: column;
+	justify-content: flex-start;
+	align-items: center;
 	padding: 15px 0px;
+	margin-top: 20px;
 }
 
 .ftContainer {
@@ -397,9 +408,19 @@ a, a:hover, a:visited, a:active {
 	align-items: center;
 	border: 1px solid black;
 	padding: 12px 0px;
+	padding-bottom: 20px;
 }
 
 #text_startgg {
+	overflow: visible;
+	white-space: nowrap;
+	font-style: normal;
+	font-weight: normal;
+	font-size: 18px;
+	color: rgb(0, 0, 0);
+}
+
+#text_stats_container {
 	overflow: visible;
 	white-space: nowrap;
 	font-style: normal;
@@ -415,6 +436,7 @@ a, a:hover, a:visited, a:active {
 	flex-direction: column;
 	flex: 1.5;
 	align-items: center;
+	margin-bottom: 15px;
 }
 
 #ftx {
@@ -469,8 +491,8 @@ a, a:hover, a:visited, a:active {
 	align-items: center;
 	border: 1px solid black;
 	padding: 15px 0px;
+	overflow: auto;
 }
-
 .grid_next_round {
 	overflow: visible;
 	width: 260px;
@@ -498,7 +520,14 @@ a, a:hover, a:visited, a:active {
 	align: center;
 }
 #openPopupTop8Btn {
-    margin-top: 10px;
+    margin-top: 0px;
+    width: 200px;
+    align: left;
+}
+#openAddPlayerStatBtn {
+    margin-top: 0px;
+    width: 200px;
+    align: left;
 }
 #button_fetch_next_players {
     margin-top: 5px;
@@ -1631,6 +1660,17 @@ a, a:hover, a:visited, a:active {
 .dropdown_country_next1 {
 	overflow: visible;
 }
+#league_suggestions {
+    fill: rgba(255,255,255,1);
+    stroke: rgba(112,112,112,1);
+    shape-rendering: auto
+    color: black;
+	width: 200px;
+    background-color: #ffffff !important;
+}
+#league_suggestions option {
+    color: black;
+}
 #dropdown_country_next2 {
 	fill: rgba(255,255,255,1);
 	stroke: rgba(112,112,112,1);
@@ -1683,4 +1723,41 @@ input[type=text], select {
 datalist {
     max-height: 150px;  /* max height when dropdown is open */
     overflow-y: auto;   /* scroll if content exceeds height */
+}
+
+/* Popup box */
+.popup-content {
+    background-color: #ffffff;
+    margin: 5% auto;
+    padding: 25px;
+    width: 420px;
+    border-radius: 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    position: relative;
+}
+
+/* Close button */
+.close {
+    position: absolute;
+    right: 12px;
+    top: 8px;
+    font-size: 24px;
+    cursor: pointer;
+}
+
+/* Event select section */
+#eventStatsContainer {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-top: 10px;
+}
+
+/* Select dropdown */
+select {
+    padding: 6px;
+    border-radius: 4px;
+    border: 1px solid #ccc;
 }
