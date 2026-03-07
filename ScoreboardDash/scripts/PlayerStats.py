@@ -15,6 +15,8 @@ first_placement_image_p2 = "In-Game_Cam_Right_Champ.png"
 top_8_placement_image_p2 = "In-Game_Cam_Right_Red.png"
 league_stats_h2h_file = "braacket_league-head2head.csv"
 league_stats_ranking_file = "braacket_league-ranking.csv"
+league_rank_dict = {}
+league_h2h_dict = {}
 
 
 @dataclass(init=False)
@@ -32,6 +34,28 @@ class EventData:
         self.losses = losses
         self.message = placement_map.get(str(placement), "")
         self.image = ""
+
+
+@dataclass(init=False)
+class PlayerLeagueStats:
+    rank: str
+    points: str
+    win_loss: str
+
+    def __init__(self, rank: str, points: str, win_loss: str):
+        self.rank = rank
+        self.points = points
+        self.win_loss = win_loss
+
+
+@dataclass(init=False)
+class MatchInfo:
+    player1: PlayerLeagueStats
+    player2: PlayerLeagueStats
+
+    def __init__(self, player1: PlayerLeagueStats, player2: PlayerLeagueStats):
+        self.player1 = player1
+        self.player2 = player2
 
 
 def event_data_decoder(dct):
@@ -155,6 +179,43 @@ def get_all_events_with_stats():
             events.add(event)
 
     return list(events)
+
+
+def get_match_info(p1_name, p2_name):
+    global league_rank_dict, league_h2h_dict
+    p1_rank = ""
+    p1_points = ""
+    p1_win_loss = ""
+    p2_rank = ""
+    p2_points = ""
+    p2_win_loss = ""
+    if p1_name in league_rank_dict:
+        p1_rank = str(league_rank_dict.get(p1_name)["Rank"])
+        p1_points = str(league_rank_dict.get(p1_name)["Points"])
+    if p2_name in league_rank_dict:
+        p2_rank = str(league_rank_dict.get(p2_name)["Rank"])
+        p2_points = str(league_rank_dict.get(p2_name)["Points"])
+
+    if p1_name in league_h2h_dict:
+        p1_win_loss = league_h2h_dict.get(p1_name)[p2_name]
+    if p2_name in league_h2h_dict:
+        p2_win_loss = league_h2h_dict.get(p2_name)[p1_name]
+    player1 = PlayerLeagueStats(p1_rank, p1_points, p1_win_loss)
+    player2 = PlayerLeagueStats(p2_rank, p2_points, p2_win_loss)
+    return MatchInfo(player1, player2)
+
+
+def update_league_stats(directory):
+    global league_rank_dict, league_h2h_dict
+    league_rank_dict = get_league_ranking_stats(directory)
+    league_h2h_dict = get_league_h2h_stats(directory)
+
+
+def clear_stats():
+    global league_rank_dict, league_h2h_dict
+    league_rank_dict = {}
+    league_h2h_dict = {}
+    print("League stats reset")
 
 
 def get_league_h2h_stats(directory):

@@ -747,6 +747,13 @@ function loadLeagueStats() {
     });
 }
 
+function clearLeagueStats() {
+    fetch("/clearLeagueData", {
+        method: "POST",
+        body: new URLSearchParams({})
+    });
+}
+
 function getLeagueDirs() {
     fetch('/getLeagueDirs')
             .then(function (response) {

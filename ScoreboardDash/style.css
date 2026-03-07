@@ -529,6 +529,12 @@ a, a:hover, a:visited, a:active {
     width: 200px;
     align: left;
 }
+#clearLeagueStatBtn {
+    margin-top: 0px;
+    margin-left: 15px;
+    width: 150px;
+    align: left;
+}
 #button_fetch_next_players {
     margin-top: 5px;
     margin-bottom: 15px;
