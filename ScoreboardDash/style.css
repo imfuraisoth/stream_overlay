@@ -686,6 +686,17 @@ a, a:hover, a:visited, a:active {
 	box-shadow: 3px 3px 3px rgb(0, 0, 0, 0.2);
 	background-color: var(--button-color);
 }
+.rectangle_button_popup {
+	overflow: visible;
+	width: 200px;
+	height: auto;
+	padding: 10px 10px;
+	margin: 5px 0px;
+	cursor: pointer;
+	border-radius: 5px;
+	box-shadow: 3px 3px 3px rgb(0, 0, 0, 0.2);
+	background-color: var(--button-color);
+}
 .rectangle_button:hover {
 	transform: translateY(2px);
 	box-shadow: 3px 3px 3px rgb(0, 0, 0, 0.8);
@@ -1761,6 +1772,18 @@ datalist {
     display: flex;
     gap: 38px;           /* space between them */
     align-items: flex-start;
+}
+
+.fetch-sections {
+    display: flex;
+    gap: 100px;
+    align-items: flex-start;
+}
+
+.fetch-column {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
 }
 
 /* Select dropdown */

@@ -215,25 +215,33 @@
 									<input type="text" id="currentEventName" name="currentEventName" required>
 									<h3>Stream Name: </h3>
 									<input type="text" id="streamName" name="streamName" required>
-									<div id="button_fetch_all_players">
-										<button class="rectangle_button" id="rectangle_button_startgg_fetch_all_players" onclick='getAllPlayersForTournament(event);'>
-											<text x="18" y="19" id="button_text_4">Fetch All Players</text>
-										</button>
-									</div>
-									<div id="button_fetch_next_players">
-										<button class="rectangle_button" id="rectangle_button_startgg_stream_queue" onclick='getNextPlayersFromStartgg(event);'>
-											<text x="18" y="19" id="button_text_4">Fetch Next Players</text>
-										</button>
-									</div>
-									<div id="button_remove_next_players">
-										<button class="rectangle_button" id="rectangle_button_remove_next_player" onclick='removeNextPlayers(event);'>
-											<text x="18" y="19" id="button_text_4">Remove Next Player</text>
-										</button>
-									</div>
-									<div id="button_clear_next_players">
-										<button class="rectangle_button" id="rectangle_button_clear_next_player" onclick='clearNextPlayers(event);'>
-											<text x="18" y="19" id="button_text_4">Clear Next Players</text>
-										</button>
+									<div class="fetch-sections">
+										<div class="fetch-column">
+											<h3>Players Fetch</h3>
+											<div id="button_fetch_all_players">
+												<button class="rectangle_button_popup" id="rectangle_button_startgg_fetch_all_players" onclick="getAllPlayersForTournament(event);">
+													Fetch All Players
+												</button>
+											</div>
+											<div id="button_clear_next_players">
+												<button class="rectangle_button_popup" id="rectangle_button_clear_next_player" onclick="clearNextPlayers(event);">
+													Clear Next Players
+												</button>
+											</div>
+										</div>
+										<div class="fetch-column">
+											<h3>Queue Fetch</h3>
+											<div id="button_fetch_next_players">
+												<button class="rectangle_button_popup" id="rectangle_button_startgg_stream_queue" onclick="getNextPlayersFromStartgg(event);">
+													Fetch From Stream Queue
+												</button>
+											</div>
+											<div id="button_remove_next_players">
+												<button class="rectangle_button_popup" id="rectangle_button_remove_next_player" onclick="removeNextPlayers(event);">
+													Remove Player From Queue
+												</button>
+											</div>
+										</div>
 									</div>
 								</form>
 							</div>

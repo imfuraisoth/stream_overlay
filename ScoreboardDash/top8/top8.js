@@ -231,6 +231,8 @@ function resetNamesAndScore() {
 	jsonData.p2Country = "US";
 	jsonData.p1Score = "0";
 	jsonData.p2Score = "0";
+	jsonData.p1Seed = "";
+	jsonData.p2Seed = "";
 	sendJsonToEndpoint("updatealldata");
 }
 
@@ -253,6 +255,10 @@ function reversePlayerNames() {
 	jsonData.p2Team = t1;
 	jsonData.p1Country = c2;
 	jsonData.p2Country = c1;
+    var p1seed = jsonData.p1Seed;
+    var p2seed = jsonData.p2Seed;
+    jsonData.p1Seed = p2seed;
+    jsonData.p2Seed = p1seed;
 	sendJsonToEndpointWithCallback(reverseNames, 'updateCurrentPlayers');
 }
 
@@ -422,6 +428,8 @@ function resetAll() {
 	jsonData.p2Name = "";
 	jsonData.p1Team = "";
 	jsonData.p2Team = "";
+    jsonData.p1Seed = "";
+    jsonData.p2Seed = "";
 	jsonData.p1Score = "0";
 	jsonData.p2Score = "0";
 	jsonData.round = "";
@@ -557,6 +565,17 @@ function updateCurrentAndNextInfo(currentNextData) {
     jsonData.p2Name = currentNextData.player2.name;
     jsonData.p1Country = currentNextData.player1.country;
     jsonData.p2Country = currentNextData.player2.country;
+
+    jsonData.p1Seed = "";
+    jsonData.p2Seed = "";
+	// If player is in player map, try to set the seed value
+	if (playersMap.has(jsonData.p1Name)) {
+	    jsonData.p1Seed = playersMap.get(jsonData.p1Name).seed;
+	}
+    if (playersMap.has(jsonData.p2Name)) {
+        jsonData.p2Seed = playersMap.get(jsonData.p2Name).seed;
+    }
+
     jsonData.p1Score = "0";
     jsonData.p2Score = "0";
     jsonData.nextteam1 = currentNextData.nextPlayer1.team;
