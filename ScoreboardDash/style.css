@@ -520,13 +520,19 @@ a, a:hover, a:visited, a:active {
 	align: center;
 }
 #openPopupTop8Btn {
+    margin-top: 5px;
+    width: 150px;
+    align: left;
+}
+#clearTop8DataBtn {
     margin-top: 0px;
-    width: 200px;
+    margin-left: 15px;
+    width: 150px;
     align: left;
 }
 #openAddPlayerStatBtn {
-    margin-top: 0px;
-    width: 200px;
+    margin-top: 5px;
+    width: 150px;
     align: left;
 }
 #clearLeagueStatBtn {
@@ -1636,17 +1642,14 @@ a, a:hover, a:visited, a:active {
 .form-center-align {
     text-align: center;
 }
-.events-with-stats-dropdown {
-    box-sizing: border-box;
-    overflow: visible;
-    padding: 5px;
-    width: 170px;
-}
 #eventStatsSelect {
     fill: rgba(255,255,255,1);
     stroke: rgba(112,112,112,1);
+    margin-top: 3px;
     shape-rendering: auto
     color: black;
+	width: 200px;
+    background-color: #ffffff !important;
 }
 #dropdown_country_next1 {
 	fill: rgba(255,255,255,1);
@@ -1754,12 +1757,10 @@ datalist {
     cursor: pointer;
 }
 
-/* Event select section */
-#eventStatsContainer {
+.top-row {
     display: flex;
-    flex-direction: column;
-    gap: 6px;
-    margin-top: 10px;
+    gap: 38px;           /* space between them */
+    align-items: flex-start;
 }
 
 /* Select dropdown */

@@ -748,10 +748,7 @@ function loadLeagueStats() {
 }
 
 function clearLeagueStats() {
-    fetch("/clearLeagueData", {
-        method: "POST",
-        body: new URLSearchParams({})
-    });
+    sendJsonDataToEndpoint({}, "clearLeagueData", "League data deleted!");
 }
 
 function getLeagueDirs() {
@@ -762,7 +759,8 @@ function getLeagueDirs() {
         })
         .then(function (data) {
             leagues = document.getElementById('league_suggestions');
-            if (data.length === 0) {
+            leaguesList = data.leagues;
+            if (leaguesList.length === 0) {
                 // Clear all options from the datalist
                 leagues.innerHTML = '';
                 return;
@@ -772,11 +770,12 @@ function getLeagueDirs() {
             leagues.innerHTML = '';
             // Filter and add leagues
             const option = document.createElement('option');
-            option.textContent = "Select Event For Stats";
+            option.textContent = "Select League For Stats";
             option.selected = true;
             option.disabled = true;
             leagues.appendChild(option);
-            data
+            currentLeague = data.current_league;
+            leaguesList
               .slice() // optional: avoids mutating the original array
               .sort((a, b) => a.localeCompare(b))
               .forEach(league => {
@@ -784,12 +783,20 @@ function getLeagueDirs() {
                 option.value = league;
                 option.textContent = league;
                 option.style.color = "black";
+                if (league === currentLeague) {
+                    option.selected = true;
+                }
                 leagues.appendChild(option);
             });
           })
         .catch(function (err) {
           console.log('error: ' + err);
         });
+}
+
+function loadStatsInfo() {
+    getLeagueDirs();
+    createEventsWithStatsDropdown();
 }
 
 function saveStartggInfo() {
@@ -1006,25 +1013,28 @@ function createEventsWithStatsDropdown() {
         jsonData = response.json();
       return jsonData;
     })
-    .then(function (events) {
-        // Get the container where the dropdown will be inserted
-        const container = document.getElementById("eventStatsContainer");
-
+    .then(function (eventData) {
         // Create the <select> element
         const select = document.getElementById("eventStatsSelect");
-        select.classList.add("events-with-stats-dropdown");
-
+        select.innerHTML = '';
+        const option1 = document.createElement('option');
+        option1.textContent = "Select Event For Stats";
+        option1.selected = true;
+        option1.disabled = true;
+        select.appendChild(option1);
+        var currentEvent = eventData.current_event;
         // Loop through the list of strings and create <option> elements
-        events.forEach(event => {
+        eventData.events.forEach(event => {
             // Create an <option> element for each string
             const option = document.createElement("option");
             option.value = event;  // Set the value of the option
             option.textContent = event;          // Set the text inside the option
             option.style.color = "black";
+            if (event === currentEvent) {
+                option.selected = true;
+            }
             select.appendChild(option);          // Append the option to the select element
         });
-        // Append the <select> element to the container
-        container.appendChild(select);
         // Add event listener to handle selection change
         select.addEventListener("change", function() {
             const selectedOption = select.options[select.selectedIndex];

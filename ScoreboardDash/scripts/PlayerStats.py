@@ -9,6 +9,7 @@ player_data_backup_file_name = root_dir + "../data/player_data_backup.json"
 placement_file_name = root_dir + "../data/placement_strings.json"
 league_directory = "../data/league/"
 current_event = ""
+current_league = ""
 first_placement_image_p1 = "In-Game_Cam_Left_Champ.png"
 top_8_placement_image_p1 = "In-Game_Cam_Left_Red.png"
 first_placement_image_p2 = "In-Game_Cam_Right_Champ.png"
@@ -172,13 +173,16 @@ def get_current_event():
 
 
 def get_all_events_with_stats():
-    global player_data
+    global player_data, current_event
     events = set()
     for player in player_data:
         for event in player_data[player]:
             events.add(event)
-
-    return list(events)
+    events_data = {
+        "current_event": current_event,
+        "events": list(events)
+    }
+    return events_data
 
 
 def get_match_info(p1_name, p2_name):
@@ -206,22 +210,24 @@ def get_match_info(p1_name, p2_name):
 
 
 def update_league_stats(directory):
-    global league_rank_dict, league_h2h_dict
+    global league_rank_dict, league_h2h_dict, current_league
     league_rank_dict = get_league_ranking_stats(directory)
     league_h2h_dict = get_league_h2h_stats(directory)
+    current_league = directory
 
 
 def clear_stats():
-    global league_rank_dict, league_h2h_dict
+    global league_rank_dict, league_h2h_dict, current_league
     league_rank_dict = {}
     league_h2h_dict = {}
+    current_league = ""
     print("League stats reset")
 
 
 def get_league_h2h_stats(directory):
     global league_directory
     if not directory:
-        return
+        return {}
     file_path = Path(league_directory + directory + "/" + league_stats_h2h_file)
     if not file_path.exists():
         print("Could not locate head to head file in directory: " + directory)
@@ -250,7 +256,7 @@ def get_league_h2h_stats(directory):
 def get_league_ranking_stats(directory):
     global league_directory
     if not directory:
-        return
+        return {}
     file_path = Path(league_directory + directory + "/" + league_stats_ranking_file)
     if not file_path.exists():
         print("Could not locate ranking file in directory: " + directory)
@@ -272,4 +278,10 @@ def get_league_ranking_stats(directory):
 
 
 def list_league_stats_directories():
-    return [p.name for p in Path(league_directory).iterdir() if p.is_dir()]
+    global current_league
+    league_data = {
+        "current_league": current_league,
+        "leagues": [p.name for p in Path(league_directory).iterdir() if p.is_dir()]
+
+    }
+    return league_data

@@ -12,6 +12,7 @@ url = 'https://api.start.gg/gql/alpha'
 player_stats = PlayerStats
 entrants_per_page = 25
 max_seed = 8
+use_highest_phase = True
 
 
 def read_file(file_name, default):
@@ -214,12 +215,10 @@ def get_next_players_from_tournament(tournament_name, stream_name, current_playe
                         }
                     },
                     seeds {
-                      entrant {
-                        event {
-                         name
-                        }
-                      }
-                      seedNum                      
+                      phase {
+                        phaseOrder
+                      },
+                      seedNum                    
                     }                    
                 }
             }
@@ -252,7 +251,7 @@ def get_next_players_from_tournament(tournament_name, stream_name, current_playe
                     slots = s["slots"]
                     event_name = s["event"]["name"]
                     if slots is not None and len(slots) == 2:
-                        match = Match(create_player(slots[0], event_name), create_player(slots[1], event_name), set_id)
+                        match = Match(create_player(slots[0]), create_player(slots[1]), set_id)
                         if not match.contains_players(current_player1, current_player2) and not match.already_played(previous_matches_map):
                             matches.append(match.to_json())
     json_dicts = [json.loads(match) for match in matches]
@@ -311,11 +310,9 @@ def get_players_from_tournament(tournament_name, event_name, page):
                       }
                     },
                     seeds {
-                      entrant {
-                        event {
-                         name
-                        }
-                      }
+                      phase {
+                        phaseOrder
+                      },
                       seedNum                        
                     }
                   }
@@ -346,7 +343,7 @@ def get_players_from_tournament(tournament_name, event_name, page):
         gamer_tag = entrant["participants"][0]["gamerTag"]
         team = entrant["participants"][0]["prefix"]
         country = get_country(entrant["participants"][0])
-        seed = get_seed(entrant["seeds"], event_name)
+        seed = get_seed(entrant["seeds"])
         entrants_list.append(Player(gamer_tag, entrant_id, team or "", country, seed))
     return entrants_list
 
@@ -384,7 +381,7 @@ def create_results_data(winner_id, loser_id, entrant_1_score, entrant_2_score):
     return games
 
 
-def create_player(slot, event_name):
+def create_player(slot):
     if slot["entrant"] is None or slot["entrant"]["name"] is None or slot["entrant"]["name"].strip() == "":
         return Player("TBD", "TBD", "", "US", "")
 
@@ -394,19 +391,29 @@ def create_player(slot, event_name):
         team, name = slot["entrant"]["name"].split(" | ")
     country_code = get_country(slot["entrant"]["participants"][0])
     entrant_id = slot["entrant"]["id"]
-    seed = get_seed(slot["entrant"]["seeds"], event_name)
+    seed = get_seed(slot["entrant"]["seeds"])
     return Player(name, entrant_id, team, country_code, seed)
 
 
-def get_seed(seeds, event_name):
-    global max_seed
+def get_seed(seeds):
+    global max_seed, use_highest_phase
+    # Only grab the seed of the first phase
+    current_phase_order = 0
+    seed_result = ""
     for seed in seeds:
-        this_event_name = seed["entrant"]["event"]["name"]
-        if this_event_name == event_name:
+        phase_order = seed["phase"]["phaseOrder"]
+        if use_highest_phase:
+            if phase_order > current_phase_order:
+                seed_num = seed["seedNum"]
+                current_phase_order = phase_order
+                if seed_num <= max_seed:
+                    seed_result = str(seed_num)
+        elif phase_order == 1:
             seed_num = seed["seedNum"]
             if seed_num > max_seed:
                 return ""
             return str(seed_num)
+    return seed_result
 
 
 def get_country(participant):
