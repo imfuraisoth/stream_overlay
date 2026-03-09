@@ -881,7 +881,7 @@ function loadPlayerData(fromCache) {
         .then(function (playersData) {
             nextPlaySuggestions = document.getElementById('next_player_suggestions');
             playersMap.clear();
-            if (playersData.length === 0) {
+            if (playersData.length === 0 || playersData[startggInfo.event].length === 0) {
                 // Clear all options from the datalist
                 nextPlaySuggestions.innerHTML = '';
                 return;
@@ -890,7 +890,7 @@ function loadPlayerData(fromCache) {
             // Clear all options from the nextPlaySuggestions
             nextPlaySuggestions.innerHTML = '';
             // Filter and add suggestions to next player list
-            playersData
+            playersData[startggInfo.event]
               .slice() // optional: avoids mutating the original array
               .sort((a, b) => a.name.localeCompare(b.name))
               .forEach(player => {

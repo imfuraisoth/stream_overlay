@@ -1,0 +1,153 @@
+/* ---------- Body & Container ---------- */
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: #f4f6f8;
+    margin: 0;
+    padding: 0;
+}
+
+.container {
+    max-width: 900px;
+    margin: 30px auto;
+    padding: 20px 30px; /* left/right padding adds space */
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    text-align: left;
+}
+
+h2 {
+    text-align: left;
+    color: #333;
+    margin-bottom: 20px;
+}
+
+/* Dropdowns spacing */
+#gameSelect {
+    width: 150px;
+    padding: 10px 15px;
+    font-size: 16px;
+    border-radius: 8px;
+    border: 1px solid #ccc;
+    margin: 0 10px 20px 10px; /* bottom + left margin */
+    text-align: left;
+}
+
+#eventSelect, #playerSelect {
+    width: 200px;
+    padding: 10px 15px;
+    font-size: 16px;
+    border-radius: 8px;
+    border: 1px solid #ccc;
+    margin: 0 10px 20px 10px; /* bottom + left margin */
+    text-align: left;
+}
+
+/* ---------- Character List Grid ---------- */
+#characterList {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 15px;
+}
+
+
+/* ---------- Character Row ---------- */
+.character-row {
+    display: flex;
+    flex-direction: row;
+    align-items: center;          /* align items vertically */
+    justify-content: space-between;
+    padding: 10px 10px;
+    background: #f9f9f9;
+    border-radius: 10px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.character-row:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+/* ---------- Controls: Checkbox + Dropdown ---------- */
+.char-controls {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 5px;  /* <-- smaller gap between checkbox and dropdown */
+}
+
+/* Label + Checkbox */
+.character-row label {
+    display: flex;
+    align-items: center;
+    gap: 3px;   /* space between checkbox and text */
+    font-weight: bold;
+    margin: 0;
+}
+
+/* Dropdown styling */
+.character-row select {
+    padding: 5px 8px;
+    border-radius: 6px;
+    border: 1px solid #ccc;
+    width: auto;
+    min-width: 80px;
+    font-size: 14px;
+    cursor: pointer;
+}
+
+/* Highlighted when selected */
+.character-row.selected {
+    background-color: #d0f0ff; /* light blue highlight */
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+/* ---------- Image Preview ---------- */
+.character-row img {
+    width: 80px;
+    height: 80px;
+    object-fit: cover;
+    border-radius: 6px;
+    border: 2px solid #ddd;
+    transition: transform 0.2s, border-color 0.2s;
+}
+
+.character-row img:hover {
+    transform: scale(1.05);
+    border-color: #aaa;
+}
+
+/* ---------- Responsive ---------- */
+@media (max-width: 600px) {
+    #characterList {
+        grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    }
+    .character-row img {
+        width: 70px;
+        height: 70px;
+    }
+    .character-row select {
+        min-width: 60px;
+    }
+}
+
+.rectangle_button {
+	overflow: visible;
+	width: auto;
+	height: auto;
+	padding: 10px 10px;
+	margin: 5px 0px;
+	cursor: pointer;
+	border-radius: 5px;
+	box-shadow: 3px 3px 3px rgb(0, 0, 0, 0.2);
+	background-color: var(--button-color);
+}
+.rectangle_button:hover {
+	transform: translateY(2px);
+	box-shadow: 3px 3px 3px rgb(0, 0, 0, 0.8);
+}
+.rectangle_button:active {
+  background-color: #675267;
+  transform: translateY(2px);
+}

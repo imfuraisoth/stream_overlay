@@ -12,6 +12,7 @@ config/
 data/
 scoreboard/imgs/countries/
 scoreboard/sc/
+images/
 
 # Distribution / packaging
 .Python

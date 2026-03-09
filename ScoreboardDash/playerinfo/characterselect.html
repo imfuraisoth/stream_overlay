@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <link rel="stylesheet" href="https://use.typekit.net/ogo7pba.css">
+    <title>Character Select Dashboard</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+Vithkuqi:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="icon" type="image/png" href="../images/V.png">
+    <script src="https://kit.fontawesome.com/2c93766a80.js" crossorigin="anonymous"></script>
+    <script class="u-script" type="text/javascript" src="characterselect.js" defer=""></script>
+    <link href="characterselect.css" rel="stylesheet" type="text/css" />
+</head>
+<body>
+    <div class="container">
+        <h2>Select Game, Event, & Player</h2>
+
+        <!-- Game Dropdown -->
+        <label for="gameSelect">Game:</label>
+        <select id="gameSelect" onchange="handleGameSelect();"></select>
+
+        <label for="eventSelect">Event:</label>
+        <select id="eventSelect" onchange="loadPlayersDropdown();"></select>
+
+        <!-- Player Dropdown -->
+        <label for="playerSelect">Player:</label>
+        <select id="playerSelect"></select>
+
+        <div>
+            <button class="rectangle_button" type="submit" onclick="savePlayerCharacterData();">Submit</button>
+        </div>
+
+        <h2>Characters</h2>
+
+        <div id="characterList"></div>
+    </div>
+</body>
+</html>

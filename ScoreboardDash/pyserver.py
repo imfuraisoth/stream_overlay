@@ -18,6 +18,8 @@ from datetime import datetime
 from scripts import PlayerStats
 from scripts import TTLCache
 from scripts import ReplayUtils
+from scripts import CharacterImageLoader
+from playerinfo import PlayerStatsDB
 
 # Get today's date in YYYY-MM-DD format
 today_date = datetime.today().strftime('%Y-%m-%d')
@@ -46,7 +48,8 @@ result1 = "../data/result1.txt"
 result2 = "../data/result2.txt"
 result_name_1 = "../data/resultname1.txt"
 result_name_2 = "../data/resultname2.txt"
-players_list = []
+players_list_map = {}
+players_db = PlayerStatsDB
 
 api = Flask(__name__)
 CORS(api)
@@ -64,6 +67,7 @@ event_name = ""
 tournament_info = None
 player_stats = PlayerStats
 replay_utils = ReplayUtils
+character_image_loader = CharacterImageLoader
 previous_matches_cache = TTLCache.SimpleTTLCache(1800)  # 30 minutes TTL
 
 
@@ -240,24 +244,66 @@ def get_tournament_info():
 
 @api.route('/getAllPlayersForTournament', methods=['GET'])
 def get_all_players_for_tournament():
-    global players_list
+    global players_list_map
     from_cache = parse_bool(request.args.get("fromCache"), False)
     if from_cache:
         # Return cache value
-        return jsonify(players_list), 200
+        return jsonify(players_list_map), 200
     tournament = request.args.get("tournament")
     event = request.args.get("event")
     result = startgg_client.get_all_players_from_tournament(tournament, event)
     if result is None:
         return json.dumps("[]", ensure_ascii=False), 200
-    players_list = [player.__dict__ for player in result]
-    return jsonify(players_list), 200
+    players_list_map[event] = [player.__dict__ for player in result]
+    return jsonify(players_list_map), 200
+
+
+@api.route('/getAllPlayersForEvent', methods=['GET'])
+def get_all_players_for_event():
+    global players_list_map
+    event = request.args.get("event")
+    return jsonify(players_list_map.get(event)), 200
+
+
+@api.route('/getAllEvents', methods=['GET'])
+def get_all_events():
+    global players_list_map
+    return jsonify(list(players_list_map.keys())), 200
+
+
+@api.route('/getAllGameImageDir', methods=['GET'])
+def get_all_game_image_dir():
+    global character_image_loader
+    return jsonify(character_image_loader.list_games()), 200
+
+
+@api.route('/getCharacterImages', methods=['GET'])
+def get_character_images():
+    global character_image_loader
+    game = request.args.get("game")
+    return jsonify(character_image_loader.get_character_images(game)), 200
+
+
+@api.route('/savePlayerCharacterData', methods=['POST'])
+def save_player_character_data():
+    global players_db
+    data = request.get_json()
+    players_db.save_player_characters(data)
+    return "200"
+
+
+@api.route('/getPlayerCharacterData', methods=['GET'])
+def get_player_character_data():
+    global players_db
+    player = request.args.get("player")
+    game = request.args.get("game")
+    return jsonify(players_db.get_player_characters(player, game)), 200
 
 
 @api.route('/clearPlayersList', methods=['POST'])
-def clear_players_list():
-    global players_list
-    players_list = []
+def clear_players_list_map():
+    global players_list_map
+    players_list_map = {}
     return "200"
 
 
