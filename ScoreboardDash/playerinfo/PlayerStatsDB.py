@@ -1,10 +1,31 @@
-import sqlite3
-
+import sqlite3, os, json
+from pathlib import Path
 
 db_path = "../data/players/players.db"
+last_access_path = "../data/players/last_access_info.txt"
+last_access_info = {}
+
+
+def read_file(file_name):
+    try:
+        with open(file_name, "r", encoding="utf-8") as json_file:
+            return json.load(json_file)
+    except FileNotFoundError:
+        return {}
+
+
+def write_file(file_path, content):
+    os.makedirs(os.path.dirname(file_path), exist_ok=True)
+
+    with open(file_path, "w", encoding="utf-8") as f:
+        f.write(json.dumps(content, default=lambda o: o.__dict__))
 
 
 def init_db():
+    global last_access_info
+    path = Path(db_path)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    last_access_info = read_file(last_access_path)
     conn = sqlite3.connect(db_path)
     cur = conn.cursor()
 
@@ -99,6 +120,10 @@ def save_player_characters(data):
 
 
 def get_player_characters(player, game):
+    global last_access_info
+    last_access_info = {"player": player, "game": game}
+    write_file(last_access_path, last_access_info)
+
     conn = sqlite3.connect(db_path)
     cur = conn.cursor()
 
@@ -111,6 +136,63 @@ def get_player_characters(player, game):
         WHERE players.name=? AND games.name=?
     """, (player, game))
 
-    results = cur.fetchall()
+    rows = cur.fetchall()
     conn.close()
-    return results
+
+    characters = []
+    for name, variant, image in rows:
+        characters.append({
+            "character": name,
+            "variant": variant,
+            "image": image
+        })
+
+    return {
+        "player": player,
+        "game": game,
+        "characters": characters
+    }
+
+
+def get_last_access_player_info():
+    global last_access_info
+    if not last_access_info:
+        return {}
+    return get_player_characters(last_access_info.get("player"), last_access_info.get("game"))
+
+
+def remove_player(player_name):
+    global last_access_info
+    if last_access_info.get("player") == player_name:
+        last_access_info = {}
+        write_file(last_access_path, last_access_info)
+
+    conn = sqlite3.connect(db_path)
+    cur = conn.cursor()
+
+    # get player id
+    cur.execute("SELECT id FROM players WHERE name=?", (player_name,))
+    row = cur.fetchone()
+
+    if not row:
+        conn.close()
+        return False
+
+    player_id = row[0]
+
+    # remove character associations
+    cur.execute("""
+        DELETE FROM player_characters
+        WHERE player_id=?
+    """, (player_id,))
+
+    # remove player
+    cur.execute("""
+        DELETE FROM players
+        WHERE id=?
+    """, (player_id,))
+
+    conn.commit()
+    conn.close()
+
+    return True

@@ -11,6 +11,10 @@ function handleGameSelect() {
 }
 
 function renderCharacters(game) {
+    renderCharacters(game, function (){});
+}
+
+function renderCharacters(game, callback) {
     var url = `/getCharacterImages?game=${game}`;
     fetch(url)
       .then(function(response) {
@@ -74,9 +78,11 @@ function renderCharacters(game) {
                 container.appendChild(row);
 
             });
+            callback();
         }).catch(function (err) {
                 console.log('error: ' + err);
               });
+
 }
 
 var playersMap = new Map();
@@ -156,6 +162,7 @@ function loadPlayersDropdown() {
                 option.textContent = player.name;
                 players.appendChild(option);
             });
+            clearSelectedCharacters();
         })
         .catch(function (err) {
               console.log('error: ' + err);
@@ -209,6 +216,43 @@ function savePlayerCharacterData() {
         characters: characters
     }
     sendJsonDataToEndpoint(data, "savePlayerCharacterData", "Player Character Data Saved!");
+}
+
+function clearSelectedCharacters() {
+
+    const rows = document.querySelectorAll(".character-row");
+
+    rows.forEach(row => {
+
+        const checkbox = row.querySelector("input[type='checkbox']");
+        const dropdown = row.querySelector("select");
+        const preview = row.querySelector("img");
+
+        // uncheck checkbox
+        checkbox.checked = false;
+
+        // remove highlight
+        row.classList.remove("selected");
+
+        // reset dropdown to first option
+        dropdown.selectedIndex = 0;
+
+        // reset preview image
+        if (dropdown.options.length > 0) {
+            preview.src = relativePath + dropdown.options[0].value;
+        }
+    });
+}
+
+function deletePlayerCharacters() {
+    const game = document.getElementById('gameSelect').value;
+    const player = document.getElementById('playerSelect').value;
+    data = {
+        game: game,
+        player: player
+    }
+    sendJsonDataToEndpoint(data, "deletePlayerCharacterData", "Player data for: " + player + " deleted!");
+    clearSelectedCharacters();
 }
 
 function getSelectedCharacters() {
@@ -275,5 +319,114 @@ function sendJsonDataToEndpoint(data, endpoint, message) {
 	xhr.send(dataToSend);
 }
 
+function initPage() {
+    loadPlayer("", "");
+}
+
+function loadSelectedPlayer() {
+    const game = document.getElementById("gameSelect");
+    const player = document.getElementById('playerSelect');
+    loadPlayer(player.value, game.value);
+}
+
+function loadPlayer(playerName, gameName) {
+    var url = `/getPlayerCharacterData?player=${playerName}&game=${gameName}`;
+
+    fetch(url)
+        .then(response => response.json())
+        .then(playerData => {
+
+            // Clear previous selections if no data
+            if (!playerData || Object.keys(playerData).length === 0) {
+                clearSelectedCharacters();
+                return;
+            }
+
+            // Set game select
+            const gameSelect = document.getElementById("gameSelect");
+            gameSelect.value = playerData.game;
+
+            // Set player select
+            const playerSelect = document.getElementById('playerSelect');
+
+            // Check if the player option exists
+            let optionExists = Array.from(playerSelect.options)
+                                   .some(opt => opt.value === playerData.player);
+
+            if (!optionExists) {
+                // Create new option and select it
+                const newOption = document.createElement("option");
+                newOption.value = playerData.player;
+                newOption.textContent = playerData.player;
+                playerSelect.appendChild(newOption);
+            }
+
+            // Select the player
+            playerSelect.value = playerData.player;
+
+            // Render character rows and apply saved selections
+            renderCharacters(playerData.game, () => applyPlayerData(playerData));
+        })
+        .catch(err => {
+            console.error("Error loading player data:", err);
+        });
+}
+
+function applyPlayerData(playerData) {
+    const rows = document.querySelectorAll(".character-row");
+
+    // Convert playerData.characters into a map for fast lookup
+    const charMap = new Map();
+    if (playerData.characters) {
+        playerData.characters.forEach(c => {
+            charMap.set(c.character, { variant: c.variant, image: c.image });
+        });
+    }
+
+    rows.forEach(row => {
+        const checkbox = row.querySelector("input[type='checkbox']");
+        const label = row.querySelector("label");
+        const dropdown = row.querySelector("select");
+        const preview = row.querySelector("img");
+
+        const characterName = label.textContent;
+
+        if (charMap.has(characterName)) {
+            const { variant, image } = charMap.get(characterName);
+
+            // Check the checkbox and highlight
+            checkbox.checked = true;
+            row.classList.add("selected");
+
+            // Select the correct dropdown option
+            let found = false;
+            for (let i = 0; i < dropdown.options.length; i++) {
+                if (dropdown.options[i].value === variant) {
+                    dropdown.selectedIndex = i;
+                    found = true;
+                    break;
+                }
+            }
+            if (!found && dropdown.options.length > 0) {
+                dropdown.selectedIndex = 0;
+            }
+
+            // Set the preview from the stored image
+            preview.src = relativePath + image;
+
+        } else {
+            // Character not selected → reset
+            checkbox.checked = false;
+            row.classList.remove("selected");
+
+            if (dropdown.options.length > 0) {
+                dropdown.selectedIndex = 0;
+                preview.src = relativePath + dropdown.options[0].value;
+            }
+        }
+    });
+}
+
 getAllEvents();
 getAllGames();
+initPage();

@@ -25,10 +25,11 @@
 
         <!-- Player Dropdown -->
         <label for="playerSelect">Player:</label>
-        <select id="playerSelect"></select>
+        <select id="playerSelect" onchange="loadSelectedPlayer();"></select>
 
-        <div>
+        <div id="buttonsDiv">
             <button class="rectangle_button" type="submit" onclick="savePlayerCharacterData();">Submit</button>
+            <button class="rectangle_button" type="submit" onclick="deletePlayerCharacters();">Clear</button>
         </div>
 
         <h2>Characters</h2>

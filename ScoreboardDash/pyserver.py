@@ -297,7 +297,18 @@ def get_player_character_data():
     global players_db
     player = request.args.get("player")
     game = request.args.get("game")
+    if not player:
+        return jsonify(players_db.get_last_access_player_info()), 200
     return jsonify(players_db.get_player_characters(player, game)), 200
+
+
+@api.route('/deletePlayerCharacterData', methods=['POST'])
+def delete_player_character_data():
+    global players_db
+    data = request.get_json()
+    player = data["player"]
+    players_db.remove_player(player)
+    return "200"
 
 
 @api.route('/clearPlayersList', methods=['POST'])
@@ -739,7 +750,7 @@ if __name__ == "__main__":
             open_browser("http://" + server_info, 'open -a /Applications/Google\ Chrome.app %s')
         elif args.linux:
             open_browser("http://" + server_info, '/usr/bin/google-chrome %s')
-
+        players_db.init_db()
         api.run(host=server_ip, port=server_port)
     except KeyboardInterrupt:
         pass
