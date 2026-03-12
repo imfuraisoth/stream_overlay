@@ -1,4 +1,4 @@
-import json, csv
+import json, csv, copy, threading
 from io import open
 from pathlib import Path
 from dataclasses import dataclass
@@ -74,10 +74,7 @@ def read_file(file_name):
 
     try:
         with open(file_name) as json_file:
-            line = json_file.readline()
-            result = json.loads(line, object_hook=event_data_decoder)
-            json_file.close()
-            return result
+            return json.load(json_file, object_hook=event_data_decoder)
     except Exception as e:
         print("Error opening file", e)
         return {}
@@ -85,37 +82,40 @@ def read_file(file_name):
 
 placement_map = read_file(placement_file_name)
 player_data = read_file(player_data_file_name)
+player_data_lock = threading.Lock()
 
 
 def write_to_file(json_data):
     global player_data
-    player_data = json_data
+    player_data = copy.deepcopy(json_data)
     FileUtils.write_file(player_data_file_name, player_data)
 
 
 def add_to_file(json_data):
     global player_data
-    player_data = read_file(player_data_file_name)
-    for key in json_data:
-        if key in player_data:
-            event_map = player_data[key]
-            event_map.update(json_data[key])
-            player_data[key] = event_map
-        else:
-            player_data[key] = json_data[key]
-    write_to_file(player_data)
+    with player_data_lock:
+        player_data = read_file(player_data_file_name)
+        for key in json_data:
+            if key in player_data:
+                event_map = player_data[key]
+                event_map.update(json_data[key])
+                player_data[key] = event_map
+            else:
+                player_data[key] = json_data[key]
+        write_to_file(player_data)
 
 
 def add_player_data(player_id, event_id, placement, wins, loses):
     event_data = EventData(placement, wins, loses)
     global player_data
-    player_data = read_file(player_data_file_name)
-    event_map = player_data.get(player_id, None)
-    if event_map is None:
-        event_map = {}
-    event_map[event_id] = event_data
-    player_data[player_id] = event_map
-    write_to_file(player_data)
+    with player_data_lock:
+        player_data = read_file(player_data_file_name)
+        event_map = player_data.get(player_id, None)
+        if event_map is None:
+            event_map = {}
+        event_map[event_id] = event_data
+        player_data[player_id] = event_map
+        write_to_file(player_data)
 
 
 def get_placement(player_id, p1_or_p2):
@@ -147,17 +147,17 @@ def get_image_location(p1_or_p2, placement):
 
 def delete_stats():
     global player_data
-    player_data = {}
-    player_data_backup = read_file(player_data_file_name)
-    file_path = Path(player_data_backup_file_name)
-    if not file_path.exists():
-        file_path.write_text("{}")  # Creates the file
-        print("Player data backup file created successfully.")
-    if player_data_backup:
-        # Check to see if it's empty or not before saving it
-        FileUtils.write_file(player_data_backup_file_name, player_data_backup)
-
-    FileUtils.write_file(player_data_file_name, player_data)
+    with player_data_lock:
+        player_data_backup = read_file(player_data_file_name)
+        file_path = Path(player_data_backup_file_name)
+        if not file_path.exists():
+            file_path.write_text("{}")  # Creates the file
+            print("Player data backup file created successfully.")
+        if player_data_backup:
+            # Check to see if it's empty or not before saving it
+            FileUtils.write_file(player_data_backup_file_name, player_data_backup)
+        player_data = {}
+        FileUtils.write_file(player_data_file_name, player_data)
 
 
 def set_current_event(event):

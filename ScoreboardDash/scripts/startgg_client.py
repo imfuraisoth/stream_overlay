@@ -16,16 +16,26 @@ use_highest_phase = True
 
 
 def read_file(file_name, default):
-    with open(file_name) as json_file:
-        line = json_file.readline()
-        if not line:
-            return default
-        response_json = json.loads(line)
-        json_file.close()
-        return response_json
+    try:
+        with open(file_name) as json_file:
+            content = json_file.read()
+            if not content.strip():
+                return default
+            return json.loads(content)
+    except Exception:
+        return default
 
 
 country_code_map = read_file(country_prop_file, "{}")
+
+
+def get_api_data(response):
+    response_json = response.json()
+    errors = response_json.get("errors")
+    if errors:
+        print("start.gg API error: " + str(errors))
+        return None
+    return response_json.get("data")
 
 
 class Match:
@@ -86,8 +96,10 @@ def get_events(tournament_name):
     }
 
     response = requests.post(url, json={'query': query, 'variables': variables}, headers=headers)
-    response_json = response.json()
-    events = response_json["data"]["tournament"]["events"]
+    data = get_api_data(response)
+    if data is None:
+        return "[]"
+    events = data["tournament"]["events"]
     if events is None or len(events) == 0:
         print("No events found in start.gg for tournament: " + tournament_name)
         return "[]"
@@ -117,8 +129,10 @@ def get_num_entrants_for_event(tournament_name, event_name):
     }
 
     response = requests.post(url, json={'query': query, 'variables': variables}, headers=headers)
-    response_json = response.json()
-    return response_json["data"]["event"]["numEntrants"]
+    data = get_api_data(response)
+    if data is None:
+        return 0
+    return data["event"]["numEntrants"]
 
 
 def get_top_8_entrants(tournament_name, event_name, page):
@@ -155,11 +169,13 @@ def get_top_8_entrants(tournament_name, event_name, page):
     }
 
     response = requests.post(url, json={'query': query, 'variables': variables}, headers=headers)
-    response_json = response.json()
-    entrants = response_json["data"]["event"]["entrants"]["nodes"]
+    data = get_api_data(response)
+    if data is None:
+        return {}
+    entrants = data["event"]["entrants"]["nodes"]
     if entrants is None or len(entrants) == 0:
         print("No entrants found for event: " + event_name + " in start.gg for tournament: " + tournament_name)
-        return "[]"
+        return {}
     entrants_map = {}
     entrant_count = 0
     for entrant in entrants:
@@ -237,10 +253,12 @@ def get_next_players_from_tournament(tournament_name, stream_name, current_playe
     }
 
     response = requests.post(url, json={'query': query, 'variables': variables}, headers=headers)
-    response_json = response.json()
-    print(response_json)
+    data = get_api_data(response)
+    if data is None:
+        return json.dumps([])
+    print(data)
     matches = []
-    stream_queue = response_json["data"]["tournament"]["streamQueue"]
+    stream_queue = data["tournament"]["streamQueue"]
     if stream_queue is not None and len(stream_queue) > 0:
         for stream in stream_queue:
             if stream['stream']['streamName'] == stream_name:
@@ -331,12 +349,14 @@ def get_players_from_tournament(tournament_name, event_name, page):
     }
 
     response = requests.post(url, json={'query': query, 'variables': variables}, headers=headers)
-    response_json = response.json()
-    entrants = response_json["data"]["event"]["entrants"]["nodes"]
-    event_name = response_json["data"]["event"]["name"]
+    data = get_api_data(response)
+    if data is None:
+        return []
+    entrants = data["event"]["entrants"]["nodes"]
+    event_name = data["event"]["name"]
     if entrants is None or len(entrants) == 0:
         print("No entrants found for event: " + event_name + " in start.gg for tournament: " + tournament_name)
-        return "[]"
+        return []
     entrants_list = []
     for entrant in entrants:
         entrant_id = entrant["id"]
@@ -388,7 +408,7 @@ def create_player(slot):
     name = slot["entrant"]["name"]
     team = ""
     if " | " in name:
-        team, name = slot["entrant"]["name"].split(" | ")
+        team, name = slot["entrant"]["name"].split(" | ", 1)
     country_code = get_country(slot["entrant"]["participants"][0])
     entrant_id = slot["entrant"]["id"]
     seed = get_seed(slot["entrant"]["seeds"])
@@ -424,7 +444,7 @@ def get_country(participant):
         if location:
             country = location["country"]
             if country:
-                country_code = country_code_map[country]
+                country_code = country_code_map.get(country)
                 if country_code is None:
                     # Couldn't find the country code from country code map, default back to US
                     print("Couldn't find country code for country: " + country)

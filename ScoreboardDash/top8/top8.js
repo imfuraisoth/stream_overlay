@@ -1,6 +1,3 @@
-// Creating a XHR object
-var xhr = new XMLHttpRequest();
-
 var jsonData;
 var lastRoundSuffix = [];
 var lastNextRoundSuffix = [];
@@ -21,42 +18,39 @@ var roundSuffixMap = {
 
 function getDataFromServer() {
     fetch('/getdata')
-        .then(function (response) {
-        jsonData = response.json();
-      return jsonData;
-    })
-    .then(function (data) {
-        populateData(data);
-      })
-    .catch(function (err) {
-      console.log('error: ' + err);
-    });
+        .then(function(response) {
+            return response.json();
+        })
+        .then(function(data) {
+            populateData(data);
+        })
+        .catch(function(err) {
+            console.log('error: ' + err);
+        });
     fetch('/getTop8CurrentNextData')
-        .then(function (response) {
-        jsonData = response.json();
-      return jsonData;
-    })
-    .then(function (data) {
-        updateTop8StartedButton(data);
-        highlightNextRoundForms(data.nextRound)
-        highlightCurrentRoundForms(data.currentRound)
-      })
-    .catch(function (err) {
-      console.log('error: ' + err);
-    });
+        .then(function(response) {
+            return response.json();
+        })
+        .then(function(data) {
+            updateTop8StartedButton(data);
+            highlightNextRoundForms(data.nextRound);
+            highlightCurrentRoundForms(data.currentRound);
+        })
+        .catch(function(err) {
+            console.log('error: ' + err);
+        });
 }
 
 fetch('/getTop8PlayerData')
-	.then(function (response) {
-	top8Data = response.json();
-  return top8Data;
-})
-.then(function (data) {
-	populateTop8PlayerData(data);
-  })
-.catch(function (err) {
-  console.log('error: ' + err);
-});
+    .then(function(response) {
+        return response.json();
+    })
+    .then(function(data) {
+        populateTop8PlayerData(data);
+    })
+    .catch(function(err) {
+        console.log('error: ' + err);
+    });
 
 function populateTop8PlayerData(data) {
     console.log(data);
@@ -82,10 +76,6 @@ function populateTop8PlayerData(data) {
     populateTop8Player("l2_lf", data, "r9", "p2");
 }
 
-function populateTop8Player(suffix, data, round, player) {
-    populateTop8Player(suffix, data, round, player, false);
-}
-
 function populateTop8Player(suffix, data, round, player, includeCountry) {
 	updateElement("form_name_" + suffix, data[round][player]["name"]);
 	updateElement("form_team_" + suffix, data[round][player]["team"]);
@@ -100,18 +90,15 @@ function populateTop8Player(suffix, data, round, player, includeCountry) {
 }
 
 function setAsNextRound(round, suffix1, suffix2) {
-    // open a connection
-    xhr.open("POST", '../setNextRound', true);
-    // Set the request header i.e. which type of content you are sending
-    xhr.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
-    // Create a state change callback
-    xhr.onreadystatechange = function () {
-        if (xhr.readyState === 4 && xhr.status === 200) {
+    fetch('/setNextRound', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: 'round=' + round
+    }).then(function(response) {
+        if (response.ok) {
             getJsonDataFromServerWithArgs('getTop8PlayerData', updateNextRoundForms, round, suffix1, suffix2);
         }
-    };
-    // Sending data with the request
-    xhr.send('round=' + round);
+    }).catch(function(err) { console.log('error: ' + err); });
 }
 
 function updateNextRoundForms(top8PlayerData, round, suffix1, suffix2) {
@@ -190,12 +177,12 @@ function updateNextPlayer2() {
 }
 
 function updateNextTeam1() {
-	jsonData.nextteam1 = document.getElementById("dropdown_country_next1").value;
+	jsonData.nextteam1 = document.getElementById("form_next_round_team_1p").value;
 	sendJsonToEndpoint('updateNextPlayers');
 }
 
 function updateNextTeam2() {
-	jsonData.nextteam2 = document.getElementById("dropdown_country_next2").value;
+	jsonData.nextteam2 = document.getElementById("form_next_round_team_2p").value;
 	sendJsonToEndpoint('updateNextPlayers');
 }
 
@@ -268,10 +255,9 @@ function reverseNames() {
 
 function reverseScores() {
     fetch('/getdata')
-        .then(function (response) {
-        jsonData = response.json();
-      return jsonData;
-    }).then(function (data) {
+        .then(function(response) {
+            return response.json();
+        }).then(function (data) {
         updateElement("form_score_1p", data.p1Score);
         updateElement("form_score_2p", data.p2Score);
         var p1 = document.getElementById("form_score_1p").value;
@@ -451,19 +437,15 @@ function resetAll() {
 	updateAllData(resetTop8);
 }
 
-function countryDropdown(id) {
+function countryDropdownCurrent(id, field) {
 	var c = document.getElementById(id);
-	jsonData.p1Country = c.options[c.selectedIndex].text;
+	jsonData[field] = c.options[c.selectedIndex].text;
 	sendJsonToEndpoint('updateCurrentPlayers');
 }
 
 function countryDropdown(id, round, player) {
     var value = document.getElementById(id);
     updateTop8PlayerInfo(round, player, "country", value.options[value.selectedIndex].text)
-}
-
-function updateTop8PlayerInfo(round, player_id, field, value) {
-    updateTop8PlayerInfo(round, player_id, field, value, null);
 }
 
 function updateTop8PlayerInfo(round, player_id, field, value, position) {
@@ -481,31 +463,23 @@ function updateTop8PlayerInfo(round, player_id, field, value, position) {
 }
 
 function updateTop8PlayerInfoCallServer(round, player, field, value) {
-    // open a connection
-    xhr.open("POST", '../updateTop8playerInfo', true);
-    // Set the request header i.e. which type of content you are sending
-    xhr.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
-    // Create a state change callback
-    xhr.onreadystatechange = function () {
-        if (xhr.readyState === 4 && xhr.status === 200) {
-           // console.log("Server Okay");
-        }
-    };
-    // Sending data with the request
-    xhr.send("round=" + round + "&player=" + player + "&field=" + field + "&value=" + value);
+    fetch('/updateTop8playerInfo', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: 'round=' + encodeURIComponent(round) + '&player=' + encodeURIComponent(player) + '&field=' + encodeURIComponent(field) + '&value=' + encodeURIComponent(value)
+    }).catch(function(err) { console.log('error: ' + err); });
 }
 
-function nextRound(jsonData) {
+function nextRound() {
     fetch('/getdata')
-        .then(function (response) {
-        jsonData = response.json();
-      return jsonData;
-    })
-    .then(function (jsonData) {
-        document.getElementById("form_results_score_1p").value = jsonData.p1Score;
-        document.getElementById("form_results_score_2p").value = jsonData.p2Score;
-        document.getElementById("form_results_name_1p").value = jsonData.p1Name;
-        document.getElementById("form_results_name_2p").value = jsonData.p2Name;
+        .then(function(response) {
+            return response.json();
+        })
+        .then(function(data) {
+        document.getElementById("form_results_score_1p").value = data.p1Score;
+        document.getElementById("form_results_score_2p").value = data.p2Score;
+        document.getElementById("form_results_name_1p").value = data.p1Name;
+        document.getElementById("form_results_name_2p").value = data.p2Name;
 
         document.getElementById("form_results_score_1p").style.opacity  = 0.5;
         document.getElementById("form_results_score_2p").style.opacity  = 0.5;
@@ -592,6 +566,7 @@ function highlightCurrentRoundForms(round) {
         document.getElementById("form_name_" + suffix).style.border="";
         document.getElementById("form_score_" + suffix).style.border="";
     }
+    if (round == null || !roundSuffixMap[round]) return;
     for (const suffix of roundSuffixMap[round]) {
         document.getElementById("form_team_" + suffix).style.border="2px solid red";
         document.getElementById("form_name_" + suffix).style.border="2px solid red";
@@ -610,6 +585,7 @@ function highlightNextRoundForms(round) {
         document.getElementById("form_name_" + suffix).style.border="";
         document.getElementById("form_score_" + suffix).style.border="";
     }
+    if (round == null || !roundSuffixMap[round]) return;
     for (const suffix of roundSuffixMap[round]) {
         document.getElementById("form_team_" + suffix).style.border="2px solid yellow";
         document.getElementById("form_name_" + suffix).style.border="2px solid yellow";
@@ -624,39 +600,17 @@ function updateCurrentAndNextInfoUpdatePlayerData(currentNextData) {
 }
 
 function getJsonDataFromServerWithArgs(endpoint, callback, arg1, arg2, arg3) {
-	// open a connection
-	xhr.open("GET", '/' + endpoint, true);
-
-	// Set the request header i.e. which type of content you are sending
-	xhr.setRequestHeader("Content-Type", "application/json");
-
-	// Create a state change callback
-	xhr.onreadystatechange = function () {
-		if (xhr.readyState === 4 && xhr.status === 200) {
-			// console.log("Server Okay");
-			callback(JSON.parse(xhr.response), arg1, arg2, arg3)
-		}
-	};
-	// Sending data with the request
-	xhr.send();
+    fetch('/' + endpoint)
+        .then(function(response) { return response.json(); })
+        .then(function(data) { callback(data, arg1, arg2, arg3); })
+        .catch(function(err) { console.log('error: ' + err); });
 }
 
 function getJsonDataFromServer(endpoint, callback) {
-	// open a connection
-	xhr.open("GET", '/' + endpoint, true);
-
-	// Set the request header i.e. which type of content you are sending
-	xhr.setRequestHeader("Content-Type", "application/json");
-
-	// Create a state change callback
-	xhr.onreadystatechange = function () {
-		if (xhr.readyState === 4 && xhr.status === 200) {
-			// console.log("Server Okay");
-			callback(JSON.parse(xhr.response))
-		}
-	};
-	// Sending data with the request
-	xhr.send();
+    fetch('/' + endpoint)
+        .then(function(response) { return response.json(); })
+        .then(function(data) { callback(data); })
+        .catch(function(err) { console.log('error: ' + err); });
 }
 
 function updateResults() {
@@ -672,73 +626,41 @@ function updateResults() {
 }
 
 function callServer(endpoint) {
-	// open a connection
-	xhr.open("POST", '../' + endpoint, true);
-
-	// Set the request header i.e. which type of content you are sending
-	xhr.setRequestHeader("Content-Type", "application/json");
-
-	// Create a state change callback
-	xhr.onreadystatechange = function () {
-		if (xhr.readyState === 4 && xhr.status === 200) {
-		}
-	};
-
-	// Sending data with the request
-	xhr.send();
+    fetch('/' + endpoint, { method: 'POST' })
+        .catch(function(err) { console.log('error: ' + err); });
 }
 
 function resetTop8() {
-	// open a connection
-	xhr.open("POST", '../resetTop8', true);
-
-	// Set the request header i.e. which type of content you are sending
-	xhr.setRequestHeader("Content-Type", "application/json");
-
-	// Create a state change callback
-	xhr.onreadystatechange = function () {
-		if (xhr.readyState === 4 && xhr.status === 200) {
-	        document.getElementById("rectangle_button_18").style.background = "#675267";
-            for (const suffix of lastRoundSuffix) {
-                document.getElementById("form_team_" + suffix).style.border="";
-                document.getElementById("form_name_" + suffix).style.border="";
-                document.getElementById("form_score_" + suffix).style.border="";
+    fetch('/resetTop8', { method: 'POST' })
+        .then(function(response) {
+            if (response.ok) {
+                document.getElementById("rectangle_button_18").style.background = "#675267";
+                for (const suffix of lastRoundSuffix) {
+                    document.getElementById("form_team_" + suffix).style.border="";
+                    document.getElementById("form_name_" + suffix).style.border="";
+                    document.getElementById("form_score_" + suffix).style.border="";
+                }
+                for (const suffix of lastNextRoundSuffix) {
+                    document.getElementById("form_team_" + suffix).style.border="";
+                    document.getElementById("form_name_" + suffix).style.border="";
+                    document.getElementById("form_score_" + suffix).style.border="";
+                }
+                document.getElementById("form_score_w1_gf2").style.border="";
+                document.getElementById("form_score_w2_gf2").style.border="";
             }
-            for (const suffix of lastNextRoundSuffix) {
-                document.getElementById("form_team_" + suffix).style.border="";
-                document.getElementById("form_name_" + suffix).style.border="";
-                document.getElementById("form_score_" + suffix).style.border="";
-            }
-            document.getElementById("form_score_w1_gf2").style.border="";
-            document.getElementById("form_score_w2_gf2").style.border="";
-		}
-	};
-
-	// Sending data with the request
-	xhr.send();
+        })
+        .catch(function(err) { console.log('error: ' + err); });
 }
 
 function updateAllData(callback) {
-    // open a connection
-	xhr.open("POST", '../updatealldata', true);
-
-	// Set the request header i.e. which type of content you are sending
-	xhr.setRequestHeader("Content-Type", "application/json");
-
-	// Create a state change callback
-	xhr.onreadystatechange = function () {
-		if (xhr.readyState === 4 && xhr.status === 200) {
-            callback();
-        }
-	};
-
-	// Set timestamp
-	jsonData.timestamp = Date.now();
-
-	// Converting JSON data to string
-	var data = JSON.stringify(jsonData);
-	// Sending data with the request
-	xhr.send(data);
+    jsonData.timestamp = Date.now();
+    fetch('/updatealldata', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(jsonData)
+    }).then(function(response) {
+        if (response.ok) { callback(); }
+    }).catch(function(err) { console.log('error: ' + err); });
 }
 
 function sendJsonToEndpoint(endpoint) {
@@ -746,46 +668,28 @@ function sendJsonToEndpoint(endpoint) {
 }
 
 function sendJsonToEndpointWithCallback(callback, endpoint) {
-    // open a connection
-	xhr.open("POST", "../" + endpoint, true);
-
-	// Set the request header i.e. which type of content you are sending
-	xhr.setRequestHeader("Content-Type", "application/json");
-
-	// Create a state change callback
-	xhr.onreadystatechange = function () {
-		if (xhr.readyState === 4 && xhr.status === 200) {
-		    callback();
-        }
-	};
-
-	// Set timestamp
-	jsonData.timestamp = Date.now();
-
-	// Converting JSON data to string
-	var data = JSON.stringify(jsonData);
-	// Sending data with the request
-	xhr.send(data);
+    jsonData.timestamp = Date.now();
+    fetch('/' + endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(jsonData)
+    }).then(function(response) {
+        if (response.ok) { callback(); }
+    }).catch(function(err) { console.log('error: ' + err); });
 }
 
 function registerClientForRefresh() {
-    // Open a connection to the server
-    xhr.open("GET", "/registerClientRefresh", true);
-	// Set the request header i.e. which type of content you are sending
-	xhr.setRequestHeader("Content-Type", "application/json");
-
-    // Handle the response from the server
-    xhr.onreadystatechange = function() {
-		if (xhr.readyState === 4 && xhr.status === 200) {
-            // Update the UI with the new notification
-            getDataFromServer();
-            // Send another request to the server
+    fetch('/registerClientRefresh')
+        .then(function(response) {
+            if (response.ok) {
+                getDataFromServer();
+            }
             registerClientForRefresh();
-        }
-    };
-
-    // Send the request
-    xhr.send();
+        })
+        .catch(function(err) {
+            console.log('error: ' + err);
+            registerClientForRefresh();
+        });
 }
 
 var startggInfo;
@@ -793,11 +697,10 @@ var playersMap = new Map();
 
 function getStartggInfo() {
     fetch('/getTournamentInfo')
-        .then(function (response) {
-        startggData = response.json();
-      return startggData;
-    })
-    .then(function (data) {
+        .then(function(response) {
+            return response.json();
+        })
+        .then(function (data) {
         if (Object.keys(data).length != 0) {
             startggInfo = data;
         }

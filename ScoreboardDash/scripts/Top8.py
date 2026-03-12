@@ -1,4 +1,5 @@
 import json
+import threading
 from io import open
 import copy
 from scripts.FileUtils import FileUtils
@@ -223,6 +224,8 @@ current_next_data = read_file(current_next_data_file)
 current_next_data["started"] = False
 global_player_data = read_file(player_data_file_name)
 
+top8_lock = threading.Lock()
+
 
 def initialize():
     global global_player_data
@@ -275,98 +278,99 @@ def update_next_player_data(player_id, player_data):
 
 def progress_to_next_round():
     global current_next_data
-    if len(current_next_data["rounds"]) == 0:
-        print("No more rounds, please reset top 8 to start over")
-        return json.loads(json.dumps(current_next_data, ensure_ascii=False))
-    initialize()
+    with top8_lock:
+        if len(current_next_data["rounds"]) == 0:
+            print("No more rounds, please reset top 8 to start over")
+            return json.loads(json.dumps(current_next_data, ensure_ascii=False))
+        initialize()
 
-    result1 = current_next_data["player1"]
-    result2 = current_next_data["player2"]
-    p1_score_string = result1["score"]
-    p2_score_string = result2["score"]
-    result1_name = current_next_data["player1"]["name"]
-    result2_name = current_next_data["player2"]["name"]
-    p1_score = 0
-    p2_score = 0
-    if len(p1_score_string) > 0:
-        p1_score = int(p1_score_string)
-    if len(p2_score_string) > 0:
-        p2_score = int(p2_score_string)
-    if p1_score == p2_score:
-        print("Score is tied, cannot proceed to next round!")
-        # Can't update the scores, no winner, return current data
-        return json.loads(json.dumps(current_next_data, ensure_ascii=False))
+        result1 = current_next_data["player1"]
+        result2 = current_next_data["player2"]
+        p1_score_string = result1["score"]
+        p2_score_string = result2["score"]
+        result1_name = current_next_data["player1"]["name"]
+        result2_name = current_next_data["player2"]["name"]
+        p1_score = 0
+        p2_score = 0
+        if len(p1_score_string) > 0:
+            p1_score = int(p1_score_string)
+        if len(p2_score_string) > 0:
+            p2_score = int(p2_score_string)
+        if p1_score == p2_score:
+            print("Score is tied, cannot proceed to next round!")
+            # Can't update the scores, no winner, return current data
+            return json.loads(json.dumps(current_next_data, ensure_ascii=False))
 
-    p1_winner = p1_score > p2_score
-    global global_player_data
-    current_round = current_next_data["currentRound"]
-    if current_round >= 10:
-        return update_final_round(global_player_data, current_next_data, p1_score_string, p2_score_string, current_round)
+        p1_winner = p1_score > p2_score
+        global global_player_data
+        current_round = current_next_data["currentRound"]
+        if current_round >= 10:
+            return update_final_round(global_player_data, current_next_data, p1_score_string, p2_score_string, current_round)
 
-    if p1_winner:
-        update_winner_player_data(global_player_data, result1, current_round)
-    else:
-        update_winner_player_data(global_player_data, result2, current_round)
-
-    global losers_round_progression_mapping
-    if losers_round_progression_mapping.get(current_round) is not None:
         if p1_winner:
-            update_loser_player_data(global_player_data, result2, current_round)
+            update_winner_player_data(global_player_data, result1, current_round)
         else:
-            update_loser_player_data(global_player_data, result1, current_round)
+            update_winner_player_data(global_player_data, result2, current_round)
 
-    # Update result scores in top 8 data
-    key = "r" + str(current_round)
-    if current_next_data["reverseNames"]:
-        global_player_data[key]["p1"]["score"] = p2_score_string
-        global_player_data[key]["p2"]["score"] = p1_score_string
-    else:
-        global_player_data[key]["p1"]["score"] = p1_score_string
-        global_player_data[key]["p2"]["score"] = p2_score_string
+        global losers_round_progression_mapping
+        if losers_round_progression_mapping.get(current_round) is not None:
+            if p1_winner:
+                update_loser_player_data(global_player_data, result2, current_round)
+            else:
+                update_loser_player_data(global_player_data, result1, current_round)
 
-    # Save off top 8 player data to file
-    FileUtils.write_file(player_data_file_name, global_player_data)
-
-    print("Completed round: " + str(current_round))
-    current_next_data["rounds"].remove(current_round)
-
-    # Update the current player info in the player data
-    current_round = get_next_round(current_round)
-    if current_next_data["nextRoundOverride"]:
-        current_round = current_next_data["nextRound"]
+        # Update result scores in top 8 data
         key = "r" + str(current_round)
-        copy_player_data(global_player_data[key]["p1"], current_next_data["nextPlayer1"])
-        copy_player_data(global_player_data[key]["p2"], current_next_data["nextPlayer2"])
-        current_next_data["nextRoundOverride"] = False
+        if current_next_data["reverseNames"]:
+            global_player_data[key]["p1"]["score"] = p2_score_string
+            global_player_data[key]["p2"]["score"] = p1_score_string
+        else:
+            global_player_data[key]["p1"]["score"] = p1_score_string
+            global_player_data[key]["p2"]["score"] = p2_score_string
 
-    # Reset any overrides for next round
-    copy_player_data(current_next_data["nextPlayer1"], current_next_data["player1"])
-    copy_player_data(current_next_data["nextPlayer2"], current_next_data["player2"])
-    next_round = get_next_round(current_round)
-    if next_round <= 10:
-        # Stop processing next rounds if on last round
-        key = "r" + str(next_round)
-        copy_player_data(global_player_data[key]["p1"], current_next_data["nextPlayer1"])
-        copy_player_data(global_player_data[key]["p2"], current_next_data["nextPlayer2"])
-        current_next_data["nextRound"] = next_round
-    else:
-        current_next_data["player2"]["name"] = current_next_data["player2"]["name"] + " [L]"
-        current_next_data["nextPlayer1"]["name"] = ""
-        current_next_data["nextPlayer2"]["name"] = ""
-        current_next_data["nextPlayer1"]["team"] = ""
-        current_next_data["nextPlayer2"]["team"] = ""
-        current_next_data["nextPlayer1"]["country"] = ""
-        current_next_data["nextPlayer2"]["country"] = ""
+        # Save off top 8 player data to file
+        FileUtils.write_file(player_data_file_name, global_player_data)
 
-    add_placeholder_names(next_round)
-    current_next_data["currentRound"] = current_round
-    global roundNamesMap
-    current_round_name = roundNamesMap.get(current_round)
-    current_next_data["currentRoundName"] = current_round_name
-    update_scoreboard_json(current_next_data, result1_name, result2_name, p1_score_string, p2_score_string, current_round_name)
-    current_next_data["reverseNames"] = False
-    FileUtils.write_file(current_next_data_file, current_next_data)
-    return json.loads(json.dumps(current_next_data, ensure_ascii=False))
+        print("Completed round: " + str(current_round))
+        current_next_data["rounds"].remove(current_round)
+
+        # Update the current player info in the player data
+        current_round = get_next_round(current_round)
+        if current_next_data["nextRoundOverride"]:
+            current_round = current_next_data["nextRound"]
+            key = "r" + str(current_round)
+            copy_player_data(global_player_data[key]["p1"], current_next_data["nextPlayer1"])
+            copy_player_data(global_player_data[key]["p2"], current_next_data["nextPlayer2"])
+            current_next_data["nextRoundOverride"] = False
+
+        # Reset any overrides for next round
+        copy_player_data(current_next_data["nextPlayer1"], current_next_data["player1"])
+        copy_player_data(current_next_data["nextPlayer2"], current_next_data["player2"])
+        next_round = get_next_round(current_round)
+        if next_round is not None and next_round <= 10:
+            # Stop processing next rounds if on last round
+            key = "r" + str(next_round)
+            copy_player_data(global_player_data[key]["p1"], current_next_data["nextPlayer1"])
+            copy_player_data(global_player_data[key]["p2"], current_next_data["nextPlayer2"])
+            current_next_data["nextRound"] = next_round
+        else:
+            current_next_data["player2"]["name"] = current_next_data["player2"]["name"] + " [L]"
+            current_next_data["nextPlayer1"]["name"] = ""
+            current_next_data["nextPlayer2"]["name"] = ""
+            current_next_data["nextPlayer1"]["team"] = ""
+            current_next_data["nextPlayer2"]["team"] = ""
+            current_next_data["nextPlayer1"]["country"] = ""
+            current_next_data["nextPlayer2"]["country"] = ""
+
+        add_placeholder_names(next_round)
+        current_next_data["currentRound"] = current_round
+        global roundNamesMap
+        current_round_name = roundNamesMap.get(current_round)
+        current_next_data["currentRoundName"] = current_round_name
+        update_scoreboard_json(current_next_data, result1_name, result2_name, p1_score_string, p2_score_string, current_round_name)
+        current_next_data["reverseNames"] = False
+        FileUtils.write_file(current_next_data_file, current_next_data)
+        return json.loads(json.dumps(current_next_data, ensure_ascii=False))
 
 
 def add_placeholder_names(next_round):
@@ -449,7 +453,7 @@ def update_scoreboard_json(data, result_name_1, result_name_2, result1, result2,
     scoreboard_data["resultplayer2"] = result_name_2
     scoreboard_data["resultscore2"] = result2
     scoreboard_data["nextteam1"] = data["nextPlayer1"]["team"]
-    scoreboard_data["nextteam2"] = data["nextPlayer1"]["team"]
+    scoreboard_data["nextteam2"] = data["nextPlayer2"]["team"]
     scoreboard_data["nextplayer1"] = data["nextPlayer1"]["name"]
     scoreboard_data["nextplayer2"] = data["nextPlayer2"]["name"]
     scoreboard_data["nextcountry1"] = data["nextPlayer1"]["country"]
@@ -486,13 +490,14 @@ def set_next_round_override(override):
     global current_next_data
     global global_player_data
     override_string = str(override)
-    if override not in current_next_data["rounds"]:
-        print("Trying to set a round that's already finished: " + override_string + " Ignoring")
-        return "500"
-    print("Next round override set to: " + override_string)
-    current_next_data["nextRound"] = override
-    current_next_data["nextRoundOverride"] = True
-    FileUtils.write_file(current_next_data_file, current_next_data)
+    with top8_lock:
+        if override not in current_next_data["rounds"]:
+            print("Trying to set a round that's already finished: " + override_string + " Ignoring")
+            return "500"
+        print("Next round override set to: " + override_string)
+        current_next_data["nextRound"] = override
+        current_next_data["nextRoundOverride"] = True
+        FileUtils.write_file(current_next_data_file, current_next_data)
     return "200"
 
 
@@ -507,49 +512,54 @@ def get_next_round(current_round):
 def reset():
     print("Resetting data..")
     global current_next_data
-    current_next_data = copy.deepcopy(defaultCurrentDataJson)
     global global_player_data
-    global_player_data = copy.deepcopy(defaultPlayerData)
-    FileUtils.write_file(player_data_file_name, global_player_data)
-    FileUtils.write_file(current_next_data_file, current_next_data)
+    with top8_lock:
+        current_next_data = copy.deepcopy(defaultCurrentDataJson)
+        global_player_data = copy.deepcopy(defaultPlayerData)
+        FileUtils.write_file(player_data_file_name, global_player_data)
+        FileUtils.write_file(current_next_data_file, current_next_data)
 
 
 def update_current_players_info(scoreboard_json):
     global current_next_data
-    if not current_next_data["started"]:
-        return
-    current_next_data["player1"]["name"] = scoreboard_json["p1Name"]
-    current_next_data["player1"]["team"] = scoreboard_json["p1Team"]
-    current_next_data["player1"]["score"] = scoreboard_json["p1Score"]
-    current_next_data["player1"]["country"] = scoreboard_json["p1Country"]
-    current_next_data["player2"]["name"] = scoreboard_json["p2Name"]
-    current_next_data["player2"]["team"] = scoreboard_json["p2Team"]
-    current_next_data["player2"]["score"] = scoreboard_json["p2Score"]
-    current_next_data["player2"]["country"] = scoreboard_json["p2Country"]
-    FileUtils.write_file(current_next_data_file, current_next_data)
+    with top8_lock:
+        if not current_next_data["started"]:
+            return
+        current_next_data["player1"]["name"] = scoreboard_json["p1Name"]
+        current_next_data["player1"]["team"] = scoreboard_json["p1Team"]
+        current_next_data["player1"]["score"] = scoreboard_json["p1Score"]
+        current_next_data["player1"]["country"] = scoreboard_json["p1Country"]
+        current_next_data["player2"]["name"] = scoreboard_json["p2Name"]
+        current_next_data["player2"]["team"] = scoreboard_json["p2Team"]
+        current_next_data["player2"]["score"] = scoreboard_json["p2Score"]
+        current_next_data["player2"]["country"] = scoreboard_json["p2Country"]
+        FileUtils.write_file(current_next_data_file, current_next_data)
 
 
 def update_next_players_info(scoreboard_json):
     global current_next_data
-    current_next_data["nextPlayer1"]["name"] = scoreboard_json["nextplayer1"]
-    current_next_data["nextPlayer1"]["team"] = scoreboard_json["nextteam1"]
-    current_next_data["nextPlayer2"]["name"] = scoreboard_json["nextplayer2"]
-    current_next_data["nextPlayer2"]["team"] = scoreboard_json["nextteam2"]
-    current_next_data["nextPlayer1"]["country"] = scoreboard_json["nextcountry1"]
-    current_next_data["nextPlayer2"]["country"] = scoreboard_json["nextcountry2"]
-    FileUtils.write_file(current_next_data_file, current_next_data)
+    with top8_lock:
+        current_next_data["nextPlayer1"]["name"] = scoreboard_json["nextplayer1"]
+        current_next_data["nextPlayer1"]["team"] = scoreboard_json["nextteam1"]
+        current_next_data["nextPlayer2"]["name"] = scoreboard_json["nextplayer2"]
+        current_next_data["nextPlayer2"]["team"] = scoreboard_json["nextteam2"]
+        current_next_data["nextPlayer1"]["country"] = scoreboard_json["nextcountry1"]
+        current_next_data["nextPlayer2"]["country"] = scoreboard_json["nextcountry2"]
+        FileUtils.write_file(current_next_data_file, current_next_data)
 
 
 def update_player_info(round_id, player_id, field, value):
     global global_player_data
-    global_player_data[round_id][player_id][field] = value
-    FileUtils.write_file(player_data_file_name, global_player_data)
+    with top8_lock:
+        global_player_data[round_id][player_id][field] = value
+        FileUtils.write_file(player_data_file_name, global_player_data)
 
 
 def set_reverse_names():
     global current_next_data
-    current_next_data["reverseNames"] = not current_next_data["reverseNames"]
-    FileUtils.write_file(current_next_data_file, current_next_data)
+    with top8_lock:
+        current_next_data["reverseNames"] = not current_next_data["reverseNames"]
+        FileUtils.write_file(current_next_data_file, current_next_data)
 
 
 def get_current_next_data():

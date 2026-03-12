@@ -1,18 +1,14 @@
-// Creating a XHR object
-var xhr = new XMLHttpRequest();
-
 function getDataFromServer() {
     fetch('/getdata')
-        .then(function (response) {
-        jsonData = response.json();
-      return jsonData;
-    })
-    .then(function (data) {
-        populateData(data);
-      })
-    .catch(function (err) {
-      console.log('error: ' + err);
-    });
+        .then(function(response) {
+            return response.json();
+        })
+        .then(function(data) {
+            populateData(data);
+        })
+        .catch(function(err) {
+            console.log('error: ' + err);
+        });
 }
 
 function populateData(data) {
@@ -293,10 +289,9 @@ function reversePlayerNames() {
 
 function reverseScores() {
     fetch('/getdata')
-        .then(function (response) {
-        jsonData = response.json();
-      return jsonData;
-    }).then(function (data) {
+        .then(function(response) {
+            return response.json();
+        }).then(function (data) {
         updateElement("form_score_1p", data.p1Score);
         updateElement("form_score_2p", data.p2Score);
         var p1 = document.getElementById("form_score_1p").value;
@@ -426,11 +421,10 @@ function countryDropdown2() {
 
 function nextRound() {
     fetch('/getdata')
-        .then(function (response) {
-        jsonData = response.json();
-      return jsonData;
-    })
-    .then(function (data) {
+        .then(function(response) {
+            return response.json();
+        })
+        .then(function (data) {
         if (compareScores(data)) {
             reportScoresToStartgg(data)
             nextRoundUpdate(data);
@@ -602,110 +596,52 @@ function updateResults() {
 }
 
 function sendJSON() {
-	// open a connection
-	xhr.open("POST", '/updatedatanoscores', true);
-
-	// Set the request header i.e. which type of content you are sending
-	xhr.setRequestHeader("Content-Type", "application/json");
-
-	// Create a state change callback
-	xhr.onreadystatechange = function () {
-		if (xhr.readyState === 4 && xhr.status === 200) {
-			// console.log("Server Okay");
-		}
-	};
-
-	// Set timestamp
 	jsonData.timestamp = Date.now();
-
-	// Converting JSON data to string
-	var data = JSON.stringify(jsonData);
-	// Sending data with the request
-	xhr.send(data);
+	fetch('/updatedatanoscores', {
+		method: 'POST',
+		headers: { 'Content-Type': 'application/json' },
+		body: JSON.stringify(jsonData)
+	}).catch(function(err) { console.log('error: ' + err); });
 }
 
 function sendJsonToEndpoint(endpoint) {
-    sendJsonToEndpointWithCallback(function (){}, endpoint);
-}
-
-function sendJsonDataToEndpoint(data, endpoint) {
-    sendJsonToEndpoint(data, endpoint, "");
+    sendJsonToEndpointWithCallback(function() {}, endpoint);
 }
 
 function sendJsonDataToEndpoint(data, endpoint, message) {
-    // open a connection
-	xhr.open("POST", "../" + endpoint, true);
-
-	// Set the request header i.e. which type of content you are sending
-	xhr.setRequestHeader("Content-Type", "application/json");
-
-    // Handle the response
-    xhr.onreadystatechange = function() {
-        if (xhr.readyState === 4) {  // 4 means request is done
-            if (xhr.status === 200 && message != null && message.trim() != "") {  // 200 means OK
-                alert(message);
-            } else if (xhr.status === 400) {
-                console.log("Bad request. Please check your data.");
-            } else if (xhr.status === 500) {
-                console.log("Server error. Please try again later.");
-            } else {
-                console.log("Something went wrong. Status:", xhr.status);
-            }
+    fetch('/' + endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+    }).then(function(response) {
+        if (response.ok && message != null && message.trim() !== '') {
+            alert(message);
+        } else if (!response.ok) {
+            console.log('Something went wrong. Status:', response.status);
         }
-    };
-
-    // Handle network errors
-    xhr.onerror = function() {
-        console.log("Request failed due to network error.");
-    };
-
-	// Converting JSON data to string
-	var dataToSend = JSON.stringify(data);
-	// Sending data with the request
-	xhr.send(dataToSend);
+    }).catch(function(err) { console.log('error: ' + err); });
 }
 
 function sendJsonToEndpointWithCallback(callback, endpoint) {
-    // open a connection
-	xhr.open("POST", "../" + endpoint, true);
-
-	// Set the request header i.e. which type of content you are sending
-	xhr.setRequestHeader("Content-Type", "application/json");
-
-	// Create a state change callback
-	xhr.onreadystatechange = function () {
-		if (xhr.readyState === 4 && xhr.status === 200) {
-		    callback();
-        }
-	};
-
-	// Set timestamp
 	jsonData.timestamp = Date.now();
-
-	// Converting JSON data to string
-	var data = JSON.stringify(jsonData);
-	// Sending data with the request
-	xhr.send(data);
+	fetch('/' + endpoint, {
+		method: 'POST',
+		headers: { 'Content-Type': 'application/json' },
+		body: JSON.stringify(jsonData)
+	}).then(function(response) {
+		if (response.ok) callback();
+	}).catch(function(err) { console.log('error: ' + err); });
 }
 
 function registerClientForRefresh() {
-    // Open a connection to the server
-    xhr.open("GET", "/registerClientRefresh", true);
-	// Set the request header i.e. which type of content you are sending
-	xhr.setRequestHeader("Content-Type", "application/json");
-
-    // Handle the response from the server
-    xhr.onreadystatechange = function() {
-		if (xhr.readyState === 4 && xhr.status === 200) {
-            // Update the UI with the new notification
-            getDataFromServer();
-            // Send another request to the server
-            registerClientForRefresh();
-        }
-    };
-
-    // Send the request
-    xhr.send();
+    fetch('/registerClientRefresh')
+        .then(function(response) {
+            if (response.ok) {
+                getDataFromServer();
+                registerClientForRefresh();
+            }
+        })
+        .catch(function(err) { console.log('error: ' + err); });
 }
 
 // For pop up dialogue
@@ -781,9 +717,8 @@ function clearLeagueStats() {
 
 function getLeagueDirs() {
     fetch('/getLeagueDirs')
-            .then(function (response) {
-            jsonData = response.json();
-          return jsonData;
+        .then(function(response) {
+            return response.json();
         })
         .then(function (data) {
             leagues = document.getElementById('league_suggestions');
@@ -1037,11 +972,10 @@ function setEventForStats() {
 
 function createEventsWithStatsDropdown() {
     fetch('/getEventsWithStats')
-        .then(function (response) {
-        jsonData = response.json();
-      return jsonData;
-    })
-    .then(function (eventData) {
+        .then(function(response) {
+            return response.json();
+        })
+        .then(function (eventData) {
         // Create the <select> element
         const select = document.getElementById("eventStatsSelect");
         select.innerHTML = '';

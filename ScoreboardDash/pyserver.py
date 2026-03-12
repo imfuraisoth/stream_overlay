@@ -1,4 +1,5 @@
 import json
+import threading
 from io import open
 from flask import Flask, send_from_directory, jsonify
 from flask import request
@@ -73,6 +74,7 @@ replay_utils = ReplayUtils
 character_image_loader = CharacterImageLoader
 previous_matches_cache = TTLCache.SimpleTTLCache(1800)  # 30 minutes TTL
 
+full_data_lock = threading.Lock()
 full_data = FileUtils.read_file(scoreboard_data_file)
 
 
@@ -371,18 +373,19 @@ def reverse_names():
 def get_next_round_data():
     next_round_info = top8.progress_to_next_round()
     global full_data
-    temp = FileUtils.read_file(scoreboard_data_file)
-    player1 = next_round_info["player1"]
-    player2 = next_round_info["player2"]
-    temp["p1Name"] = player1["name"]
-    temp["p2Name"] = player2["name"]
-    temp["p1Team"] = player1["team"]
-    temp["p2Team"] = player2["team"]
-    temp["p1Country"] = player1["country"]
-    temp["p2Country"] = player2["country"]
-    temp["p1Score"] = "0"
-    temp["p2Score"] = "0"
-    full_data = temp
+    with full_data_lock:
+        temp = copy.deepcopy(full_data)
+        player1 = next_round_info["player1"]
+        player2 = next_round_info["player2"]
+        temp["p1Name"] = player1["name"]
+        temp["p2Name"] = player2["name"]
+        temp["p1Team"] = player1["team"]
+        temp["p2Team"] = player2["team"]
+        temp["p1Country"] = player1["country"]
+        temp["p2Country"] = player2["country"]
+        temp["p1Score"] = "0"
+        temp["p2Score"] = "0"
+        full_data = temp
     FileUtils.write_file(scoreboard_data_file, full_data)
     return next_round_info, 200
 
@@ -395,7 +398,8 @@ def update_all_data():
         print("GOT CORRUPT DATA!!!!")
         return "500"
     global full_data
-    full_data = json_data
+    with full_data_lock:
+        full_data = json_data
     add_result_players_to_cache(json_data)
     FileUtils.write_file(scoreboard_data_file, full_data)
     return "200"
@@ -405,14 +409,17 @@ def update_all_data():
 def update_comm_data():
     json_data = request.get_json()
     global full_data
-    if "com1" in json_data:
-        full_data["com1"] = json_data.get("com1", "")
-    if "com2" in json_data:
-        full_data["com2"] = json_data.get("com2", "")
-    if "soc1" in json_data:
-        full_data["soc1"] = json_data.get("soc1", "")
-    if "soc2" in json_data:
-        full_data["soc2"] = json_data.get("soc2", "")
+    with full_data_lock:
+        temp = copy.deepcopy(full_data)
+        if "com1" in json_data:
+            temp["com1"] = json_data.get("com1", "")
+        if "com2" in json_data:
+            temp["com2"] = json_data.get("com2", "")
+        if "soc1" in json_data:
+            temp["soc1"] = json_data.get("soc1", "")
+        if "soc2" in json_data:
+            temp["soc2"] = json_data.get("soc2", "")
+        full_data = temp
     FileUtils.write_file(scoreboard_data_file, full_data)
     return "200"
 
@@ -421,29 +428,30 @@ def update_comm_data():
 def update_data_no_scores():
     global full_data
     json_data = request.get_json()
-    temp = copy.deepcopy(full_data)
-    temp["current_game"] = json_data.get("current_game")
-    temp["p1Name"] = json_data.get("p1Name", "")
-    temp["p2Name"] = json_data.get("p2Name", "")
-    temp["p1Team"] = json_data.get("p1Team", "")
-    temp["p2Team"] = json_data.get("p2Team", "")
-    temp["resultscore1"] = json_data.get("resultscore1", "")
-    temp["resultscore2"] = json_data.get("resultscore2", "")
-    temp["resultplayer1"] = json_data.get("resultplayer1", "")
-    temp["resultplayer2"] = json_data.get("resultplayer2", "")
-    temp["p1Country"] = json_data.get("p1Country", "")
-    temp["p2Country"] = json_data.get("p2Country", "")
-    temp["round"] = json_data.get("round", "")
-    temp["nextplayer1"] = json_data.get("nextplayer1", "")
-    temp["nextplayer2"] = json_data.get("nextplayer2", "")
-    temp["nextteam1"] = json_data.get("nextteam1", "")
-    temp["nextteam2"] = json_data.get("nextteam2", "")
-    temp["nextcountry1"] = json_data.get("nextcountry1", "")
-    temp["nextcountry2"] = json_data.get("nextcountry2", "")
-    temp["maxScore"] = json_data.get("maxScore", "99")
-    temp["timestamp"] = json_data.get("timestamp")
-    temp["nextRound"] = json_data.get("nextRound", temp["round"])
-    full_data = temp
+    with full_data_lock:
+        temp = copy.deepcopy(full_data)
+        temp["current_game"] = json_data.get("current_game")
+        temp["p1Name"] = json_data.get("p1Name", "")
+        temp["p2Name"] = json_data.get("p2Name", "")
+        temp["p1Team"] = json_data.get("p1Team", "")
+        temp["p2Team"] = json_data.get("p2Team", "")
+        temp["resultscore1"] = json_data.get("resultscore1", "")
+        temp["resultscore2"] = json_data.get("resultscore2", "")
+        temp["resultplayer1"] = json_data.get("resultplayer1", "")
+        temp["resultplayer2"] = json_data.get("resultplayer2", "")
+        temp["p1Country"] = json_data.get("p1Country", "")
+        temp["p2Country"] = json_data.get("p2Country", "")
+        temp["round"] = json_data.get("round", "")
+        temp["nextplayer1"] = json_data.get("nextplayer1", "")
+        temp["nextplayer2"] = json_data.get("nextplayer2", "")
+        temp["nextteam1"] = json_data.get("nextteam1", "")
+        temp["nextteam2"] = json_data.get("nextteam2", "")
+        temp["nextcountry1"] = json_data.get("nextcountry1", "")
+        temp["nextcountry2"] = json_data.get("nextcountry2", "")
+        temp["maxScore"] = json_data.get("maxScore", "99")
+        temp["timestamp"] = json_data.get("timestamp")
+        temp["nextRound"] = json_data.get("nextRound", temp["round"])
+        full_data = temp
     FileUtils.write_file(scoreboard_data_file, full_data)
     return "200"
 
@@ -452,9 +460,10 @@ def update_data_no_scores():
 def update_p1_score():
     json_data = request.get_json()
     global full_data
-    temp = copy.deepcopy(full_data)
-    temp["p1Score"] = json_data.get("p1Score", "0")
-    full_data = temp
+    with full_data_lock:
+        temp = copy.deepcopy(full_data)
+        temp["p1Score"] = json_data.get("p1Score", "0")
+        full_data = temp
     FileUtils.write_file(scoreboard_data_file, full_data)
     top8.update_current_players_info(full_data)
     return "200"
@@ -464,9 +473,10 @@ def update_p1_score():
 def update_p2_score():
     json_data = request.get_json()
     global full_data
-    temp = copy.deepcopy(full_data)
-    temp["p2Score"] = json_data.get("p2Score", "0")
-    full_data = temp
+    with full_data_lock:
+        temp = copy.deepcopy(full_data)
+        temp["p2Score"] = json_data.get("p2Score", "0")
+        full_data = temp
     FileUtils.write_file(scoreboard_data_file, full_data)
     top8.update_current_players_info(full_data)
     return "200"
@@ -476,10 +486,11 @@ def update_p2_score():
 def update_current_scores():
     json_data = request.get_json()
     global full_data
-    temp = copy.deepcopy(full_data)
-    temp["p1Score"] = json_data.get("p1Score", "0")
-    temp["p2Score"] = json_data.get("p2Score", "0")
-    full_data = temp
+    with full_data_lock:
+        temp = copy.deepcopy(full_data)
+        temp["p1Score"] = json_data.get("p1Score", "0")
+        temp["p2Score"] = json_data.get("p2Score", "0")
+        full_data = temp
     FileUtils.write_file(scoreboard_data_file, full_data)
     top8.update_current_players_info(full_data)
     return "200"
@@ -489,15 +500,16 @@ def update_current_scores():
 def update_current_players():
     global full_data
     json_data = request.get_json()
-    temp = copy.deepcopy(full_data)
-    temp["p1Name"] = json_data["p1Name"]
-    temp["p2Name"] = json_data["p2Name"]
-    temp["p1Team"] = json_data["p1Team"]
-    temp["p2Team"] = json_data["p2Team"]
-    temp["p1Country"] = json_data["p1Country"]
-    temp["p2Country"] = json_data["p2Country"]
-    temp["round"] = json_data["round"]
-    full_data = temp
+    with full_data_lock:
+        temp = copy.deepcopy(full_data)
+        temp["p1Name"] = json_data["p1Name"]
+        temp["p2Name"] = json_data["p2Name"]
+        temp["p1Team"] = json_data["p1Team"]
+        temp["p2Team"] = json_data["p2Team"]
+        temp["p1Country"] = json_data["p1Country"]
+        temp["p2Country"] = json_data["p2Country"]
+        temp["round"] = json_data["round"]
+        full_data = temp
     FileUtils.write_file(scoreboard_data_file, full_data)
     top8.update_current_players_info(full_data)
     return "200"
@@ -507,12 +519,13 @@ def update_current_players():
 def update_results():
     global full_data
     json_data = request.get_json()
-    temp = copy.deepcopy(full_data)
-    temp["resultscore1"] = json_data["resultscore1"]
-    temp["resultscore2"] = json_data["resultscore2"]
-    temp["resultplayer1"] = json_data["resultplayer1"]
-    temp["resultplayer2"] = json_data["resultplayer2"]
-    full_data = temp
+    with full_data_lock:
+        temp = copy.deepcopy(full_data)
+        temp["resultscore1"] = json_data["resultscore1"]
+        temp["resultscore2"] = json_data["resultscore2"]
+        temp["resultplayer1"] = json_data["resultplayer1"]
+        temp["resultplayer2"] = json_data["resultplayer2"]
+        full_data = temp
     FileUtils.write_file(scoreboard_data_file, full_data)
     return "200"
 
@@ -521,14 +534,15 @@ def update_results():
 def update_next_players():
     global full_data
     json_data = request.get_json()
-    temp = copy.deepcopy(full_data)
-    temp["nextplayer1"] = json_data["nextplayer1"]
-    temp["nextplayer2"] = json_data["nextplayer2"]
-    temp["nextteam1"] = json_data["nextteam1"]
-    temp["nextteam2"] = json_data["nextteam2"]
-    temp["nextcountry1"] = json_data["nextcountry1"]
-    temp["nextcountry2"] = json_data["nextcountry2"]
-    full_data = temp
+    with full_data_lock:
+        temp = copy.deepcopy(full_data)
+        temp["nextplayer1"] = json_data["nextplayer1"]
+        temp["nextplayer2"] = json_data["nextplayer2"]
+        temp["nextteam1"] = json_data["nextteam1"]
+        temp["nextteam2"] = json_data["nextteam2"]
+        temp["nextcountry1"] = json_data["nextcountry1"]
+        temp["nextcountry2"] = json_data["nextcountry2"]
+        full_data = temp
     FileUtils.write_file(scoreboard_data_file, full_data)
     top8.update_next_players_info(full_data)
     return "200"
@@ -657,17 +671,19 @@ def move_files(src_dir, dst_dir):
 
 def add_to_score(score_key):
     global full_data
-    temp = copy.deepcopy(full_data)
-    temp[score_key] = str(int(full_data[score_key]) + 1)
-    full_data = temp
+    with full_data_lock:
+        temp = copy.deepcopy(full_data)
+        temp[score_key] = str(int(temp[score_key]) + 1)
+        full_data = temp
     FileUtils.write_file(scoreboard_data_file, full_data)
 
 
 def sub_to_score(score_key):
     global full_data
-    temp = copy.deepcopy(full_data)
-    temp[score_key] = str(max(int(full_data[score_key]) - 1, 0))
-    full_data = temp
+    with full_data_lock:
+        temp = copy.deepcopy(full_data)
+        temp[score_key] = str(max(int(temp[score_key]) - 1, 0))
+        full_data = temp
     FileUtils.write_file(scoreboard_data_file, full_data)
 
 
@@ -675,32 +691,34 @@ def update_player_name(player_name_key, team_name_key, file_name, player_id):
     save_previous_results()
     player_info = get_player_info_from_id_map(player_id)
     global full_data
-    temp = copy.deepcopy(full_data)
-    temp[player_name_key] = player_info[0]
-    if len(player_info) > 1:
-        # update team name
-        temp[team_name_key] = player_info[1]
+    with full_data_lock:
+        temp = copy.deepcopy(full_data)
+        temp[player_name_key] = player_info[0]
+        if len(player_info) > 1:
+            # update team name
+            temp[team_name_key] = player_info[1]
 
-    # Reset the scores
-    temp["p1Score"] = "0"
-    temp["p2Score"] = "0"
-    full_data = temp
+        # Reset the scores
+        temp["p1Score"] = "0"
+        temp["p2Score"] = "0"
+        full_data = temp
     write_to_file(file_name, player_name_key, full_data)
     FileUtils.write_file(scoreboard_data_file, full_data)
 
 
 def save_previous_results():
     global full_data
-    write_to_file(result1, "p1Score", full_data)
-    write_to_file(result2, "p2Score", full_data)
-    write_to_file(result_name_1, "p1Name", full_data)
-    write_to_file(result_name_2, "p2Name", full_data)
-    temp = copy.deepcopy(full_data)
-    temp["resultscore1"] = full_data["p1Score"]
-    temp["resultscore2"] = full_data["p2Score"]
-    temp["resultplayer1"] = full_data["p1Name"]
-    temp["resultplayer2"] = full_data["p2Name"]
-    full_data = temp
+    with full_data_lock:
+        write_to_file(result1, "p1Score", full_data)
+        write_to_file(result2, "p2Score", full_data)
+        write_to_file(result_name_1, "p1Name", full_data)
+        write_to_file(result_name_2, "p2Name", full_data)
+        temp = copy.deepcopy(full_data)
+        temp["resultscore1"] = temp["p1Score"]
+        temp["resultscore2"] = temp["p2Score"]
+        temp["resultplayer1"] = temp["p1Name"]
+        temp["resultplayer2"] = temp["p2Name"]
+        full_data = temp
     FileUtils.write_file(scoreboard_data_file, full_data)
 
 
