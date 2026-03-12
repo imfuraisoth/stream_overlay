@@ -1,6 +1,7 @@
 import json
 from io import open
 import copy
+from scripts.FileUtils import FileUtils
 
 defaultCurrentDataJson = {
     "player1": {
@@ -253,8 +254,7 @@ def initialize():
     started = True
     current_next_data["started"] = started
     update_scoreboard_json(current_next_data, "", "", "", "", current_next_data["currentRoundName"])
-    with open(current_next_data_file, 'w', encoding="utf-8") as json_file:
-        json_file.write(json.dumps(current_next_data, ensure_ascii=False))
+    FileUtils.write_file(current_next_data_file, current_next_data)
     print("Top 8 started!")
 
 
@@ -325,9 +325,7 @@ def progress_to_next_round():
         global_player_data[key]["p2"]["score"] = p2_score_string
 
     # Save off top 8 player data to file
-    with open(player_data_file_name, 'w', encoding="utf-8") as json_file:
-        data_to_write = json.dumps(global_player_data, ensure_ascii=False)
-        json_file.write(data_to_write)
+    FileUtils.write_file(player_data_file_name, global_player_data)
 
     print("Completed round: " + str(current_round))
     current_next_data["rounds"].remove(current_round)
@@ -367,8 +365,7 @@ def progress_to_next_round():
     current_next_data["currentRoundName"] = current_round_name
     update_scoreboard_json(current_next_data, result1_name, result2_name, p1_score_string, p2_score_string, current_round_name)
     current_next_data["reverseNames"] = False
-    with open(current_next_data_file, 'w', encoding="utf-8") as json_file:
-        json_file.write(json.dumps(current_next_data, ensure_ascii=False))
+    FileUtils.write_file(current_next_data_file, current_next_data)
     return json.loads(json.dumps(current_next_data, ensure_ascii=False))
 
 
@@ -432,11 +429,8 @@ def update_final_round(global_player_round_data, current_round_data, p1_score, p
     current_round_name = roundNamesMap.get(current_round)
     current_next_data["currentRoundName"] = current_round_name
     update_scoreboard_json(current_next_data, p1_name, p2_name, str(p1_score), str(p2_score), current_round_name)
-    with open(player_data_file_name, 'w', encoding="utf-8") as json_file:
-        data_to_write = json.dumps(global_player_round_data, ensure_ascii=False)
-        json_file.write(data_to_write)
-    with open(current_next_data_file, 'w', encoding="utf-8") as json_file:
-        json_file.write(json.dumps(current_next_data, ensure_ascii=False))
+    FileUtils.write_file(player_data_file_name, global_player_round_data)
+    FileUtils.write_file(current_next_data_file, current_next_data)
     return json.loads(json.dumps(current_round_data, ensure_ascii=False))
 
 
@@ -461,8 +455,7 @@ def update_scoreboard_json(data, result_name_1, result_name_2, result1, result2,
     scoreboard_data["nextcountry1"] = data["nextPlayer1"]["country"]
     scoreboard_data["nextcountry2"] = data["nextPlayer2"]["country"]
     scoreboard_data["round"] = current_round_name
-    with open(scoreboard_json_file, 'w', encoding="utf-8") as json_file:
-        json_file.write(json.dumps(scoreboard_data, ensure_ascii=False))
+    FileUtils.write_file(scoreboard_json_file, scoreboard_data)
 
 
 def copy_player_data(source, dest):
@@ -499,8 +492,7 @@ def set_next_round_override(override):
     print("Next round override set to: " + override_string)
     current_next_data["nextRound"] = override
     current_next_data["nextRoundOverride"] = True
-    with open(current_next_data_file, 'w', encoding="utf-8") as json_file:
-        json_file.write(json.dumps(current_next_data, ensure_ascii=False))
+    FileUtils.write_file(current_next_data_file, current_next_data)
     return "200"
 
 
@@ -518,10 +510,8 @@ def reset():
     current_next_data = copy.deepcopy(defaultCurrentDataJson)
     global global_player_data
     global_player_data = copy.deepcopy(defaultPlayerData)
-    with open(player_data_file_name, 'w', encoding="utf-8") as json_file:
-        json_file.write(json.dumps(global_player_data, ensure_ascii=False))
-    with open(current_next_data_file, 'w', encoding="utf-8") as json_file:
-        json_file.write(json.dumps(current_next_data, ensure_ascii=False))
+    FileUtils.write_file(player_data_file_name, global_player_data)
+    FileUtils.write_file(current_next_data_file, current_next_data)
 
 
 def update_current_players_info(scoreboard_json):
@@ -536,8 +526,7 @@ def update_current_players_info(scoreboard_json):
     current_next_data["player2"]["team"] = scoreboard_json["p2Team"]
     current_next_data["player2"]["score"] = scoreboard_json["p2Score"]
     current_next_data["player2"]["country"] = scoreboard_json["p2Country"]
-    with open(current_next_data_file, 'w', encoding="utf-8") as json_file:
-        json_file.write(json.dumps(current_next_data, ensure_ascii=False))
+    FileUtils.write_file(current_next_data_file, current_next_data)
 
 
 def update_next_players_info(scoreboard_json):
@@ -548,22 +537,19 @@ def update_next_players_info(scoreboard_json):
     current_next_data["nextPlayer2"]["team"] = scoreboard_json["nextteam2"]
     current_next_data["nextPlayer1"]["country"] = scoreboard_json["nextcountry1"]
     current_next_data["nextPlayer2"]["country"] = scoreboard_json["nextcountry2"]
-    with open(current_next_data_file, 'w', encoding="utf-8") as json_file:
-        json_file.write(json.dumps(current_next_data, ensure_ascii=False))
+    FileUtils.write_file(current_next_data_file, current_next_data)
 
 
 def update_player_info(round_id, player_id, field, value):
     global global_player_data
     global_player_data[round_id][player_id][field] = value
-    with open(player_data_file_name, 'w', encoding="utf-8") as json_file:
-        json_file.write(json.dumps(global_player_data, ensure_ascii=False))
+    FileUtils.write_file(player_data_file_name, global_player_data)
 
 
 def set_reverse_names():
     global current_next_data
     current_next_data["reverseNames"] = not current_next_data["reverseNames"]
-    with open(current_next_data_file, 'w', encoding="utf-8") as json_file:
-        json_file.write(json.dumps(current_next_data, ensure_ascii=False))
+    FileUtils.write_file(current_next_data_file, current_next_data)
 
 
 def get_current_next_data():

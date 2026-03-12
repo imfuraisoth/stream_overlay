@@ -407,6 +407,7 @@ function resetAll() {
 	jsonData.maxScore = "";
 	jsonData.round = "Casuals";
 	jsonData.nextRound = "Casuals";
+	jsonData.current_game = "";
 	updateCurrentPlayerDisplay();
 	sendJsonToEndpoint("updatealldata");
 }
@@ -495,6 +496,10 @@ function nextRoundUpdate(data) {
 	jsonData.resultscore2 = data.p2Score;
 	jsonData.resultplayer1 = data.p1Name;
 	jsonData.resultplayer2 = data.p2Name;
+	jsonData.current_game = data.current_game;
+	if (jsonData.current_game == undefined || jsonData.current_game === "") {
+	    alert("GOT EMPTY CURRENT GAME");
+	}
     jsonData.com1 = data.com1;
     jsonData.com2 = data.com2;
     jsonData.soc1 = data.soc1;
@@ -1106,10 +1111,57 @@ function clearNextPlayers(event) {
     sendJsonToEndpoint("clearPlayersList");
 }
 
+function updateCurrentGame() {
+    jsonData["current_game"] = document.getElementById('gameSelect').value;
+    sendJSON();
+}
+
+function getAllGames() {
+    fetch('/getAllGameImageDir')
+        .then(function (response) {
+            gamesData = response.json();
+            return gamesData;
+        }).then(function (gamesData) {
+                  var games = document.getElementById('gameSelect');
+                  if (gamesData.game_list.length === 0) {
+                      // Clear all options from the datalist
+                      games.innerHTML = '';
+                      return;
+                  }
+
+                  // Clear all options from the nextPlaySuggestions
+                  games.innerHTML = '';
+                  const option1 = document.createElement('option');
+                  option1.textContent = "Select Game";
+                  option1.selected = true;
+                  option1.disabled = true;
+                  games.appendChild(option1);
+                  // Filter and add suggestions to next player list
+                  var currentGame = gamesData.current_game;
+                  gamesData.game_list
+                    .slice() // optional: avoids mutating the original array
+                    .sort((a, b) => a.localeCompare(b))
+                    .forEach(game => {
+                      const option = document.createElement('option');
+                      option.value = game;
+                      if (game === currentGame) {
+                        option.selected = true;
+                      }
+                      option.textContent = game;
+                      option.style.color = "black";
+                      games.appendChild(option);
+                  });
+              })
+              .catch(function (err) {
+                    console.log('error: ' + err);
+                  });
+}
+
 populateCountrySelectDropDown();
 getDataFromServer();
 getStartggInfo();
 createEventsWithStatsDropdown();
 addEventListenersForNextRound('form_next_round_name_1p');
 addEventListenersForNextRound('form_next_round_name_2p');
+getAllGames();
 registerClientForRefresh();

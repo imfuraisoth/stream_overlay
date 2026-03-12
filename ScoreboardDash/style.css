@@ -192,7 +192,7 @@ a, a:hover, a:visited, a:active {
 	justify-content: center;
 	width: 100%;
 	padding: 15px 0px;
-	border: 1px solid black;
+	border-bottom: 1px solid black;
 }
 .header-type {
 	margin-bottom: 10px;
@@ -406,7 +406,17 @@ a, a:hover, a:visited, a:active {
 	flex: 0.2;
 	flex-direction: column;
 	align-items: center;
-	border: 1px solid black;
+	border-bottom: 1px solid black;
+	padding: 12px 0px;
+	padding-bottom: 20px;
+}
+
+.gameContainer {
+	display: flex;
+	flex: 0.2;
+	flex-direction: column;
+	align-items: center;
+	border-bottom: 1px solid black;
 	padding: 12px 0px;
 	padding-bottom: 20px;
 }
@@ -1660,6 +1670,15 @@ a, a:hover, a:visited, a:active {
     shape-rendering: auto
     color: black;
 	width: 200px;
+    background-color: #ffffff !important;
+}
+#gameSelect {
+    fill: rgba(255,255,255,1);
+    stroke: rgba(112,112,112,1);
+    margin-top: 3px;
+    shape-rendering: auto
+    color: black;
+	width: 150px;
     background-color: #ffffff !important;
 }
 #dropdown_country_next1 {

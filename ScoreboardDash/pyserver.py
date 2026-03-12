@@ -14,12 +14,15 @@ import socket
 import os
 import webbrowser
 import shutil
+import copy
 from datetime import datetime
 from scripts import PlayerStats
 from scripts import TTLCache
 from scripts import ReplayUtils
 from scripts import CharacterImageLoader
+from scripts.FileUtils import FileUtils
 from playerinfo import PlayerStatsDB
+
 
 # Get today's date in YYYY-MM-DD format
 today_date = datetime.today().strftime('%Y-%m-%d')
@@ -70,13 +73,7 @@ replay_utils = ReplayUtils
 character_image_loader = CharacterImageLoader
 previous_matches_cache = TTLCache.SimpleTTLCache(1800)  # 30 minutes TTL
 
-
-def read_file(file_name):
-    with open(file_name, "r", encoding="utf-8") as json_file:
-        return json.load(json_file)
-
-
-full_data = read_file(scoreboard_data_file)
+full_data = FileUtils.read_file(scoreboard_data_file)
 
 
 # Serve your webpage files from the same directory
@@ -110,7 +107,7 @@ def register_client_refresh():
 
 @api.route('/getdata', methods=['GET'])
 def get_data():
-    return json.dumps(read_file(scoreboard_data_file), ensure_ascii=False), 200
+    return json.dumps(FileUtils.read_file(scoreboard_data_file), ensure_ascii=False), 200
 
 
 @api.route('/getTop8PlayerData', methods=['GET'])
@@ -131,34 +128,32 @@ def reset_top8_data():
 
 @api.route('/getCommentators', methods=['GET'])
 def get_commentators():
-    return json.dumps(read_file(commentators_file), ensure_ascii=False), 200
+    return json.dumps(FileUtils.read_file(commentators_file), ensure_ascii=False), 200
 
 
 @api.route('/addCommentator', methods=['POST'])
 def add_commentator():
     commentator_data = request.get_json()
-    commentators = read_file(commentators_file)
+    commentators = FileUtils.read_file(commentators_file)
     commentators[commentator_data.get("name")] = commentator_data
-    with open(commentators_file, 'w', encoding="utf-8") as json_file:
-        json_file.write(json.dumps(commentators))
+    FileUtils.write_file(commentators_file, commentators)
     return "200"
 
 
 @api.route('/deleteCommentators', methods=['POST'])
 def delete_commentator():
     commentator_names = request.get_json()
-    commentators = read_file(commentators_file)
+    commentators = FileUtils.read_file(commentators_file)
     for name in commentator_names:
         del commentators[name]
-    with open(commentators_file, 'w', encoding="utf-8") as json_file:
-        json_file.write(json.dumps(commentators))
+    FileUtils.write_file(commentators_file, commentators)
     return "200"
 
 
 @api.route('/getNextPlayers', methods=['GET'])
 def get_next_players():
     global full_data
-    full_data = read_file(scoreboard_data_file)
+    full_data = FileUtils.read_file(scoreboard_data_file)
     current_player_1 = full_data["p1Name"]
     current_player_2 = full_data["p2Name"]
     return startgg_client.get_next_players(current_player_1, current_player_2, previous_matches_cache), 200
@@ -273,8 +268,15 @@ def get_all_events():
 
 @api.route('/getAllGameImageDir', methods=['GET'])
 def get_all_game_image_dir():
-    global character_image_loader
-    return jsonify(character_image_loader.list_games()), 200
+    global character_image_loader, full_data
+    current_game = full_data.get("current_game")
+    if not current_game:
+        current_game = ""
+    result = {
+        "current_game": current_game,
+        "game_list": character_image_loader.list_games()
+    }
+    return jsonify(result), 200
 
 
 @api.route('/getCharacterImages', methods=['GET'])
@@ -369,30 +371,33 @@ def reverse_names():
 def get_next_round_data():
     next_round_info = top8.progress_to_next_round()
     global full_data
-    full_data = read_file(scoreboard_data_file)
+    temp = FileUtils.read_file(scoreboard_data_file)
     player1 = next_round_info["player1"]
     player2 = next_round_info["player2"]
-    full_data["p1Name"] = player1["name"]
-    full_data["p2Name"] = player2["name"]
-    full_data["p1Team"] = player1["team"]
-    full_data["p2Team"] = player2["team"]
-    full_data["p1Country"] = player1["country"]
-    full_data["p2Country"] = player2["country"]
-    full_data["p1Score"] = "0"
-    full_data["p2Score"] = "0"
-    with open(scoreboard_data_file, 'w', encoding="utf-8") as json_file:
-        json_file.write(json.dumps(full_data))
+    temp["p1Name"] = player1["name"]
+    temp["p2Name"] = player2["name"]
+    temp["p1Team"] = player1["team"]
+    temp["p2Team"] = player2["team"]
+    temp["p1Country"] = player1["country"]
+    temp["p2Country"] = player2["country"]
+    temp["p1Score"] = "0"
+    temp["p2Score"] = "0"
+    full_data = temp
+    FileUtils.write_file(scoreboard_data_file, full_data)
     return next_round_info, 200
 
 
 @api.route('/updatealldata', methods=['POST'])
 def update_all_data():
     json_data = request.get_json()
+    if json_data.get("current_game") is None:
+        print(json.dumps(json_data))
+        print("GOT CORRUPT DATA!!!!")
+        return "500"
     global full_data
     full_data = json_data
     add_result_players_to_cache(json_data)
-    with open(scoreboard_data_file, 'w', encoding="utf-8") as json_file:
-        json_file.write(json.dumps(full_data))
+    FileUtils.write_file(scoreboard_data_file, full_data)
     return "200"
 
 
@@ -408,8 +413,7 @@ def update_comm_data():
         full_data["soc1"] = json_data.get("soc1", "")
     if "soc2" in json_data:
         full_data["soc2"] = json_data.get("soc2", "")
-    with open(scoreboard_data_file, 'w', encoding="utf-8") as json_file:
-        json_file.write(json.dumps(full_data))
+    FileUtils.write_file(scoreboard_data_file, full_data)
     return "200"
 
 
@@ -417,38 +421,41 @@ def update_comm_data():
 def update_data_no_scores():
     global full_data
     json_data = request.get_json()
-    full_data["p1Name"] = json_data.get("p1Name", "")
-    full_data["p2Name"] = json_data.get("p2Name", "")
-    full_data["p1Team"] = json_data.get("p1Team", "")
-    full_data["p2Team"] = json_data.get("p2Team", "")
-    full_data["resultscore1"] = json_data.get("resultscore1", "")
-    full_data["resultscore2"] = json_data.get("resultscore2", "")
-    full_data["resultplayer1"] = json_data.get("resultplayer1", "")
-    full_data["resultplayer2"] = json_data.get("resultplayer2", "")
-    full_data["p1Country"] = json_data.get("p1Country", "")
-    full_data["p2Country"] = json_data.get("p2Country", "")
-    full_data["round"] = json_data.get("round", "")
-    full_data["nextplayer1"] = json_data.get("nextplayer1", "")
-    full_data["nextplayer2"] = json_data.get("nextplayer2", "")
-    full_data["nextteam1"] = json_data.get("nextteam1", "")
-    full_data["nextteam2"] = json_data.get("nextteam2", "")
-    full_data["nextcountry1"] = json_data.get("nextcountry1", "")
-    full_data["nextcountry2"] = json_data.get("nextcountry2", "")
-    full_data["maxScore"] = json_data.get("maxScore", "99")
-    full_data["timestamp"] = json_data.get("timestamp")
-    full_data["nextRound"] = json_data.get("nextRound", full_data["round"])
-    with open(scoreboard_data_file, 'w', encoding="utf-8") as json_file:
-        json_file.write(json.dumps(full_data))
+    temp = copy.deepcopy(full_data)
+    temp["current_game"] = json_data.get("current_game")
+    temp["p1Name"] = json_data.get("p1Name", "")
+    temp["p2Name"] = json_data.get("p2Name", "")
+    temp["p1Team"] = json_data.get("p1Team", "")
+    temp["p2Team"] = json_data.get("p2Team", "")
+    temp["resultscore1"] = json_data.get("resultscore1", "")
+    temp["resultscore2"] = json_data.get("resultscore2", "")
+    temp["resultplayer1"] = json_data.get("resultplayer1", "")
+    temp["resultplayer2"] = json_data.get("resultplayer2", "")
+    temp["p1Country"] = json_data.get("p1Country", "")
+    temp["p2Country"] = json_data.get("p2Country", "")
+    temp["round"] = json_data.get("round", "")
+    temp["nextplayer1"] = json_data.get("nextplayer1", "")
+    temp["nextplayer2"] = json_data.get("nextplayer2", "")
+    temp["nextteam1"] = json_data.get("nextteam1", "")
+    temp["nextteam2"] = json_data.get("nextteam2", "")
+    temp["nextcountry1"] = json_data.get("nextcountry1", "")
+    temp["nextcountry2"] = json_data.get("nextcountry2", "")
+    temp["maxScore"] = json_data.get("maxScore", "99")
+    temp["timestamp"] = json_data.get("timestamp")
+    temp["nextRound"] = json_data.get("nextRound", temp["round"])
+    full_data = temp
+    FileUtils.write_file(scoreboard_data_file, full_data)
     return "200"
 
 
 @api.route('/updateP1score', methods=['POST'])
 def update_p1_score():
     json_data = request.get_json()
-
-    full_data["p1Score"] = json_data.get("p1Score", "0")
-    with open(scoreboard_data_file, 'w', encoding="utf-8") as json_file:
-        json_file.write(json.dumps(full_data))
+    global full_data
+    temp = copy.deepcopy(full_data)
+    temp["p1Score"] = json_data.get("p1Score", "0")
+    full_data = temp
+    FileUtils.write_file(scoreboard_data_file, full_data)
     top8.update_current_players_info(full_data)
     return "200"
 
@@ -456,10 +463,11 @@ def update_p1_score():
 @api.route('/updateP2score', methods=['POST'])
 def update_p2_score():
     json_data = request.get_json()
-
-    full_data["p2Score"] = json_data.get("p2Score", "0")
-    with open(scoreboard_data_file, 'w', encoding="utf-8") as json_file:
-        json_file.write(json.dumps(full_data))
+    global full_data
+    temp = copy.deepcopy(full_data)
+    temp["p2Score"] = json_data.get("p2Score", "0")
+    full_data = temp
+    FileUtils.write_file(scoreboard_data_file, full_data)
     top8.update_current_players_info(full_data)
     return "200"
 
@@ -467,53 +475,61 @@ def update_p2_score():
 @api.route('/updateCurrentScore', methods=['POST'])
 def update_current_scores():
     json_data = request.get_json()
-    full_data["p1Score"] = json_data.get("p1Score", "0")
-    full_data["p2Score"] = json_data.get("p2Score", "0")
-    with open(scoreboard_data_file, 'w', encoding="utf-8") as json_file:
-        json_file.write(json.dumps(full_data))
+    global full_data
+    temp = copy.deepcopy(full_data)
+    temp["p1Score"] = json_data.get("p1Score", "0")
+    temp["p2Score"] = json_data.get("p2Score", "0")
+    full_data = temp
+    FileUtils.write_file(scoreboard_data_file, full_data)
     top8.update_current_players_info(full_data)
     return "200"
 
 
 @api.route('/updateCurrentPlayers', methods=['POST'])
 def update_current_players():
+    global full_data
     json_data = request.get_json()
-    full_data["p1Name"] = json_data["p1Name"]
-    full_data["p2Name"] = json_data["p2Name"]
-    full_data["p1Team"] = json_data["p1Team"]
-    full_data["p2Team"] = json_data["p2Team"]
-    full_data["p1Country"] = json_data["p1Country"]
-    full_data["p2Country"] = json_data["p2Country"]
-    full_data["round"] = json_data["round"]
-    with open(scoreboard_data_file, 'w', encoding="utf-8") as json_file:
-        json_file.write(json.dumps(full_data))
+    temp = copy.deepcopy(full_data)
+    temp["p1Name"] = json_data["p1Name"]
+    temp["p2Name"] = json_data["p2Name"]
+    temp["p1Team"] = json_data["p1Team"]
+    temp["p2Team"] = json_data["p2Team"]
+    temp["p1Country"] = json_data["p1Country"]
+    temp["p2Country"] = json_data["p2Country"]
+    temp["round"] = json_data["round"]
+    full_data = temp
+    FileUtils.write_file(scoreboard_data_file, full_data)
     top8.update_current_players_info(full_data)
     return "200"
 
 
 @api.route('/updateResults', methods=['POST'])
 def update_results():
+    global full_data
     json_data = request.get_json()
-    full_data["resultscore1"] = json_data["resultscore1"]
-    full_data["resultscore2"] = json_data["resultscore2"]
-    full_data["resultplayer1"] = json_data["resultplayer1"]
-    full_data["resultplayer2"] = json_data["resultplayer2"]
-    with open(scoreboard_data_file, 'w', encoding="utf-8") as json_file:
-        json_file.write(json.dumps(full_data))
+    temp = copy.deepcopy(full_data)
+    temp["resultscore1"] = json_data["resultscore1"]
+    temp["resultscore2"] = json_data["resultscore2"]
+    temp["resultplayer1"] = json_data["resultplayer1"]
+    temp["resultplayer2"] = json_data["resultplayer2"]
+    full_data = temp
+    FileUtils.write_file(scoreboard_data_file, full_data)
     return "200"
 
 
 @api.route('/updateNextPlayers', methods=['POST'])
 def update_next_players():
+    global full_data
     json_data = request.get_json()
-    full_data["nextplayer1"] = json_data["nextplayer1"]
-    full_data["nextplayer2"] = json_data["nextplayer2"]
-    full_data["nextteam1"] = json_data["nextteam1"]
-    full_data["nextteam2"] = json_data["nextteam2"]
-    full_data["nextcountry1"] = json_data["nextcountry1"]
-    full_data["nextcountry2"] = json_data["nextcountry2"]
-    with open(scoreboard_data_file, 'w', encoding="utf-8") as json_file:
-        json_file.write(json.dumps(full_data))
+    temp = copy.deepcopy(full_data)
+    temp["nextplayer1"] = json_data["nextplayer1"]
+    temp["nextplayer2"] = json_data["nextplayer2"]
+    temp["nextteam1"] = json_data["nextteam1"]
+    temp["nextteam2"] = json_data["nextteam2"]
+    temp["nextcountry1"] = json_data["nextcountry1"]
+    temp["nextcountry2"] = json_data["nextcountry2"]
+    full_data = temp
+    FileUtils.write_file(scoreboard_data_file, full_data)
     top8.update_next_players_info(full_data)
     return "200"
 
@@ -640,44 +656,52 @@ def move_files(src_dir, dst_dir):
 
 
 def add_to_score(score_key):
-    full_data[score_key] = str(int(full_data[score_key]) + 1)
-    with open(scoreboard_data_file, 'w', encoding="utf-8") as json_file:
-        json_file.write(json.dumps(full_data, ensure_ascii=False))
+    global full_data
+    temp = copy.deepcopy(full_data)
+    temp[score_key] = str(int(full_data[score_key]) + 1)
+    full_data = temp
+    FileUtils.write_file(scoreboard_data_file, full_data)
 
 
 def sub_to_score(score_key):
-    full_data[score_key] = str(max(int(full_data[score_key]) - 1, 0))
-    with open(scoreboard_data_file, 'w', encoding="utf-8") as json_file:
-        json_file.write(json.dumps(full_data, ensure_ascii=False))
+    global full_data
+    temp = copy.deepcopy(full_data)
+    temp[score_key] = str(max(int(full_data[score_key]) - 1, 0))
+    full_data = temp
+    FileUtils.write_file(scoreboard_data_file, full_data)
 
 
 def update_player_name(player_name_key, team_name_key, file_name, player_id):
     save_previous_results()
     player_info = get_player_info_from_id_map(player_id)
-    full_data[player_name_key] = player_info[0]
+    global full_data
+    temp = copy.deepcopy(full_data)
+    temp[player_name_key] = player_info[0]
     if len(player_info) > 1:
         # update team name
-        full_data[team_name_key] = player_info[1]
+        temp[team_name_key] = player_info[1]
 
     # Reset the scores
-    full_data["p1Score"] = "0"
-    full_data["p2Score"] = "0"
+    temp["p1Score"] = "0"
+    temp["p2Score"] = "0"
+    full_data = temp
     write_to_file(file_name, player_name_key, full_data)
-    with open(scoreboard_data_file, 'w', encoding="utf-8") as json_file:
-        json_file.write(json.dumps(full_data, ensure_ascii=False))
+    FileUtils.write_file(scoreboard_data_file, full_data)
 
 
 def save_previous_results():
+    global full_data
     write_to_file(result1, "p1Score", full_data)
     write_to_file(result2, "p2Score", full_data)
     write_to_file(result_name_1, "p1Name", full_data)
     write_to_file(result_name_2, "p2Name", full_data)
-    full_data["resultscore1"] = full_data["p1Score"]
-    full_data["resultscore2"] = full_data["p2Score"]
-    full_data["resultplayer1"] = full_data["p1Name"]
-    full_data["resultplayer2"] = full_data["p2Name"]
-    with open(scoreboard_data_file, 'w', encoding="utf-8") as json_file:
-        json_file.write(json.dumps(full_data))
+    temp = copy.deepcopy(full_data)
+    temp["resultscore1"] = full_data["p1Score"]
+    temp["resultscore2"] = full_data["p2Score"]
+    temp["resultplayer1"] = full_data["p1Name"]
+    temp["resultplayer2"] = full_data["p2Name"]
+    full_data = temp
+    FileUtils.write_file(scoreboard_data_file, full_data)
 
 
 def write_to_file(file_name, data_key, json_data):
@@ -687,7 +711,7 @@ def write_to_file(file_name, data_key, json_data):
 
 
 def get_player_info_from_id_map(player_id):
-    id_map = read_file("id_map.txt")
+    id_map = FileUtils.read_file("id_map.txt")
     if str(player_id) in id_map:
         return id_map[str(player_id)].split(":")
     print("No name associated with id: " + str(player_id))

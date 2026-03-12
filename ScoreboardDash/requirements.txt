@@ -3,3 +3,4 @@ Pillow
 flask-cors
 opencv-python
 requests
+filelock

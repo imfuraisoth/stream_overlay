@@ -172,11 +172,11 @@ function loadPlayersDropdown() {
 function getAllGames() {
     fetch('/getAllGameImageDir')
         .then(function (response) {
-            gameDirs = response.json();
-            return gameDirs;
-        }).then(function (gameDirs) {
+            gamesData = response.json();
+            return gamesData;
+        }).then(function (gamesData) {
                   var games = document.getElementById('gameSelect');
-                  if (gameDirs.length === 0) {
+                  if (gamesData.game_list.length === 0) {
                       // Clear all options from the datalist
                       games.innerHTML = '';
                       return;
@@ -190,12 +190,16 @@ function getAllGames() {
                   option1.disabled = true;
                   games.appendChild(option1);
                   // Filter and add suggestions to next player list
-                  gameDirs
+                  var currentGame = gamesData.current_game;
+                  gamesData.game_list
                     .slice() // optional: avoids mutating the original array
                     .sort((a, b) => a.localeCompare(b))
                     .forEach(game => {
                       const option = document.createElement('option');
                       option.value = game;
+                      if (game === currentGame) {
+                        option.selected = true;
+                      }
                       option.textContent = game;
                       option.style.color = "black";
                       games.appendChild(option);

@@ -2,6 +2,7 @@ import json, csv
 from io import open
 from pathlib import Path
 from dataclasses import dataclass
+from scripts.FileUtils import FileUtils
 
 root_dir = ""
 player_data_file_name = root_dir + "../data/player_data.json"
@@ -89,8 +90,7 @@ player_data = read_file(player_data_file_name)
 def write_to_file(json_data):
     global player_data
     player_data = json_data
-    with open(player_data_file_name, 'w', encoding="utf-8") as json_file:
-        json_file.write(json.dumps(player_data, default=lambda o: o.__dict__))
+    FileUtils.write_file(player_data_file_name, player_data)
 
 
 def add_to_file(json_data):
@@ -155,11 +155,9 @@ def delete_stats():
         print("Player data backup file created successfully.")
     if player_data_backup:
         # Check to see if it's empty or not before saving it
-        with open(player_data_backup_file_name, 'w', encoding="utf-8") as json_file:
-            json_file.write(json.dumps(player_data_backup, default=lambda o: o.__dict__))
+        FileUtils.write_file(player_data_backup_file_name, player_data_backup)
 
-    with open(player_data_file_name, 'w', encoding="utf-8") as json_file:
-        json_file.write(json.dumps(player_data, default=lambda o: o.__dict__))
+    FileUtils.write_file(player_data_file_name, player_data)
 
 
 def set_current_event(event):
@@ -187,25 +185,24 @@ def get_all_events_with_stats():
 
 def get_match_info(p1_name, p2_name):
     global league_rank_dict, league_h2h_dict
-    p1_rank = ""
-    p1_points = ""
-    p1_win_loss = ""
-    p2_rank = ""
-    p2_points = ""
-    p2_win_loss = ""
-    if p1_name in league_rank_dict:
-        p1_rank = str(league_rank_dict.get(p1_name)["Rank"])
-        p1_points = str(league_rank_dict.get(p1_name)["Points"])
-    if p2_name in league_rank_dict:
-        p2_rank = str(league_rank_dict.get(p2_name)["Rank"])
-        p2_points = str(league_rank_dict.get(p2_name)["Points"])
 
-    if p1_name in league_h2h_dict:
-        p1_win_loss = league_h2h_dict.get(p1_name)[p2_name]
-    if p2_name in league_h2h_dict:
-        p2_win_loss = league_h2h_dict.get(p2_name)[p1_name]
+    # ----- Player 1 -----
+    p1_data = league_rank_dict.get(p1_name, {})
+    p1_rank = str(p1_data.get("Rank", ""))
+    p1_points = str(p1_data.get("Points", ""))
+
+    p1_win_loss = league_h2h_dict.get(p1_name, {}).get(p2_name, "")
+
+    # ----- Player 2 -----
+    p2_data = league_rank_dict.get(p2_name, {})
+    p2_rank = str(p2_data.get("Rank", ""))
+    p2_points = str(p2_data.get("Points", ""))
+
+    p2_win_loss = league_h2h_dict.get(p2_name, {}).get(p1_name, "")
+
     player1 = PlayerLeagueStats(p1_rank, p1_points, p1_win_loss)
     player2 = PlayerLeagueStats(p2_rank, p2_points, p2_win_loss)
+
     return MatchInfo(player1, player2)
 
 

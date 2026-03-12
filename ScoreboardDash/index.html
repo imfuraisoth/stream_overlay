@@ -190,13 +190,22 @@
 						</div>
 					</div>		
 			</div>
-					<div class="ftContainer">
-						<div id="text_ft">
-							<span class="text-shadow">First to #</span>
-						</div>
-						<div id="ftx">
-							<input placeholder="0" class="form_ft" type="text" id="form_ft" style="float: left;" value="" onchange="updateMaxScore();">
-						</div>
+					<div class="leftMidContainer">
+						<span class="ftContainer">
+							<div id="text_ft">
+								<span class="text-shadow">First to #</span>
+							</div>
+							<div id="ftx">
+								<input placeholder="0" class="form_ft" type="text" id="form_ft" style="float: left;" value="" onchange="updateMaxScore();">
+							</div>
+						</span>
+						<span class="gameContainer">
+							<div id="text_game">
+								<span class="text-shadow">Current Game</span>
+							</div>
+							<select id="gameSelect" class="dropdown_game_select" onchange="updateCurrentGame();">
+							</select>
+						</span>
 					</div>
 
 					<div class="fetchContainer">
