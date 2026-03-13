@@ -456,9 +456,11 @@ a, a:hover, a:visited, a:active {
 .nextRoundConsoleContainer {
 	display: flex;
 	width: 100%;
+	padding-top: 5px;
 	flex-direction: row !important;
 	justify-content: center;
 	align-items: center;
+	border-bottom: 1px solid black;
 }
 
 .nextRound-1p {
@@ -495,6 +497,14 @@ a, a:hover, a:visited, a:active {
 }
 
 .resultsContainer {
+	display: flex;
+	flex-direction: column;
+	flex: .5;
+	align-items: center;
+	border-bottom: 1px solid black;
+	overflow: auto;
+}
+.rightContainer {
 	display: flex;
 	flex-direction: column;
 	flex: .5;
@@ -681,6 +691,7 @@ a, a:hover, a:visited, a:active {
   }
 .bottom-button-container {
   display: flex;
+  padding-top: 30px;
 }
 .bottom-button-container rectangle_button {
   padding: 10px 20px;
