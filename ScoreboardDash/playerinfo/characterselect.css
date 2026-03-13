@@ -16,6 +16,22 @@ body {
     text-align: left;
 }
 
+.top-navbar-container {
+	display: flex;
+	align: center;
+	width: 100vw;
+	height: 50px;
+	background-color: var(--black-bg);
+}
+.header-item {
+	white-space: nowrap;
+	font-style: normal;
+	font-weight: normal;
+	font-size: 25px;
+	padding: 0px 20px 20px 0px;
+	color: var(--link-color);
+}
+
 h2 {
     text-align: left;
     color: #333;

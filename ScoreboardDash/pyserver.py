@@ -374,7 +374,7 @@ def get_next_round_data():
     next_round_info = top8.progress_to_next_round()
     global full_data
     with full_data_lock:
-        temp = copy.deepcopy(full_data)
+        temp = FileUtils.read_file(scoreboard_data_file)
         player1 = next_round_info["player1"]
         player2 = next_round_info["player2"]
         temp["p1Name"] = player1["name"]
