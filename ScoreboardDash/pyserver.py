@@ -28,17 +28,6 @@ from playerinfo import PlayerStatsDB
 # Get today's date in YYYY-MM-DD format
 today_date = datetime.today().strftime('%Y-%m-%d')
 
-hostname = socket.getfqdn()
-server_ip = socket.gethostbyname(hostname)
-print("Server IP: " + server_ip)
-port = "8080"
-server_port = int(port)
-
-server_info = server_ip + ":" + port
-config_file = open('../config/serverip.txt', "w")
-config_file.write(server_info)
-config_file.close()
-
 replay_prefix = "Replay"
 replays_folder = "recordings/replays"
 saved_replays_folder = "../../clips"
@@ -760,6 +749,22 @@ def parse_bool(value, default=None):
     return default   # fallback for unexpected strings
 
 
+def get_server_info():
+    ip = "localhost"
+    port = "8080"
+    port_num = int(port)
+    if args.remote_server:
+        hostname = socket.getfqdn()
+        ip = socket.gethostbyname(hostname)
+    info = ip + ":" + port
+    config_file = open('../config/serverip.txt', "w")
+    config_file.write(info)
+    config_file.close()
+
+    print("Server IP: " + info)
+    return ip, port_num, info
+
+
 if __name__ == "__main__":
     try:
         print("Now we talk'n, server started ...")
@@ -772,6 +777,8 @@ if __name__ == "__main__":
         parser.add_argument("-w", "--windows", action='store_true', dest='windows', help="Open browser for Windows")
         parser.add_argument("-m", "--mac", action='store_true', dest='mac', help="Open browser for Mac")
         parser.add_argument("-l", "--linux", action='store_true', dest='linux', help="Open browser for Linux")
+
+        parser.add_argument("-r", "--remote", action='store_true', dest='remote_server', help="Uses actual IP instead of localhost")
 
         # Read arguments from command line
         args = parser.parse_args()
@@ -786,12 +793,15 @@ if __name__ == "__main__":
             else:
                 print("Auto scoring enabled but no game defined. Please choose with options [-st, -cvs2]")
 
+        server_ip, server_port, server_info = get_server_info()
+
         if args.windows:
             open_browser("http://" + server_info, 'C:/Program Files (x86)/Google/Chrome/Application/chrome.exe %s')
         elif args.mac:
             open_browser("http://" + server_info, 'open -a /Applications/Google\ Chrome.app %s')
         elif args.linux:
             open_browser("http://" + server_info, '/usr/bin/google-chrome %s')
+
         players_db.init_db()
         api.run(host=server_ip, port=server_port)
     except KeyboardInterrupt:
