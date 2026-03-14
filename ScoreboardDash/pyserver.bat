@@ -3,13 +3,13 @@
 if not exist "venv" (
     echo Creating virtual environment...
     python -m venv venv
-    call venv\Scripts\activate
-    echo Installing requirements...
-    pip install -r requirements.txt
-) else (
-    echo Virtual environment found.
-    call venv\Scripts\activate
 )
+
+echo Activating virtual environment...
+call venv\Scripts\activate
+
+echo Installing requirements...
+python -m pip install -r requirements.txt
 
 python pyserver.py
 
