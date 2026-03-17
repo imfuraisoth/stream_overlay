@@ -440,6 +440,8 @@ def update_data_no_scores():
         temp["maxScore"] = json_data.get("maxScore", "99")
         temp["timestamp"] = json_data.get("timestamp")
         temp["nextRound"] = json_data.get("nextRound", temp["round"])
+        temp["p1Seed"] = json_data.get("p1Seed", "")
+        temp["p2Seed"] = json_data.get("p2Seed", "")
         full_data = temp
     FileUtils.write_file(scoreboard_data_file, full_data)
     return "200"

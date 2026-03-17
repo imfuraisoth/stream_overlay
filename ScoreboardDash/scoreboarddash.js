@@ -46,6 +46,12 @@ function populateData(data) {
     if (jsonData.p2Score == undefined) {
         jsonData.p2Score = "0";
     }
+    if (jsonData.p1Seed == undefined) {
+        jsonData.p1Seed = "";
+    }
+    if (jsonData.p2Seed == undefined) {
+        jsonData.p2Seed = "";
+    }
 	updateCurrentPlayerDisplay();
 }
 
@@ -102,12 +108,26 @@ function updateCurrentPlayerDisplay() {
 
 function updatePlayer1() {
 	jsonData.p1Name = document.getElementById("form_name_1p").value;
+    jsonData.p1Seed = "";
+    // If player is in player map, try to set the seed value
+    if (playersMap.has(jsonData.p1Name)) {
+        jsonData.p1Seed = playersMap.get(jsonData.p1Name).seed;
+    } else if (nextPlayersMap.has(jsonData.p1Name)) {
+        jsonData.p1Seed = nextPlayersMap.get(jsonData.p1Name).seed;
+    }
 	updateCurrentPlayerDisplay();
 	sendJSON();
 }
 
 function updatePlayer2() {
 	jsonData.p2Name = document.getElementById("form_name_2p").value;
+    jsonData.p2Seed = "";
+    // If player is in player map, try to set the seed value
+    if (playersMap.has(jsonData.p2Name)) {
+        jsonData.p2Seed = playersMap.get(jsonData.p2Name).seed;
+    } else if (nextPlayersMap.has(jsonData.p2Name)) {
+        jsonData.p2Seed = nextPlayersMap.get(jsonData.p2Name).seed;
+    }
 	updateCurrentPlayerDisplay();
 	sendJSON();
 }
@@ -805,10 +825,14 @@ function deletePlayerStats() {
 function getAllPlayersForTournament(event) {
     event.preventDefault();
     event.stopPropagation();
-    loadPlayerData(false);
+    loadPlayerData(false, true);
 }
 
 function loadPlayerData(fromCache) {
+   loadPlayerData(fromCache, false);
+}
+
+function loadPlayerData(fromCache, notify) {
     var param1 = encodeURIComponent(startggInfo.tournament);
     var param2 = encodeURIComponent(startggInfo.event);
     var param3 = fromCache;
@@ -822,6 +846,7 @@ function loadPlayerData(fromCache) {
             nextPlaySuggestions = document.getElementById('next_player_suggestions');
             playersMap.clear();
             if (playersData.length === 0 || playersData[startggInfo.event].length === 0) {
+                if (notify) alert("Got no data for tournament: " + startggInfo.tournament + " event: " + startggInfo.event);
                 // Clear all options from the datalist
                 nextPlaySuggestions.innerHTML = '';
                 return;
@@ -839,6 +864,7 @@ function loadPlayerData(fromCache) {
                 option.value = player.name;
                 nextPlaySuggestions.appendChild(option);
             });
+            if (notify) alert("Tournament data loaded for tournament: " + startggInfo.tournament + " event: " + startggInfo.event);
         })
         .catch(function (err) {
               console.log('error: ' + err);
