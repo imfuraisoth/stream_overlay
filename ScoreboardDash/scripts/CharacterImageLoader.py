@@ -2,13 +2,14 @@ from pathlib import Path
 from collections import defaultdict
 
 games_path = "images/games"
+image_extensions = (".png", ".jpg", ".jpeg", ".gif", ".bmp", ".webp")
 
 
 def get_character_images(game):
-    global games_path
+    global games_path, image_extensions
     character_map = defaultdict(list)
 
-    for file in Path(games_path + "/" + game + "/icon").glob("*.png"):
+    for file in Path(games_path + "/" + game + "/icon").iterdir():
 
         name = file.stem  # filename without extension
 

@@ -188,17 +188,17 @@ def get_match_info(p1_name, p2_name):
 
     # ----- Player 1 -----
     p1_data = league_rank_dict.get(p1_name, {})
-    p1_rank = str(p1_data.get("Rank", ""))
-    p1_points = str(p1_data.get("Points", ""))
+    p1_rank = str(p1_data.get("Rank", "N/A"))
+    p1_points = str(p1_data.get("Points", "N/A"))
 
-    p1_win_loss = league_h2h_dict.get(p1_name, {}).get(p2_name, "")
+    p1_win_loss = league_h2h_dict.get(p1_name, {}).get(p2_name, "N/A")
 
     # ----- Player 2 -----
     p2_data = league_rank_dict.get(p2_name, {})
-    p2_rank = str(p2_data.get("Rank", ""))
-    p2_points = str(p2_data.get("Points", ""))
+    p2_rank = str(p2_data.get("Rank", "N/A"))
+    p2_points = str(p2_data.get("Points", "N/A"))
 
-    p2_win_loss = league_h2h_dict.get(p2_name, {}).get(p1_name, "")
+    p2_win_loss = league_h2h_dict.get(p2_name, {}).get(p1_name, "N/A")
 
     player1 = PlayerLeagueStats(p1_rank, p1_points, p1_win_loss)
     player2 = PlayerLeagueStats(p2_rank, p2_points, p2_win_loss)
