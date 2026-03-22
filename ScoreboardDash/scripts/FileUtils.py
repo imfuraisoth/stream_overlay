@@ -34,3 +34,24 @@ class FileUtils:
                 f.write(data_to_write)
 
             os.replace(temp_file, file_path)
+
+    @staticmethod
+    def list_files(directory):
+        files = []
+        for entry in os.listdir(directory):
+            full_path = os.path.join(directory, entry)
+            if os.path.isfile(full_path):
+                files.append(full_path)
+        return files
+
+    @staticmethod
+    def list_files_no_ext(directory):
+        return [f.stem for f in Path(directory).iterdir() if f.is_file()]
+
+    @staticmethod
+    def find_file_name(directory, name):
+        for f in Path(directory).iterdir():
+            if f.is_file() and f.stem == name:
+                return f.name  # filename with extension
+        print("No file found with name: " + name)
+        return None
