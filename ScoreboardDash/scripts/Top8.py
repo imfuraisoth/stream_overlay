@@ -256,7 +256,7 @@ def initialize():
     current_next_data["currentRoundName"] = roundNamesMap.get(current_round)
     started = True
     current_next_data["started"] = started
-    update_scoreboard_json(current_next_data, "", "", "", "", current_next_data["currentRoundName"])
+    update_scoreboard_json(current_next_data, "", "", "", "", current_next_data["currentRoundName"], current_round)
     FileUtils.write_file(current_next_data_file, current_next_data)
     print("Top 8 started!")
 
@@ -367,7 +367,7 @@ def progress_to_next_round():
         global roundNamesMap
         current_round_name = roundNamesMap.get(current_round)
         current_next_data["currentRoundName"] = current_round_name
-        update_scoreboard_json(current_next_data, result1_name, result2_name, p1_score_string, p2_score_string, current_round_name)
+        update_scoreboard_json(current_next_data, result1_name, result2_name, p1_score_string, p2_score_string, current_round_name, current_round)
         current_next_data["reverseNames"] = False
         FileUtils.write_file(current_next_data_file, current_next_data)
         return json.loads(json.dumps(current_next_data, ensure_ascii=False))
@@ -432,13 +432,13 @@ def update_final_round(global_player_round_data, current_round_data, p1_score, p
     global roundNamesMap
     current_round_name = roundNamesMap.get(current_round)
     current_next_data["currentRoundName"] = current_round_name
-    update_scoreboard_json(current_next_data, p1_name, p2_name, str(p1_score), str(p2_score), current_round_name)
+    update_scoreboard_json(current_next_data, p1_name, p2_name, str(p1_score), str(p2_score), current_round_name, current_round)
     FileUtils.write_file(player_data_file_name, global_player_round_data)
     FileUtils.write_file(current_next_data_file, current_next_data)
     return json.loads(json.dumps(current_round_data, ensure_ascii=False))
 
 
-def update_scoreboard_json(data, result_name_1, result_name_2, result1, result2, current_round_name):
+def update_scoreboard_json(data, result_name_1, result_name_2, result1, result2, current_round_name, current_round):
     scoreboard_data = read_file(scoreboard_json_file)
     scoreboard_data["p1Name"] = data["player1"]["name"]
     scoreboard_data["p1Team"] = data["player1"]["team"]
@@ -448,16 +448,29 @@ def update_scoreboard_json(data, result_name_1, result_name_2, result1, result2,
     scoreboard_data["p2Team"] = data["player2"]["team"]
     scoreboard_data["p2Country"] = data["player2"]["country"]
     scoreboard_data["p2Score"] = "0"
-    scoreboard_data["resultplayer1"] = result_name_1
-    scoreboard_data["resultscore1"] = result1
-    scoreboard_data["resultplayer2"] = result_name_2
-    scoreboard_data["resultscore2"] = result2
-    scoreboard_data["nextteam1"] = data["nextPlayer1"]["team"]
-    scoreboard_data["nextteam2"] = data["nextPlayer2"]["team"]
-    scoreboard_data["nextplayer1"] = data["nextPlayer1"]["name"]
-    scoreboard_data["nextplayer2"] = data["nextPlayer2"]["name"]
-    scoreboard_data["nextcountry1"] = data["nextPlayer1"]["country"]
-    scoreboard_data["nextcountry2"] = data["nextPlayer2"]["country"]
+    # Stop updating next and results when we are at grand finals
+    if current_round < 10:
+        scoreboard_data["resultplayer1"] = result_name_1
+        scoreboard_data["resultscore1"] = result1
+        scoreboard_data["resultplayer2"] = result_name_2
+        scoreboard_data["resultscore2"] = result2
+        scoreboard_data["nextteam1"] = data["nextPlayer1"]["team"]
+        scoreboard_data["nextteam2"] = data["nextPlayer2"]["team"]
+        scoreboard_data["nextplayer1"] = data["nextPlayer1"]["name"]
+        scoreboard_data["nextplayer2"] = data["nextPlayer2"]["name"]
+        scoreboard_data["nextcountry1"] = data["nextPlayer1"]["country"]
+        scoreboard_data["nextcountry2"] = data["nextPlayer2"]["country"]
+    else:
+        scoreboard_data["resultplayer1"] = ""
+        scoreboard_data["resultscore1"] = ""
+        scoreboard_data["resultplayer2"] = ""
+        scoreboard_data["resultscore2"] = ""
+        scoreboard_data["nextteam1"] = ""
+        scoreboard_data["nextteam2"] = ""
+        scoreboard_data["nextplayer1"] = ""
+        scoreboard_data["nextplayer2"] = ""
+        scoreboard_data["nextcountry1"] = ""
+        scoreboard_data["nextcountry2"] = ""
     scoreboard_data["round"] = current_round_name
     FileUtils.write_file(scoreboard_json_file, scoreboard_data)
 
