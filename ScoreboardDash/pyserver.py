@@ -21,6 +21,7 @@ from scripts import PlayerStats
 from scripts import TTLCache
 from scripts import ReplayUtils
 from scripts import CharacterImageLoader
+from scripts import Countdown
 from scripts.FileUtils import FileUtils
 from playerinfo import PlayerStatsDB
 
@@ -43,6 +44,7 @@ result_name_1 = "../data/resultname1.txt"
 result_name_2 = "../data/resultname2.txt"
 players_list_map = {}
 players_db = PlayerStatsDB
+countdown = Countdown
 
 api = Flask(__name__)
 CORS(api)
@@ -646,6 +648,25 @@ def get_match_data():
 @api.route('/getLeagueDirs', methods=['GET'])
 def get_league_dirs():
     return jsonify(player_stats.list_league_stats_directories()), 200
+
+
+@api.route('/setCountdownInfo', methods=['POST'])
+def set_countdown_info():
+    json_data = request.get_json()
+    countdown.set_game(json_data.get("game_name", ""), json_data.get("message", ""), json_data.get("timer", 0))
+    return "200"
+
+
+@api.route('/getGamesForCountdown', methods=['GET'])
+def get_games_for_countdown():
+    return countdown.get_games()
+
+
+@api.route('/getCountdownInfo', methods=['GET'])
+def get_countdown_info():
+    first_load_str = request.args.get('firstLoad', 'false')
+    first_load = first_load_str.lower() == 'true'
+    return countdown.get_as_json(first_load)
 
 
 def move_files(src_dir, dst_dir):
