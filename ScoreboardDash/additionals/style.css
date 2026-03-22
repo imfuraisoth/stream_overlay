@@ -1,0 +1,101 @@
+body {
+    font-family: Arial, sans-serif;
+    background: #FFFFFF;
+    color: white;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+}
+
+.container {
+    max-width: 900px;
+    margin: 30px auto;
+    padding: 20px 30px; /* left/right padding adds space */
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    text-align: left;
+
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+}
+.content {
+    max-width: 900px;
+    margin: 30px auto;
+    padding: 20px 30px; /* left/right padding adds space */
+    text-align: left;
+    display: flex;
+    gap: 20px;
+    justify-content: center;
+    align-items: top;
+    flex-direction: row;
+}
+.top-navbar-container {
+	display: flex;
+	align: center;
+	width: auto;
+	height: 50px;
+	background-color: var(--black-bg);
+}
+.header-item {
+	white-space: nowrap;
+	font-style: normal;
+	font-weight: normal;
+	font-size: 25px;
+	padding: 0px 20px 20px 0px;
+	color: var(--link-color);
+}
+
+.header-item-divider {
+	white-space: nowrap;
+	font-style: normal;
+	font-weight: normal;
+	font-size: 25px;
+	padding: 0px 20px 20px 0px;
+	color: blue;
+}
+
+#panel {
+    background: #000000;
+    padding: 20px;
+    border-radius: 10px;
+    width: 220px;
+    box-shadow: 0 0 10px rgba(0,0,0,0.5);
+}
+#customMessagePanel {
+    background: #000000;
+    padding: 20px;
+    border-radius: 10px;
+    width: 220px;
+    box-shadow: 0 0 10px rgba(0,0,0,0.5);
+}
+
+label {
+    display: block;
+    margin-top: 10px;
+    font-size: 14px;
+}
+
+select, input, button {
+    width: 200px;
+    margin-top: 5px;
+    padding: 8px;
+    border-radius: 5px;
+    border: none;
+    font-size: 14px;
+}
+
+button {
+    margin-top: 15px;
+    background: #4CAF50;
+    color: white;
+    cursor: pointer;
+    font-weight: bold;
+}
+
+button:hover {
+    background: #45a049;
+}

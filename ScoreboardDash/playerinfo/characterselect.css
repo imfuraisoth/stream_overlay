@@ -31,6 +31,14 @@ body {
 	padding: 0px 20px 20px 0px;
 	color: var(--link-color);
 }
+.header-item-divider {
+	white-space: nowrap;
+	font-style: normal;
+	font-weight: normal;
+	font-size: 25px;
+	padding: 0px 20px 20px 0px;
+	color: blue;
+}
 
 h2 {
     text-align: left;

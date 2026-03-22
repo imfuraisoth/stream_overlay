@@ -24,6 +24,7 @@ from scripts import CharacterImageLoader
 from scripts import Countdown
 from scripts.FileUtils import FileUtils
 from playerinfo import PlayerStatsDB
+from scripts import  MessageDataStore
 
 
 # Get today's date in YYYY-MM-DD format
@@ -45,6 +46,7 @@ result_name_2 = "../data/resultname2.txt"
 players_list_map = {}
 players_db = PlayerStatsDB
 countdown = Countdown
+message_data_store = MessageDataStore
 
 api = Flask(__name__)
 CORS(api)
@@ -667,6 +669,18 @@ def get_countdown_info():
     first_load_str = request.args.get('firstLoad', 'false')
     first_load = first_load_str.lower() == 'true'
     return countdown.get_as_json(first_load)
+
+
+@api.route('/getCustomMessages', methods=['GET'])
+def get_custom_messages():
+    return jsonify(message_data_store.get_message_data()), 200
+
+
+@api.route('/setCustomMessages', methods=['POST'])
+def set_custom_messages():
+    json_data = request.get_json()
+    message_data_store.save_message_data(json_data)
+    return "200"
 
 
 def move_files(src_dir, dst_dir):
