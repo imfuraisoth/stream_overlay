@@ -59,7 +59,9 @@ async function loadGames() {
         const select = document.getElementById("gameSelect");
         select.innerHTML = "";
 
-        games.forEach((gameName) => {
+        games.slice() // optional: avoids mutating the original array
+          .sort((a, b) => a.localeCompare(b))
+          .forEach((gameName) => {
             const option = document.createElement("option");
             option.value = gameName;
             option.textContent = gameName;
@@ -69,6 +71,57 @@ async function loadGames() {
     } catch (err) {
         console.error("Failed to load games:", err);
     }
+}
+
+async function loadCountdownData() {
+    try {
+        const res = await fetch('/getCountdownInfo?firstLoad=true');
+        const data = await res.json();
+
+        // Populate game select (after games are loaded)
+        if (data.game_name) {
+            const select = document.getElementById("gameSelect");
+            select.value = data.game_name;
+        }
+
+        // Populate message
+        if (data.message !== undefined) {
+            document.getElementById("message").value = data.message;
+        }
+
+        // Convert seconds -> HH:MM:SS
+        if (data.timer !== undefined) {
+            document.getElementById("timer").value = secondsToTime(data.timer);
+        }
+    } catch (err) {
+        console.error("Failed to load games:", err);
+    }
+}
+
+async function getCustomMessages() {
+    try {
+        const res = await fetch('/getCustomMessages');
+        const data = await res.json();
+
+        // Custom message
+        if (data.cameraSceneMessage !== undefined) {
+            document.getElementById("cameraSceneMessage").value = data.cameraSceneMessage;
+        }
+    } catch (err) {
+        console.error("Failed to load games:", err);
+    }
+}
+
+function secondsToTime(totalSeconds) {
+    const hours = Math.floor(totalSeconds / 3600);
+    const minutes = Math.floor((totalSeconds % 3600) / 60);
+    const seconds = totalSeconds % 60;
+
+    return (
+        String(hours).padStart(2, '0') + ":" +
+        String(minutes).padStart(2, '0') + ":" +
+        String(seconds).padStart(2, '0')
+    );
 }
 
 function timeToSeconds(timeStr) {
@@ -130,7 +183,11 @@ async function submitMessageData() {
 }
 
 // Load games on page start
-loadGames();
+document.addEventListener("DOMContentLoaded", async () => {
+    await loadGames();
+    await loadCountdownData();
+    getCustomMessages();
+});
 </script>
 
 </body>
