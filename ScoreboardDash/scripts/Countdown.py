@@ -38,7 +38,7 @@ def set_game(game_name, message, timer):
     global current_game, last_game
     icon_file = FileUtils.find_file_name(game_dir, game_name)
     current_game = CurrentGame(game_name, icon_file, message, timer)
-    last_game_data = CurrentGame(game_name, icon_file, message, 0)
+    last_game_data = CurrentGame(game_name, icon_file, message, timer)
     FileUtils.write_file(last_game, last_game_data.to_dict())
 
 
