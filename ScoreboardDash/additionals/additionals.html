@@ -157,6 +157,8 @@ async function submitData() {
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify(payload)
         });
+		
+		alert("Countdown started!");
 
     } catch (err) {
         console.error("Failed to submit:", err);
