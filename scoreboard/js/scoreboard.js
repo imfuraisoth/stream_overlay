@@ -1,7 +1,6 @@
 var enableFlags = true;
 	
 var xhr = new XMLHttpRequest(); //AJAX data request sent to server(in this case server being local json file)
-var streamJSON = '../sc/streamcontrol.json'; //specifies path for streamcontrol output json
 var startup = true; //flag for if looping functions are on their first pass or not
 var cBust = 0; //variable to hold cache busting value
 var game; //variable to hold game value from streamcontrol dropdown
@@ -11,8 +10,8 @@ var countryHold2;
 var flagsDir = '../../../resources/countries/iso/64shiny/';
 var placementDir = '../../../resources/placement/';
 
-var serverIp = readServerIp();
-//var serverIp = "localhost:8080";
+//var serverIp = readServerIp();
+var serverIp = "localhost:8080";
 
 function readServerIp() {
 	var request = new XMLHttpRequest();

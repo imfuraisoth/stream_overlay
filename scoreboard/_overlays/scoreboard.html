@@ -1,13 +1,13 @@
 <html>
 
 <head>
-	<meta charset="UTF-8">
+
 	<script src="../js/scoreboard.js" type="text/javascript" charset="utf-8"></script>
 	<script src="../js/jquery-3.6.3.min.js" type="text/javascript" charset="utf-8"></script>
 	<script src="../js/greensock-js/src/minified/TweenMax.min.js" type="text/javascript" charset="utf-8"></script>
 	<script src="../js/countries.js" type="text/javascript" charset="utf-8"></script>
 	<link href="style.css" rel="stylesheet" type="text/css" />
-	<link rel="stylesheet" href="https://use.typekit.net/ogo7pba.css">
+	<link rel="stylesheet" href="https://use.typekit.net/vsy6ybb.css">
 
 </head>
 
@@ -29,21 +29,21 @@
 			<span id="f1Wrapper" class="fWrappers">
 				<img id="p1Country" class="cFlags"></img>
 			</span>
-			<span id="p1Wrapper" class="leftWrapper">
-				<span id="p1Team" class="teams"></span> <!-- team/name spans nested within wrapper span to allow them to align the same without overlapping each other -->
-				<span id="p1Name" class="names"></span>
-			</span>
 		</div>
+		<span id="p1Wrapper">
+			<div id="p1Team" class="teams"></div> <!-- team/name spans nested within wrapper span to allow them to align the same without overlapping each other -->
+			<div id="p1Name" class="names"></div>
+		</span>
 		<div id="rightWrapper">
 			<span id="p2Score" class="scores"></span>
 			<span id="f2Wrapper" class="fWrappers">
 				<img id="p2Country" class="cFlags"></img>
 			</span>
-			<span id="p2Wrapper" class="rightWrapper">
-				<span id="p2Name" class="names"></span>
-				<span id="p2Team" class="teams"></span>
-			</span>
 		</div>
+		<span id="p2Wrapper">
+			<div id="p2Name" class="names"></div>
+			<div id="p2Team" class="teams"></div>
+		</span>
 		<div id="results1" class="resultContainer">
 			<span id="result1Name" class="names"></span>
 		</div>
@@ -70,21 +70,21 @@
 
 <script type="text/javascript">
 
-	var resultNameSize = '35px';
-	var resultScoreSize = '45px';
-	var nextNameSize = '35px';
-	var teamNameSize = '25px';
-	var nameSize = '70px'; //default font size of name wrappers, should match 'font-size' value of .wrappers
-	var rdSize = '40px'; //default font size of round container, should match 'font-size' value of #round
-	var p1Move = '-45px'; //distance on x-axis that P1 name should initially be set to prior to load-in animation
-	var p2Move = '45px'; //distance on x-axis that P2 name should initially be set to prior to load-in animation
+	var resultNameSize = '30px';
+	var resultScoreSize = '35px';
+	var nextNameSize = '30px';
+	var teamNameSize = '20px';
+	var nameSize = '45px'; //default font size of name wrappers, should match 'font-size' value of .wrappers
+	var rdSize = '48px'; //default font size of round container, should match 'font-size' value of #round
+	var p1Move = '-25px'; //distance on x-axis that P1 name should initially be set to prior to load-in animation
+	var p2Move = '25px'; //distance on x-axis that P2 name should initially be set to prior to load-in animation
 	var rdMove = '-40px'; //distance on y-axis that round should initially be set to prior to load-in animation
-	var nameTime = .3; //amount of time in seconds that the load-in animation for names takes
-	var nameDelay = .2; //amount of time in seconds that the load-in animation for names is delayed before starting
+	var nameTime = .4; //amount of time in seconds that the load-in animation for names takes
+	var nameDelay = .8; //amount of time in seconds that the load-in animation for names is delayed before starting
 	var rdTime = .3; //amount of time in seconds that the load-in animation for round info takes
-	var rdDelay = .2; //amount of time in seconds that the load-in animation for round info is delayed before starting
+	var rdDelay = .7; //amount of time in seconds that the load-in animation for round info is delayed before starting
 	var scTime = .3; //amount of time in seconds that the load-in animation for scores takes
-	var scDelay = .45; //amount of time in seconds that the load-in animation for scores is delayed before starting
+	var scDelay = .7; //amount of time in seconds that the load-in animation for scores is delayed before starting
 	var logoTime = 200; //amount of time the fade-in animation for logos is delayed before starting
 	var adjust2 = '-28px'; //distance on y-axis that scoreboards move when adjusting for 2nd webm
 	var adjust3 = '+28px'; //distance on y-axis that scoreboards move when adjusting for 3rd webm

@@ -55,7 +55,7 @@ function populateData(data) {
 	updateCurrentPlayerDisplay();
 }
 
-const countriesDropDownList = ['US', 'CA', 'JP', 'KR', 'MX', 'GB', 'ES', 'FR', 'FI', 'SE', 'PR'];
+const countriesDropDownList = ['US', 'CA', 'JP', 'KR', 'MX', 'GB', 'ES', 'FR', 'FI', 'SE', 'PR', 'BR'];
 const dropDownSelects = ['dropdown_country_1p', 'dropdown_country_2p', 'dropdown_country_next1', 'dropdown_country_next2'];
 var currentPlayerInfoDisplay = "";
 var currentScoreInfoDisplay = "";

@@ -2,7 +2,7 @@ from datetime import datetime
 import os
 import time
 
-date_time_format = "%Y-%m-%d %H-%M-%S"
+date_time_format = "%Y-%m-%d_%H-%M-%S"
 last_replay_delete_time = 0
 enable_auto_delete = True
 

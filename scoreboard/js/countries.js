@@ -74,6 +74,13 @@ var countries = {
         "alpha3": "PRI",
         "name": "Puerto Rico",
         "flag": "PR"
+    },
+	
+	"BR": {
+        "alpha2": "BR",
+        "alpha3": "BRA",
+        "name": "Brazil",
+        "flag": "BR"
     }
 };
 

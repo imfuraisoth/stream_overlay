@@ -30,7 +30,7 @@ from scripts import  MessageDataStore
 # Get today's date in YYYY-MM-DD format
 today_date = datetime.today().strftime('%Y-%m-%d')
 
-replay_prefix = "Replay"
+replay_prefix = "Replay_"
 replays_folder = "recordings/replays"
 saved_replays_folder = "../../clips"
 scoreboard_data_file = "../data/scoreboard.json"
