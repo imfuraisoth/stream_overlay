@@ -799,7 +799,6 @@ function saveStartggInfo() {
     startggInfo.tournament = tournamentName;
     startggInfo.event = eventName;
     startggInfo.stream = streamName;
-    document.getElementById('startggPopup').style.display = 'none';
     sendJsonDataToEndpoint(startggInfo, "setTournamentInfo");
 }
 
