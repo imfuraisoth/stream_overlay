@@ -59,7 +59,7 @@ auto_score_updater_st = AutoScoreUpdaterSt
 auto_score_updater_cvs2 = AutoScoreUpdaterCvs2
 auto_score_updater_cps1 = AutoScoreUpdaterCPS1
 top8 = Top8
-refresh_client = False
+refresh_event = threading.Event()
 event_name = ""
 tournament_info = None
 player_stats = PlayerStats
@@ -85,19 +85,19 @@ def serve_static(filename):
 
 @api.route('/registerClientRefresh', methods=['GET'])
 def register_client_refresh():
-    global refresh_client
-    while not refresh_client:
-        # Wait and do nothing
+    deadline = time.time() + 30  # 30-second max hold time
+    while time.time() < deadline:
+        if refresh_event.wait(timeout=1):
+            refresh_event.clear()
+            return "", 200
         if auto_score_updater_cvs2.has_updated_score():
-            break
+            return "", 200
         elif auto_score_updater_st.has_updated_score():
-            break
+            return "", 200
         elif auto_score_updater_cps1.has_updated_score():
-            break
-        time.sleep(1)
-
-    refresh_client = False
-    return "", 200
+            return "", 200
+    # Timeout — tell the client to reconnect without fetching new data
+    return "", 204
 
 
 @api.route('/getdata', methods=['GET'])
@@ -319,8 +319,7 @@ def clear_players_list_map():
 def add_player1_score():
     add_to_score("p1Score")
     top8.update_current_players_info(full_data)
-    global refresh_client
-    refresh_client = True
+    refresh_event.set()
     return "200"
 
 
@@ -328,8 +327,7 @@ def add_player1_score():
 def add_player2_score():
     add_to_score("p2Score")
     top8.update_current_players_info(full_data)
-    global refresh_client
-    refresh_client = True
+    refresh_event.set()
     return "200"
 
 
@@ -337,8 +335,7 @@ def add_player2_score():
 def sub_player1_score():
     sub_to_score("p1Score")
     top8.update_current_players_info(full_data)
-    global refresh_client
-    refresh_client = True
+    refresh_event.set()
     return "200"
 
 
@@ -346,8 +343,7 @@ def sub_player1_score():
 def sub_player2_score():
     sub_to_score("p2Score")
     top8.update_current_players_info(full_data)
-    global refresh_client
-    refresh_client = True
+    refresh_event.set()
     return "200"
 
 
@@ -567,8 +563,7 @@ def update_player1():
     elif previous_id == player_id and (current_time - player_info_update_window) > previous_timestamp:
         add_to_score("p1Score")
         previous_player_1 = (player_id, current_time)
-    global refresh_client
-    refresh_client = True
+    refresh_event.set()
     return "200"
 
 
@@ -586,8 +581,7 @@ def update_player2():
     elif previous_id == player_id and (current_time - player_info_update_window) > previous_timestamp:
         add_to_score("p2Score")
         previous_player_2 = (player_id, current_time)
-    global refresh_client
-    refresh_client = True
+    refresh_event.set()
     return "200"
 
 

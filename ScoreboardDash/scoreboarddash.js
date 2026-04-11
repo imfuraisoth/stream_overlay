@@ -615,13 +615,17 @@ function updateResults() {
 	sendJSON();
 }
 
+var _sendJsonTimer = null;
 function sendJSON() {
 	jsonData.timestamp = Date.now();
-	fetch('/updatedatanoscores', {
-		method: 'POST',
-		headers: { 'Content-Type': 'application/json' },
-		body: JSON.stringify(jsonData)
-	}).catch(function(err) { console.log('error: ' + err); });
+	if (_sendJsonTimer) clearTimeout(_sendJsonTimer);
+	_sendJsonTimer = setTimeout(function() {
+		fetch('/updatedatanoscores', {
+			method: 'POST',
+			headers: { 'Content-Type': 'application/json' },
+			body: JSON.stringify(jsonData)
+		}).catch(function(err) { console.log('error: ' + err); });
+	}, 300);
 }
 
 function sendJsonToEndpoint(endpoint) {
@@ -656,12 +660,18 @@ function sendJsonToEndpointWithCallback(callback, endpoint) {
 function registerClientForRefresh() {
     fetch('/registerClientRefresh')
         .then(function(response) {
-            if (response.ok) {
+            if (response.status === 200) {
+                // Server signalled a real update — fetch fresh data
                 getDataFromServer();
-                registerClientForRefresh();
             }
+            // 200 or 204 (timeout keepalive): reconnect immediately
+            registerClientForRefresh();
         })
-        .catch(function(err) { console.log('error: ' + err); });
+        .catch(function(err) {
+            console.log('error: ' + err);
+            // Wait before reconnecting to avoid a tight error loop
+            setTimeout(registerClientForRefresh, 2000);
+        });
 }
 
 // For pop up dialogue
