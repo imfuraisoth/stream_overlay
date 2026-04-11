@@ -476,20 +476,37 @@ function nextRound() {
             return response.json();
         })
         .then(function(data) {
-        document.getElementById("form_results_score_1p").value = data.p1Score;
-        document.getElementById("form_results_score_2p").value = data.p2Score;
-        document.getElementById("form_results_name_1p").value = data.p1Name;
-        document.getElementById("form_results_name_2p").value = data.p2Name;
+            if (compareScores(data)) {
+                document.getElementById("form_results_score_1p").value = data.p1Score;
+                document.getElementById("form_results_score_2p").value = data.p2Score;
+                document.getElementById("form_results_name_1p").value = data.p1Name;
+                document.getElementById("form_results_name_2p").value = data.p2Name;
 
-        document.getElementById("form_results_score_1p").style.opacity  = 0.5;
-        document.getElementById("form_results_score_2p").style.opacity  = 0.5;
-        document.getElementById("form_results_name_1p").style.opacity  = 0.5;
-        document.getElementById("form_results_name_2p").style.opacity  = 0.5;
-        getJsonDataFromServer("getNextRoundData", updateCurrentAndNextInfoUpdatePlayerData)
+                document.getElementById("form_results_score_1p").style.opacity  = 0.5;
+                document.getElementById("form_results_score_2p").style.opacity  = 0.5;
+                document.getElementById("form_results_name_1p").style.opacity  = 0.5;
+                document.getElementById("form_results_name_2p").style.opacity  = 0.5;
+                getJsonDataFromServer("getNextRoundData", updateCurrentAndNextInfoUpdatePlayerData)
+            }
       })
     .catch(function (err) {
       console.log('error: ' + err);
     });
+}
+
+function compareScores(data) {
+    if (data.p1Name.trim() === "" && data.p2Name.trim() === "") {
+        // No names, just pass
+        return true;
+    }
+
+	document.getElementById("form_score_1p").value = data.p1Score;
+	document.getElementById("form_score_2p").value = data.p2Score;
+    if (data.p1Score == data.p2Score) {
+        alert("Player 1 and player 2 scores same value: " + data.p1Score + ". Update scores then try again.");
+        return false;
+    }
+    return true;
 }
 
 function startTop8() {
@@ -678,20 +695,6 @@ function sendJsonToEndpointWithCallback(callback, endpoint) {
     }).catch(function(err) { console.log('error: ' + err); });
 }
 
-function registerClientForRefresh() {
-    fetch('/registerClientRefresh')
-        .then(function(response) {
-            if (response.ok) {
-                getDataFromServer();
-            }
-            registerClientForRefresh();
-        })
-        .catch(function(err) {
-            console.log('error: ' + err);
-            registerClientForRefresh();
-        });
-}
-
 var startggInfo;
 var playersMap = new Map();
 
@@ -750,4 +753,3 @@ function loadPlayerData(fromCache) {
 
 getDataFromServer();
 getStartggInfo();
-registerClientForRefresh();

@@ -657,23 +657,6 @@ function sendJsonToEndpointWithCallback(callback, endpoint) {
 	}).catch(function(err) { console.log('error: ' + err); });
 }
 
-function registerClientForRefresh() {
-    fetch('/registerClientRefresh')
-        .then(function(response) {
-            if (response.status === 200) {
-                // Server signalled a real update — fetch fresh data
-                getDataFromServer();
-            }
-            // 200 or 204 (timeout keepalive): reconnect immediately
-            registerClientForRefresh();
-        })
-        .catch(function(err) {
-            console.log('error: ' + err);
-            // Wait before reconnecting to avoid a tight error loop
-            setTimeout(registerClientForRefresh, 2000);
-        });
-}
-
 // For pop up dialogue
 document.getElementById('openPopupTop8Btn').addEventListener('click', function() {
     document.getElementById('popupTop8').style.display = 'block';
@@ -1133,4 +1116,3 @@ createEventsWithStatsDropdown();
 addEventListenersForNextRound('form_next_round_name_1p');
 addEventListenersForNextRound('form_next_round_name_2p');
 getAllGames();
-registerClientForRefresh();
