@@ -1,3 +1,13 @@
+// Safe element helper — silently skips missing IDs from old SVG layout
+// Maps old button IDs to new equivalents
+const _idAliases = {
+    'rectangle_button_18': 'button_start_top8',
+};
+function safeEl(id) {
+    const mapped = _idAliases[id] || id;
+    return document.getElementById(mapped) || { value: '', style: {}, innerText: '', textContent: '' };
+}
+
 var jsonData;
 var lastRoundSuffix = [];
 var lastNextRoundSuffix = [];
@@ -102,17 +112,17 @@ function setAsNextRound(round, suffix1, suffix2) {
 }
 
 function updateNextRoundForms(top8PlayerData, round, suffix1, suffix2) {
-    document.getElementById("form_next_round_team_1p").value = document.getElementById("form_team_" + suffix1).value;
-    document.getElementById("form_next_round_name_1p").value = document.getElementById("form_name_" + suffix1).value;
-    document.getElementById("dropdown_country_next1").value = top8PlayerData["r" + round]["p1"]["country"];
-    document.getElementById("form_next_round_team_2p").value = document.getElementById("form_team_" + suffix2).value;
-    document.getElementById("form_next_round_name_2p").value = document.getElementById("form_name_" + suffix2).value;
-    document.getElementById("dropdown_country_next2").value = top8PlayerData["r" + round]["p2"]["country"];
+    safeEl("form_next_round_team_1p").value = safeEl("form_team_" + suffix1).value;
+    safeEl("form_next_round_name_1p").value = safeEl("form_name_" + suffix1).value;
+    safeEl("dropdown_country_next1").value = top8PlayerData["r" + round]["p1"]["country"];
+    safeEl("form_next_round_team_2p").value = safeEl("form_team_" + suffix2).value;
+    safeEl("form_next_round_name_2p").value = safeEl("form_name_" + suffix2).value;
+    safeEl("dropdown_country_next2").value = top8PlayerData["r" + round]["p2"]["country"];
     highlightNextRoundForms(round);
-    jsonData.nextteam1 = document.getElementById("form_team_" + suffix1).value;
-    jsonData.nextplayer1 = document.getElementById("form_name_" + suffix1).value;
-    jsonData.nextteam2 = document.getElementById("form_team_" + suffix2).value;
-    jsonData.nextplayer2 = document.getElementById("form_name_" + suffix2).value;
+    jsonData.nextteam1 = safeEl("form_team_" + suffix1).value;
+    jsonData.nextplayer1 = safeEl("form_name_" + suffix1).value;
+    jsonData.nextteam2 = safeEl("form_team_" + suffix2).value;
+    jsonData.nextplayer2 = safeEl("form_name_" + suffix2).value;
     jsonData.nextcountry1 = top8PlayerData["r" + round]["p1"]["country"];
     jsonData.nextcountry2 = top8PlayerData["r" + round]["p2"]["country"];
     sendJsonToEndpoint('updateNextPlayers');
@@ -142,74 +152,74 @@ function populateData(data) {
 
 function updateElement(id, value) {
 	if (value != null && value.length > 0) {
-		document.getElementById(id).value = value;
+		safeEl(id).value = value;
 	}
 }
 
 function updatePlayer1() {
-	jsonData.p1Name = document.getElementById("form_name_1p").value;
+	jsonData.p1Name = safeEl("form_name_1p").value;
 	sendJsonToEndpoint('updateCurrentPlayers');
 }
 
 function updatePlayer2() {
-	jsonData.p2Name = document.getElementById("form_name_2p").value;
+	jsonData.p2Name = safeEl("form_name_2p").value;
 	sendJsonToEndpoint('updateCurrentPlayers');
 }
 
 function updateTeam1() {
-	jsonData.p1Team = document.getElementById("form_team_1p").value;
+	jsonData.p1Team = safeEl("form_team_1p").value;
 	sendJsonToEndpoint('updateCurrentPlayers');
 }
 
 function updateTeam2() {
-	jsonData.p2Team = document.getElementById("form_team_2p").value;
+	jsonData.p2Team = safeEl("form_team_2p").value;
 	sendJsonToEndpoint('updateCurrentPlayers');
 }
 
 function updateNextPlayer1() {
-	jsonData.nextplayer1 = document.getElementById("form_next_round_name_1p").value;
+	jsonData.nextplayer1 = safeEl("form_next_round_name_1p").value;
 	sendJsonToEndpoint('updateNextPlayers');
 }
 
 function updateNextPlayer2() {
-	jsonData.nextplayer2 = document.getElementById("form_next_round_name_2p").value;
+	jsonData.nextplayer2 = safeEl("form_next_round_name_2p").value;
 	sendJsonToEndpoint('updateNextPlayers');
 }
 
 function updateNextTeam1() {
-	jsonData.nextteam1 = document.getElementById("form_next_round_team_1p").value;
+	jsonData.nextteam1 = safeEl("form_next_round_team_1p").value;
 	sendJsonToEndpoint('updateNextPlayers');
 }
 
 function updateNextTeam2() {
-	jsonData.nextteam2 = document.getElementById("form_next_round_team_2p").value;
+	jsonData.nextteam2 = safeEl("form_next_round_team_2p").value;
 	sendJsonToEndpoint('updateNextPlayers');
 }
 
 function updateScore1() {
-	jsonData.p1Score = document.getElementById("form_score_1p").value;
+	jsonData.p1Score = safeEl("form_score_1p").value;
 	sendJsonToEndpoint('updateP1score');
 }
 
 function updateScore2() {
-	jsonData.p2Score = document.getElementById("form_score_2p").value;
+	jsonData.p2Score = safeEl("form_score_2p").value;
 	sendJsonToEndpoint('updateP2score');
 }
 
 function updateRound() {
-	jsonData.round = document.getElementById("dropdown_round").value;
+	jsonData.round = safeEl("dropdown_round").value;
 	sendJsonToEndpoint('updateCurrentPlayers');
 }
 
 function resetNamesAndScore() {
-	document.getElementById("form_name_1p").value = "";
-	document.getElementById("form_name_2p").value = "";
-	document.getElementById("form_team_1p").value = "";
-	document.getElementById("form_team_2p").value = "";
-	document.getElementById("form_score_1p").value = "0";
-	document.getElementById("form_score_2p").value = "0";
-	document.getElementById("dropdown_country_current_1").value = "US";
-    document.getElementById("dropdown_country_current_2").value = "US";
+	safeEl("form_name_1p").value = "";
+	safeEl("form_name_2p").value = "";
+	safeEl("form_team_1p").value = "";
+	safeEl("form_team_2p").value = "";
+	safeEl("form_score_1p").value = "0";
+	safeEl("form_score_2p").value = "0";
+	safeEl("dropdown_country_current_1").value = "US";
+    safeEl("dropdown_country_current_2").value = "US";
 	jsonData.p1Name = "";
 	jsonData.p2Name = "";
 	jsonData.p1Team = "";
@@ -224,18 +234,18 @@ function resetNamesAndScore() {
 }
 
 function reversePlayerNames() {
-	var p1 = document.getElementById("form_name_1p").value;
-	var p2 = document.getElementById("form_name_2p").value;
-	var t1 = document.getElementById("form_team_1p").value;
-	var t2 = document.getElementById("form_team_2p").value;
-	var c1 = document.getElementById("dropdown_country_current_1").value;
-	var c2 = document.getElementById("dropdown_country_current_2").value;
-	document.getElementById("form_name_1p").value = p2;
-	document.getElementById("form_name_2p").value = p1;
-	document.getElementById("form_team_1p").value = t2;
-	document.getElementById("form_team_2p").value = t1;
-	document.getElementById("dropdown_country_current_1").value = c2;
-	document.getElementById("dropdown_country_current_2").value = c1;
+	var p1 = safeEl("form_name_1p").value;
+	var p2 = safeEl("form_name_2p").value;
+	var t1 = safeEl("form_team_1p").value;
+	var t2 = safeEl("form_team_2p").value;
+	var c1 = safeEl("dropdown_country_current_1").value;
+	var c2 = safeEl("dropdown_country_current_2").value;
+	safeEl("form_name_1p").value = p2;
+	safeEl("form_name_2p").value = p1;
+	safeEl("form_team_1p").value = t2;
+	safeEl("form_team_2p").value = t1;
+	safeEl("dropdown_country_current_1").value = c2;
+	safeEl("dropdown_country_current_2").value = c1;
 	jsonData.p1Name = p2;
 	jsonData.p2Name = p1;
 	jsonData.p1Team = t2;
@@ -260,10 +270,10 @@ function reverseScores() {
         }).then(function (data) {
         updateElement("form_score_1p", data.p1Score);
         updateElement("form_score_2p", data.p2Score);
-        var p1 = document.getElementById("form_score_1p").value;
-        var p2 = document.getElementById("form_score_2p").value;
-        document.getElementById("form_score_1p").value = p2;
-        document.getElementById("form_score_2p").value = p1;
+        var p1 = safeEl("form_score_1p").value;
+        var p2 = safeEl("form_score_2p").value;
+        safeEl("form_score_1p").value = p2;
+        safeEl("form_score_2p").value = p1;
         jsonData.p1Score = p2;
         jsonData.p2Score = p1;
         sendJsonToEndpoint('updateCurrentScore');
@@ -274,141 +284,141 @@ function reverseScores() {
 }
 
 function addScoreP1() {
-	var score = parseInt(document.getElementById("form_score_1p").value);
+	var score = parseInt(safeEl("form_score_1p").value);
 	score++;
 	jsonData.p1Score = score.toString();
-	document.getElementById("form_score_1p").value = jsonData.p1Score;
+	safeEl("form_score_1p").value = jsonData.p1Score;
 	sendJsonToEndpoint('updateP1score');
 }
 
 function subtractScoreP1() {
-	var score = parseInt(document.getElementById("form_score_1p").value);
+	var score = parseInt(safeEl("form_score_1p").value);
 	if (score <= 0) {
 		return;
 	}
 	score--;
 	jsonData.p1Score = score.toString();
-	document.getElementById("form_score_1p").value = jsonData.p1Score;
+	safeEl("form_score_1p").value = jsonData.p1Score;
 	sendJsonToEndpoint('updateP1score');
 }
 
 function addScoreP2() {
-	var score = parseInt(document.getElementById("form_score_2p").value);
+	var score = parseInt(safeEl("form_score_2p").value);
 	score++;
 	jsonData.p2Score = score.toString();
-	document.getElementById("form_score_2p").value = jsonData.p2Score;
+	safeEl("form_score_2p").value = jsonData.p2Score;
 	sendJsonToEndpoint('updateP2score');
 }
 
 function subtractScoreP2() {
-	var score = parseInt(document.getElementById("form_score_2p").value);
+	var score = parseInt(safeEl("form_score_2p").value);
 	if (score <= 0) {
 		return;
 	}
 	score--;
 	jsonData.p2Score = score.toString();
-	document.getElementById("form_score_2p").value = jsonData.p2Score;
+	safeEl("form_score_2p").value = jsonData.p2Score;
 	sendJsonToEndpoint('updateP2score');
 }
 
 function resetScores() {
-	document.getElementById("form_score_1p").value = "0";
-	document.getElementById("form_score_2p").value = "0";
+	safeEl("form_score_1p").value = "0";
+	safeEl("form_score_2p").value = "0";
 	jsonData.p1Score = "0";
 	jsonData.p2Score = "0";
 	sendJsonToEndpoint('updateCurrentScore');
 }
 
 function resetAll() {
-	document.getElementById("form_name_1p").value = "";
-	document.getElementById("form_name_2p").value = "";
-	document.getElementById("form_team_1p").value = "";
-	document.getElementById("form_team_2p").value = "";
-	document.getElementById("form_score_1p").value = "0";
-	document.getElementById("form_score_2p").value = "0";
-	document.getElementById("dropdown_country_current_1").value = "US";
-	document.getElementById("dropdown_country_current_2").value = "US";
-	document.getElementById("form_next_round_team_1p").value = "";
-	document.getElementById("form_next_round_name_1p").value = "";
-	document.getElementById("form_next_round_team_2p").value = "";
-	document.getElementById("form_next_round_name_2p").value = "";
-	document.getElementById("form_results_name_1p").value = "";
-	document.getElementById("form_results_score_1p").value = "";
-	document.getElementById("form_results_name_2p").value = "";
-	document.getElementById("form_results_score_2p").value = "";
-    document.getElementById("dropdown_country_w1").value = "US";
-    document.getElementById("dropdown_country_w2").value = "US";
-    document.getElementById("dropdown_country_w3").value = "US";
-    document.getElementById("dropdown_country_w4").value = "US";
-    document.getElementById("dropdown_country_l1").value = "US";
-    document.getElementById("dropdown_country_l2").value = "US";
-    document.getElementById("dropdown_country_l3").value = "US";
-    document.getElementById("dropdown_country_l4").value = "US";
-    document.getElementById("dropdown_country_next1").value = "US";
-    document.getElementById("dropdown_country_next2").value = "US";
-	document.getElementById("form_name_w1").value = "";
-    document.getElementById("form_name_w2").value = "";
-    document.getElementById("form_name_w3").value = "";
-    document.getElementById("form_name_w4").value = "";
-    document.getElementById("form_name_l1").value = "";
-    document.getElementById("form_name_l2").value = "";
-    document.getElementById("form_name_l3").value = "";
-    document.getElementById("form_name_l4").value = "";
-    document.getElementById("form_team_w1").value = "";
-    document.getElementById("form_team_w2").value = "";
-    document.getElementById("form_team_w3").value = "";
-    document.getElementById("form_team_w4").value = "";
-    document.getElementById("form_team_l1").value = "";
-    document.getElementById("form_team_l2").value = "";
-    document.getElementById("form_team_l3").value = "";
-    document.getElementById("form_team_l4").value = "";
-    document.getElementById("form_score_w1").value = "";
-    document.getElementById("form_score_w2").value = "";
-    document.getElementById("form_score_w3").value = "";
-    document.getElementById("form_score_w4").value = "";
-    document.getElementById("form_score_l1").value = "";
-    document.getElementById("form_score_l2").value = "";
-    document.getElementById("form_score_l3").value = "";
-    document.getElementById("form_score_l4").value = "";
-    document.getElementById("form_name_w1_wf").value = "";
-    document.getElementById("form_team_w1_wf").value = "";
-    document.getElementById("form_score_w1_wf").value = "";
-    document.getElementById("form_score_w1_gf2").value = "";
-    document.getElementById("form_name_w2_wf").value = "";
-    document.getElementById("form_team_w2_wf").value = "";
-    document.getElementById("form_score_w2_wf").value = "";
-    document.getElementById("form_score_w2_gf2").value = "";
-    document.getElementById("form_name_w1_gf").value = "";
-    document.getElementById("form_team_w1_gf").value = "";
-    document.getElementById("form_score_w1_gf").value = "";
-    document.getElementById("form_name_w2_gf").value = "";
-    document.getElementById("form_team_w2_gf").value = "";
-    document.getElementById("form_score_w2_gf").value = "";
-    document.getElementById("form_name_l1_lq").value = "";
-    document.getElementById("form_team_l1_lq").value = "";
-    document.getElementById("form_score_l1_lq").value = "";
-    document.getElementById("form_name_l2_lq").value = "";
-    document.getElementById("form_team_l2_lq").value = "";
-    document.getElementById("form_score_l2_lq").value = "";
-    document.getElementById("form_name_l3_lq").value = "";
-    document.getElementById("form_team_l3_lq").value = "";
-    document.getElementById("form_score_l3_lq").value = "";
-    document.getElementById("form_name_l4_lq").value = "";
-    document.getElementById("form_team_l4_lq").value = "";
-    document.getElementById("form_score_l4_lq").value = "";
-    document.getElementById("form_name_l1_ls").value = "";
-    document.getElementById("form_team_l1_ls").value = "";
-    document.getElementById("form_score_l1_ls").value = "";
-    document.getElementById("form_name_l2_ls").value = "";
-    document.getElementById("form_team_l2_ls").value = "";
-    document.getElementById("form_score_l2_ls").value = "";
-    document.getElementById("form_name_l1_lf").value = "";
-    document.getElementById("form_team_l1_lf").value = "";
-    document.getElementById("form_score_l1_lf").value = "";
-    document.getElementById("form_name_l2_lf").value = "";
-    document.getElementById("form_team_l2_lf").value = "";
-    document.getElementById("form_score_l2_lf").value = "";
-    document.getElementById("dropdown_round").value = "Casuals";
+	safeEl("form_name_1p").value = "";
+	safeEl("form_name_2p").value = "";
+	safeEl("form_team_1p").value = "";
+	safeEl("form_team_2p").value = "";
+	safeEl("form_score_1p").value = "0";
+	safeEl("form_score_2p").value = "0";
+	safeEl("dropdown_country_current_1").value = "US";
+	safeEl("dropdown_country_current_2").value = "US";
+	safeEl("form_next_round_team_1p").value = "";
+	safeEl("form_next_round_name_1p").value = "";
+	safeEl("form_next_round_team_2p").value = "";
+	safeEl("form_next_round_name_2p").value = "";
+	safeEl("form_results_name_1p").value = "";
+	safeEl("form_results_score_1p").value = "";
+	safeEl("form_results_name_2p").value = "";
+	safeEl("form_results_score_2p").value = "";
+    safeEl("dropdown_country_w1").value = "US";
+    safeEl("dropdown_country_w2").value = "US";
+    safeEl("dropdown_country_w3").value = "US";
+    safeEl("dropdown_country_w4").value = "US";
+    safeEl("dropdown_country_l1").value = "US";
+    safeEl("dropdown_country_l2").value = "US";
+    safeEl("dropdown_country_l3").value = "US";
+    safeEl("dropdown_country_l4").value = "US";
+    safeEl("dropdown_country_next1").value = "US";
+    safeEl("dropdown_country_next2").value = "US";
+	safeEl("form_name_w1").value = "";
+    safeEl("form_name_w2").value = "";
+    safeEl("form_name_w3").value = "";
+    safeEl("form_name_w4").value = "";
+    safeEl("form_name_l1").value = "";
+    safeEl("form_name_l2").value = "";
+    safeEl("form_name_l3").value = "";
+    safeEl("form_name_l4").value = "";
+    safeEl("form_team_w1").value = "";
+    safeEl("form_team_w2").value = "";
+    safeEl("form_team_w3").value = "";
+    safeEl("form_team_w4").value = "";
+    safeEl("form_team_l1").value = "";
+    safeEl("form_team_l2").value = "";
+    safeEl("form_team_l3").value = "";
+    safeEl("form_team_l4").value = "";
+    safeEl("form_score_w1").value = "";
+    safeEl("form_score_w2").value = "";
+    safeEl("form_score_w3").value = "";
+    safeEl("form_score_w4").value = "";
+    safeEl("form_score_l1").value = "";
+    safeEl("form_score_l2").value = "";
+    safeEl("form_score_l3").value = "";
+    safeEl("form_score_l4").value = "";
+    safeEl("form_name_w1_wf").value = "";
+    safeEl("form_team_w1_wf").value = "";
+    safeEl("form_score_w1_wf").value = "";
+    safeEl("form_score_w1_gf2").value = "";
+    safeEl("form_name_w2_wf").value = "";
+    safeEl("form_team_w2_wf").value = "";
+    safeEl("form_score_w2_wf").value = "";
+    safeEl("form_score_w2_gf2").value = "";
+    safeEl("form_name_w1_gf").value = "";
+    safeEl("form_team_w1_gf").value = "";
+    safeEl("form_score_w1_gf").value = "";
+    safeEl("form_name_w2_gf").value = "";
+    safeEl("form_team_w2_gf").value = "";
+    safeEl("form_score_w2_gf").value = "";
+    safeEl("form_name_l1_lq").value = "";
+    safeEl("form_team_l1_lq").value = "";
+    safeEl("form_score_l1_lq").value = "";
+    safeEl("form_name_l2_lq").value = "";
+    safeEl("form_team_l2_lq").value = "";
+    safeEl("form_score_l2_lq").value = "";
+    safeEl("form_name_l3_lq").value = "";
+    safeEl("form_team_l3_lq").value = "";
+    safeEl("form_score_l3_lq").value = "";
+    safeEl("form_name_l4_lq").value = "";
+    safeEl("form_team_l4_lq").value = "";
+    safeEl("form_score_l4_lq").value = "";
+    safeEl("form_name_l1_ls").value = "";
+    safeEl("form_team_l1_ls").value = "";
+    safeEl("form_score_l1_ls").value = "";
+    safeEl("form_name_l2_ls").value = "";
+    safeEl("form_team_l2_ls").value = "";
+    safeEl("form_score_l2_ls").value = "";
+    safeEl("form_name_l1_lf").value = "";
+    safeEl("form_team_l1_lf").value = "";
+    safeEl("form_score_l1_lf").value = "";
+    safeEl("form_name_l2_lf").value = "";
+    safeEl("form_team_l2_lf").value = "";
+    safeEl("form_score_l2_lf").value = "";
+    safeEl("dropdown_round").value = "Casuals";
 
 	jsonData.p1Name = "";
 	jsonData.p2Name = "";
@@ -438,13 +448,13 @@ function resetAll() {
 }
 
 function countryDropdownCurrent(id, field) {
-	var c = document.getElementById(id);
+	var c = safeEl(id);
 	jsonData[field] = c.options[c.selectedIndex].text;
 	sendJsonToEndpoint('updateCurrentPlayers');
 }
 
 function countryDropdown(id, round, player) {
-    var value = document.getElementById(id);
+    var value = safeEl(id);
     updateTop8PlayerInfo(round, player, "country", value.options[value.selectedIndex].text)
 }
 
@@ -453,9 +463,9 @@ function updateTop8PlayerInfo(round, player_id, field, value, position) {
         // Check to see if it's a part of our players map
         if (playersMap.has(value)) {
     	    player = playersMap.get(value);
-            document.getElementById("form_team_" + position).value = player.team;
+            safeEl("form_team_" + position).value = player.team;
             updateTop8PlayerInfoCallServer(round, player_id, "team", player.team);
-            document.getElementById("dropdown_country_" + position).value = player.country;
+            safeEl("dropdown_country_" + position).value = player.country;
             updateTop8PlayerInfoCallServer(round, player_id, "country", player.country);
     	}
     }
@@ -477,15 +487,15 @@ function nextRound() {
         })
         .then(function(data) {
             if (compareScores(data)) {
-                document.getElementById("form_results_score_1p").value = data.p1Score;
-                document.getElementById("form_results_score_2p").value = data.p2Score;
-                document.getElementById("form_results_name_1p").value = data.p1Name;
-                document.getElementById("form_results_name_2p").value = data.p2Name;
+                safeEl("form_results_score_1p").value = data.p1Score;
+                safeEl("form_results_score_2p").value = data.p2Score;
+                safeEl("form_results_name_1p").value = data.p1Name;
+                safeEl("form_results_name_2p").value = data.p2Name;
 
-                document.getElementById("form_results_score_1p").style.opacity  = 0.5;
-                document.getElementById("form_results_score_2p").style.opacity  = 0.5;
-                document.getElementById("form_results_name_1p").style.opacity  = 0.5;
-                document.getElementById("form_results_name_2p").style.opacity  = 0.5;
+                safeEl("form_results_score_1p").style.opacity  = 0.5;
+                safeEl("form_results_score_2p").style.opacity  = 0.5;
+                safeEl("form_results_name_1p").style.opacity  = 0.5;
+                safeEl("form_results_name_2p").style.opacity  = 0.5;
                 getJsonDataFromServer("getNextRoundData", updateCurrentAndNextInfoUpdatePlayerData)
             }
       })
@@ -500,8 +510,8 @@ function compareScores(data) {
         return true;
     }
 
-	document.getElementById("form_score_1p").value = data.p1Score;
-	document.getElementById("form_score_2p").value = data.p2Score;
+	safeEl("form_score_1p").value = data.p1Score;
+	safeEl("form_score_2p").value = data.p2Score;
     if (data.p1Score == data.p2Score) {
         alert("Player 1 and player 2 scores same value: " + data.p1Score + ". Update scores then try again.");
         return false;
@@ -523,28 +533,28 @@ function updateTop8StartedButton(currentNextData) {
 }
 
 function setButtonColourAndText(id, bgColour, text) {
-    var element = document.getElementById(id);
+    var element = safeEl(id);
     element.style.background = bgColour;
     element.innerText = text;
     element.style.color = "white";
 }
 
 function updateCurrentAndNextInfo(currentNextData) {
-    document.getElementById("form_next_round_team_1p").value = currentNextData.nextPlayer1.team;
-    document.getElementById("form_next_round_name_1p").value = currentNextData.nextPlayer1.name;
-    document.getElementById("form_next_round_team_2p").value = currentNextData.nextPlayer2.team;
-    document.getElementById("form_next_round_name_2p").value = currentNextData.nextPlayer2.name;
-    document.getElementById("dropdown_country_next1").value = currentNextData.nextPlayer1.country;
-    document.getElementById("dropdown_country_next2").value = currentNextData.nextPlayer2.country;
-    document.getElementById("form_team_1p").value = currentNextData.player1.team;
-    document.getElementById("form_name_1p").value = currentNextData.player1.name;
-    document.getElementById("form_team_2p").value = currentNextData.player2.team;
-    document.getElementById("form_name_2p").value = currentNextData.player2.name;
-    document.getElementById("dropdown_country_current_1").value = currentNextData.player1.country;
-    document.getElementById("dropdown_country_current_2").value = currentNextData.player2.country;
-    document.getElementById("form_score_1p").value = "0";
-    document.getElementById("form_score_2p").value = "0";
-    document.getElementById("dropdown_round").value = currentNextData.currentRoundName;
+    safeEl("form_next_round_team_1p").value = currentNextData.nextPlayer1.team;
+    safeEl("form_next_round_name_1p").value = currentNextData.nextPlayer1.name;
+    safeEl("form_next_round_team_2p").value = currentNextData.nextPlayer2.team;
+    safeEl("form_next_round_name_2p").value = currentNextData.nextPlayer2.name;
+    safeEl("dropdown_country_next1").value = currentNextData.nextPlayer1.country;
+    safeEl("dropdown_country_next2").value = currentNextData.nextPlayer2.country;
+    safeEl("form_team_1p").value = currentNextData.player1.team;
+    safeEl("form_name_1p").value = currentNextData.player1.name;
+    safeEl("form_team_2p").value = currentNextData.player2.team;
+    safeEl("form_name_2p").value = currentNextData.player2.name;
+    safeEl("dropdown_country_current_1").value = currentNextData.player1.country;
+    safeEl("dropdown_country_current_2").value = currentNextData.player2.country;
+    safeEl("form_score_1p").value = "0";
+    safeEl("form_score_2p").value = "0";
+    safeEl("dropdown_round").value = currentNextData.currentRoundName;
     updateTop8StartedButton(currentNextData);
     highlightNextRoundForms(currentNextData.nextRound)
     highlightCurrentRoundForms(currentNextData.currentRound)
@@ -579,34 +589,34 @@ function updateCurrentAndNextInfo(currentNextData) {
 
 function highlightCurrentRoundForms(round) {
     for (const suffix of lastRoundSuffix) {
-        document.getElementById("form_team_" + suffix).style.border="";
-        document.getElementById("form_name_" + suffix).style.border="";
-        document.getElementById("form_score_" + suffix).style.border="";
+        safeEl("form_team_" + suffix).style.border="";
+        safeEl("form_name_" + suffix).style.border="";
+        safeEl("form_score_" + suffix).style.border="";
     }
     if (round == null || !roundSuffixMap[round]) return;
     for (const suffix of roundSuffixMap[round]) {
-        document.getElementById("form_team_" + suffix).style.border="2px solid red";
-        document.getElementById("form_name_" + suffix).style.border="2px solid red";
-        document.getElementById("form_score_" + suffix).style.border="2px solid red";
+        safeEl("form_team_" + suffix).style.border="2px solid red";
+        safeEl("form_name_" + suffix).style.border="2px solid red";
+        safeEl("form_score_" + suffix).style.border="2px solid red";
     }
     if (round == 11) {
-        document.getElementById("form_score_w1_gf2").style.border="2px solid red";
-        document.getElementById("form_score_w2_gf2").style.border="2px solid red";
+        safeEl("form_score_w1_gf2").style.border="2px solid red";
+        safeEl("form_score_w2_gf2").style.border="2px solid red";
     }
     lastRoundSuffix = roundSuffixMap[round];
 }
 
 function highlightNextRoundForms(round) {
     for (const suffix of lastNextRoundSuffix) {
-        document.getElementById("form_team_" + suffix).style.border="";
-        document.getElementById("form_name_" + suffix).style.border="";
-        document.getElementById("form_score_" + suffix).style.border="";
+        safeEl("form_team_" + suffix).style.border="";
+        safeEl("form_name_" + suffix).style.border="";
+        safeEl("form_score_" + suffix).style.border="";
     }
     if (round == null || !roundSuffixMap[round]) return;
     for (const suffix of roundSuffixMap[round]) {
-        document.getElementById("form_team_" + suffix).style.border="2px solid yellow";
-        document.getElementById("form_name_" + suffix).style.border="2px solid yellow";
-        document.getElementById("form_score_" + suffix).style.border="2px solid yellow";
+        safeEl("form_team_" + suffix).style.border="2px solid yellow";
+        safeEl("form_name_" + suffix).style.border="2px solid yellow";
+        safeEl("form_score_" + suffix).style.border="2px solid yellow";
     }
     lastNextRoundSuffix = roundSuffixMap[round];
 }
@@ -631,14 +641,14 @@ function getJsonDataFromServer(endpoint, callback) {
 }
 
 function updateResults() {
-	document.getElementById("form_results_score_1p").style.opacity  = 1;
-	document.getElementById("form_results_score_2p").style.opacity  = 1;
-	document.getElementById("form_results_name_1p").style.opacity  = 1;
-	document.getElementById("form_results_name_2p").style.opacity  = 1;
-	jsonData.resultscore1 = document.getElementById("form_results_score_1p").value;
-	jsonData.resultscore2 = document.getElementById("form_results_score_2p").value;
-	jsonData.resultplayer1 = document.getElementById("form_results_name_1p").value;
-	jsonData.resultplayer2 = document.getElementById("form_results_name_2p").value;
+	safeEl("form_results_score_1p").style.opacity  = 1;
+	safeEl("form_results_score_2p").style.opacity  = 1;
+	safeEl("form_results_name_1p").style.opacity  = 1;
+	safeEl("form_results_name_2p").style.opacity  = 1;
+	jsonData.resultscore1 = safeEl("form_results_score_1p").value;
+	jsonData.resultscore2 = safeEl("form_results_score_2p").value;
+	jsonData.resultplayer1 = safeEl("form_results_name_1p").value;
+	jsonData.resultplayer2 = safeEl("form_results_name_2p").value;
 	sendJsonToEndpoint('updateResults');
 }
 
@@ -651,19 +661,19 @@ function resetTop8() {
     fetch('/resetTop8', { method: 'POST' })
         .then(function(response) {
             if (response.ok) {
-                document.getElementById("rectangle_button_18").style.background = "#675267";
+                safeEl("rectangle_button_18").style.background = "#675267";
                 for (const suffix of lastRoundSuffix) {
-                    document.getElementById("form_team_" + suffix).style.border="";
-                    document.getElementById("form_name_" + suffix).style.border="";
-                    document.getElementById("form_score_" + suffix).style.border="";
+                    safeEl("form_team_" + suffix).style.border="";
+                    safeEl("form_name_" + suffix).style.border="";
+                    safeEl("form_score_" + suffix).style.border="";
                 }
                 for (const suffix of lastNextRoundSuffix) {
-                    document.getElementById("form_team_" + suffix).style.border="";
-                    document.getElementById("form_name_" + suffix).style.border="";
-                    document.getElementById("form_score_" + suffix).style.border="";
+                    safeEl("form_team_" + suffix).style.border="";
+                    safeEl("form_name_" + suffix).style.border="";
+                    safeEl("form_score_" + suffix).style.border="";
                 }
-                document.getElementById("form_score_w1_gf2").style.border="";
-                document.getElementById("form_score_w2_gf2").style.border="";
+                safeEl("form_score_w1_gf2").style.border="";
+                safeEl("form_score_w2_gf2").style.border="";
             }
         })
         .catch(function(err) { console.log('error: ' + err); });
@@ -725,7 +735,7 @@ function loadPlayerData(fromCache) {
            return response.json();
          })
         .then(function (playersData) {
-            nextPlaySuggestions = document.getElementById('next_player_suggestions');
+            nextPlaySuggestions = safeEl('next_player_suggestions');
             playersMap.clear();
             if (playersData.length === 0 || playersData[startggInfo.event].length === 0) {
                 // Clear all options from the datalist

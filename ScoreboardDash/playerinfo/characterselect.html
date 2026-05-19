@@ -1,54 +1,64 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <meta charset="utf-8">
-    <link rel="stylesheet" href="https://use.typekit.net/ogo7pba.css">
-    <title>Character Select Dashboard</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+Vithkuqi:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="icon" type="image/png" href="../images/V.png">
-    <script src="https://kit.fontawesome.com/2c93766a80.js" crossorigin="anonymous"></script>
-    <script class="u-script" type="text/javascript" src="characterselect.js" defer=""></script>
-    <link href="characterselect.css" rel="stylesheet" type="text/css" />
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Character Select Dashboard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;900&family=Barlow:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="icon" type="image/png" href="../images/V.png">
+  <script src="https://kit.fontawesome.com/2c93766a80.js" crossorigin="anonymous"></script>
+  <script class="u-script" type="text/javascript" src="characterselect.js" defer=""></script>
+  <link href="characterselect.css" rel="stylesheet" type="text/css" />
 </head>
 <body>
-    <div class="container">
-        <div class="top-navbar-container">
-            <div id="Commentators" class="header-item">
-                <a href="../commentators/commentators.html" style="text-decoration: none">Commentators</a>
-            </div>
-            <div class="header-item-divider">|</div>
-            <div id="Event_Dashboard" class="header-item">
-                <a href="../index.html" style="text-decoration: none">Event Dashboard</a>
-            </div>
-            <div class="header-item-divider">|</div>
-            <div id="Top_8" class="header-item">
-                <a href="../top8/top8.html" style="text-decoration: none">Top 8</a>
-            </div>
+
+  <!-- TOP NAV -->
+  <div class="top-navbar-container">
+    <div class="header-item"><a href="../commentators/commentators.html">Commentators</a></div>
+    <span class="header-sep">|</span>
+    <div class="header-item"><a href="../index.html">Event Dashboard</a></div>
+    <span class="header-sep">|</span>
+    <div class="header-item"><a href="../top8/top8.html">Top 8</a></div>
+    <span class="header-sep">|</span>
+    <div class="header-item active"><a href="characterselect.html">Character Select</a></div>
+  </div>
+
+  <div class="page-content">
+
+    <!-- Selector panel -->
+    <div class="selector-panel">
+      <div class="page-header">
+        <h2>Character Select</h2>
+        <div class="header-actions">
+          <button onclick="savePlayerCharacterData();">Save</button>
+          <button class="btn-sec" onclick="deletePlayerCharacters();">Clear</button>
         </div>
+      </div>
 
-        <h2>Select Game, Event, & Player</h2>
-
-        <!-- Game Dropdown -->
-        <label for="gameSelect">Game:</label>
-        <select id="gameSelect" onchange="handleGameSelect();"></select>
-
-        <label for="eventSelect">Event:</label>
-        <select id="eventSelect" onchange="loadPlayersDropdown();"></select>
-
-        <!-- Player Dropdown -->
-        <label for="playerSelect">Player:</label>
-        <select id="playerSelect" onchange="loadSelectedPlayer();"></select>
-
-        <div id="buttonsDiv">
-            <button class="rectangle_button" type="submit" onclick="savePlayerCharacterData();">Submit</button>
-            <button class="rectangle_button" type="submit" onclick="deletePlayerCharacters();">Clear</button>
+      <div class="selectors-row">
+        <div class="selector-group">
+          <label for="gameSelect">Game</label>
+          <select id="gameSelect" onchange="handleGameSelect();"></select>
         </div>
-
-        <h2>Characters</h2>
-
-        <div id="characterList"></div>
+        <div class="selector-group">
+          <label for="eventSelect">Event</label>
+          <select id="eventSelect" onchange="loadPlayersDropdown();"></select>
+        </div>
+        <div class="selector-group">
+          <label for="playerSelect">Player</label>
+          <select id="playerSelect" onchange="loadSelectedPlayer();"></select>
+        </div>
+      </div>
     </div>
+
+    <!-- Character grid -->
+    <div class="section-panel">
+      <div class="section-header">Characters</div>
+      <div id="characterList"></div>
+    </div>
+
+  </div>
 </body>
 </html>

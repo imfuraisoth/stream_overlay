@@ -3,11 +3,11 @@
 <head>
 	<base href="/">
 	<meta charset="utf-8">
-	<link rel="stylesheet" href="https://use.typekit.net/ogo7pba.css">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<title>Scoreboard Dashboard</title>
 	<link rel="preconnect" href="https://fonts.googleapis.com">
 	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-	<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+Vithkuqi:wght@400;500;600;700&display=swap" rel="stylesheet">
+	<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;900&family=Barlow:wght@400;500&display=swap" rel="stylesheet">
 	<link href="style.css" rel="stylesheet" type="text/css" />
 	<link href="popup.css" rel="stylesheet" type="text/css" />
 	<link rel="icon" type="image/png" href="images/V.png">
@@ -18,162 +18,276 @@
 	<div class="container">
 		<div id="event_page">
 
-			<div class="top-navbar-container">
-				<div id="Commentators" class="header-item">
-					<a href="commentators/commentators.html" style="text-decoration: none">Commentators</a>
-				</div>
-				<div class="header-item">|</div>
-				<div id="Event_Dashboard" class="header-item">
-					<a href="index.html" style="text-decoration: none">Event Dashboard</a>
-				</div>	
-				<div class="header-item">|</div>
-				<div id="Top_8" class="header-item">
-					<a href="top8/top8.html" style="text-decoration: none">Top 8</a>
-				</div>
-				<div class="header-item">|</div>
-				<div id="characterSelect" class="header-item">
-					<a href="playerinfo/characterselect.html" style="text-decoration: none">Character Select</a>
-				</div>
-				<div class="header-item">|</div>
-				<div id="additionals" class="header-item">
-					<a href="additionals/additionals.html" class="tooltip" style="text-decoration: none">
-						Additional Options
-						<span class="tooltip-text">Countdown timer, custom messaging, etc..</span>
-					</a>
-				</div>
-			</div>
+			<!-- TOP NAV -->
+  <div class="top-navbar-container">
+    <div class="header-item"><a href="commentators/commentators.html">Commentators</a></div>
+    <span class="header-sep">|</span>
+    <div class="header-item active"><a href="index.html">Event Dashboard</a></div>
+    <span class="header-sep">|</span>
+    <div class="header-item"><a href="top8/top8.html">Top 8</a></div>
+    <span class="header-sep">|</span>
+    <div class="header-item"><a href="playerinfo/characterselect.html">Character Select</a></div>
+  </div>
 
 			<!-- EVENT DASHBOARD CONTENT -->
-			
-			<!-- MATCH META DATA CURRENT MATCH -->
-			<div class="event-dashboard-content">			
+			<div class="event-dashboard-content">
 
-			<!-- HEADER -->
-			<div class="dashboard-header">
-				<div class="contents-item">
-					<button class="rectangle_button" id="rectangle_button" onclick='resetAll();'>
-						<text id="button_text">RESET ALL</text>
-					</button>
+				<!-- HEADER -->
+				<div class="dashboard-header">
+					<div class="contents-item">
+						<button class="rectangle_button" id="rectangle_button" onclick="resetAll();">
+							Reset All
+						</button>
+					</div>
+					<div class="contents-item">
+						<h2 id="eventDashText">Event Dashboard</h2>
+					</div>
+					<div class="contents-item">
+						<button class="rectangle_button" id="rectangle_button_1" onclick="resetNamesAndScore();">
+							Reset Names &amp; Scores
+						</button>
+					</div>
 				</div>
-				<div class="contents-item">
-					<h2 id="eventDashText">EVENT DASHBOARD</h2>
-				</div>
-				<div class="contents-item">
-					<button class="rectangle_button" id="rectangle_button_1" onclick='resetNamesAndScore();'>
-						<text id="button_text_2">RESET NAMES & SCORES </text>
-					</button>
-				</div>	
-			</div>
 
-			<div class="matchMetaDataContainer">
+				<!-- CURRENT MATCH -->
+				<div class="matchMetaDataContainer">
 
-				<div class="matchItem playerCard-p1">
-					<div class="cardHeader"> 
-						<div id="text_1p">
-							<span class="text-shadow">PLAYER 1</span>
-						</div>
-						<div class="current1p">	
-							<div class="playerCardItem">
-								<span>Name</span>
+					<!-- P1 Card -->
+					<div class="matchItem playerCard-p1">
+						<div class="cardHeader">
+							<div id="text_1p"><span class="text-shadow">PLAYER 1</span></div>
+							<div class="current1p">
+								<div class="playerCardItem">
+									<span>Name</span>
+									<div class="name-scroll-wrap" id="wrap_name_1p"><input class="form_name_1p" type="text" id="form_name_1p" value="" placeholder="P1 Name" onchange="updatePlayer1();"></div>
+								</div>
+								<div class="playerCardItem">
+									<span>Team</span>
+									<input class="form_team_1p" type="text" id="form_team_1p" value="" placeholder="P1 Team" onchange="updateTeam1();">
+								</div>
 							</div>
-							<input class="form_name_1p" type="text" id="form_name_1p" value="" placeholder="P1 Name" onchange="updatePlayer1();">
-							<div class="playerCardItem">
-								<span>Team</span>
-							</div>
-							<input class="form_team_1p" type="text" id="form_team_1p" value="" placeholder="P1 Team" onchange="updateTeam1();">
 						</div>
-					</div>
-					<div class="playerCardItem">
-						<span>Country</span>
-						<select id="dropdown_country_1p" onchange="countryDropdown1()">
-						</select>
-					</div>
-					<div class="playerCardItem">
-						<span>Score</span>
-						<div class="cardScoreItem">
-							<button class="scoreButton" onclick='subtractScoreP1();'> <span class="minus"> - </span> </button>
-							<input class="form_score_1p" type="text" id="form_score_1p" value="0" onchange="updateScore1();">
-							<button class="scoreButton" onclick='addScoreP1();'> <span> + </span></button>
-						</div>
-					</div>
-				</div>
-				<div class="currentMatchInfoDisplay">
-					<div id="text_current_match">
-						<span>CURRENT MATCH</span>
-					</div>
-					<div id="button_reverse_names">
-						<button class="rectangle_button" id="rectangle_button_7" onclick='reversePlayerNames();'>
-							<text id="button_text_4"><-Reverse Names-></text>
-						</button>
-					</div>
-					<div class="matchInfoCenterDisplay">
-						<div class="playerInfoDisplay">
-							<span><text id="currentPlayerInfoDisplay"></text></span>
-							<div><text id="currentScoreInfoDisplay"></text></div>
-						</div>
-					</div>
-					<div class="matchInfo-todo"></div>
-					<div id="button_reverse_scores">
-						<button class="rectangle_button" id="rectangle_button_2" onclick='reverseScores();'>
-							<text id="button_text_4"><-Reverse Scores-></text>
-						</button>
-					</div>
-					<div id="button_reset_scores">
-						<button class="rectangle_button" id="rectangle_button_3" onclick='resetScores();'>
-							<text id="button_text_4">Reset Scores</text>
-						</button>
-					</div>
-				</div>
-				<div class="matchItem playerCard-p2">
-					<div class="cardHeader">
-						<div id="text_2p">
-							<span class="text-shadow">PLAYER 2</span>
-						</div>
-						<div class="playerCardItem">
-							<span>Name</span>
-						</div>
-						<input class="form_name_2p" type="text" id="form_name_2p" value="" placeholder="P2 Name" onchange="updatePlayer2();">	
-						<div class="playerCardItem">
-							<span>Team</span>
-						</div>
-							<input class="form_team_2p" type="text" id="form_team_2p" value="" placeholder="P2 Team" onchange="updateTeam2();">
-					</div>
-					<div class="cardCountry">
 						<div class="playerCardItem">
 							<span>Country</span>
+							<select id="dropdown_country_1p" onchange="countryDropdown1()"></select>
 						</div>
-						<select id="dropdown_country_2p" class="dropdown_country_2p" onchange = "countryDropdown2()">
-						</select>
-					</div>
-					<div class="playerCardItem">
-						<span>Score</span>
-
-						<div class="cardScoreItem">
-							<button class="scoreButton" onclick='subtractScoreP2();'>
-								<span class="minus"> - </span>
-							</button>
-							<input class="form_score_2p" type="text" id="form_score_2p" value="0" onchange="updateScore2();">
-							<button class="scoreButton" onclick='addScoreP2();'>
-								<span> + </span>
-							</button>
+						<div class="playerCardItem">
+							<span>Score</span>
+							<div class="cardScoreItem">
+								<button class="scoreButton" onclick="subtractScoreP1();"><span class="minus">−</span></button>
+								<input class="form_score_1p" type="text" id="form_score_1p" value="0" onchange="updateScore1();">
+								<button class="scoreButton" onclick="addScoreP1();">+</button>
+							</div>
 						</div>
-						
 					</div>
-				</div>
 
-			</div>
+					<!-- Center column -->
+					<div class="currentMatchInfoDisplay">
+						<div id="text_current_match"><span>CURRENT MATCH</span></div>
+						<div id="button_reverse_names">
+							<button class="rectangle_button" id="rectangle_button_7" onclick="reversePlayerNames();">⇄ Swap Names</button>
+						</div>
+						<div class="matchInfoCenterDisplay">
+							<div class="playerInfoDisplay">
+								<div class="center-name-clip"><span id="currentPlayerInfoDisplay"></span></div>
+								<div><text id="currentScoreInfoDisplay"></text></div>
+							</div>
+						</div>
+						<div id="button_reverse_scores">
+							<button class="rectangle_button" id="rectangle_button_2" onclick="reverseScores();">⇄ Swap Scores</button>
+						</div>
+						<div id="button_reset_scores">
+							<button class="rectangle_button" id="rectangle_button_3" onclick="resetScores();">Reset Scores</button>
+						</div>
+					</div>
 
-			<!-- LAST SECTION -->
-			<div class="extraSectionContainer">
-				<div class="leftSectionContainer">
+					<!-- P2 Card -->
+					<div class="matchItem playerCard-p2">
+						<div class="cardHeader">
+							<div id="text_2p"><span class="text-shadow">PLAYER 2</span></div>
+							<div class="playerCardItem">
+								<span>Name</span>
+								<div class="name-scroll-wrap" id="wrap_name_2p"><input class="form_name_2p" type="text" id="form_name_2p" value="" placeholder="P2 Name" onchange="updatePlayer2();"></div>
+							</div>
+							<div class="playerCardItem">
+								<span>Team</span>
+								<input class="form_team_2p" type="text" id="form_team_2p" value="" placeholder="P2 Team" onchange="updateTeam2();">
+							</div>
+						</div>
+						<div class="cardCountry">
+							<div class="playerCardItem">
+								<span>Country</span>
+								<select id="dropdown_country_2p" class="dropdown_country_2p" onchange="countryDropdown2()"></select>
+							</div>
+						</div>
+						<div class="playerCardItem">
+							<span>Score</span>
+							<div class="cardScoreItem">
+								<button class="scoreButton" onclick="subtractScoreP2();"><span class="minus">−</span></button>
+								<input class="form_score_2p" type="text" id="form_score_2p" value="0" onchange="updateScore2();">
+								<button class="scoreButton" onclick="addScoreP2();">+</button>
+							</div>
+						</div>
+					</div>
 
-				<!-- ROUND -->
-				<div class="round-section-container">
-					<div class="round-contents">
-						<div class="contents-item-dropdown">
-							<div class="header-type text-shadow">Round Type</div>
-							<div id="round">
-								<select id="dropdown_round" class="dropdown_round" onchange="updateRound();">
+				</div><!-- /matchMetaDataContainer -->
+
+				<!-- BOTTOM SECTION -->
+				<div class="extraSectionContainer">
+
+					<!-- Left column: Round, FT, Game, Start.gg, Stats -->
+					<div class="leftSectionContainer">
+
+						<div class="round-section-container">
+							<div class="round-contents">
+								<div class="contents-item-dropdown">
+									<div class="header-type">Round Type</div>
+									<div id="round">
+										<select id="dropdown_round" class="dropdown_round" onchange="updateRound();">
+											<option>Casuals</option>
+											<option>Pools</option>
+											<option>Winners Round 1</option>
+											<option>Winners Round 2</option>
+											<option>Winners Round 3</option>
+											<option>Winners Round 4</option>
+											<option>Winners Quarters</option>
+											<option>Winners Semis</option>
+											<option>Winners Finals</option>
+											<option>Grand Finals</option>
+											<option>Losers Round 1</option>
+											<option>Losers Round 2</option>
+											<option>Losers Round 3</option>
+											<option>Losers Round 4</option>
+											<option>Losers Quarters</option>
+											<option>Losers Semis</option>
+											<option>Losers Finals</option>
+											<option>Exhibitions</option>
+											<option>FT3</option>
+											<option>FT5</option>
+											<option>FT10</option>
+											<option>FT?</option>
+										</select>
+									</div>
+								</div>
+							</div>
+						</div>
+
+						<div class="leftMidContainer">
+							<div class="ftContainer">
+								<div id="text_ft">First to #</div>
+								<div id="ftx">
+									<input placeholder="0" class="form_ft" type="text" id="form_ft" value="" onchange="updateMaxScore();">
+								</div>
+							</div>
+							<div class="gameContainer">
+								<div id="text_game">Current Game</div>
+								<select id="gameSelect" class="dropdown_game_select" onchange="updateCurrentGame();"></select>
+							</div>
+						</div>
+
+						<div class="fetchContainer">
+							<div id="text_startgg">Start.gg</div>
+							<button class="rectangle_button" id="openStartggBtn" onclick="getStartggInfo();">Start.gg Controls</button>
+							<div id="startggPopup" class="popup">
+								<div class="popup-content">
+									<span id="closeStartggBtn" class="close">&times;</span>
+									<form id="tournament">
+										<h3>Tournament Name:</h3>
+										<input type="text" id="tournamentName" name="tournamentName" required>
+										<h3>Event Name:</h3>
+										<input type="text" id="currentEventName" name="currentEventName" required>
+										<h3>Stream Name:</h3>
+										<input type="text" id="streamName" name="streamName" required>
+										<div class="fetch-sections">
+											<div class="fetch-column">
+												<h3>Players Fetch</h3>
+												<button class="rectangle_button_popup" id="rectangle_button_startgg_fetch_all_players" onclick="getAllPlayersForTournament(event);">Fetch All Players</button>
+												<button class="rectangle_button_popup" id="rectangle_button_clear_next_player" onclick="clearNextPlayers(event);">Clear Next Players</button>
+											</div>
+											<div class="fetch-column">
+												<h3>Queue Fetch</h3>
+												<button class="rectangle_button_popup" id="rectangle_button_startgg_stream_queue" onclick="getNextPlayersFromStartgg(event);">Fetch From Stream Queue</button>
+												<button class="rectangle_button_popup" id="rectangle_button_remove_next_player" onclick="removeNextPlayers(event);">Remove From Queue</button>
+											</div>
+										</div>
+									</form>
+								</div>
+							</div>
+						</div>
+
+						<div class="statsContainer">
+							<div id="text_stats_container">Player Stats</div>
+							<button class="rectangle_button" id="openStatsBtn" onclick="loadStatsInfo();">Stats Controls</button>
+							<div id="statsPopup" class="popup">
+								<div class="popup-content">
+									<span id="closeStatsBtn" class="close">&times;</span>
+									<div class="top-row">
+										<div id="fetchTop8div">
+											<h3>Fetch Top 8 Results</h3>
+											<button class="rectangle_button" id="openPopupTop8Btn">Fetch Top 8 Results</button>
+											<div id="popupTop8" class="popup">
+												<div class="popup-content">
+													<span id="closePopupTop8Btn" class="close">&times;</span>
+													<form id="FetchTop8">
+														<h3>Tournament Name:</h3>
+														<input type="text" id="tournamentNameTop8" name="tournamentNameTop8" required>
+														<h3>Event Name:</h3>
+														<input type="text" id="eventNameTop8" name="eventNameTop8" required>
+														<div class="horizontal-button-container">
+															<button type="submit" onclick="fetchStartggTop8Info();">Get Single Event</button>
+															<button onclick="addStartggTop8Info();">Add Event</button>
+														</div>
+													</form>
+												</div>
+											</div>
+										</div>
+										<div id="addPlayerStatDiv">
+											<h3>Add Player Stat</h3>
+											<button class="rectangle_button" id="openAddPlayerStatBtn">Add Player Stat</button>
+											<div id="addPlayerStat" class="popup">
+												<div class="popup-content">
+													<span id="closeAddPlayerStatBtn" class="close">&times;</span>
+													<form id="PlayerStat">
+														<h3>Gamer Tag:</h3>
+														<input type="text" id="playerName" name="playerName" required>
+														<h3>Event Name:</h3>
+														<input type="text" id="eventName" name="eventName" required>
+														<div class="horizontal-button-container">
+															<h3>Placement:</h3>
+															<input type="text" class="form-center-align" id="placement" name="placement" required>
+															<h3>Wins:</h3>
+															<input type="text" class="form-center-align" id="wins" name="wins" value="0">
+															<h3>Losses:</h3>
+															<input type="text" class="form-center-align" id="losses" name="losses" value="0">
+														</div>
+														<button onclick="addPlayStats();">Submit</button>
+													</form>
+												</div>
+											</div>
+										</div>
+									</div>
+									<div id="eventStatsContainer" align="left">
+										<h3>Select Event For Stats</h3>
+										<select id="eventStatsSelect" onchange="setEventForStats()"></select>
+										<button class="rectangle_button" id="clearTop8DataBtn" onclick="deletePlayerStats();">Clear Event Stats</button>
+									</div>
+									<div id="leagueStatsDiv">
+										<h3>Select League for Stats</h3>
+										<select id="league_suggestions" onchange="loadLeagueStats();"></select>
+										<button class="rectangle_button" id="clearLeagueStatBtn" onclick="clearLeagueStats();">Clear League Stats</button>
+									</div>
+								</div>
+							</div>
+						</div>
+
+				</div><!-- /leftSectionContainer -->
+
+					<!-- Center: Next Round -->
+					<div class="nextRoundContainer">
+						<div>
+							<h3 class="finalSectionHeaderText text-shadow">NEXT ROUND</h3>
+							<div id="next_round">
+								<select id="dropdown_next_round" class="dropdown_round" onchange="updateNextRound();">
 									<option>Casuals</option>
 									<option>Pools</option>
 									<option>Winners Round 1</option>
@@ -197,258 +311,219 @@
 									<option>FT10</option>
 									<option>FT?</option>
 								</select>
-							</div>		
-						</div>
-					</div>		
-			</div>
-					<div class="leftMidContainer">
-						<span class="ftContainer">
-							<div id="text_ft">
-								<span class="text-shadow">First to #</span>
-							</div>
-							<div id="ftx">
-								<input placeholder="0" class="form_ft" type="text" id="form_ft" style="float: left;" value="" onchange="updateMaxScore();">
-							</div>
-						</span>
-						<span class="gameContainer">
-							<div id="text_game">
-								<span class="text-shadow">Current Game</span>
-							</div>
-							<select id="gameSelect" class="dropdown_game_select" onchange="updateCurrentGame();">
-							</select>
-						</span>
-					</div>
-
-					<div class="fetchContainer">
-						<div id="text_startgg">
-							<span class="text-shadow">Start.gg</span>
-						</div>
-
-						<button class="rectangle_button" id="openStartggBtn" onclick="getStartggInfo();">Start.gg Controls</button>
-						<div id="startggPopup" class="popup">
-							<div class="popup-content">
-								<span id="closeStartggBtn" class="close">&times;</span>
-								<form id="tournament">
-									<h3>Tournament Name:</h3>
-									<input type="text" id="tournamentName" name="tournamentName" required>
-									<h3>Event Name:</h3>
-									<input type="text" id="currentEventName" name="currentEventName" required>
-									<h3>Stream Name: </h3>
-									<input type="text" id="streamName" name="streamName" required>
-									<div class="fetch-sections">
-										<div class="fetch-column">
-											<h3>Players Fetch</h3>
-											<div id="button_fetch_all_players">
-												<button class="rectangle_button_popup" id="rectangle_button_startgg_fetch_all_players" onclick="getAllPlayersForTournament(event);">
-													Fetch All Players
-												</button>
-											</div>
-											<div id="button_clear_next_players">
-												<button class="rectangle_button_popup" id="rectangle_button_clear_next_player" onclick="clearNextPlayers(event);">
-													Clear Next Players
-												</button>
-											</div>
-										</div>
-										<div class="fetch-column">
-											<h3>Queue Fetch</h3>
-											<div id="button_fetch_next_players">
-												<button class="rectangle_button_popup" id="rectangle_button_startgg_stream_queue" onclick="getNextPlayersFromStartgg(event);">
-													Fetch From Stream Queue
-												</button>
-											</div>
-											<div id="button_remove_next_players">
-												<button class="rectangle_button_popup" id="rectangle_button_remove_next_player" onclick="removeNextPlayers(event);">
-													Remove Player From Queue
-												</button>
-											</div>
-										</div>
-									</div>
-								</form>
 							</div>
 						</div>
-					</div>
-				</div>
 
-				<div class="nextRoundContainer">
-					<div>
-						<h3 class="finalSectionHeaderText text-shadow">NEXT ROUND</h3>
-						<div id="next_round">
-							<select id="dropdown_next_round" class="dropdown_round" onchange="updateNextRound();">
-								<option>Casuals</option>
-								<option>Pools</option>
-								<option>Winners Round 1</option>
-								<option>Winners Round 2</option>
-								<option>Winners Round 3</option>
-								<option>Winners Round 4</option>
-								<option>Winners Quarters</option>
-								<option>Winners Semis</option>
-								<option>Winners Finals</option>
-								<option>Grand Finals</option>
-								<option>Losers Round 1</option>
-								<option>Losers Round 2</option>
-								<option>Losers Round 3</option>
-								<option>Losers Round 4</option>
-								<option>Losers Quarters</option>
-								<option>Losers Semis</option>
-								<option>Losers Finals</option>
-								<option>Exhibitions</option>
-								<option>FT3</option>
-								<option>FT5</option>
-								<option>FT10</option>
-								<option>FT?</option>
-							</select>
-						</div>
-					</div>
+						<div class="nextRoundConsoleContainer">
+							<datalist id="next_player_suggestions"></datalist>
 
-					<div class="nextRoundConsoleContainer">
-						<datalist id="next_player_suggestions">
-							<!-- Options will be populated dynamically -->
-						</datalist>
-
-						<!-- 1st player -->
-						<div class="nextRound-1p">
-							<div id="text_next_round_1p">
-								<span class="text-shadow">Player 1</span>
+							<!-- Next P1 -->
+							<div class="nextRound-1p">
+								<div id="text_next_round_1p"><span class="text-shadow">Player 1</span></div>
+								<div class="nextRoundItem" id="text_next_round_name_1p">
+									<span>Name</span>
+									<input class="form_next_round_name_1p" type="text" id="form_next_round_name_1p" value="" placeholder="Next P1 Name" list="next_player_suggestions" onchange="updateNextPlayer1();">
+								</div>
+								<div class="nextRoundItem" id="text_next_round_team_1p">
+									<span>Team</span>
+									<input class="form_next_round_team_1p" type="text" id="form_next_round_team_1p" value="" placeholder="Next P1 Team" onchange="updateNextTeam1();">
+								</div>
+								<div class="nextRoundItem">
+									<span>Country</span>
+									<select id="dropdown_country_next1" class="dropdown_country_next1" onchange="updateNextCountry1();"></select>
+								</div>
 							</div>
-							<div class="nextRoundItem" id="text_next_round_name_1p">
-								<span>Name</span>
-							</div>
-							<input class="form_next_round_name_1p" type="text" id="form_next_round_name_1p" value="" placeholder="Next P1 Name" list="next_player_suggestions" onchange="updateNextPlayer1();">
-							<div class="nextRoundItem" id="text_next_round_team_1p">
-								<span>Team</span>
-							</div>
-							<input class="form_next_round_team_1p" type="text" id="form_next_round_team_1p" value="" placeholder="Next P1 Team" onchange="updateNextTeam1();">
 
-							<div class="nextRoundItem">
-								<span>Country</span>
-								<select id="dropdown_country_next1" class="dropdown_country_next1" onchange="updateNextCountry1();">
-								</select>
+							<!-- Next P2 -->
+							<div class="nextRound-2p">
+								<div id="text_next_round_2p"><span class="text-shadow">Player 2</span></div>
+								<div class="nextRoundItem" id="text_next_round_name_2p">
+									<span>Name</span>
+									<input class="form_next_round_name_2p" type="text" id="form_next_round_name_2p" value="" placeholder="Next P2 Name" list="next_player_suggestions" onchange="updateNextPlayer2();">
+								</div>
+								<div class="nextRoundItem" id="text_next_round_team_2p">
+									<span>Team</span>
+									<input class="form_next_round_team_2p" type="text" id="form_next_round_team_2p" value="" placeholder="Next P2 Team" onchange="updateNextTeam2();">
+								</div>
+								<div class="nextRoundItem">
+									<span>Country</span>
+									<select id="dropdown_country_next2" class="dropdown_country_next2" onchange="updateNextCountry2();"></select>
+								</div>
 							</div>
 						</div>
-						
-						<!-- 2nd Player -->
-						<div class="nextRound-2p">
-							<div id="text_next_round_2p">
-								<span class="text-shadow">Player 2</span>
-							</div>
-							<div class="nextRoundItem" id="text_next_round_name_2p">
-								<span>Name</span>
-							</div>
-							<input class="form_next_round_name_2p" type="text" id="form_next_round_name_2p" value="" placeholder="Next P1 Name" list="next_player_suggestions" onchange="updateNextPlayer2();">
 
-							<div class="nextRoundItem" id="text_next_round_team_2p">
-								<span>Team</span>
-							</div>
-							<input class="form_next_round_team_2p" type="text" id="form_next_round_team_2p" value="" placeholder="Next P1 Team" onchange="updateNextTeam2();">
-
-							<div class="nextRoundItem">
-								<span> Country </span>
-								<select id="dropdown_country_next2" class="dropdown_country_next2" onchange="updateNextCountry2();">
-								</select>
-							</div>
-						</div>
-					</div>
-
-					<div id="next-round-button-container" class="bottom-button-container">
-						<div id="button_next_round">
-							<button class="rectangle_button" id="rectangle_button_6" onclick='nextRound();'>
-								<text x="18" y="19" id="button_text_4">Next Round</text>
+						<div id="next-round-button-container" class="bottom-button-container">
+							<button class="rectangle_button" id="rectangle_button_6" onclick="nextRound();">
+								Next Round →
 							</button>
 						</div>
 					</div>
-				</div>
-				<div class="rightContainer" id="rightContainer">
-					<div class="resultsContainer">
-						<h2 class="text-shadow"> Results </h2>
-						<div id="text_results_1p">
-							<span>1P</span>
-						</div>
-						<div id="result1p">
-							<input placeholder="P1 Name" class="form_results_name_1p" type="text" id="form_results_name_1p" style="float: left;" value="" onchange="updateResults();">
-							<input placeholder="0" class="form_results_score_1p" type="text" id="form_results_score_1p" style="float: left;" value="" onchange="updateResults();">
-						</div>
-						<div id="text_results_2p">
-							<span>2P</span>
-						</div>
-						<div id="result2p">
-							<input placeholder="P2 Name" class="form_results_name_2p" type="text" id="form_results_name_2p" style="float: left; " value="" onchange="updateResults();">
-							<input placeholder="0" class="form_results_score_2p" type="text" id="form_results_score_2p" style="float: left;" value="" onchange="updateResults();">
-						</div>
-					</div>
-					<div class="statsContainer">
-						<div id="text_stats_container">
-							<span class="text-shadow">Player Stats</span>
-						</div>
-						<button class="rectangle_button" id="openStatsBtn" onclick="loadStatsInfo();">Stats Controls</button>
-						<div id="statsPopup" class="popup">
-							<div class="popup-content">
-								<span id="closeStatsBtn" class="close">&times;</span>
-								<div class="top-row">
-									<div id="fetchTop8div">
-										<h3>Fetch Top 8 Results</h3>
-										<button class="rectangle_button" id="openPopupTop8Btn">Fetch Top 8 Results</button>
-										<div id="popupTop8" class="popup">
-											<div class="popup-content">
-												<span id="closePopupTop8Btn" class="close">&times;</span>
-												<form id="FetchTop8">
-													<h3>Tournament Name:</h3>
-													<input type="text" id="tournamentNameTop8" name="tournamentNameTop8" required>
-													<h3>Event Name: </h3>
-													<input type="text" id="eventNameTop8" name="eventNameTop8" required>
-													<div class="horizontal-button-container">
-														<button type="submit" onclick="fetchStartggTop8Info();">Get Single Event</button>
-														<button onclick="addStartggTop8Info();">Add Event</button>
-													</div>
-												</form>
-											</div>
-										</div>
-									</div>
-									<div id="addPlayerStatDiv">
-										<h3>Add Player Stat</h3>
-										<button class="rectangle_button" id="openAddPlayerStatBtn">Add Player Stat</button>
-										<div id="addPlayerStat" class="popup">
-											<div class="popup-content">
-												<span id="closeAddPlayerStatBtn" class="close">&times;</span>
-												<form id="PlayerStat">
-													<h3>Gamer Tag:</h3>
-													<input type="text" id="playerName" name="playerName" required>
-													<h3>Event Name: </h3>
-													<input type="text" id="eventName" name="eventName" required>
-													<div class="horizontal-button-container">
-														<h3>Placement: </h3>
-														<input type="text" class="form-center-align" id="placement" name="placement" required>
-														<h3>Wins: </h3>
-														<input type="text" class="form-center-align" id="wins" name="wins" value="0">
-														<h3>Losses: </h3>
-														<input type="text" class="form-center-align" id="losses" name="losses" value="0">
-													</div>
-													<button onclick="addPlayStats();">Submit</button>
-												</form>
-											</div>
-										</div>
-									</div>
-								</div>
-								<div id="eventStatsContainer" align="left">
-									<h3>Select Event For Stats</h3>
-									<select id="eventStatsSelect" onchange="setEventForStats()">
-										<!-- Options will be populated dynamically -->
-									</select>
-									<button class="rectangle_button" id="clearTop8DataBtn" onclick="deletePlayerStats();">Clear Event Stats</button>
-								</div>
-								<div id="leagueStatsDiv">
-									<h3>Select League for Stats</h3>
-									<select id="league_suggestions" onchange="loadLeagueStats();">
-										<!-- Options will be populated dynamically -->
-									</select>
-									<button class="rectangle_button" id="clearLeagueStatBtn" onclick="clearLeagueStats();">Clear League Stats</button>
-								</div>
+
+					<!-- Right: Results + Additionals -->
+					<div class="rightContainer" id="rightContainer">
+						<div class="resultsContainer">
+							<h2 class="text-shadow">Results</h2>
+							<div id="text_results_1p"><span>P1</span></div>
+							<div id="result1p">
+								<input placeholder="P1 Name" class="form_results_name_1p" type="text" id="form_results_name_1p" value="" onchange="updateResults();">
+								<input placeholder="0" class="form_results_score_1p" type="text" id="form_results_score_1p" value="" onchange="updateResults();">
+							</div>
+							<div id="text_results_2p"><span>P2</span></div>
+							<div id="result2p">
+								<input placeholder="P2 Name" class="form_results_name_2p" type="text" id="form_results_name_2p" value="" onchange="updateResults();">
+								<input placeholder="0" class="form_results_score_2p" type="text" id="form_results_score_2p" value="" onchange="updateResults();">
 							</div>
 						</div>
+
+						<div class="additionalsContainer">
+							<div id="text_countdown">Countdown</div>
+							<div class="field-group">
+								<span>Game</span>
+								<select id="countdownGameSelect"></select>
+							</div>
+							<div class="field-group">
+								<span>Message</span>
+								<input type="text" id="countdownMessage" placeholder="Enter message">
+							</div>
+							<div class="field-group">
+								<span>Timer (HH:MM:SS)</span>
+								<input type="text" id="countdownTimer" placeholder="00:00:00" value="00:10:00">
+							</div>
+							<button class="rectangle_button" onclick="submitCountdownData();">Start Countdown</button>
+						</div>
+
+						<div class="additionalsContainer" style="border-bottom:none;">
+							<div id="text_custom_message">Custom Message</div>
+							<div class="field-group">
+								<span>Camera Scene</span>
+								<input type="text" id="cameraSceneMessage" placeholder="Enter message">
+							</div>
+							<button class="rectangle_button" onclick="submitCustomMessageData();">Submit</button>
+						</div>
+
 					</div>
-				</div>
-			</div>
-		</div>
-	</div>
-	</div>
+
+				</div><!-- /extraSectionContainer -->
+
+			</div><!-- /event-dashboard-content -->
+		</div><!-- /event_page -->
+	</div><!-- /container -->
+
+	<script>
+	/* ── Marquee scroll: detect overflow, apply animation ── */
+	function checkScrollNeeded(wrapId, inputOrSpanId) {
+		const wrap = document.getElementById(wrapId);
+		const el   = document.getElementById(inputOrSpanId);
+		if (!wrap || !el) return;
+		// Reset first so we measure natural width
+		wrap.classList.remove('is-scrolling');
+		el.classList.remove('is-scrolling');
+		el.style.animation = 'none';
+		requestAnimationFrame(() => {
+			const overflowing = el.scrollWidth > wrap.clientWidth + 2;
+			if (overflowing) {
+				const dist = wrap.clientWidth - el.scrollWidth;
+				wrap.style.setProperty('--scroll-dist', dist + 'px');
+				el.style.setProperty('--scroll-dist', dist + 'px');
+				wrap.classList.add('is-scrolling');
+				el.classList.add('is-scrolling');
+				el.style.animation = '';
+			}
+		});
+	}
+
+	function refreshAllScrolls() {
+		checkScrollNeeded('wrap_name_1p', 'form_name_1p');
+		checkScrollNeeded('wrap_name_2p', 'form_name_2p');
+		// Center display uses its clip div as the wrap
+		const clip = document.querySelector('.center-name-clip');
+		const disp = document.getElementById('currentPlayerInfoDisplay');
+		if (clip && disp) {
+			clip.classList.remove('is-scrolling');
+			disp.classList.remove('is-scrolling');
+			requestAnimationFrame(() => {
+				const overflowing = disp.scrollWidth > clip.clientWidth + 2;
+				if (overflowing) {
+					const dist = clip.clientWidth - disp.scrollWidth;
+					clip.style.setProperty('--scroll-dist', dist + 'px');
+					disp.style.setProperty('--scroll-dist', dist + 'px');
+					clip.classList.add('is-scrolling');
+					disp.classList.add('is-scrolling');
+				}
+			});
+		}
+	}
+
+	// Run on load and whenever window resizes
+	window.addEventListener('load', refreshAllScrolls);
+	window.addEventListener('resize', refreshAllScrolls);
+
+	// Re-check after each name update (hook into existing update functions)
+	const _origUpdatePlayer1 = typeof updatePlayer1 !== 'undefined' ? updatePlayer1 : null;
+	const _origUpdatePlayer2 = typeof updatePlayer2 !== 'undefined' ? updatePlayer2 : null;
+	document.addEventListener('DOMContentLoaded', () => {
+		const p1input = document.getElementById('form_name_1p');
+		const p2input = document.getElementById('form_name_2p');
+		if (p1input) p1input.addEventListener('input', () => checkScrollNeeded('wrap_name_1p', 'form_name_1p'));
+		if (p2input) p2input.addEventListener('input', () => checkScrollNeeded('wrap_name_2p', 'form_name_2p'));
+		// Also observe currentPlayerInfoDisplay for content changes
+		const obs = new MutationObserver(refreshAllScrolls);
+		const disp = document.getElementById('currentPlayerInfoDisplay');
+		if (disp) obs.observe(disp, { childList: true, characterData: true, subtree: true });
+		refreshAllScrolls();
+	});
+	</script>	<script>
+	/* ── Additional Options (countdown + custom message) ── */
+	function additionals_secondsToTime(s) {
+		const h = Math.floor(s/3600), m = Math.floor((s%3600)/60), sec = s%60;
+		return String(h).padStart(2,'0')+':'+String(m).padStart(2,'0')+':'+String(sec).padStart(2,'0');
+	}
+	function additionals_timeToSeconds(t) {
+		const match = t.match(/^(\d{1,2}):(\d{2}):(\d{2})$/);
+		if (!match) { alert('Invalid time format! Use HH:MM:SS'); return 0; }
+		return parseInt(match[1])*3600 + parseInt(match[2])*60 + parseInt(match[3]);
+	}
+	async function loadCountdownOptions() {
+		try {
+			const res = await fetch('/getGamesForCountdown');
+			const games = await res.json();
+			const sel = document.getElementById('countdownGameSelect');
+			sel.innerHTML = '';
+			games.slice().sort((a,b)=>a.localeCompare(b)).forEach(g => {
+				const o = document.createElement('option'); o.value = o.textContent = g; sel.appendChild(o);
+			});
+			const info = await (await fetch('/getCountdownInfo?firstLoad=true')).json();
+			if (info.game_name) sel.value = info.game_name;
+			if (info.message !== undefined) document.getElementById('countdownMessage').value = info.message;
+			if (info.timer !== undefined) document.getElementById('countdownTimer').value = additionals_secondsToTime(info.timer);
+		} catch(e) { console.error('Countdown load error:', e); }
+		try {
+			const msg = await (await fetch('/getCustomMessages')).json();
+			if (msg.cameraSceneMessage !== undefined)
+				document.getElementById('cameraSceneMessage').value = msg.cameraSceneMessage;
+		} catch(e) { console.error('Custom message load error:', e); }
+	}
+	async function submitCountdownData() {
+		try {
+			await fetch('/setCountdownInfo', { method:'POST', headers:{'Content-Type':'application/json'},
+				body: JSON.stringify({
+					game_name: document.getElementById('countdownGameSelect').value,
+					icon_file: '',
+					message: document.getElementById('countdownMessage').value,
+					timer: additionals_timeToSeconds(document.getElementById('countdownTimer').value)
+				})
+			});
+			alert('Countdown started!');
+		} catch(e) { console.error('Countdown submit error:', e); }
+	}
+	async function submitCustomMessageData() {
+		try {
+			await fetch('/setCustomMessages', { method:'POST', headers:{'Content-Type':'application/json'},
+				body: JSON.stringify({ cameraSceneMessage: document.getElementById('cameraSceneMessage').value })
+			});
+		} catch(e) { console.error('Custom message submit error:', e); }
+	}
+	document.addEventListener('DOMContentLoaded', loadCountdownOptions);
+	</script>
 </body>
 </html>
