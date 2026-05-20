@@ -123,6 +123,15 @@ def undo_next_round():
     return json.dumps(result, ensure_ascii=False), 200
 
 
+@api.route('/getStartggToken', methods=['GET'])
+def get_startgg_token():
+    try:
+        token = startgg_client.get_token().strip()
+        return json.dumps({"token": token}), 200
+    except Exception:
+        return json.dumps({"token": ""}), 200
+
+
 @api.route('/getCommentators', methods=['GET'])
 def get_commentators():
     return json.dumps(FileUtils.read_file(commentators_file), ensure_ascii=False), 200

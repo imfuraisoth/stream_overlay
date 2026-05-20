@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Stations — Stream Overlay</title>
+  <link rel="icon" type="image/png" href="../images/V.png">
+  <link href="style.css" rel="stylesheet" type="text/css">
+</head>
+<body>
+
+<!-- NAV -->
+<div class="top-navbar-container">
+  <div class="header-item"><a href="../commentators/commentators.html">Commentators</a></div>
+  <span class="header-sep">|</span>
+  <div class="header-item"><a href="../index.html">Event Dashboard</a></div>
+  <span class="header-sep">|</span>
+  <div class="header-item"><a href="../top8/top8.html">Top 8</a></div>
+  <span class="header-sep">|</span>
+  <div class="header-item"><a href="../playerinfo/characterselect.html">Character Select</a></div>
+  <span class="header-sep">|</span>
+  <div class="header-item active">Stations</div>
+</div>
+
+<!-- CONFIG BAR -->
+<div class="config-bar">
+  <span class="config-label">Start.gg</span>
+  <div class="config-field">
+    <label for="tourneySlug">Tournament Slug</label>
+    <input type="text" id="tourneySlug" placeholder="my-tournament-2025">
+  </div>
+  <div class="config-field">
+    <label for="eventSlug">Event Slug</label>
+    <input type="text" id="eventSlug" placeholder="street-fighter-6-singles">
+  </div>
+  <select id="eventSel" style="display:none; min-width:180px;" onchange="onEventChange(this.value)"></select>
+  <button class="btn" onclick="loadTournament()">↺ Load</button>
+  <button class="btn sec sm" onclick="saveSettings()" style="margin-left:auto;">💾 Save</button>
+</div>
+
+<!-- STATUS BAR -->
+<div class="status-bar">
+  <span><span class="dot" id="statusDot"></span><span id="statusText">No tournament loaded</span></span>
+  <span id="tournMeta"></span>
+</div>
+
+<!-- TOOLBAR -->
+<div class="toolbar">
+  <div class="toolbar-left">
+    <div class="auto-row">
+      <input type="checkbox" id="autoRefresh" onchange="toggleAuto()">
+      <label for="autoRefresh">Auto-refresh</label>
+      <select id="autoInterval" style="width:68px;" onchange="resetAuto()">
+        <option value="15">15s</option>
+        <option value="30" selected>30s</option>
+        <option value="60">60s</option>
+        <option value="120">2min</option>
+      </select>
+      <span class="timer-badge" id="timerBadge"></span>
+    </div>
+  </div>
+  <div class="toolbar-right">
+    <div class="st-zoom">
+      <button class="st-zoom-btn" onclick="doZoom(-0.1)">−</button>
+      <span class="st-zoom-label" id="zoomLabel">100%</span>
+      <button class="st-zoom-btn" onclick="doZoom(0.1)">+</button>
+    </div>
+    <button class="btn sec sm" onclick="loadStreamQueue()">Refresh</button>
+  </div>
+</div>
+
+<!-- CONTENT -->
+<div class="content">
+  <div id="queueContent">
+    <div class="empty-state">
+      <strong>No tournament loaded</strong>
+      <div class="hint">Enter your Start.gg API key and tournament slug above, then click Load.</div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── STATE ─────────────────────────────────────────────────────────
+let tournSlug = '';
+let selectedEventId = null;
+let autoTimer = null;
+let autoInterval = 30;
+let autoCountdown = 0;
+let sqScale = 1;
+let _apiToken = ''; // loaded from server silently, never shown in UI
+
+// Custom column names and featured stream — persisted in localStorage
+const sqCustomNames = JSON.parse(localStorage.getItem('sq_custom_names') || '{}');
+function saveSqCustomNames() { localStorage.setItem('sq_custom_names', JSON.stringify(sqCustomNames)); }
+let sqFeaturedStream = localStorage.getItem('sq_featured_stream') || '';
+function saveSqFeatured() { localStorage.setItem('sq_featured_stream', sqFeaturedStream); }
+
+// ── SETTINGS ──────────────────────────────────────────────────────
+function saveSettings() {
+  localStorage.setItem('sq_tourney_slug', document.getElementById('tourneySlug').value.trim());
+  localStorage.setItem('sq_event_slug',   document.getElementById('eventSlug').value.trim());
+  setStatus('Settings saved', true);
+}
+
+async function restoreSettings() {
+  // Pull token silently from server; pull tournament info into visible fields
+  try {
+    const [tokenRes, infoRes] = await Promise.all([
+      fetch('/getStartggToken'),
+      fetch('/getTournamentInfo')
+    ]);
+    if (tokenRes.ok) {
+      const t = await tokenRes.json();
+      _apiToken = t.token || '';
+    }
+    if (infoRes.ok) {
+      const info = await infoRes.json();
+      if (info.tournament) document.getElementById('tourneySlug').value = info.tournament;
+      if (info.event)      document.getElementById('eventSlug').value   = info.event;
+    }
+  } catch (e) { /* server not reachable — fall through to localStorage */ }
+
+  // Fill any blanks from localStorage
+  if (!document.getElementById('tourneySlug').value)
+    document.getElementById('tourneySlug').value = localStorage.getItem('sq_tourney_slug') || '';
+  if (!document.getElementById('eventSlug').value)
+    document.getElementById('eventSlug').value   = localStorage.getItem('sq_event_slug')   || '';
+
+  // Auto-load if we have a token and tournament slug
+  if (_apiToken && document.getElementById('tourneySlug').value) {
+    loadTournament();
+  }
+}
+
+// ── HELPERS ───────────────────────────────────────────────────────
+function escHtml(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+function setStatus(msg, ok) {
+  document.getElementById('statusText').textContent = msg;
+  const dot = document.getElementById('statusDot');
+  dot.className = 'dot' + (ok === true ? ' ok' : ok === false ? ' err' : '');
+}
+function loading(el) { el.innerHTML = '<div class="empty-state"><span class="spinner"></span> Loading…</div>'; }
+function renderError(el, msg) { el.innerHTML = '<div class="err-msg">⚠ ' + msg + '</div>'; }
+
+function getKey() { return _apiToken; }
+
+// ── GQL ───────────────────────────────────────────────────────────
+async function gql(query, variables = {}) {
+  const res = await fetch('https://api.start.gg/gql/alpha', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': 'Bearer ' + getKey()
+    },
+    body: JSON.stringify({ query, variables })
+  });
+  if (!res.ok) throw new Error('HTTP ' + res.status);
+  const json = await res.json();
+  if (json.errors?.length) throw new Error(json.errors[0].message);
+  return json.data;
+}
+
+// ── LOAD TOURNAMENT ───────────────────────────────────────────────
+async function loadTournament() {
+  const raw = document.getElementById('tourneySlug').value.trim();
+  tournSlug = raw.replace(/^https?:\/\/[^/]+\//, '')
+                 .replace(/\/events.*$/, '')
+                 .replace(/\/$/, '');
+  if (!tournSlug) { setStatus('Enter a tournament slug first', false); return; }
+  setStatus('Loading…');
+  try {
+    const data = await gql(`
+      query($slug: String!) {
+        tournament(slug: $slug) {
+          id name city numAttendees
+          events { id name videogame { name } }
+        }
+      }`, { slug: tournSlug });
+    const t = data.tournament;
+    if (!t) throw new Error('Tournament not found.');
+    const events = t.events || [];
+    selectedEventId = events[0]?.id || null;
+    document.getElementById('tournMeta').textContent =
+      [t.name, t.city, t.numAttendees ? t.numAttendees + ' entrants' : ''].filter(Boolean).join(' · ');
+    setStatus('Connected: ' + t.name, true);
+    const sel = document.getElementById('eventSel');
+    sel.innerHTML = events.map(e =>
+      `<option value="${e.id}">${escHtml(e.name)}${e.videogame ? ' (' + escHtml(e.videogame.name) + ')' : ''}</option>`
+    ).join('');
+    sel.style.display = events.length > 1 ? 'inline-block' : 'none';
+    await loadStreamQueue();
+  } catch (e) { setStatus('Error: ' + e.message, false); }
+}
+
+function onEventChange(id) {
+  selectedEventId = parseInt(id);
+  loadStreamQueue();
+}
+
+// ── STATION RENAME ────────────────────────────────────────────────
+function renameSqCol(btn) {
+  const snSafe = btn.dataset.raw;
+  const rawName = Object.keys(sqCustomNames).find(k => escHtml(k) === snSafe) || snSafe;
+  const current = sqCustomNames[rawName] || rawName;
+  const newName = prompt('Rename station:', current);
+  if (newName === null) return;
+  sqCustomNames[rawName] = newName.trim() || current;
+  saveSqCustomNames();
+  const hdr = document.getElementById('sqhdr-' + snSafe);
+  if (hdr) hdr.querySelector('.sq-col-name').textContent = '📡 ' + escHtml(sqCustomNames[rawName]);
+}
+
+// ── FEATURED STREAM TOGGLE ────────────────────────────────────────
+function setSqFeatured(snSafe) {
+  sqFeaturedStream = sqFeaturedStream === snSafe ? '' : snSafe;
+  saveSqFeatured();
+  // Update stars and headers without a full reload
+  document.querySelectorAll('.sq-featured-btn').forEach(b => {
+    const isFeat = b.dataset.raw === sqFeaturedStream;
+    b.textContent = isFeat ? '★' : '☆';
+    b.title = isFeat ? 'Unmark as featured' : 'Mark as featured';
+  });
+  document.querySelectorAll('.sq-col-hdr').forEach(h => {
+    h.classList.toggle('sq-col-featured', h.id === 'sqhdr-' + sqFeaturedStream);
+  });
+  // Re-render badges only
+  document.querySelectorAll('.sq-row').forEach(row => {
+    const badge = row.querySelector('.sq-badge');
+    const isOnStream = row.closest('.sq-col')?.querySelector('.sq-col-hdr')?.id === 'sqhdr-' + sqFeaturedStream;
+    const isLive = row.classList.contains('now-playing') || row.classList.contains('on-stream');
+    if (badge) {
+      if (isOnStream && isLive) {
+        row.classList.remove('now-playing'); row.classList.add('on-stream');
+        badge.className = 'sq-badge on-stream'; badge.textContent = 'On Stream';
+      } else if (isLive) {
+        row.classList.remove('on-stream'); row.classList.add('now-playing');
+        badge.className = 'sq-badge now-playing'; badge.textContent = 'Now Playing';
+      }
+    }
+  });
+}
+
+// ── STREAM QUEUE ──────────────────────────────────────────────────
+async function loadStreamQueue() {
+  const el = document.getElementById('queueContent');
+  if (!tournSlug) { return; }
+  loading(el);
+  try {
+    const data = await gql(`
+      query($slug: String!) {
+        tournament(slug: $slug) {
+          streamQueue {
+            stream { streamSource streamName }
+            sets {
+              id fullRoundText state
+              station { number }
+              slots {
+                entrant {
+                  name
+                  participants { gamerTag prefix }
+                }
+              }
+            }
+          }
+        }
+      }`, { slug: tournSlug });
+
+    const queues = data?.tournament?.streamQueue || [];
+    if (!queues.length) {
+      el.innerHTML = '<div class="empty-state"><strong>No stream queue</strong><div class="hint">The TO may not have a stream queue configured on Start.gg.</div></div>';
+      setStatus('No stream queue found', null);
+      return;
+    }
+
+    let html = `<div class="sq-grid" id="sqGrid" style="--sq-scale:${sqScale}">`;
+
+    queues.forEach(q => {
+      const sn = q.stream?.streamName || 'Stream';
+      const snSafe = escHtml(sn);
+      const customName = sqCustomNames[sn] || sn;
+      const isFeatured = sqFeaturedStream === snSafe;
+
+      html += `<div class="sq-col">`;
+      html += `<div class="sq-col-hdr${isFeatured ? ' sq-col-featured' : ''}" id="sqhdr-${snSafe}">`;
+      html += `<button class="sq-featured-btn" data-raw="${snSafe}" onclick="setSqFeatured('${snSafe}')" title="${isFeatured ? 'Unmark as featured' : 'Mark as featured'}">${isFeatured ? '★' : '☆'}</button>`;
+      html += `<span class="sq-col-name">📡 ${escHtml(customName)}</span>`;
+      html += `<button class="sq-rename-btn" data-raw="${snSafe}" onclick="renameSqCol(this)" title="Rename station">✎</button>`;
+      html += `</div>`;
+      html += `<div class="sq-list">`;
+
+      const sets = q.sets || [];
+      if (!sets.length) {
+        html += `<div class="sq-row"><div class="sq-match" style="color:var(--fg2)">Queue empty</div></div>`;
+      }
+
+      sets.forEach((s, i) => {
+        const slot0 = s.slots[0], slot1 = s.slots[1];
+        const p0 = slot0?.entrant?.participants?.[0];
+        const p1e = slot1?.entrant?.participants?.[0];
+        const tag0 = p0?.gamerTag || slot0?.entrant?.name || 'TBD';
+        const tag1 = p1e?.gamerTag || slot1?.entrant?.name || 'TBD';
+        const pfx0 = p0?.prefix ? `<span style="color:var(--accent);margin-right:3px;">${escHtml(p0.prefix)}</span>` : '';
+        const pfx1 = p1e?.prefix ? `<span style="color:var(--accent);margin-right:3px;">${escHtml(p1e.prefix)}</span>` : '';
+        const round   = s.fullRoundText || '';
+        const station = s.station?.number ? ' · Station ' + s.station.number : '';
+        const isLive  = s.state === 2;
+        const onStream = isFeatured && isLive;
+
+        const rowCls = onStream ? 'on-stream' : isLive ? 'now-playing' : i === 0 ? 'next-up' : '';
+        const badge  = onStream
+          ? '<span class="sq-badge on-stream">On Stream</span>'
+          : isLive  ? '<span class="sq-badge now-playing">Now Playing</span>'
+          : i === 0 ? '<span class="sq-badge next-up">Next Up</span>'
+          :           '<span class="sq-badge queued">Queued</span>';
+
+        html += `<div class="sq-row ${rowCls}">
+          <div class="sq-match">${pfx0}${escHtml(tag0)} <span style="color:var(--fg2)">vs</span> ${pfx1}${escHtml(tag1)}</div>
+          <div class="sq-round">${escHtml(round)}${escHtml(station)}</div>
+          <div class="sq-footer">
+            ${badge}
+          </div>
+        </div>`;
+      });
+
+      html += `</div></div>`;
+    });
+
+    html += `</div>`;
+    el.innerHTML = html;
+    setStatus('Stream queue loaded', true);
+
+  } catch (e) {
+    renderError(el, e.message);
+    setStatus('Error: ' + e.message, false);
+  }
+}
+
+// ── ZOOM ──────────────────────────────────────────────────────────
+function doZoom(delta) {
+  sqScale = Math.min(3, Math.max(0.5, Math.round((sqScale + delta) * 10) / 10));
+  const grid = document.getElementById('sqGrid');
+  if (grid) grid.style.setProperty('--sq-scale', sqScale);
+  document.getElementById('zoomLabel').textContent = Math.round(sqScale * 100) + '%';
+}
+
+// ── AUTO-REFRESH ──────────────────────────────────────────────────
+function toggleAuto() {
+  const on = document.getElementById('autoRefresh').checked;
+  if (on) startAuto(); else stopAuto();
+}
+function resetAuto() {
+  if (document.getElementById('autoRefresh').checked) { stopAuto(); startAuto(); }
+}
+function startAuto() {
+  autoInterval = parseInt(document.getElementById('autoInterval').value);
+  autoCountdown = autoInterval;
+  updateTimerBadge();
+  autoTimer = setInterval(() => {
+    autoCountdown--;
+    if (autoCountdown <= 0) { autoCountdown = autoInterval; loadStreamQueue(); }
+    updateTimerBadge();
+  }, 1000);
+}
+function stopAuto() {
+  clearInterval(autoTimer);
+  autoTimer = null;
+  document.getElementById('timerBadge').textContent = '';
+}
+function updateTimerBadge() {
+  document.getElementById('timerBadge').textContent = 'next in ' + autoCountdown + 's';
+}
+
+// ── KEYBOARD SHORTCUTS ────────────────────────────────────────────
+document.getElementById('tourneySlug').addEventListener('keydown', e => { if (e.key === 'Enter') loadTournament(); });
+
+// Auto-populate from server on load
+document.addEventListener('DOMContentLoaded', restoreSettings);
+</script>
+</body>
+</html>

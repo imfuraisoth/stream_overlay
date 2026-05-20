@@ -27,6 +27,8 @@
     <div class="header-item"><a href="top8/top8.html">Top 8</a></div>
     <span class="header-sep">|</span>
     <div class="header-item"><a href="playerinfo/characterselect.html">Character Select</a></div>
+    <span class="header-sep">|</span>
+    <div class="header-item"><a href="stations/stations.html">Stations</a></div>
   </div>
 
 			<!-- EVENT DASHBOARD CONTENT -->
@@ -280,6 +282,15 @@
 							</div>
 						</div>
 
+					<div class="additionalsContainer" style="border-bottom:none;">
+						<div id="text_custom_message">Custom Message</div>
+						<div class="field-group">
+							<span>Camera Scene</span>
+							<input type="text" id="cameraSceneMessage" placeholder="Enter message">
+						</div>
+						<button class="rectangle_button" onclick="submitCustomMessageData();">Submit</button>
+					</div>
+
 				</div><!-- /leftSectionContainer -->
 
 					<!-- Center: Next Round -->
@@ -390,15 +401,6 @@
 								<input type="text" id="countdownTimer" placeholder="00:00:00" value="00:10:00">
 							</div>
 							<button class="rectangle_button" onclick="submitCountdownData();">Start Countdown</button>
-						</div>
-
-						<div class="additionalsContainer" style="border-bottom:none;">
-							<div id="text_custom_message">Custom Message</div>
-							<div class="field-group">
-								<span>Camera Scene</span>
-								<input type="text" id="cameraSceneMessage" placeholder="Enter message">
-							</div>
-							<button class="rectangle_button" onclick="submitCustomMessageData();">Submit</button>
 						</div>
 
 					</div>
