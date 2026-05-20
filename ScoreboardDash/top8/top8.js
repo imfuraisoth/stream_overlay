@@ -480,6 +480,71 @@ function updateTop8PlayerInfoCallServer(round, player, field, value) {
     }).catch(function(err) { console.log('error: ' + err); });
 }
 
+// ── Undo state ───────────────────────────────────────────────────
+var _undoSnapshot = null;
+
+function _captureSnapshot() {
+    const fields = [
+        'form_name_1p','form_team_1p','form_score_1p','dropdown_country_current_1',
+        'form_name_2p','form_team_2p','form_score_2p','dropdown_country_current_2',
+        'form_next_round_name_1p','form_next_round_team_1p','dropdown_country_next1',
+        'form_next_round_name_2p','form_next_round_team_2p','dropdown_country_next2',
+        'form_results_name_1p','form_results_score_1p',
+        'form_results_name_2p','form_results_score_2p',
+        'dropdown_round'
+    ];
+    const snap = { fields: {}, jsonData: JSON.parse(JSON.stringify(jsonData || {})) };
+    fields.forEach(id => { snap.fields[id] = safeEl(id).value; });
+    _undoSnapshot = snap;
+    // Show the undo button
+    const btn = document.getElementById('button_undo_round');
+    if (btn) btn.style.display = '';
+}
+
+function undoNextRound() {
+    fetch('/undoNextRound', { method: 'POST' })
+        .then(function(response) {
+            if (!response.ok) { alert('Nothing to undo.'); return null; }
+            return response.json();
+        })
+        .then(function(data) {
+            if (!data) return;
+            // Keep _undoSnapshot alive so confirmAndRefresh can use its jsonData
+            // Hide undo, show confirm
+            const undoBtn = document.getElementById('button_undo_round');
+            const confirmBtn = document.getElementById('button_confirm_refresh');
+            if (undoBtn) undoBtn.style.display = 'none';
+            if (confirmBtn) confirmBtn.style.display = '';
+            // Disable Next Round until confirmed
+            safeEl('rectangle_button_7').disabled = true;
+        })
+        .catch(function(err) { console.log('Undo error: ' + err); });
+}
+
+function confirmAndRefresh() {
+    const confirmBtn = document.getElementById('button_confirm_refresh');
+    if (confirmBtn) confirmBtn.style.display = 'none';
+    safeEl('rectangle_button_7').disabled = false;
+
+    // Push the snapshot's jsonData directly to the server so scoreboard.json
+    // has the correct player names/scores before we fetch
+    if (_undoSnapshot && _undoSnapshot.jsonData) {
+        fetch('/updatealldata', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(_undoSnapshot.jsonData)
+        }).then(function() {
+            // Now fetch clean state from server
+            getDataFromServer();
+            getJsonDataFromServer('getTop8PlayerData', populateTop8PlayerData);
+        });
+    } else {
+        getDataFromServer();
+        getJsonDataFromServer('getTop8PlayerData', populateTop8PlayerData);
+    }
+    _undoSnapshot = null;
+}
+
 function nextRound() {
     fetch('/getdata')
         .then(function(response) {
@@ -487,6 +552,7 @@ function nextRound() {
         })
         .then(function(data) {
             if (compareScores(data)) {
+                _captureSnapshot();
                 safeEl("form_results_score_1p").value = data.p1Score;
                 safeEl("form_results_score_2p").value = data.p2Score;
                 safeEl("form_results_name_1p").value = data.p1Name;

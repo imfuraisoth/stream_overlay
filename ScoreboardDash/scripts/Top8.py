@@ -223,11 +223,13 @@ def read_file(file_name):
 current_next_data = read_file(current_next_data_file)
 current_next_data["started"] = False
 global_player_data = read_file(player_data_file_name)
+_undo_snapshot = None
+_restoring = False
 
 top8_lock = threading.Lock()
 
 
-def initialize():
+def initialize(skip_scoreboard_update=False):
     global global_player_data
     global current_next_data
     if current_next_data["started"]:
@@ -256,7 +258,8 @@ def initialize():
     current_next_data["currentRoundName"] = roundNamesMap.get(current_round)
     started = True
     current_next_data["started"] = started
-    update_scoreboard_json(current_next_data, "", "", "", "", current_next_data["currentRoundName"], current_round)
+    if not skip_scoreboard_update:
+        update_scoreboard_json(current_next_data, "", "", "", "", current_next_data["currentRoundName"], current_round)
     FileUtils.write_file(current_next_data_file, current_next_data)
     print("Top 8 started!")
 
@@ -276,16 +279,21 @@ def update_next_player_data(player_id, player_data):
     current_next_data[player_id]["country"] = player_data["country"]
 
 
+_restoring = False
+
 def progress_to_next_round():
-    global current_next_data
+    global current_next_data, _restoring
     with top8_lock:
         if len(current_next_data["rounds"]) == 0:
             print("No more rounds, please reset top 8 to start over")
             return json.loads(json.dumps(current_next_data, ensure_ascii=False))
-        initialize()
+        initialize(skip_scoreboard_update=_restoring)
+        _restoring = False
+        snapshot_before_next_round()
 
         result1 = current_next_data["player1"]
         result2 = current_next_data["player2"]
+        print(f"[progress_to_next_round] currentRound={current_next_data['currentRound']} p1={result1['name']} p2={result2['name']} p1score={result1['score']} p2score={result2['score']}")
         p1_score_string = result1["score"]
         p2_score_string = result2["score"]
         result1_name = current_next_data["player1"]["name"]
@@ -522,6 +530,57 @@ def get_next_round(current_round):
     return None
 
 
+def snapshot_before_next_round():
+    """Save a snapshot of all mutable state so we can undo the last next_round call."""
+    global _undo_snapshot
+    import copy
+    scoreboard_data = read_file(scoreboard_json_file)
+    _undo_snapshot = {
+        "current_next_data": copy.deepcopy(current_next_data),
+        "global_player_data": copy.deepcopy(global_player_data),
+        "p1Score": scoreboard_data.get("p1Score", "0"),
+        "p2Score": scoreboard_data.get("p2Score", "0"),
+    }
+
+def restore_snapshot():
+    """Restore bracket state to before the last next_round call."""
+    global _undo_snapshot, current_next_data, global_player_data, _restoring
+    print(f"[restore_snapshot] called, snapshot exists: {_undo_snapshot is not None}")
+    if _undo_snapshot is None:
+        print("[restore_snapshot] No snapshot available")
+        return None
+    with top8_lock:
+        current_next_data = _undo_snapshot["current_next_data"]
+        global_player_data = _undo_snapshot["global_player_data"]
+        current_next_data["started"] = False
+        _restoring = True
+        # Write files back to disk
+        FileUtils.write_file(player_data_file_name, global_player_data)
+        FileUtils.write_file(current_next_data_file, current_next_data)
+        # Run initialize so current_next_data has correct player names
+        initialize(skip_scoreboard_update=True)
+        # Now write the full scoreboard with restored players and original scores
+        update_scoreboard_json(
+            current_next_data,
+            "",  # result names cleared since we're undoing
+            "",
+            "",
+            "",
+            current_next_data["currentRoundName"],
+            current_next_data["currentRound"]
+        )
+        # Put the scores back (update_scoreboard_json zeros them)
+        scoreboard_data = read_file(scoreboard_json_file)
+        scoreboard_data["p1Score"] = _undo_snapshot["p1Score"]
+        scoreboard_data["p2Score"] = _undo_snapshot["p2Score"]
+        FileUtils.write_file(scoreboard_json_file, scoreboard_data)
+        # Verify what was written
+        verify = read_file(scoreboard_json_file)
+        print(f"[restore_snapshot] scoreboard.json after write: p1={verify.get('p1Name')} p2={verify.get('p2Name')} p1Score={verify.get('p1Score')} p2Score={verify.get('p2Score')}")
+        print(f"[restore_snapshot] Restored to round={current_next_data['currentRound']} p1={current_next_data['player1']['name']} p2={current_next_data['player2']['name']}")
+        _undo_snapshot = None
+    return json.loads(json.dumps(current_next_data, ensure_ascii=False))
+
 def reset():
     print("Resetting data..")
     global current_next_data
@@ -538,6 +597,7 @@ def update_current_players_info(scoreboard_json):
     with top8_lock:
         if not current_next_data["started"]:
             return
+        print(f"[update_current_players_info] setting p1={scoreboard_json['p1Name']} p2={scoreboard_json['p2Name']} round={current_next_data['currentRound']}")
         current_next_data["player1"]["name"] = scoreboard_json["p1Name"]
         current_next_data["player1"]["team"] = scoreboard_json["p1Team"]
         current_next_data["player1"]["score"] = scoreboard_json["p1Score"]

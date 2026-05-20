@@ -5,10 +5,22 @@ from flask import Flask, send_from_directory, jsonify
 from flask import request
 from flask_cors import CORS
 import time
-from scripts import AutoScoreUpdaterSt
-from scripts import AutoScoreUpdaterCvs2
+try:
+    from scripts import AutoScoreUpdaterSt
+except Exception as e:
+    print(f"AutoScoreUpdaterSt disabled: {e}")
+    AutoScoreUpdaterSt = None
+try:
+    from scripts import AutoScoreUpdaterCvs2
+except Exception as e:
+    print(f"AutoScoreUpdaterCvs2 disabled: {e}")
+    AutoScoreUpdaterCvs2 = None
 from scripts import Top8
-from scripts import AutoScoreUpdaterCPS1
+try:
+    from scripts import AutoScoreUpdaterCPS1
+except Exception as e:
+    print(f"AutoScoreUpdaterCPS1 disabled: {e}")
+    AutoScoreUpdaterCPS1 = None
 from scripts import startgg_client
 import argparse
 import socket
@@ -101,6 +113,14 @@ def get_top8_current_next_data():
 def reset_top8_data():
     top8.reset()
     return "200"
+
+
+@api.route('/undoNextRound', methods=['POST'])
+def undo_next_round():
+    result = top8.restore_snapshot()
+    if result is None:
+        return "No snapshot available", 400
+    return json.dumps(result, ensure_ascii=False), 200
 
 
 @api.route('/getCommentators', methods=['GET'])
@@ -805,7 +825,7 @@ if __name__ == "__main__":
         if args.windows:
             open_browser("http://" + server_info, 'C:/Program Files (x86)/Google/Chrome/Application/chrome.exe %s')
         elif args.mac:
-            open_browser("http://" + server_info, 'open -a /Applications/Google\ Chrome.app %s')
+            open_browser("http://" + server_info, 'open -a /Applications/Google\\ Chrome.app %s')
         elif args.linux:
             open_browser("http://" + server_info, '/usr/bin/google-chrome %s')
 
