@@ -61,7 +61,7 @@
 							<div class="current1p">
 								<div class="playerCardItem">
 									<span>Name</span>
-									<div class="name-scroll-wrap" id="wrap_name_1p"><input class="form_name_1p" type="text" id="form_name_1p" value="" placeholder="P1 Name" onchange="updatePlayer1();"></div>
+									<div class="name-scroll-wrap" id="wrap_name_1p"><input class="form_name_1p" type="text" id="form_name_1p" value="" placeholder="P1 Name" list="next_player_suggestions" onchange="updatePlayer1();"></div>
 								</div>
 								<div class="playerCardItem">
 									<span>Team</span>
@@ -109,7 +109,7 @@
 							<div id="text_2p"><span class="text-shadow">PLAYER 2</span></div>
 							<div class="playerCardItem">
 								<span>Name</span>
-								<div class="name-scroll-wrap" id="wrap_name_2p"><input class="form_name_2p" type="text" id="form_name_2p" value="" placeholder="P2 Name" onchange="updatePlayer2();"></div>
+								<div class="name-scroll-wrap" id="wrap_name_2p"><input class="form_name_2p" type="text" id="form_name_2p" value="" placeholder="P2 Name" list="next_player_suggestions" onchange="updatePlayer2();"></div>
 							</div>
 							<div class="playerCardItem">
 								<span>Team</span>
@@ -190,6 +190,14 @@
 						<div class="fetchContainer">
 							<div id="text_startgg">Start.gg</div>
 							<button class="rectangle_button" id="openStartggBtn" onclick="getStartggInfo();">Start.gg Controls</button>
+							<div class="player-source-toggle">
+								<span class="player-source-label">Player suggestions</span>
+								<div class="toggle-group">
+									<button class="toggle-btn active" id="srcBtnBoth"    onclick="setPlayerSource('both')">Both</button>
+									<button class="toggle-btn"        id="srcBtnStartgg" onclick="setPlayerSource('startgg')">Start.gg</button>
+									<button class="toggle-btn"        id="srcBtnLocal"   onclick="setPlayerSource('local')">Local</button>
+								</div>
+							</div>
 							<div id="startggPopup" class="popup">
 								<div class="popup-content">
 									<span id="closeStartggBtn" class="close">&times;</span>

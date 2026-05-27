@@ -578,8 +578,34 @@ button:active, .rectangle_button:active { transform: translateY(1px); }
 .text-shadow { text-shadow: rgba(0,0,0,.6) 1px 2px 4px; }
 datalist { max-height: 150px; overflow-y: auto; }
 
+/* ── PLAYER SOURCE TOGGLE ── */
+.player-source-toggle {
+  display: flex; flex-direction: column; gap: 5px; margin-top: 2px;
+}
+.player-source-label {
+  font-family: var(--font-d); font-size: 10px; font-weight: 700;
+  letter-spacing: .1em; text-transform: uppercase; color: var(--fg2);
+}
+.toggle-group {
+  display: flex; gap: 2px;
+}
+.toggle-btn {
+  background: var(--bg4); border: 1px solid var(--border) !important;
+  color: var(--fg2); font-family: var(--font-d); font-size: 11px;
+  font-weight: 700; letter-spacing: .06em; text-transform: uppercase;
+  padding: 4px 10px; border-radius: 3px; cursor: pointer;
+  transition: background .15s, color .15s, border-color .15s;
+  line-height: 1;
+}
+.toggle-btn:hover { border-color: var(--accent) !important; color: var(--accent); }
+.toggle-btn.active {
+  background: var(--accent); color: #0e0d0b;
+  border-color: var(--accent) !important;
+}
+.toggle-btn.active:hover { background: #f0b030; }
+
 .additionalsContainer {
-  padding: 0 14px 14px;
+  padding: 14px;
   display: flex;
   flex-direction: column;
   gap: 8px;

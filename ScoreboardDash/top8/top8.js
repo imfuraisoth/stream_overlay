@@ -156,13 +156,85 @@ function updateElement(id, value) {
 	}
 }
 
+// ── LOCAL PLAYER PERSISTENCE (shared with Event Dashboard) ────────
+function saveLocalPlayerName(name) {
+    if (!name || !name.trim()) return;
+    fetch('/saveLocalPlayer', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: name.trim() })
+    }).catch(function(e) { console.log('saveLocalPlayer error:', e); });
+}
+
+function loadLocalPlayersIntoDatalist() {
+    var source = localStorage.getItem('player_source') || 'both';
+    var dl = document.getElementById('next_player_suggestions');
+    if (!dl) return;
+
+    // Clear and rebuild based on preference
+    // Start.gg players are already in the datalist from populateTop8PlayerData —
+    // so for 'startgg' mode we leave whatever is there; for 'local' we clear first
+    if (source === 'local') {
+        dl.innerHTML = '';
+    }
+
+    if (source === 'local' || source === 'both') {
+        fetch('/getLocalPlayers')
+            .then(function(r) { return r.json(); })
+            .then(function(names) {
+                if (!names || !names.length) return;
+                var existing = new Set(Array.from(dl.options).map(function(o) { return o.value; }));
+                names.forEach(function(name) {
+                    if (!existing.has(name)) {
+                        var opt = document.createElement('option');
+                        opt.value = name;
+                        dl.appendChild(opt);
+                    }
+                });
+            })
+            .catch(function(e) { console.log('loadLocalPlayers error:', e); });
+    }
+}
+
+function setTop8PlayerSource(src) {
+    localStorage.setItem('player_source', src);
+    ['both','startgg','local'].forEach(function(s) {
+        var btn = document.getElementById('t8srcBtn' + s.charAt(0).toUpperCase() + s.slice(1));
+        if (btn) btn.classList.toggle('active', s === src);
+    });
+    // Rebuild datalist immediately
+    var dl = document.getElementById('next_player_suggestions');
+    if (!dl) return;
+    dl.innerHTML = '';
+    if (src === 'startgg' || src === 'both') {
+        playersMap.forEach(function(_, name) {
+            var opt = document.createElement('option');
+            opt.value = name; dl.appendChild(opt);
+        });
+    }
+    if (src === 'local' || src === 'both') {
+        loadLocalPlayersIntoDatalist();
+    }
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    var src = localStorage.getItem('player_source') || 'both';
+    ['both','startgg','local'].forEach(function(s) {
+        var btn = document.getElementById('t8srcBtn' + s.charAt(0).toUpperCase() + s.slice(1));
+        if (btn) btn.classList.toggle('active', s === src);
+    });
+    loadLocalPlayersIntoDatalist();
+});
+
 function updatePlayer1() {
 	jsonData.p1Name = safeEl("form_name_1p").value;
+    saveLocalPlayerName(jsonData.p1Name);
 	sendJsonToEndpoint('updateCurrentPlayers');
 }
 
 function updatePlayer2() {
 	jsonData.p2Name = safeEl("form_name_2p").value;
+    saveLocalPlayerName(jsonData.p2Name);
 	sendJsonToEndpoint('updateCurrentPlayers');
 }
 
@@ -178,11 +250,13 @@ function updateTeam2() {
 
 function updateNextPlayer1() {
 	jsonData.nextplayer1 = safeEl("form_next_round_name_1p").value;
+    saveLocalPlayerName(jsonData.nextplayer1);
 	sendJsonToEndpoint('updateNextPlayers');
 }
 
 function updateNextPlayer2() {
 	jsonData.nextplayer2 = safeEl("form_next_round_name_2p").value;
+    saveLocalPlayerName(jsonData.nextplayer2);
 	sendJsonToEndpoint('updateNextPlayers');
 }
 
@@ -460,6 +534,7 @@ function countryDropdown(id, round, player) {
 
 function updateTop8PlayerInfo(round, player_id, field, value, position) {
     if (position != null && 'name' === field) {
+        saveLocalPlayerName(value);
         // Check to see if it's a part of our players map
         if (playersMap.has(value)) {
     	    player = playersMap.get(value);
@@ -809,18 +884,27 @@ function loadPlayerData(fromCache) {
                 return;
             }
 
-            // Clear all options from the nextPlaySuggestions
-            nextPlaySuggestions.innerHTML = '';
-            // Filter and add suggestions to next player list
+            // Build playersMap regardless of preference (needed for team/country lookup)
             playersData[startggInfo.event]
-              .slice() // optional: avoids mutating the original array
+              .slice()
               .sort((a, b) => a.name.localeCompare(b.name))
               .forEach(player => {
                 playersMap.set(player.name, player);
-                const option = document.createElement('option');
-                option.value = player.name;
-                nextPlaySuggestions.appendChild(option);
             });
+
+            // Populate datalist based on source preference
+            var source = localStorage.getItem('player_source') || 'both';
+            nextPlaySuggestions.innerHTML = '';
+            if (source === 'startgg' || source === 'both') {
+                playersMap.forEach(function(_, name) {
+                    const option = document.createElement('option');
+                    option.value = name;
+                    nextPlaySuggestions.appendChild(option);
+                });
+            }
+            if (source === 'local' || source === 'both') {
+                loadLocalPlayersIntoDatalist();
+            }
         })
         .catch(function (err) {
               console.log('error: ' + err);

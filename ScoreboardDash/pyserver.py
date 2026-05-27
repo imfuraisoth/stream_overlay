@@ -132,6 +132,33 @@ def get_startgg_token():
         return json.dumps({"token": ""}), 200
 
 
+local_players_file = "../data/local_players.json"
+
+@api.route('/getLocalPlayers', methods=['GET'])
+def get_local_players():
+    try:
+        data = FileUtils.read_file(local_players_file)
+        return json.dumps(data.get("players", []), ensure_ascii=False), 200
+    except Exception:
+        return json.dumps([]), 200
+
+@api.route('/saveLocalPlayer', methods=['POST'])
+def save_local_player():
+    name = (request.get_json() or {}).get("name", "").strip()
+    if not name:
+        return "400", 400
+    try:
+        data = FileUtils.read_file(local_players_file)
+        players = data.get("players", [])
+        if name not in players:
+            players.append(name)
+            players.sort(key=str.lower)
+            FileUtils.write_file(local_players_file, {"players": players})
+    except Exception as e:
+        print(f"saveLocalPlayer error: {e}")
+    return "200"
+
+
 @api.route('/getCommentators', methods=['GET'])
 def get_commentators():
     return json.dumps(FileUtils.read_file(commentators_file), ensure_ascii=False), 200

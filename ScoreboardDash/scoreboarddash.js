@@ -1,3 +1,86 @@
+// ── LOCAL PLAYER PERSISTENCE ──────────────────────────────────────
+// Saves any manually entered name to data/local_players.json on the server
+// and merges them into the next_player_suggestions datalist on load.
+
+var _playerSource = localStorage.getItem('player_source') || 'both';
+
+function setPlayerSource(src) {
+    _playerSource = src;
+    localStorage.setItem('player_source', src);
+    // Update toggle button states
+    ['both','startgg','local'].forEach(function(s) {
+        var btn = document.getElementById('srcBtn' + s.charAt(0).toUpperCase() + s.slice(1));
+        if (btn) btn.classList.toggle('active', s === src);
+    });
+    // Repopulate datalist from scratch with new preference
+    refreshDatalist();
+}
+
+function refreshDatalist() {
+    var dl = document.getElementById('next_player_suggestions');
+    if (!dl) return;
+    dl.innerHTML = '';
+    if (_playerSource === 'startgg' || _playerSource === 'both') {
+        // Re-add from playersMap (Start.gg players already fetched)
+        playersMap.forEach(function(_, name) {
+            var opt = document.createElement('option');
+            opt.value = name; dl.appendChild(opt);
+        });
+    }
+    if (_playerSource === 'local' || _playerSource === 'both') {
+        loadLocalPlayers();
+    }
+}
+
+function saveLocalPlayerName(name) {
+    if (!name || name.trim() === '') return;
+    fetch('/saveLocalPlayer', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: name.trim() })
+    }).then(function() {
+        // Add to datalist immediately if local is in scope
+        if (_playerSource === 'local' || _playerSource === 'both') {
+            var dl = document.getElementById('next_player_suggestions');
+            if (!dl) return;
+            var existing = new Set(Array.from(dl.options).map(function(o) { return o.value; }));
+            if (!existing.has(name.trim())) {
+                var opt = document.createElement('option');
+                opt.value = name.trim(); dl.appendChild(opt);
+            }
+        }
+    }).catch(function(e) { console.log('saveLocalPlayer error:', e); });
+}
+
+function loadLocalPlayers() {
+    fetch('/getLocalPlayers')
+        .then(function(r) { return r.json(); })
+        .then(function(names) {
+            if (!names || !names.length) return;
+            var dl = document.getElementById('next_player_suggestions');
+            if (!dl) return;
+            var existing = new Set(Array.from(dl.options).map(function(o) { return o.value; }));
+            names.forEach(function(name) {
+                if (!existing.has(name)) {
+                    var opt = document.createElement('option');
+                    opt.value = name;
+                    dl.appendChild(opt);
+                }
+            });
+        })
+        .catch(function(e) { console.log('loadLocalPlayers error:', e); });
+}
+
+// On load: restore toggle state and seed datalist
+document.addEventListener('DOMContentLoaded', function() {
+    // Restore toggle button active state
+    setPlayerSource(_playerSource);
+    // Seed with local players if preference includes local
+    if (_playerSource === 'local' || _playerSource === 'both') {
+        loadLocalPlayers();
+    }
+});
+
 function getDataFromServer() {
     fetch('/getdata')
         .then(function(response) {
@@ -109,12 +192,12 @@ function updateCurrentPlayerDisplay() {
 function updatePlayer1() {
 	jsonData.p1Name = document.getElementById("form_name_1p").value;
     jsonData.p1Seed = "";
-    // If player is in player map, try to set the seed value
     if (playersMap.has(jsonData.p1Name)) {
         jsonData.p1Seed = playersMap.get(jsonData.p1Name).seed;
     } else if (nextPlayersMap.has(jsonData.p1Name)) {
         jsonData.p1Seed = nextPlayersMap.get(jsonData.p1Name).seed;
     }
+    saveLocalPlayerName(jsonData.p1Name);
 	updateCurrentPlayerDisplay();
 	sendJSON();
 }
@@ -122,12 +205,12 @@ function updatePlayer1() {
 function updatePlayer2() {
 	jsonData.p2Name = document.getElementById("form_name_2p").value;
     jsonData.p2Seed = "";
-    // If player is in player map, try to set the seed value
     if (playersMap.has(jsonData.p2Name)) {
         jsonData.p2Seed = playersMap.get(jsonData.p2Name).seed;
     } else if (nextPlayersMap.has(jsonData.p2Name)) {
         jsonData.p2Seed = nextPlayersMap.get(jsonData.p2Name).seed;
     }
+    saveLocalPlayerName(jsonData.p2Name);
 	updateCurrentPlayerDisplay();
 	sendJSON();
 }
@@ -144,6 +227,7 @@ function updateTeam2() {
 
 function updateNextPlayer1() {
 	jsonData.nextplayer1 = document.getElementById("form_next_round_name_1p").value;
+    saveLocalPlayerName(jsonData.nextplayer1);
 	if (nextPlayersMap.has(jsonData.nextplayer1)) {
         // Auto set team name and player 2 name to the opponent's name
         match = nextPlayersMap.get(jsonData.nextplayer1);
@@ -171,6 +255,7 @@ function updateNextPlayer1() {
 
 function updateNextPlayer2() {
 	jsonData.nextplayer2 = document.getElementById("form_next_round_name_2p").value;
+    saveLocalPlayerName(jsonData.nextplayer2);
     if (nextPlayersMap.has(jsonData.nextplayer2)) {
         // Auto set team name and player 1 name to the opponent's name
         match = nextPlayersMap.get(jsonData.nextplayer2);
@@ -848,14 +933,24 @@ function loadPlayerData(fromCache, notify) {
             nextPlaySuggestions.innerHTML = '';
             // Filter and add suggestions to next player list
             playersData[startggInfo.event]
-              .slice() // optional: avoids mutating the original array
+              .slice()
               .sort((a, b) => a.name.localeCompare(b.name))
               .forEach(player => {
                 playersMap.set(player.name, player);
-                const option = document.createElement('option');
-                option.value = player.name;
-                nextPlaySuggestions.appendChild(option);
             });
+            // Only add to datalist if preference includes startgg
+            nextPlaySuggestions.innerHTML = '';
+            if (_playerSource === 'startgg' || _playerSource === 'both') {
+                playersMap.forEach(function(_, name) {
+                    const option = document.createElement('option');
+                    option.value = name;
+                    nextPlaySuggestions.appendChild(option);
+                });
+            }
+            // If preference includes local, merge those in too
+            if (_playerSource === 'local' || _playerSource === 'both') {
+                loadLocalPlayers();
+            }
             if (notify) alert("Tournament data loaded for tournament: " + startggInfo.tournament + " event: " + startggInfo.event);
         })
         .catch(function (err) {
