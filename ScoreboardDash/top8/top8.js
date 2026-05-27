@@ -157,13 +157,33 @@ function updateElement(id, value) {
 }
 
 // ── LOCAL PLAYER PERSISTENCE (shared with Event Dashboard) ────────
+var _localPlayersMap = new Map();
+
 function saveLocalPlayerName(name, team, country) {
     if (!name || !name.trim()) return;
+    var existing = _localPlayersMap.get(name.trim()) || {};
+    if (team)    existing.team    = team;
+    if (country) existing.country = country;
+    existing.name = name.trim();
+    _localPlayersMap.set(name.trim(), existing);
     fetch('/saveLocalPlayer', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: name.trim(), team: team || '', country: country || '' })
+        body: JSON.stringify({ name: name.trim(), team: team || '', country: country || '',
+            social_handle: existing.social_handle || '', social_platform: existing.social_platform || '' })
     }).catch(function(e) { console.log('saveLocalPlayer error:', e); });
+}
+
+function autoFillFromLocalDB(name, teamElId, countryElId) {
+    var p = _localPlayersMap.get(name);
+    if (!p) return false;
+    if (p.team && teamElId) {
+        safeEl(teamElId).value = p.team;
+    }
+    if (p.country && countryElId) {
+        safeEl(countryElId).value = p.country;
+    }
+    return true;
 }
 
 function loadLocalPlayersIntoDatalist() {
@@ -183,6 +203,8 @@ function loadLocalPlayersIntoDatalist() {
             .then(function(r) { return r.json(); })
             .then(function(players) {
                 if (!players || !players.length) return;
+                // Build lookup map for auto-fill
+                players.forEach(function(p) { if (p && p.name) _localPlayersMap.set(p.name, p); });
                 var existing = new Set(Array.from(dl.options).map(function(o) { return o.value; }));
                 players.forEach(function(p) {
                     var name = typeof p === 'string' ? p : p.name;
@@ -228,37 +250,51 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 function updatePlayer1() {
-	jsonData.p1Name = safeEl("form_name_1p").value;
+    jsonData.p1Name = safeEl("form_name_1p").value;
+    autoFillFromLocalDB(jsonData.p1Name, 'form_team_1p', 'dropdown_country_current_1');
+    jsonData.p1Team    = safeEl("form_team_1p").value;
+    jsonData.p1Country = safeEl("dropdown_country_current_1").value;
     saveLocalPlayerName(jsonData.p1Name, jsonData.p1Team, jsonData.p1Country);
-	sendJsonToEndpoint('updateCurrentPlayers');
+    sendJsonToEndpoint('updateCurrentPlayers');
 }
 
 function updatePlayer2() {
-	jsonData.p2Name = safeEl("form_name_2p").value;
+    jsonData.p2Name = safeEl("form_name_2p").value;
+    autoFillFromLocalDB(jsonData.p2Name, 'form_team_2p', 'dropdown_country_current_2');
+    jsonData.p2Team    = safeEl("form_team_2p").value;
+    jsonData.p2Country = safeEl("dropdown_country_current_2").value;
     saveLocalPlayerName(jsonData.p2Name, jsonData.p2Team, jsonData.p2Country);
-	sendJsonToEndpoint('updateCurrentPlayers');
+    sendJsonToEndpoint('updateCurrentPlayers');
 }
 
 function updateTeam1() {
-	jsonData.p1Team = safeEl("form_team_1p").value;
-	sendJsonToEndpoint('updateCurrentPlayers');
+    jsonData.p1Team = safeEl("form_team_1p").value;
+    saveLocalPlayerName(jsonData.p1Name, jsonData.p1Team, jsonData.p1Country);
+    sendJsonToEndpoint('updateCurrentPlayers');
 }
 
 function updateTeam2() {
-	jsonData.p2Team = safeEl("form_team_2p").value;
-	sendJsonToEndpoint('updateCurrentPlayers');
+    jsonData.p2Team = safeEl("form_team_2p").value;
+    saveLocalPlayerName(jsonData.p2Name, jsonData.p2Team, jsonData.p2Country);
+    sendJsonToEndpoint('updateCurrentPlayers');
 }
 
 function updateNextPlayer1() {
-	jsonData.nextplayer1 = safeEl("form_next_round_name_1p").value;
+    jsonData.nextplayer1 = safeEl("form_next_round_name_1p").value;
+    autoFillFromLocalDB(jsonData.nextplayer1, 'form_next_round_team_1p', 'dropdown_country_next1');
+    jsonData.nextteam1    = safeEl("form_next_round_team_1p").value;
+    jsonData.nextcountry1 = safeEl("dropdown_country_next1").value;
     saveLocalPlayerName(jsonData.nextplayer1, jsonData.nextteam1, jsonData.nextcountry1);
-	sendJsonToEndpoint('updateNextPlayers');
+    sendJsonToEndpoint('updateNextPlayers');
 }
 
 function updateNextPlayer2() {
-	jsonData.nextplayer2 = safeEl("form_next_round_name_2p").value;
+    jsonData.nextplayer2 = safeEl("form_next_round_name_2p").value;
+    autoFillFromLocalDB(jsonData.nextplayer2, 'form_next_round_team_2p', 'dropdown_country_next2');
+    jsonData.nextteam2    = safeEl("form_next_round_team_2p").value;
+    jsonData.nextcountry2 = safeEl("dropdown_country_next2").value;
     saveLocalPlayerName(jsonData.nextplayer2, jsonData.nextteam2, jsonData.nextcountry2);
-	sendJsonToEndpoint('updateNextPlayers');
+    sendJsonToEndpoint('updateNextPlayers');
 }
 
 function updateNextTeam1() {
@@ -537,6 +573,20 @@ function updateTop8PlayerInfo(round, player_id, field, value, position) {
     if (position != null && 'name' === field) {
         var team    = safeEl('form_team_' + position).value    || '';
         var country = safeEl('dropdown_country_' + position).value || '';
+        // Auto-fill from local DB if available
+        var localP = _localPlayersMap.get(value);
+        if (localP) {
+            if (localP.team) {
+                safeEl('form_team_' + position).value = localP.team;
+                team = localP.team;
+                updateTop8PlayerInfoCallServer(round, player_id, 'team', localP.team);
+            }
+            if (localP.country) {
+                safeEl('dropdown_country_' + position).value = localP.country;
+                country = localP.country;
+                updateTop8PlayerInfoCallServer(round, player_id, 'country', localP.country);
+            }
+        }
         saveLocalPlayerName(value, team, country);
         // Check to see if it's a part of our players map
         if (playersMap.has(value)) {

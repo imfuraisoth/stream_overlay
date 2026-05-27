@@ -8,14 +8,12 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;900&family=Barlow:wght@400;500&display=swap" rel="stylesheet">
   <link href="style.css" rel="stylesheet" type="text/css" />
-  <link href="popup.css" rel="stylesheet" type="text/css" />
   <link rel="icon" type="image/png" href="../images/V.png">
   <script src="https://kit.fontawesome.com/2c93766a80.js" crossorigin="anonymous"></script>
   <script class="u-script" type="text/javascript" src="commentators.js" defer=""></script>
 </head>
 <body>
 
-  <!-- TOP NAV -->
   <div class="top-navbar-container">
     <div class="header-item active"><a href="commentators.html">Commentators</a></div>
     <span class="header-sep">|</span>
@@ -30,19 +28,15 @@
     <div class="header-item"><a href="../players/players.html">Players</a></div>
   </div>
 
-  <!-- CONTENT -->
   <div class="page-content">
 
     <div class="page-header">
       <h2>Commentators</h2>
       <div class="header-actions">
         <button class="rectangle_button" onclick="reverseCommentatorNames();">⇄ Swap Names</button>
-        <button class="rectangle_button btn-sec" id="rectangle_button_add_commentator">+ Add Commentator</button>
-        <button class="rectangle_button btn-sec" id="rectangle_button_delete_commentator">− Delete Commentator</button>
       </div>
     </div>
 
-    <!-- Commentator cards -->
     <div class="com-grid">
 
       <!-- Primary -->
@@ -51,14 +45,23 @@
         <div id="com_primary" class="com-fields">
           <div class="field-group">
             <label>Name</label>
-            <input class="form_name_1" type="text" id="form_name_1" placeholder="Name" onchange="updateCom1();">
+            <input class="form_name_1" type="text" id="form_name_1" placeholder="Name" list="com_name_suggestions" onchange="updateCom1();">
           </div>
           <div class="field-group">
             <label>Social</label>
-            <input class="form_social_1" type="text" id="form_social_1" placeholder="@handle" onchange="updateSoc1();">
+            <div class="social-preview-row">
+              <select id="soc1_platform_sel" onchange="updatePlatform1();">
+                <option value="">— Platform —</option>
+                <option value="twitter">𝕏 Twitter</option>
+                <option value="bluesky">🦋 Bluesky</option>
+                <option value="instagram">📷 Instagram</option>
+                <option value="facebook">👤 Facebook</option>
+              </select>
+              <input class="form_social_1" type="text" id="form_social_1" placeholder="@handle" onchange="updateSoc1();">
+            </div>
           </div>
-          <div id="soc1_dropdown"></div>
         </div>
+        <button class="rectangle_button btn-sec btn-clear" onclick="clearCom1();">✕ Clear</button>
       </div>
 
       <!-- Secondary -->
@@ -67,52 +70,31 @@
         <div id="com_secondary" class="com-fields">
           <div class="field-group">
             <label>Name</label>
-            <input class="form_name_2" type="text" id="form_name_2" placeholder="Name" onchange="updateCom2();">
+            <input class="form_name_2" type="text" id="form_name_2" placeholder="Name" list="com_name_suggestions" onchange="updateCom2();">
           </div>
           <div class="field-group">
             <label>Social</label>
-            <input class="form_social_2" type="text" id="form_social_2" placeholder="@handle" onchange="updateSoc2();">
+            <div class="social-preview-row">
+              <select id="soc2_platform_sel" onchange="updatePlatform2();">
+                <option value="">— Platform —</option>
+                <option value="twitter">𝕏 Twitter</option>
+                <option value="bluesky">🦋 Bluesky</option>
+                <option value="instagram">📷 Instagram</option>
+                <option value="facebook">👤 Facebook</option>
+              </select>
+              <input class="form_social_2" type="text" id="form_social_2" placeholder="@handle" onchange="updateSoc2();">
+            </div>
           </div>
-          <div id="soc2_dropdown"></div>
         </div>
+        <button class="rectangle_button btn-sec btn-clear" onclick="clearCom2();">✕ Clear</button>
       </div>
 
     </div>
 
+    <p class="com-hint">Manage commentator profiles on the <a href="../players/players.html">Players</a> page.</p>
+
   </div>
 
-  <!-- ADD popup -->
-  <div id="popupAdd" class="popup">
-    <div class="popup-content">
-      <button class="close" id="closeAddBtn">&times;</button>
-      <p class="popup-title">Add Commentator</p>
-      <form id="AddCommentator">
-        <div class="field-group">
-          <label>Name</label>
-          <input type="text" id="commentator_name" name="commentator_name" placeholder="Name" required>
-        </div>
-        <div class="field-group">
-          <label>Social</label>
-          <input type="text" id="commentator_social" name="commentator_social" placeholder="@handle" required>
-        </div>
-        <div class="horizontal-button-container">
-          <button type="submit" id="submitButton" onclick="addCommentator();">Submit</button>
-        </div>
-      </form>
-    </div>
-  </div>
-
-  <!-- DELETE popup -->
-  <div id="popupDelete" class="popup">
-    <div class="popup-content">
-      <button class="close" id="closeDelBtn">&times;</button>
-      <p class="popup-title">Delete Commentator</p>
-      <ul id="commentatorsList" style="list-style:none;display:flex;flex-direction:column;gap:6px;padding:0;"></ul>
-      <div class="horizontal-button-container" style="margin-top:12px;">
-        <button type="submit" id="submitDeleteButton" onclick="deleteCommentator();">Delete Selected</button>
-      </div>
-    </div>
-  </div>
-
+  <datalist id="com_name_suggestions"></datalist>
 </body>
 </html>

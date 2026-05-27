@@ -135,19 +135,24 @@ def get_startgg_token():
 local_players_file = "../data/local_players.json"
 
 def _read_local_players():
-    """Returns dict of {name: {name, team, country}}"""
+    """Returns dict of {name: {name, team, country, social_handle, social_platform}}"""
     try:
         data = FileUtils.read_file(local_players_file)
-        # Migrate old flat list format if needed
+        # Migrate old flat list format
         if isinstance(data, dict) and "players" in data:
-            old = data["players"]
-            if old and isinstance(old[0], str):
-                migrated = {n: {"name": n, "team": "", "country": ""} for n in old}
+            old_list = data["players"]
+            if old_list and isinstance(old_list[0], str):
+                migrated = {n: {"name": n, "team": "", "country": "", "social_handle": "", "social_platform": ""} for n in old_list}
                 FileUtils.write_file(local_players_file, migrated)
                 return migrated
-            # Already new format stored under "players" key as list — shouldn't happen but handle
         if isinstance(data, dict) and data and isinstance(next(iter(data.values())), dict):
-            return data  # already {name: {name, team, country}}
+            for k, v in data.items():
+                # Migrate old "socials" field to "social_handle"
+                if "socials" in v and "social_handle" not in v:
+                    v["social_handle"] = v.pop("socials")
+                if "social_handle" not in v:    v["social_handle"]    = ""
+                if "social_platform" not in v:  v["social_platform"]  = ""
+            return data
         return {}
     except Exception:
         return {}
@@ -169,10 +174,11 @@ def save_local_player():
         return "400", 400
     try:
         players = _read_local_players()
-        existing = players.get(name, {"name": name, "team": "", "country": ""})
-        # Only update team/country if provided and non-empty (don't overwrite with blanks)
-        if body.get("team"):  existing["team"]    = body["team"]
-        if body.get("country"): existing["country"] = body["country"]
+        existing = players.get(name, {"name": name, "team": "", "country": "", "social_handle": "", "social_platform": ""})
+        if body.get("team"):                       existing["team"]            = body["team"]
+        if body.get("country"):                    existing["country"]         = body["country"]
+        if body.get("social_handle") is not None:  existing["social_handle"]   = body["social_handle"]
+        if body.get("social_platform") is not None: existing["social_platform"] = body["social_platform"]
         existing["name"] = name
         players[name] = existing
         FileUtils.write_file(local_players_file, players)
@@ -187,13 +193,15 @@ def update_local_player():
     name    = body.get("name", "").strip()
     team    = body.get("team", "")
     country = body.get("country", "")
+    social_handle   = body.get("social_handle", "")
+    social_platform = body.get("social_platform", "")
     if not original_name or not name:
         return "400", 400
     try:
         players = _read_local_players()
         if original_name in players:
             del players[original_name]
-        players[name] = {"name": name, "team": team, "country": country}
+        players[name] = {"name": name, "team": team, "country": country, "social_handle": social_handle, "social_platform": social_platform}
         FileUtils.write_file(local_players_file, players)
     except Exception as e:
         print(f"updateLocalPlayer error: {e}")
@@ -216,25 +224,37 @@ def delete_local_player():
 
 @api.route('/getCommentators', methods=['GET'])
 def get_commentators():
-    return json.dumps(FileUtils.read_file(commentators_file), ensure_ascii=False), 200
+    # Proxy to player DB — return in original {name: {name, soc}} format for backwards compat
+    players = _read_local_players()
+    result = {p["name"]: {"name": p["name"], "soc": p.get("social_handle", "")}
+              for p in players.values()}
+    return json.dumps(result, ensure_ascii=False), 200
 
 
 @api.route('/addCommentator', methods=['POST'])
 def add_commentator():
-    commentator_data = request.get_json()
-    commentators = FileUtils.read_file(commentators_file)
-    commentators[commentator_data.get("name")] = commentator_data
-    FileUtils.write_file(commentators_file, commentators)
+    data = request.get_json() or {}
+    name = data.get("name", "").strip()
+    if not name:
+        return "400", 400
+    players = _read_local_players()
+    existing = players.get(name, {"name": name, "team": "", "country": "", "social_handle": "", "social_platform": ""})
+    if data.get("soc"):
+        existing["social_handle"] = data["soc"]
+    existing["name"] = name
+    players[name] = existing
+    FileUtils.write_file(local_players_file, players)
     return "200"
 
 
 @api.route('/deleteCommentators', methods=['POST'])
 def delete_commentator():
-    commentator_names = request.get_json()
-    commentators = FileUtils.read_file(commentators_file)
-    for name in commentator_names:
-        del commentators[name]
-    FileUtils.write_file(commentators_file, commentators)
+    names = request.get_json() or []
+    players = _read_local_players()
+    for name in names:
+        if name in players:
+            del players[name]
+    FileUtils.write_file(local_players_file, players)
     return "200"
 
 
@@ -883,7 +903,37 @@ def get_server_info():
     return ip, port_num, info
 
 
+def _migrate_commentators_to_players():
+    """One-time migration: import commentators.json entries into local_players.json."""
+    try:
+        commentators = FileUtils.read_file(commentators_file)
+        if not commentators:
+            return
+        players = _read_local_players()
+        changed = False
+        for key, c in commentators.items():
+            name = c.get("name", key).strip()
+            if not name:
+                continue
+            if name not in players:
+                players[name] = {
+                    "name": name,
+                    "team": "",
+                    "country": "",
+                    "social_handle": c.get("soc", ""),
+                    "social_platform": ""
+                }
+                changed = True
+                print(f"[migration] Imported commentator: {name}")
+        if changed:
+            FileUtils.write_file(local_players_file, players)
+            print("[migration] commentators.json merged into local_players.json")
+    except Exception as e:
+        print(f"[migration] commentator migration error: {e}")
+
+
 if __name__ == "__main__":
+    _migrate_commentators_to_players()
     try:
         print("Now we talk'n, server started ...")
         parser = argparse.ArgumentParser(description = 'Scoreboard server')

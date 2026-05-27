@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Players — Stream Overlay</title>
+  <title>Players &amp; Commentators — Stream Overlay</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;900&family=Barlow:wght@400;500&display=swap" rel="stylesheet">
@@ -65,6 +65,19 @@
       <div class="field-group">
         <label for="mCountry">Country</label>
         <select id="mCountry"></select>
+      </div>
+      <div class="field-group">
+        <label>Social Media</label>
+        <div class="social-row">
+          <select id="mSocialPlatform">
+            <option value="">— Platform —</option>
+            <option value="twitter">𝕏 Twitter</option>
+            <option value="bluesky">🦋 Bluesky</option>
+            <option value="instagram">📷 Instagram</option>
+            <option value="facebook">👤 Facebook</option>
+          </select>
+          <input type="text" id="mSocialHandle" placeholder="@handle" style="flex:1;">
+        </div>
       </div>
     </div>
     <div class="modal-footer">
@@ -149,6 +162,7 @@ function renderTable() {
       <th onclick="sortBy('name')" class="sortable">Name <span class="sort-icon">⇅</span></th>
       <th onclick="sortBy('team')" class="sortable">Team <span class="sort-icon">⇅</span></th>
       <th onclick="sortBy('country')" class="sortable">Country <span class="sort-icon">⇅</span></th>
+      <th onclick="sortBy('social_handle')" class="sortable">Social <span class="sort-icon">⇅</span></th>
       <th class="col-actions">Actions</th>
     </tr></thead><tbody>`;
 
@@ -160,6 +174,9 @@ function renderTable() {
       <td class="col-name">${name}</td>
       <td class="col-team">${team ? `<span class="team-badge">${team}</span>` : '<span class="cell-empty">—</span>'}</td>
       <td class="col-country">${country || '<span class="cell-empty">—</span>'}</td>
+      <td class="col-socials">${p.social_handle
+        ? `<span class="platform-badge platform-${escHtml(p.social_platform||'')}">${platformIcon(p.social_platform)}${escHtml(p.social_handle)}</span>`
+        : '<span class="cell-empty">—</span>'}</td>
       <td class="col-actions">
         <button class="action-btn edit-btn" onclick="openEditModal('${escAttr(p.name)}')">✎ Edit</button>
         <button class="action-btn del-btn"  onclick="openDeleteModal('${escAttr(p.name)}')">✕</button>
@@ -187,8 +204,10 @@ function sortBy(key) {
 function openAddModal() {
   _editingOrigName = null;
   document.getElementById('modalTitle').textContent = 'Add Player';
-  document.getElementById('mName').value = '';
-  document.getElementById('mTeam').value = '';
+  document.getElementById('mName').value    = '';
+  document.getElementById('mTeam').value    = '';
+  document.getElementById('mSocialHandle').value = '';
+  document.getElementById('mSocialPlatform').value = '';
   populateCountrySelect(document.getElementById('mCountry'), '');
   document.getElementById('modal').classList.add('open');
   document.getElementById('mName').focus();
@@ -202,6 +221,8 @@ function openEditModal(name) {
   document.getElementById('mName').value    = p.name    || '';
   document.getElementById('mTeam').value    = p.team    || '';
   populateCountrySelect(document.getElementById('mCountry'), p.country || '');
+  document.getElementById('mSocialHandle').value   = p.social_handle   || '';
+  document.getElementById('mSocialPlatform').value = p.social_platform || '';
   document.getElementById('modal').classList.add('open');
   document.getElementById('mName').focus();
 }
@@ -213,12 +234,14 @@ async function saveModal() {
   const name    = document.getElementById('mName').value.trim();
   const team    = document.getElementById('mTeam').value.trim();
   const country = document.getElementById('mCountry').value;
+  const social_handle   = document.getElementById('mSocialHandle').value.trim();
+  const social_platform = document.getElementById('mSocialPlatform').value;
   if (!name) { document.getElementById('mName').focus(); return; }
 
   const endpoint = _editingOrigName ? '/updateLocalPlayer' : '/saveLocalPlayer';
   const body = _editingOrigName
-    ? { original_name: _editingOrigName, name, team, country }
-    : { name, team, country };
+    ? { original_name: _editingOrigName, name, team, country, social_handle, social_platform }
+    : { name, team, country, social_handle, social_platform };
 
   try {
     await fetch(endpoint, {
@@ -255,6 +278,9 @@ async function confirmDelete() {
 }
 
 // ── UTILS ─────────────────────────────────────────────────────────
+const PLATFORM_ICONS = { twitter: '𝕏 ', bluesky: '🦋 ', instagram: '📷 ', facebook: '👤 ' };
+function platformIcon(p) { return PLATFORM_ICONS[p] || ''; }
+
 function escHtml(s) {
   return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
@@ -262,12 +288,13 @@ function escAttr(s) {
   return String(s).replace(/'/g,'&apos;').replace(/"/g,'&quot;');
 }
 
-// Enter key in modal
+// Enter key in player modal
 document.getElementById('mName').addEventListener('keydown', function(e) { if (e.key === 'Enter') saveModal(); });
 document.getElementById('mTeam').addEventListener('keydown', function(e) { if (e.key === 'Enter') saveModal(); });
 
 // Load on start
 loadPlayers();
 </script>
+
 </body>
 </html>

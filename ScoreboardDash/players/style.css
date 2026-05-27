@@ -165,3 +165,18 @@ input::placeholder { color: var(--fg2); }
   #searchInput { width: 160px; }
   .col-country { display: none; }
 }
+.col-socials { min-width: 100px; color: var(--fg2); font-size: 12px; }
+
+/* ── SOCIAL PLATFORM ── */
+.social-row { display: flex; gap: 6px; align-items: center; }
+.social-row select { width: 140px; flex-shrink: 0; }
+
+.platform-badge {
+  font-size: 12px; padding: 2px 8px; border-radius: 3px;
+  background: var(--bg4); border: 1px solid var(--border);
+  white-space: nowrap;
+}
+.platform-twitter   { color: #1d9bf0; border-color: #1d9bf030; }
+.platform-bluesky   { color: #0085ff; border-color: #0085ff30; }
+.platform-instagram { color: #e1306c; border-color: #e1306c30; }
+.platform-facebook  { color: #1877f2; border-color: #1877f230; }

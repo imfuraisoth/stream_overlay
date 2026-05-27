@@ -20,6 +20,8 @@
   <div class="header-item"><a href="../playerinfo/characterselect.html">Character Select</a></div>
   <span class="header-sep">|</span>
   <div class="header-item active">Stations</div>
+  <span class="header-sep">|</span>
+  <div class="header-item"><a href="../players/players.html">Players</a></div>
 </div>
 
 <!-- CONFIG BAR -->
@@ -65,6 +67,7 @@
       <span class="st-zoom-label" id="zoomLabel">100%</span>
       <button class="st-zoom-btn" onclick="doZoom(0.1)">+</button>
     </div>
+    <button class="btn sec sm" onclick="clearQueue()">✕ Clear</button>
     <button class="btn sec sm" onclick="loadStreamQueue()">Refresh</button>
   </div>
 </div>
@@ -335,6 +338,25 @@ async function loadStreamQueue() {
     renderError(el, e.message);
     setStatus('Error: ' + e.message, false);
   }
+}
+
+// ── CLEAR ─────────────────────────────────────────────────────────
+function clearQueue() {
+    stopAuto();
+    document.getElementById('autoRefresh').checked = false;
+    document.getElementById('timerBadge').textContent = '';
+    tournSlug = '';
+    selectedEventId = null;
+    document.getElementById('tourneySlug').value = '';
+    document.getElementById('eventSlug').value   = '';
+    document.getElementById('eventSel').style.display = 'none';
+    document.getElementById('queueContent').innerHTML =
+        '<div class="empty-state"><strong>Queue cleared</strong><div class="hint">Enter a tournament slug and click Load.</div></div>';
+    setStatus('Cleared', null);
+    document.getElementById('tournMeta').textContent = '';
+    // Also clear saved settings
+    localStorage.removeItem('sq_tourney_slug');
+    localStorage.removeItem('sq_event_slug');
 }
 
 // ── ZOOM ──────────────────────────────────────────────────────────

@@ -1,272 +1,228 @@
-// Creating a XHR object
-var xhr = new XMLHttpRequest();
+// ── LOCAL PLAYER DB ───────────────────────────────────────────────
+var _localPlayersMap = new Map();
+var jsonData = {};
 
-var jsonData;
+function setPlatformSelect(selId, platform) {
+    var sel = document.getElementById(selId);
+    if (sel) sel.value = platform || '';
+}
 
-fetch('/getdata')
-	.then(function (response) {
-	jsonData = response.json();
-  return jsonData;
-})
-.then(function (data) {
-	populateData(data);
-  })
-.catch(function (err) {
-  console.log('error: ' + err);
-});
-function populateData(data) {
-    console.log(data);
-	updateElement("form_name_1", data.com1);
-	updateElement("form_name_2", data.com2);
-	updateElement("form_social_1", data.soc1);
-	updateElement("form_social_2", data.soc2);
-	jsonData = data;
+function loadLocalPlayers() {
+    fetch('/getLocalPlayers')
+        .then(function(r) { return r.json(); })
+        .then(function(players) {
+            if (!players || !players.length) return;
+            players.forEach(function(p) { if (p && p.name) _localPlayersMap.set(p.name, p); });
+            var dl = document.getElementById('com_name_suggestions');
+            if (!dl) return;
+            var existing = new Set(Array.from(dl.options).map(function(o) { return o.value; }));
+            players.forEach(function(p) {
+                var n = p.name;
+                if (n && !existing.has(n)) {
+                    var opt = document.createElement('option'); opt.value = n; dl.appendChild(opt);
+                }
+            });
+        })
+        .catch(function(e) { console.log('loadLocalPlayers error:', e); });
+}
+
+// ── DATA LOAD ─────────────────────────────────────────────────────
+function getDataFromServer() {
+    fetch('/getdata')
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+            jsonData = data;
+            updateElement('form_name_1',   data.com1);
+            updateElement('form_name_2',   data.com2);
+            updateElement('form_social_1', data.soc1);
+            updateElement('form_social_2', data.soc2);
+            // Restore platform badges from local DB
+            var p1 = _localPlayersMap.get(data.com1);
+            var p2 = _localPlayersMap.get(data.com2);
+            setPlatformSelect('soc1_platform_sel', p1 ? (p1.social_platform || '') : '');
+            setPlatformSelect('soc2_platform_sel', p2 ? (p2.social_platform || '') : '');
+        })
+        .catch(function(e) { console.log('getDataFromServer error:', e); });
 }
 
 function updateElement(id, value) {
-	if (value != null && value.length > 0) {
-		document.getElementById(id).value = value;
-	}
+    var el = document.getElementById(id);
+    if (el && value !== undefined) el.value = value;
+}
+
+// ── SEND ──────────────────────────────────────────────────────────
+function sendJSON() {
+    fetch('/updatecommdata', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(jsonData)
+    }).catch(function(e) { console.log('sendJSON error:', e); });
+}
+
+function sendJsonDataToEndpoint(data, endpoint) {
+    fetch('/' + endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+    }).catch(function(e) { console.log('sendJsonDataToEndpoint error:', e); });
+}
+
+// ── UPDATE FUNCTIONS ──────────────────────────────────────────────
+function saveCommentatorToDb(name, social_handle, social_platform) {
+    if (!name || !name.trim()) return;
+    var existing = _localPlayersMap.get(name.trim()) || {};
+    fetch('/saveLocalPlayer', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            name: name.trim(),
+            social_handle: social_handle || existing.social_handle || '',
+            social_platform: social_platform !== undefined ? social_platform : (existing.social_platform || ''),
+            team: existing.team || '',
+            country: existing.country || ''
+        })
+    }).then(function() {
+        existing.name = name.trim();
+        if (social_handle) existing.social_handle = social_handle;
+        _localPlayersMap.set(name.trim(), existing);
+        // Add to datalist if new
+        var dl = document.getElementById('com_name_suggestions');
+        if (dl) {
+            var existing_names = new Set(Array.from(dl.options).map(function(o) { return o.value; }));
+            if (!existing_names.has(name.trim())) {
+                var opt = document.createElement('option'); opt.value = name.trim(); dl.appendChild(opt);
+            }
+        }
+    }).catch(function(e) { console.log('saveCommentatorToDb error:', e); });
 }
 
 function updateCom1() {
-	jsonData.com1 = document.getElementById("form_name_1").value;
-	sendJSON();
+    jsonData.com1 = document.getElementById('form_name_1').value;
+    var p = _localPlayersMap.get(jsonData.com1);
+    if (p) {
+        if (p.social_handle) {
+            jsonData.soc1 = p.social_handle;
+            document.getElementById('form_social_1').value = p.social_handle;
+        }
+        setPlatformSelect('soc1_platform_sel', p.social_platform || '');
+    } else {
+        setPlatformSelect('soc1_platform_sel', '');
+    }
+    saveCommentatorToDb(jsonData.com1, jsonData.soc1, document.getElementById('soc1_platform_sel').value);
+    sendJSON();
 }
 
 function updateCom2() {
-	jsonData.com2 = document.getElementById("form_name_2").value;
-	sendJSON();
+    jsonData.com2 = document.getElementById('form_name_2').value;
+    var p = _localPlayersMap.get(jsonData.com2);
+    if (p) {
+        if (p.social_handle) {
+            jsonData.soc2 = p.social_handle;
+            document.getElementById('form_social_2').value = p.social_handle;
+        }
+        setPlatformSelect('soc2_platform_sel', p.social_platform || '');
+    } else {
+        setPlatformSelect('soc2_platform_sel', '');
+    }
+    saveCommentatorToDb(jsonData.com2, jsonData.soc2, document.getElementById('soc2_platform_sel').value);
+    sendJSON();
 }
 
 function updateSoc1() {
-	jsonData.soc1 = document.getElementById("form_social_1").value;
-	sendJSON();
+    jsonData.soc1 = document.getElementById('form_social_1').value;
+    saveCommentatorToDb(jsonData.com1, jsonData.soc1, document.getElementById('soc1_platform_sel').value);
+    sendJSON();
 }
 
 function updateSoc2() {
-	jsonData.soc2 = document.getElementById("form_social_2").value;
-	sendJSON();
+    jsonData.soc2 = document.getElementById('form_social_2').value;
+    saveCommentatorToDb(jsonData.com2, jsonData.soc2);
+    sendJSON();
+}
+
+function updatePlatform1() {
+    var platform = document.getElementById('soc1_platform_sel').value;
+    var existing = _localPlayersMap.get(jsonData.com1) || {};
+    existing.social_platform = platform;
+    if (jsonData.com1) _localPlayersMap.set(jsonData.com1, existing);
+    saveCommentatorToDb(jsonData.com1, jsonData.soc1, platform);
+}
+
+function updatePlatform2() {
+    var platform = document.getElementById('soc2_platform_sel').value;
+    var existing = _localPlayersMap.get(jsonData.com2) || {};
+    existing.social_platform = platform;
+    if (jsonData.com2) _localPlayersMap.set(jsonData.com2, existing);
+    saveCommentatorToDb(jsonData.com2, jsonData.soc2, platform);
+}
+
+function clearCom1() {
+    document.getElementById('form_name_1').value   = '';
+    document.getElementById('form_social_1').value = '';
+    setPlatformSelect('soc1_platform_sel', '');
+    jsonData.com1 = ''; jsonData.soc1 = '';
+    sendJSON();
+}
+
+function clearCom2() {
+    document.getElementById('form_name_2').value   = '';
+    document.getElementById('form_social_2').value = '';
+    setPlatformSelect('soc2_platform_sel', '');
+    jsonData.com2 = ''; jsonData.soc2 = '';
+    sendJSON();
 }
 
 function reverseCommentatorNames() {
-	var c1 = document.getElementById("form_name_1").value;
-	var c2 = document.getElementById("form_name_2").value;
-	var s1 = document.getElementById("form_social_1").value;
-	var s2 = document.getElementById("form_social_2").value;
-	document.getElementById("form_name_1").value = c2;
-	document.getElementById("form_name_2").value = c1;
-	document.getElementById("form_social_1").value = s2;
-	document.getElementById("form_social_2").value = s1;
-	jsonData.com1 = c2;
-	jsonData.com2 = c1;
-	jsonData.soc1 = s2;
-	jsonData.soc2 = s1;
-	sendJSON();
+    var c1 = document.getElementById('form_name_1').value;
+    var c2 = document.getElementById('form_name_2').value;
+    var s1 = document.getElementById('form_social_1').value;
+    var s2 = document.getElementById('form_social_2').value;
+    var p1 = document.getElementById('soc1_platform_sel').value;
+    var p2 = document.getElementById('soc2_platform_sel').value;
+    document.getElementById('form_name_1').value   = c2;
+    document.getElementById('form_name_2').value   = c1;
+    document.getElementById('form_social_1').value = s2;
+    document.getElementById('form_social_2').value = s1;
+    setPlatformSelect('soc1_platform_sel', p2);
+    setPlatformSelect('soc2_platform_sel', p1);
+    jsonData.com1 = c2; jsonData.com2 = c1;
+    jsonData.soc1 = s2; jsonData.soc2 = s1;
+    sendJSON();
 }
 
-function addCommentator() {
-    var name_value = document.getElementById("commentator_name").value;
-    var social_value = document.getElementById("commentator_social").value;
-    const commentator_data = {
-      name: name_value,
-      soc: social_value
-    };
-    document.getElementById('popupAdd').style.display = 'none';
-    sendJsonDataToEndpoint(commentator_data, "addCommentator", populateCommentatorDropdown);
-}
-
-function deleteCommentator() {
-    const checkboxes = document.querySelectorAll("#commentatorsList input[type='checkbox']");
-    const selectedNames = Array.from(checkboxes)
-        .filter(checkbox => checkbox.checked)
-        .map(checkbox => {
-            const label = document.querySelector(`label[for="${checkbox.id}"]`);
-            return label ? label.textContent.trim() : "";  // trim spaces
-        })
-        .filter(name => name !== ""); // remove empty strings
-
-    document.getElementById('popupDelete').style.display = 'none';
-    sendJsonDataToEndpoint(selectedNames, "deleteCommentators", populateCommentatorDropdown);
-}
-
-function createCommentatorList() {
-    fetch('/getCommentators')
-        .then(function (response) {
-        jsonData = response.json();
-      return jsonData;
-    })
-    .then(function (data) {
-        const commentatorsList = document.getElementById('commentatorsList');
-        // Clear all existing items
-        commentatorsList.innerHTML = '';
-        Object.keys(data).forEach(key => {
-            const li = document.createElement('li');
-
-            const checkbox = document.createElement('input');
-            checkbox.type = 'checkbox';
-            checkbox.id = key;
-            const label = document.createElement('label');
-            label.htmlFor = checkbox.id;
-            label.textContent = key;
-
-            li.appendChild(checkbox);
-            li.appendChild(label);
-            commentatorsList.appendChild(li);
-        });
-        document.getElementById('popupDelete').style.display = 'block';
-      })
-    .catch(function (err) {
-      console.log('error: ' + err);
-    });
-}
-
-function sendJsonDataToEndpoint(data, endpoint, callback) {
-// open a connection
-	xhr.open("POST", "../" + endpoint, true);
-
-	// Set the request header i.e. which type of content you are sending
-	xhr.setRequestHeader("Content-Type", "application/json");
-
-    // Handle the response
-    xhr.onreadystatechange = function() {
-        if (xhr.readyState === 4) {  // 4 means request is done
-            if (xhr.status === 200 && message != null && message.trim() != "") {  // 200 means OK
-                callback();
-            } else if (xhr.status === 400) {
-                console.log("Bad request. Please check your data.");
-            } else if (xhr.status === 500) {
-                console.log("Server error. Please try again later.");
-            } else {
-                console.log("Something went wrong. Status:", xhr.status);
+// ── INIT ──────────────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', function() {
+    // Load local players first, then fetch current scoreboard data
+    // so _localPlayersMap is ready when we try to look up platform badges
+    fetch('/getLocalPlayers')
+        .then(function(r) { return r.json(); })
+        .then(function(players) {
+            if (players && players.length) {
+                players.forEach(function(p) { if (p && p.name) _localPlayersMap.set(p.name, p); });
+                var dl = document.getElementById('com_name_suggestions');
+                if (dl) {
+                    var existing = new Set(Array.from(dl.options).map(function(o) { return o.value; }));
+                    players.forEach(function(p) {
+                        if (p.name && !existing.has(p.name)) {
+                            var opt = document.createElement('option'); opt.value = p.name; dl.appendChild(opt);
+                        }
+                    });
+                }
             }
-        }
-    };
-
-    // Handle network errors
-    xhr.onerror = function() {
-        console.log("Request failed due to network error.");
-    };
-
-	// Converting JSON data to string
-	var dataToSend = JSON.stringify(data);
-	// Sending data with the request
-	xhr.send(dataToSend);
-}
-
-function sendJSON() {
-	// open a connection
-	xhr.open("POST", '/updatecommdata', true);
-
-	// Set the request header i.e. which type of content you are sending
-	xhr.setRequestHeader("Content-Type", "application/json");
-
-	// Create a state change callback
-	xhr.onreadystatechange = function () {
-		if (xhr.readyState === 4 && xhr.status === 200) {
-			// console.log("Server Okay");
-		}
-	};
-
-	// Set timestamp
-	jsonData.timestamp = Date.now();
-
-	// Converting JSON data to string
-	var data = JSON.stringify(jsonData);
-	// Sending data with the request
-	xhr.send(data);
-}
-
-window.onload = function() {
-    populateCommentatorDropdown();
-};
-
-function populateCommentatorDropdown() {
-    fetch('/getCommentators')
-        .then(function (response) {
-        jsonData = response.json();
-      return jsonData;
-    })
-    .then(function (data) {
-        generateDropdown("soc1_dropdown", "select1", data, updateFromDropdown1);
-        generateDropdown("soc2_dropdown", "select2", data, updateFromDropdown2);
-      })
-    .catch(function (err) {
-      console.log('error: ' + err);
-    });
-}
-
-function generateDropdown(elementId, selectId, data, callback) {
-    var dropdownContainer = document.getElementById(elementId);
-
-    // Create a select element
-    var select = document.createElement("select");
-    select.setAttribute("id", selectId);
-
-    // Create a default placeholder option
-    var defaultOption = document.createElement("option");
-    defaultOption.textContent = "Select a commentator"; // Placeholder text
-    defaultOption.value = ""; // Placeholder value
-    defaultOption.disabled = true; // Disable the placeholder option
-    defaultOption.selected = true; // Select the placeholder option by default
-    select.appendChild(defaultOption);
-
-    var names = Object.keys(data);
-    names.forEach(function(name) {
-        // Create options
-        var option = document.createElement("option");
-        option.text = name;
-        option.value = JSON.stringify(data[name]);
-        select.appendChild(option);
-    });
-    // Attach onchange event listener
-    select.addEventListener("change", function() {
-        callback(this.value);
-    });
-    // Append select to container
-    dropdownContainer.appendChild(select);
-}
-
-function updateFromDropdown1(value) {
-    var person = JSON.parse(value);
-    jsonData.com1 = person.name;
-    jsonData.soc1 = person.soc;
-    document.getElementById("form_name_1").value = jsonData.com1;
-    document.getElementById("form_social_1").value = jsonData.soc1;
-    jsonData.com2 = document.getElementById("form_name_2").value;
-    jsonData.soc2 = document.getElementById("form_social_2").value;
-    sendJSON();
-}
-
-function updateFromDropdown2(value) {
-    var person = JSON.parse(value);
-    jsonData.com2 = person.name;
-    jsonData.soc2 = person.soc;
-    document.getElementById("form_name_2").value = jsonData.com2;
-    document.getElementById("form_social_2").value = jsonData.soc2;
-    jsonData.com1 = document.getElementById("form_name_1").value;
-    jsonData.soc1 = document.getElementById("form_social_1").value;
-    sendJSON();
-}
-
-// For pop up dialogue
-document.getElementById('rectangle_button_add_commentator').addEventListener('click', function() {
-    document.getElementById('popupAdd').style.display = 'block';
-});
-document.getElementById('rectangle_button_delete_commentator').addEventListener('click', function() {
-    createCommentatorList();
-});
-
-document.getElementById('closeAddBtn').addEventListener('click', function() {
-    document.getElementById('popupAdd').style.display = 'none';
-});
-
-document.getElementById('closeDelBtn').addEventListener('click', function() {
-    document.getElementById('popupDelete').style.display = 'none';
-});
-
-window.addEventListener('click', function(event) {
-    if (event.target == document.getElementById('popup')) {
-        document.getElementById('popup').style.display = 'none';
-    }
+            // Now fetch scoreboard — _localPlayersMap is ready
+            return fetch('/getdata');
+        })
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+            jsonData = data;
+            updateElement('form_name_1',   data.com1);
+            updateElement('form_name_2',   data.com2);
+            updateElement('form_social_1', data.soc1);
+            updateElement('form_social_2', data.soc2);
+            var p1 = _localPlayersMap.get(data.com1);
+            var p2 = _localPlayersMap.get(data.com2);
+            setPlatformSelect('soc1_platform_sel', p1 ? (p1.social_platform || '') : '');
+            setPlatformSelect('soc2_platform_sel', p2 ? (p2.social_platform || '') : '');
+        })
+        .catch(function(e) { console.log('init error:', e); });
 });

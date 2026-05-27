@@ -41,7 +41,9 @@ function saveLocalPlayerName(name, team, country) {
     var existing = _localPlayersMap.get(name.trim()) || {};
     if (entry.team)    existing.team    = entry.team;
     if (entry.country) existing.country = entry.country;
-    existing.name = name.trim();
+    // Preserve social fields if already stored
+    entry.social_handle   = existing.social_handle   || '';
+    entry.social_platform = existing.social_platform || '';
     _localPlayersMap.set(name.trim(), existing);
     fetch('/saveLocalPlayer', {
         method: 'POST',
@@ -149,6 +151,10 @@ function populateData(data) {
     if (jsonData.p2Seed == undefined) {
         jsonData.p2Seed = "";
     }
+    if (jsonData.p1SocialHandle   == undefined) { jsonData.p1SocialHandle   = ""; }
+    if (jsonData.p1SocialPlatform == undefined) { jsonData.p1SocialPlatform = ""; }
+    if (jsonData.p2SocialHandle   == undefined) { jsonData.p2SocialHandle   = ""; }
+    if (jsonData.p2SocialPlatform == undefined) { jsonData.p2SocialPlatform = ""; }
 	updateCurrentPlayerDisplay();
 }
 
@@ -211,7 +217,7 @@ function updatePlayer1() {
     } else if (nextPlayersMap.has(jsonData.p1Name)) {
         jsonData.p1Seed = nextPlayersMap.get(jsonData.p1Name).seed;
     }
-    // Auto-fill team/country from local DB if available
+    // Auto-fill team/country/social from local DB if available
     var localPlayer = _localPlayersMap.get(jsonData.p1Name);
     if (localPlayer) {
         if (localPlayer.team) {
@@ -223,6 +229,11 @@ function updatePlayer1() {
             var sel = document.getElementById("dropdown_country_1p");
             if (sel) sel.value = localPlayer.country;
         }
+        jsonData.p1SocialHandle   = localPlayer.social_handle   || '';
+        jsonData.p1SocialPlatform = localPlayer.social_platform || '';
+    } else {
+        jsonData.p1SocialHandle   = '';
+        jsonData.p1SocialPlatform = '';
     }
     saveLocalPlayerName(jsonData.p1Name, jsonData.p1Team, jsonData.p1Country);
     updateCurrentPlayerDisplay();
@@ -237,7 +248,7 @@ function updatePlayer2() {
     } else if (nextPlayersMap.has(jsonData.p2Name)) {
         jsonData.p2Seed = nextPlayersMap.get(jsonData.p2Name).seed;
     }
-    // Auto-fill team/country from local DB if available
+    // Auto-fill team/country/social from local DB if available
     var localPlayer = _localPlayersMap.get(jsonData.p2Name);
     if (localPlayer) {
         if (localPlayer.team) {
@@ -249,6 +260,11 @@ function updatePlayer2() {
             var sel = document.getElementById("dropdown_country_2p");
             if (sel) sel.value = localPlayer.country;
         }
+        jsonData.p2SocialHandle   = localPlayer.social_handle   || '';
+        jsonData.p2SocialPlatform = localPlayer.social_platform || '';
+    } else {
+        jsonData.p2SocialHandle   = '';
+        jsonData.p2SocialPlatform = '';
     }
     saveLocalPlayerName(jsonData.p2Name, jsonData.p2Team, jsonData.p2Country);
     updateCurrentPlayerDisplay();
