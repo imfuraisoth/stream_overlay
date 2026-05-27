@@ -157,33 +157,41 @@ function updateElement(id, value) {
 }
 
 // ── LOCAL PLAYER PERSISTENCE (shared with Event Dashboard) ────────
-var _localPlayersMap = new Map();
+var _localPlayersMap = new Map();     // id   -> player record
+var _localPlayersByName = new Map(); // name -> player record
 
 function saveLocalPlayerName(name, team, country) {
     if (!name || !name.trim()) return;
-    var existing = _localPlayersMap.get(name.trim()) || {};
+    var existing = _localPlayersMap.get(name.trim()) || { name: name.trim() };
     if (team)    existing.team    = team;
     if (country) existing.country = country;
     existing.name = name.trim();
-    _localPlayersMap.set(name.trim(), existing);
+    _localPlayersMap.set(existing.id || name.trim(), existing);
+    _localPlayersByName.set(name.trim(), existing);
+    // Only send non-empty fields — never overwrite stored socials with blanks
+    var payload = { name: name.trim() };
+    if (team)                     payload.team            = team;
+    if (country)                  payload.country         = country;
+    if (existing.social_handle)   payload.social_handle   = existing.social_handle;
+    if (existing.social_platform) payload.social_platform = existing.social_platform;
     fetch('/saveLocalPlayer', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: name.trim(), team: team || '', country: country || '',
-            social_handle: existing.social_handle || '', social_platform: existing.social_platform || '' })
+        body: JSON.stringify(payload)
     }).catch(function(e) { console.log('saveLocalPlayer error:', e); });
 }
 
 function autoFillFromLocalDB(name, teamElId, countryElId) {
-    var p = _localPlayersMap.get(name);
+    var p = _localPlayersByName.get(name);
     if (!p) return false;
-    if (p.team && teamElId) {
-        safeEl(teamElId).value = p.team;
-    }
-    if (p.country && countryElId) {
-        safeEl(countryElId).value = p.country;
-    }
+    if (p.team && teamElId)       safeEl(teamElId).value    = p.team;
+    if (p.country && countryElId) safeEl(countryElId).value = p.country;
     return true;
+}
+
+function getSocialFromLocalDB(name) {
+    var p = _localPlayersByName.get(name);
+    return p ? { handle: p.social_handle || '', platform: p.social_platform || '' } : { handle: '', platform: '' };
 }
 
 function loadLocalPlayersIntoDatalist() {
@@ -204,7 +212,11 @@ function loadLocalPlayersIntoDatalist() {
             .then(function(players) {
                 if (!players || !players.length) return;
                 // Build lookup map for auto-fill
-                players.forEach(function(p) { if (p && p.name) _localPlayersMap.set(p.name, p); });
+                players.forEach(function(p) {
+                    if (!p || !p.name) return;
+                    _localPlayersMap.set(p.id || p.name, p);
+                    _localPlayersByName.set(p.name, p);
+                });
                 var existing = new Set(Array.from(dl.options).map(function(o) { return o.value; }));
                 players.forEach(function(p) {
                     var name = typeof p === 'string' ? p : p.name;
@@ -254,6 +266,9 @@ function updatePlayer1() {
     autoFillFromLocalDB(jsonData.p1Name, 'form_team_1p', 'dropdown_country_current_1');
     jsonData.p1Team    = safeEl("form_team_1p").value;
     jsonData.p1Country = safeEl("dropdown_country_current_1").value;
+    var soc1 = getSocialFromLocalDB(jsonData.p1Name);
+    jsonData.p1SocialHandle   = soc1.handle;
+    jsonData.p1SocialPlatform = soc1.platform;
     saveLocalPlayerName(jsonData.p1Name, jsonData.p1Team, jsonData.p1Country);
     sendJsonToEndpoint('updateCurrentPlayers');
 }
@@ -263,6 +278,9 @@ function updatePlayer2() {
     autoFillFromLocalDB(jsonData.p2Name, 'form_team_2p', 'dropdown_country_current_2');
     jsonData.p2Team    = safeEl("form_team_2p").value;
     jsonData.p2Country = safeEl("dropdown_country_current_2").value;
+    var soc2 = getSocialFromLocalDB(jsonData.p2Name);
+    jsonData.p2SocialHandle   = soc2.handle;
+    jsonData.p2SocialPlatform = soc2.platform;
     saveLocalPlayerName(jsonData.p2Name, jsonData.p2Team, jsonData.p2Country);
     sendJsonToEndpoint('updateCurrentPlayers');
 }

@@ -746,3 +746,12 @@ datalist { max-height: 150px; overflow-y: auto; }
   display: block;
   min-height: 1.2em;
 }
+
+/* ── SOCIAL DISPLAY ROWS ── */
+.social-display-row span:first-child {
+  font-family: var(--font-d); font-size: 10px; font-weight: 700;
+  letter-spacing: .1em; text-transform: uppercase; color: var(--fg2);
+}
+.social-display-value {
+  font-size: 12px; color: var(--accent); font-family: var(--font-b);
+}

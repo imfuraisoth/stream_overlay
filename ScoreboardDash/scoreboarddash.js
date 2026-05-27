@@ -32,23 +32,71 @@ function refreshDatalist() {
     }
 }
 
-var _localPlayersMap = new Map(); // name -> {name, team, country}
+var _localPlayersMap = new Map();     // id   -> player record
+var _localPlayersByName = new Map(); // name -> player record (for fast lookup)
+
+function refreshSocialFields() {
+    if (!jsonData) return;
+    var changed = false;
+    function applySocial(name, handleKey, platformKey) {
+        var p = _localPlayersByName.get(name);
+        var h  = p ? (p.social_handle   || '') : '';
+        var pl = p ? (p.social_platform || '') : '';
+        if (jsonData[handleKey] !== h || jsonData[platformKey] !== pl) {
+            jsonData[handleKey]   = h;
+            jsonData[platformKey] = pl;
+            changed = true;
+        }
+    }
+    applySocial(jsonData.p1Name,      'p1SocialHandle',    'p1SocialPlatform');
+    applySocial(jsonData.p2Name,      'p2SocialHandle',    'p2SocialPlatform');
+    applySocial(jsonData.nextplayer1, 'nextSocial1Handle', 'nextSocial1Platform');
+    applySocial(jsonData.nextplayer2, 'nextSocial2Handle', 'nextSocial2Platform');
+    updateSocialDisplays();
+    if (changed) sendJSON();
+}
+
+const SOCIAL_ICONS = { twitter: '𝕏', bluesky: '🦋', instagram: '📷', facebook: '👤' };
+
+function updateSocialDisplays() {
+    function setDisplay(rowId, valueId, handle, platform) {
+        var row = document.getElementById(rowId);
+        var val = document.getElementById(valueId);
+        if (!row || !val) return;
+        if (handle) {
+            var icon = SOCIAL_ICONS[platform] ? SOCIAL_ICONS[platform] + ' ' : '';
+            val.textContent = icon + handle;
+            row.style.display = '';
+        } else {
+            row.style.display = 'none';
+        }
+    }
+    setDisplay('p1SocialDisplay',   'p1SocialValue',   jsonData.p1SocialHandle,    jsonData.p1SocialPlatform);
+    setDisplay('p2SocialDisplay',   'p2SocialValue',   jsonData.p2SocialHandle,    jsonData.p2SocialPlatform);
+    setDisplay('next1SocialDisplay','next1SocialValue', jsonData.nextSocial1Handle, jsonData.nextSocial1Platform);
+    setDisplay('next2SocialDisplay','next2SocialValue', jsonData.nextSocial2Handle, jsonData.nextSocial2Platform);
+}
 
 function saveLocalPlayerName(name, team, country) {
     if (!name || name.trim() === '') return;
-    var entry = { name: name.trim(), team: team || '', country: country || '' };
-    // Update local map immediately so auto-fill works without a reload
-    var existing = _localPlayersMap.get(name.trim()) || {};
-    if (entry.team)    existing.team    = entry.team;
-    if (entry.country) existing.country = entry.country;
-    // Preserve social fields if already stored
-    entry.social_handle   = existing.social_handle   || '';
-    entry.social_platform = existing.social_platform || '';
-    _localPlayersMap.set(name.trim(), existing);
+    // Merge into existing map entry — never overwrite with blanks
+    var existing = _localPlayersMap.get(name.trim()) || { name: name.trim() };
+    if (team)    existing.team    = team;
+    if (country) existing.country = country;
+    existing.name = name.trim();
+    _localPlayersMap.set(existing.id || name.trim(), existing);
+    _localPlayersByName.set(name.trim(), existing);
+    // Only send non-empty fields — never send blank socials that would
+    // overwrite correctly stored values on the server
+    var payload = { name: name.trim() };
+    if (team)                     payload.team            = team;
+    if (country)                  payload.country         = country;
+    if (existing.social_handle)   payload.social_handle   = existing.social_handle;
+    if (existing.social_platform) payload.social_platform = existing.social_platform;
     fetch('/saveLocalPlayer', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(entry)
+        body: JSON.stringify(payload)
     }).then(function() {
         // Add to datalist immediately if local is in scope
         if (_playerSource === 'local' || _playerSource === 'both') {
@@ -70,8 +118,12 @@ function loadLocalPlayers() {
             if (!players || !players.length) return;
             // Build lookup map for auto-fill
             players.forEach(function(p) {
-                if (p && p.name) _localPlayersMap.set(p.name, p);
+                if (!p || !p.name) return;
+                _localPlayersMap.set(p.id || p.name, p);
+                _localPlayersByName.set(p.name, p);
             });
+            // Write social fields for any players already on screen
+            refreshSocialFields();
             var dl = document.getElementById('next_player_suggestions');
             if (!dl) return;
             var existing = new Set(Array.from(dl.options).map(function(o) { return o.value; }));
@@ -155,6 +207,11 @@ function populateData(data) {
     if (jsonData.p1SocialPlatform == undefined) { jsonData.p1SocialPlatform = ""; }
     if (jsonData.p2SocialHandle   == undefined) { jsonData.p2SocialHandle   = ""; }
     if (jsonData.p2SocialPlatform == undefined) { jsonData.p2SocialPlatform = ""; }
+    if (jsonData.nextSocial1Handle   == undefined) { jsonData.nextSocial1Handle   = ""; }
+    if (jsonData.nextSocial1Platform == undefined) { jsonData.nextSocial1Platform = ""; }
+    if (jsonData.nextSocial2Handle   == undefined) { jsonData.nextSocial2Handle   = ""; }
+    if (jsonData.nextSocial2Platform == undefined) { jsonData.nextSocial2Platform = ""; }
+    refreshSocialFields();
 	updateCurrentPlayerDisplay();
 }
 
@@ -218,7 +275,7 @@ function updatePlayer1() {
         jsonData.p1Seed = nextPlayersMap.get(jsonData.p1Name).seed;
     }
     // Auto-fill team/country/social from local DB if available
-    var localPlayer = _localPlayersMap.get(jsonData.p1Name);
+    var localPlayer = _localPlayersByName.get(jsonData.p1Name);
     if (localPlayer) {
         if (localPlayer.team) {
             jsonData.p1Team = localPlayer.team;
@@ -249,7 +306,7 @@ function updatePlayer2() {
         jsonData.p2Seed = nextPlayersMap.get(jsonData.p2Name).seed;
     }
     // Auto-fill team/country/social from local DB if available
-    var localPlayer = _localPlayersMap.get(jsonData.p2Name);
+    var localPlayer = _localPlayersByName.get(jsonData.p2Name);
     if (localPlayer) {
         if (localPlayer.team) {
             jsonData.p2Team = localPlayer.team;
@@ -286,6 +343,14 @@ function updateTeam2() {
 function updateNextPlayer1() {
 	jsonData.nextplayer1 = document.getElementById("form_next_round_name_1p").value;
     saveLocalPlayerName(jsonData.nextplayer1, jsonData.nextteam1, jsonData.nextcountry1);
+    // Auto-fill from local DB
+    var localP1 = _localPlayersByName.get(jsonData.nextplayer1);
+    if (localP1) {
+        if (localP1.team) { jsonData.nextteam1 = localP1.team; document.getElementById("form_next_round_team_1p").value = localP1.team; }
+        if (localP1.country) { jsonData.nextcountry1 = localP1.country; document.getElementById("dropdown_country_next1").value = localP1.country; }
+        jsonData.nextSocial1Handle   = localP1.social_handle   || '';
+        jsonData.nextSocial1Platform = localP1.social_platform || '';
+    }
 	if (nextPlayersMap.has(jsonData.nextplayer1)) {
         // Auto set team name and player 2 name to the opponent's name
         match = nextPlayersMap.get(jsonData.nextplayer1);
@@ -314,6 +379,14 @@ function updateNextPlayer1() {
 function updateNextPlayer2() {
 	jsonData.nextplayer2 = document.getElementById("form_next_round_name_2p").value;
     saveLocalPlayerName(jsonData.nextplayer2, jsonData.nextteam2, jsonData.nextcountry2);
+    // Auto-fill from local DB
+    var localP2 = _localPlayersByName.get(jsonData.nextplayer2);
+    if (localP2) {
+        if (localP2.team) { jsonData.nextteam2 = localP2.team; document.getElementById("form_next_round_team_2p").value = localP2.team; }
+        if (localP2.country) { jsonData.nextcountry2 = localP2.country; document.getElementById("dropdown_country_next2").value = localP2.country; }
+        jsonData.nextSocial2Handle   = localP2.social_handle   || '';
+        jsonData.nextSocial2Platform = localP2.social_platform || '';
+    }
     if (nextPlayersMap.has(jsonData.nextplayer2)) {
         // Auto set team name and player 1 name to the opponent's name
         match = nextPlayersMap.get(jsonData.nextplayer2);
@@ -747,6 +820,7 @@ function nextRoundUpdate(data) {
     document.getElementById("dropdown_country_next2").value = jsonData.nextcountry2;
 
 	updateCurrentPlayerDisplay();
+    refreshSocialFields();
 	sendJsonToEndpoint("updatealldata");
 }
 

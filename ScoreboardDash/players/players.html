@@ -159,6 +159,7 @@ function renderTable() {
 
   let html = `<table class="player-table">
     <thead><tr>
+      <th class="col-id">ID</th>
       <th onclick="sortBy('name')" class="sortable">Name <span class="sort-icon">⇅</span></th>
       <th onclick="sortBy('team')" class="sortable">Team <span class="sort-icon">⇅</span></th>
       <th onclick="sortBy('country')" class="sortable">Country <span class="sort-icon">⇅</span></th>
@@ -171,6 +172,7 @@ function renderTable() {
     const team    = escHtml(p.team    || '');
     const country = escHtml(p.country || '');
     html += `<tr>
+      <td class="col-id">${escHtml(p.id || '')}</td>
       <td class="col-name">${name}</td>
       <td class="col-team">${team ? `<span class="team-badge">${team}</span>` : '<span class="cell-empty">—</span>'}</td>
       <td class="col-country">${country || '<span class="cell-empty">—</span>'}</td>
@@ -178,8 +180,8 @@ function renderTable() {
         ? `<span class="platform-badge platform-${escHtml(p.social_platform||'')}">${platformIcon(p.social_platform)}${escHtml(p.social_handle)}</span>`
         : '<span class="cell-empty">—</span>'}</td>
       <td class="col-actions">
-        <button class="action-btn edit-btn" onclick="openEditModal('${escAttr(p.name)}')">✎ Edit</button>
-        <button class="action-btn del-btn"  onclick="openDeleteModal('${escAttr(p.name)}')">✕</button>
+        <button class="action-btn edit-btn" onclick="openEditModal('${escAttr(p.id || p.name)}')">✎ Edit</button>
+        <button class="action-btn del-btn"  onclick="openDeleteModal('${escAttr(p.id || p.name)}', '${escAttr(p.name)}')">✕</button>
       </td>
     </tr>`;
   });
@@ -216,7 +218,7 @@ function openAddModal() {
 function openEditModal(name) {
   const p = _players.find(function(x) { return x.name === name; });
   if (!p) return;
-  _editingOrigName = p.name;
+  _editingOrigName = p.id || p.name;
   document.getElementById('modalTitle').textContent = 'Edit Player';
   document.getElementById('mName').value    = p.name    || '';
   document.getElementById('mTeam').value    = p.team    || '';
@@ -240,7 +242,7 @@ async function saveModal() {
 
   const endpoint = _editingOrigName ? '/updateLocalPlayer' : '/saveLocalPlayer';
   const body = _editingOrigName
-    ? { original_name: _editingOrigName, name, team, country, social_handle, social_platform }
+    ? { id: _editingOrigName, name, team, country, social_handle, social_platform }
     : { name, team, country, social_handle, social_platform };
 
   try {
@@ -256,9 +258,11 @@ async function saveModal() {
 
 // ── DELETE MODAL ──────────────────────────────────────────────────
 let _deletingName = null;
-function openDeleteModal(name) {
-  _deletingName = name;
-  document.getElementById('deletePlayerName').textContent = name;
+let _deletingDisplayName = null;
+function openDeleteModal(id, name) {
+  _deletingName = id || name;
+  _deletingDisplayName = name || id;
+  document.getElementById('deletePlayerName').textContent = _deletingDisplayName || _deletingName;
   document.getElementById('deleteModal').classList.add('open');
 }
 function closeDeleteModal() { document.getElementById('deleteModal').classList.remove('open'); }
@@ -270,7 +274,7 @@ async function confirmDelete() {
     await fetch('/deleteLocalPlayer', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name: _deletingName })
+      body: JSON.stringify({ id: _deletingName })
     });
     closeDeleteModal();
     await loadPlayers();

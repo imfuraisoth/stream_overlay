@@ -134,34 +134,77 @@ def get_startgg_token():
 
 local_players_file = "../data/local_players.json"
 
+def _next_player_id(players):
+    """Return next sequential ID like 000001, 000002, etc."""
+    existing_ids = []
+    for k in players:
+        if k.startswith('p_'):
+            try:
+                existing_ids.append(int(k[2:]))
+            except ValueError:
+                pass
+    next_num = (max(existing_ids) + 1) if existing_ids else 1
+    return f"p_{next_num:06d}"
+
 def _read_local_players():
-    """Returns dict of {name: {name, team, country, social_handle, social_platform}}"""
+    """Returns dict of {id: {id, name, team, country, social_handle, social_platform}}"""
     try:
         data = FileUtils.read_file(local_players_file)
-        # Migrate old flat list format
-        if isinstance(data, dict) and "players" in data:
+        if not isinstance(data, dict):
+            return {}
+
+        # ── Migration: old flat list {name: str} ──
+        if "players" in data:
             old_list = data["players"]
             if old_list and isinstance(old_list[0], str):
-                migrated = {n: {"name": n, "team": "", "country": "", "social_handle": "", "social_platform": ""} for n in old_list}
+                migrated = {}
+                for i, n in enumerate(old_list, 1):
+                    pid = f"p_{i:06d}"
+                    migrated[pid] = {"id": pid, "name": n, "team": "", "country": "", "social_handle": "", "social_platform": ""}
                 FileUtils.write_file(local_players_file, migrated)
                 return migrated
-        if isinstance(data, dict) and data and isinstance(next(iter(data.values())), dict):
-            for k, v in data.items():
-                # Migrate old "socials" field to "social_handle"
-                if "socials" in v and "social_handle" not in v:
-                    v["social_handle"] = v.pop("socials")
-                if "social_handle" not in v:    v["social_handle"]    = ""
-                if "social_platform" not in v:  v["social_platform"]  = ""
-            return data
+
+        # ── Migration: name-keyed dict → id-keyed dict ──
+        if data and not next(iter(data)).startswith('p_'):
+            migrated = {}
+            for i, (k, v) in enumerate(data.items(), 1):
+                pid = f"p_{i:06d}"
+                migrated[pid] = {
+                    "id":              pid,
+                    "name":            v.get("name", k),
+                    "team":            v.get("team", ""),
+                    "country":         v.get("country", ""),
+                    "social_handle":   v.get("social_handle", v.get("socials", "")),
+                    "social_platform": v.get("social_platform", "")
+                }
+            FileUtils.write_file(local_players_file, migrated)
+            print(f"[migration] Migrated {len(migrated)} players to ID-keyed format")
+            return migrated
+
+        # Already id-keyed — ensure all fields present
+        for pid, v in data.items():
+            v.setdefault("id", pid)
+            v.setdefault("team", "")
+            v.setdefault("country", "")
+            v.setdefault("social_handle", "")
+            v.setdefault("social_platform", "")
+        return data
+    except Exception as e:
+        print(f"_read_local_players error: {e}")
         return {}
-    except Exception:
-        return {}
+
+def _find_player_by_name(players, name):
+    """Find a player record by name (case-sensitive). Returns (id, record) or (None, None)."""
+    for pid, p in players.items():
+        if p.get("name") == name:
+            return pid, p
+    return None, None
 
 @api.route('/getLocalPlayers', methods=['GET'])
 def get_local_players():
     try:
         players = _read_local_players()
-        result = sorted(players.values(), key=lambda p: p.get("name","").lower())
+        result = sorted(players.values(), key=lambda p: p.get("name", "").lower())
         return json.dumps(result, ensure_ascii=False), 200
     except Exception:
         return json.dumps([]), 200
@@ -174,13 +217,18 @@ def save_local_player():
         return "400", 400
     try:
         players = _read_local_players()
-        existing = players.get(name, {"name": name, "team": "", "country": "", "social_handle": "", "social_platform": ""})
-        if body.get("team"):                       existing["team"]            = body["team"]
-        if body.get("country"):                    existing["country"]         = body["country"]
-        if body.get("social_handle") is not None:  existing["social_handle"]   = body["social_handle"]
-        if body.get("social_platform") is not None: existing["social_platform"] = body["social_platform"]
+        pid, existing = _find_player_by_name(players, name)
+        if pid is None:
+            # New player — assign next ID
+            pid = _next_player_id(players)
+            existing = {"id": pid, "name": name, "team": "", "country": "", "social_handle": "", "social_platform": ""}
+        # Only overwrite fields that are explicitly provided and non-empty
+        if body.get("team"):            existing["team"]            = body["team"]
+        if body.get("country"):         existing["country"]         = body["country"]
+        if body.get("social_handle"):   existing["social_handle"]   = body["social_handle"]
+        if body.get("social_platform"): existing["social_platform"] = body["social_platform"]
         existing["name"] = name
-        players[name] = existing
+        players[pid] = existing
         FileUtils.write_file(local_players_file, players)
     except Exception as e:
         print(f"saveLocalPlayer error: {e}")
@@ -189,19 +237,20 @@ def save_local_player():
 @api.route('/updateLocalPlayer', methods=['POST'])
 def update_local_player():
     body = request.get_json() or {}
-    original_name = body.get("original_name", "").strip()
-    name    = body.get("name", "").strip()
-    team    = body.get("team", "")
-    country = body.get("country", "")
+    pid             = body.get("id", "").strip()
+    name            = body.get("name", "").strip()
+    team            = body.get("team", "")
+    country         = body.get("country", "")
     social_handle   = body.get("social_handle", "")
     social_platform = body.get("social_platform", "")
-    if not original_name or not name:
+    if not pid or not name:
         return "400", 400
     try:
         players = _read_local_players()
-        if original_name in players:
-            del players[original_name]
-        players[name] = {"name": name, "team": team, "country": country, "social_handle": social_handle, "social_platform": social_platform}
+        if pid not in players:
+            return "404", 404
+        players[pid] = {"id": pid, "name": name, "team": team, "country": country,
+                        "social_handle": social_handle, "social_platform": social_platform}
         FileUtils.write_file(local_players_file, players)
     except Exception as e:
         print(f"updateLocalPlayer error: {e}")
@@ -209,14 +258,20 @@ def update_local_player():
 
 @api.route('/deleteLocalPlayer', methods=['POST'])
 def delete_local_player():
-    name = (request.get_json() or {}).get("name", "").strip()
-    if not name:
+    body = request.get_json() or {}
+    pid  = body.get("id", "").strip()
+    name = body.get("name", "").strip()
+    if not pid and not name:
         return "400", 400
     try:
         players = _read_local_players()
-        if name in players:
-            del players[name]
-            FileUtils.write_file(local_players_file, players)
+        if pid and pid in players:
+            del players[pid]
+        elif name:
+            found_pid, _ = _find_player_by_name(players, name)
+            if found_pid:
+                del players[found_pid]
+        FileUtils.write_file(local_players_file, players)
     except Exception as e:
         print(f"deleteLocalPlayer error: {e}")
     return "200"

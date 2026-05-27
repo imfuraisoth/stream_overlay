@@ -180,3 +180,8 @@ input::placeholder { color: var(--fg2); }
 .platform-bluesky   { color: #0085ff; border-color: #0085ff30; }
 .platform-instagram { color: #e1306c; border-color: #e1306c30; }
 .platform-facebook  { color: #1877f2; border-color: #1877f230; }
+
+.col-id {
+  min-width: 80px; color: var(--fg2); font-size: 11px;
+  font-family: var(--font-d); letter-spacing: .05em;
+}

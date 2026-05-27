@@ -69,6 +69,10 @@
 									<span>Team</span>
 									<input class="form_team_1p" type="text" id="form_team_1p" value="" placeholder="P1 Team" onchange="updateTeam1();">
 								</div>
+								<div class="playerCardItem social-display-row" id="p1SocialDisplay" style="display:none;">
+									<span>Social</span>
+									<span class="social-display-value" id="p1SocialValue"></span>
+								</div>
 							</div>
 						</div>
 						<div class="playerCardItem">
@@ -116,6 +120,10 @@
 							<div class="playerCardItem">
 								<span>Team</span>
 								<input class="form_team_2p" type="text" id="form_team_2p" value="" placeholder="P2 Team" onchange="updateTeam2();">
+							</div>
+							<div class="playerCardItem social-display-row" id="p2SocialDisplay" style="display:none;">
+								<span>Social</span>
+								<span class="social-display-value" id="p2SocialValue"></span>
 							</div>
 						</div>
 						<div class="cardCountry">
@@ -349,6 +357,10 @@
 									<span>Team</span>
 									<input class="form_next_round_team_1p" type="text" id="form_next_round_team_1p" value="" placeholder="Next P1 Team" onchange="updateNextTeam1();">
 								</div>
+								<div class="nextRoundItem social-display-row" id="next1SocialDisplay" style="display:none;">
+									<span>Social</span>
+									<span class="social-display-value" id="next1SocialValue"></span>
+								</div>
 								<div class="nextRoundItem">
 									<span>Country</span>
 									<select id="dropdown_country_next1" class="dropdown_country_next1" onchange="updateNextCountry1();"></select>
@@ -365,6 +377,10 @@
 								<div class="nextRoundItem" id="text_next_round_team_2p">
 									<span>Team</span>
 									<input class="form_next_round_team_2p" type="text" id="form_next_round_team_2p" value="" placeholder="Next P2 Team" onchange="updateNextTeam2();">
+								</div>
+								<div class="nextRoundItem social-display-row" id="next2SocialDisplay" style="display:none;">
+									<span>Social</span>
+									<span class="social-display-value" id="next2SocialValue"></span>
 								</div>
 								<div class="nextRoundItem">
 									<span>Country</span>
