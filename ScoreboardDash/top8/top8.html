@@ -24,6 +24,8 @@
     <div class="header-item"><a href="../playerinfo/characterselect.html">Character Select</a></div>
     <span class="header-sep">|</span>
     <div class="header-item"><a href="../stations/stations.html">Stations</a></div>
+    <span class="header-sep">|</span>
+    <div class="header-item"><a href="../players/players.html">Players</a></div>
   </div>
 
   <div class="page-content">
@@ -32,6 +34,11 @@
     <div class="action-bar">
       <span class="action-bar-title">Top 8 Dashboard</span>
       <button class="btn-start" id="button_start_top8" onclick="startTop8();">▶ Start Top 8</button>
+      <div class="toggle-group">
+        <button class="toggle-btn" id="t8srcBtnBoth"    onclick="setTop8PlayerSource('both')">Both</button>
+        <button class="toggle-btn" id="t8srcBtnStartgg" onclick="setTop8PlayerSource('startgg')">Start.gg</button>
+        <button class="toggle-btn" id="t8srcBtnLocal"   onclick="setTop8PlayerSource('local')">Local</button>
+      </div>
       <button class="btn-sec" id="rectangle_button_1" onclick="resetAll();">Reset All</button>
       <button class="btn-sec" id="rectangle_button_2" onclick="resetNamesAndScore();">Reset Names &amp; Scores</button>
     </div>
@@ -85,14 +92,6 @@
                 <option>Losers Quarters</option><option>Losers Semis</option>
                 <option>Losers Finals</option><option>Exhibitions</option><option>Casuals</option>
               </select>
-            </div>
-            <div class="player-source-toggle" style="width:100%;">
-              <span class="player-source-label">Player suggestions</span>
-              <div class="toggle-group">
-                <button class="toggle-btn" id="t8srcBtnBoth"    onclick="setTop8PlayerSource('both')"    style="flex:1;">Both</button>
-                <button class="toggle-btn" id="t8srcBtnStartgg" onclick="setTop8PlayerSource('startgg')" style="flex:1;">Start.gg</button>
-                <button class="toggle-btn" id="t8srcBtnLocal"   onclick="setTop8PlayerSource('local')"   style="flex:1;">Local</button>
-              </div>
             </div>
             <button class="btn-sec" id="rectangle_button_8" onclick="reversePlayerNames();" style="width:100%;font-size:10px;">⇄ Swap Names</button>
             <button class="btn-sec" id="rectangle_button_3" onclick="reverseScores();" style="width:100%;font-size:10px;">⇄ Swap Scores</button>

@@ -32,12 +32,21 @@ function refreshDatalist() {
     }
 }
 
-function saveLocalPlayerName(name) {
+var _localPlayersMap = new Map(); // name -> {name, team, country}
+
+function saveLocalPlayerName(name, team, country) {
     if (!name || name.trim() === '') return;
+    var entry = { name: name.trim(), team: team || '', country: country || '' };
+    // Update local map immediately so auto-fill works without a reload
+    var existing = _localPlayersMap.get(name.trim()) || {};
+    if (entry.team)    existing.team    = entry.team;
+    if (entry.country) existing.country = entry.country;
+    existing.name = name.trim();
+    _localPlayersMap.set(name.trim(), existing);
     fetch('/saveLocalPlayer', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: name.trim() })
+        body: JSON.stringify(entry)
     }).then(function() {
         // Add to datalist immediately if local is in scope
         if (_playerSource === 'local' || _playerSource === 'both') {
@@ -55,13 +64,18 @@ function saveLocalPlayerName(name) {
 function loadLocalPlayers() {
     fetch('/getLocalPlayers')
         .then(function(r) { return r.json(); })
-        .then(function(names) {
-            if (!names || !names.length) return;
+        .then(function(players) {
+            if (!players || !players.length) return;
+            // Build lookup map for auto-fill
+            players.forEach(function(p) {
+                if (p && p.name) _localPlayersMap.set(p.name, p);
+            });
             var dl = document.getElementById('next_player_suggestions');
             if (!dl) return;
             var existing = new Set(Array.from(dl.options).map(function(o) { return o.value; }));
-            names.forEach(function(name) {
-                if (!existing.has(name)) {
+            players.forEach(function(p) {
+                var name = typeof p === 'string' ? p : p.name;
+                if (name && !existing.has(name)) {
                     var opt = document.createElement('option');
                     opt.value = name;
                     dl.appendChild(opt);
@@ -190,44 +204,72 @@ function updateCurrentPlayerDisplay() {
 }
 
 function updatePlayer1() {
-	jsonData.p1Name = document.getElementById("form_name_1p").value;
+    jsonData.p1Name = document.getElementById("form_name_1p").value;
     jsonData.p1Seed = "";
     if (playersMap.has(jsonData.p1Name)) {
         jsonData.p1Seed = playersMap.get(jsonData.p1Name).seed;
     } else if (nextPlayersMap.has(jsonData.p1Name)) {
         jsonData.p1Seed = nextPlayersMap.get(jsonData.p1Name).seed;
     }
-    saveLocalPlayerName(jsonData.p1Name);
-	updateCurrentPlayerDisplay();
-	sendJSON();
+    // Auto-fill team/country from local DB if available
+    var localPlayer = _localPlayersMap.get(jsonData.p1Name);
+    if (localPlayer) {
+        if (localPlayer.team) {
+            jsonData.p1Team = localPlayer.team;
+            document.getElementById("form_team_1p").value = localPlayer.team;
+        }
+        if (localPlayer.country) {
+            jsonData.p1Country = localPlayer.country;
+            var sel = document.getElementById("dropdown_country_1p");
+            if (sel) sel.value = localPlayer.country;
+        }
+    }
+    saveLocalPlayerName(jsonData.p1Name, jsonData.p1Team, jsonData.p1Country);
+    updateCurrentPlayerDisplay();
+    sendJSON();
 }
 
 function updatePlayer2() {
-	jsonData.p2Name = document.getElementById("form_name_2p").value;
+    jsonData.p2Name = document.getElementById("form_name_2p").value;
     jsonData.p2Seed = "";
     if (playersMap.has(jsonData.p2Name)) {
         jsonData.p2Seed = playersMap.get(jsonData.p2Name).seed;
     } else if (nextPlayersMap.has(jsonData.p2Name)) {
         jsonData.p2Seed = nextPlayersMap.get(jsonData.p2Name).seed;
     }
-    saveLocalPlayerName(jsonData.p2Name);
-	updateCurrentPlayerDisplay();
-	sendJSON();
+    // Auto-fill team/country from local DB if available
+    var localPlayer = _localPlayersMap.get(jsonData.p2Name);
+    if (localPlayer) {
+        if (localPlayer.team) {
+            jsonData.p2Team = localPlayer.team;
+            document.getElementById("form_team_2p").value = localPlayer.team;
+        }
+        if (localPlayer.country) {
+            jsonData.p2Country = localPlayer.country;
+            var sel = document.getElementById("dropdown_country_2p");
+            if (sel) sel.value = localPlayer.country;
+        }
+    }
+    saveLocalPlayerName(jsonData.p2Name, jsonData.p2Team, jsonData.p2Country);
+    updateCurrentPlayerDisplay();
+    sendJSON();
 }
 
 function updateTeam1() {
-	jsonData.p1Team = document.getElementById("form_team_1p").value;
-	sendJSON();
+    jsonData.p1Team = document.getElementById("form_team_1p").value;
+    saveLocalPlayerName(jsonData.p1Name, jsonData.p1Team, jsonData.p1Country);
+    sendJSON();
 }
 
 function updateTeam2() {
-	jsonData.p2Team = document.getElementById("form_team_2p").value;
-	sendJSON();
+    jsonData.p2Team = document.getElementById("form_team_2p").value;
+    saveLocalPlayerName(jsonData.p2Name, jsonData.p2Team, jsonData.p2Country);
+    sendJSON();
 }
 
 function updateNextPlayer1() {
 	jsonData.nextplayer1 = document.getElementById("form_next_round_name_1p").value;
-    saveLocalPlayerName(jsonData.nextplayer1);
+    saveLocalPlayerName(jsonData.nextplayer1, jsonData.nextteam1, jsonData.nextcountry1);
 	if (nextPlayersMap.has(jsonData.nextplayer1)) {
         // Auto set team name and player 2 name to the opponent's name
         match = nextPlayersMap.get(jsonData.nextplayer1);
@@ -255,7 +297,7 @@ function updateNextPlayer1() {
 
 function updateNextPlayer2() {
 	jsonData.nextplayer2 = document.getElementById("form_next_round_name_2p").value;
-    saveLocalPlayerName(jsonData.nextplayer2);
+    saveLocalPlayerName(jsonData.nextplayer2, jsonData.nextteam2, jsonData.nextcountry2);
     if (nextPlayersMap.has(jsonData.nextplayer2)) {
         // Auto set team name and player 1 name to the opponent's name
         match = nextPlayersMap.get(jsonData.nextplayer2);
@@ -333,13 +375,15 @@ function updateMaxScore() {
 }
 
 function updateNextCountry1() {
-	jsonData.nextcountry1 = document.getElementById("dropdown_country_next1").value;
-	sendJSON();
+    jsonData.nextcountry1 = document.getElementById("dropdown_country_next1").value;
+    saveLocalPlayerName(jsonData.nextplayer1, jsonData.nextteam1, jsonData.nextcountry1);
+    sendJSON();
 }
 
 function updateNextCountry2() {
-	jsonData.nextcountry2 = document.getElementById("dropdown_country_next2").value;
-	sendJSON();
+    jsonData.nextcountry2 = document.getElementById("dropdown_country_next2").value;
+    saveLocalPlayerName(jsonData.nextplayer2, jsonData.nextteam2, jsonData.nextcountry2);
+    sendJSON();
 }
 
 function resetNamesAndScore() {
@@ -513,15 +557,17 @@ function resetAll() {
 }
 
 function countryDropdown1() {
-	var c1 = document.getElementById("dropdown_country_1p");
-	jsonData.p1Country = c1.options[c1.selectedIndex].text;
-	sendJSON();
+    var c1 = document.getElementById("dropdown_country_1p");
+    jsonData.p1Country = c1.options[c1.selectedIndex].text;
+    saveLocalPlayerName(jsonData.p1Name, jsonData.p1Team, jsonData.p1Country);
+    sendJSON();
 }
 
 function countryDropdown2() {
-	var c2 = document.getElementById("dropdown_country_2p");
-	jsonData.p2Country = c2.options[c2.selectedIndex].text;
-	sendJSON();
+    var c2 = document.getElementById("dropdown_country_2p");
+    jsonData.p2Country = c2.options[c2.selectedIndex].text;
+    saveLocalPlayerName(jsonData.p2Name, jsonData.p2Team, jsonData.p2Country);
+    sendJSON();
 }
 
 function nextRound() {

@@ -134,28 +134,83 @@ def get_startgg_token():
 
 local_players_file = "../data/local_players.json"
 
+def _read_local_players():
+    """Returns dict of {name: {name, team, country}}"""
+    try:
+        data = FileUtils.read_file(local_players_file)
+        # Migrate old flat list format if needed
+        if isinstance(data, dict) and "players" in data:
+            old = data["players"]
+            if old and isinstance(old[0], str):
+                migrated = {n: {"name": n, "team": "", "country": ""} for n in old}
+                FileUtils.write_file(local_players_file, migrated)
+                return migrated
+            # Already new format stored under "players" key as list — shouldn't happen but handle
+        if isinstance(data, dict) and data and isinstance(next(iter(data.values())), dict):
+            return data  # already {name: {name, team, country}}
+        return {}
+    except Exception:
+        return {}
+
 @api.route('/getLocalPlayers', methods=['GET'])
 def get_local_players():
     try:
-        data = FileUtils.read_file(local_players_file)
-        return json.dumps(data.get("players", []), ensure_ascii=False), 200
+        players = _read_local_players()
+        result = sorted(players.values(), key=lambda p: p.get("name","").lower())
+        return json.dumps(result, ensure_ascii=False), 200
     except Exception:
         return json.dumps([]), 200
 
 @api.route('/saveLocalPlayer', methods=['POST'])
 def save_local_player():
+    body = request.get_json() or {}
+    name = body.get("name", "").strip()
+    if not name:
+        return "400", 400
+    try:
+        players = _read_local_players()
+        existing = players.get(name, {"name": name, "team": "", "country": ""})
+        # Only update team/country if provided and non-empty (don't overwrite with blanks)
+        if body.get("team"):  existing["team"]    = body["team"]
+        if body.get("country"): existing["country"] = body["country"]
+        existing["name"] = name
+        players[name] = existing
+        FileUtils.write_file(local_players_file, players)
+    except Exception as e:
+        print(f"saveLocalPlayer error: {e}")
+    return "200"
+
+@api.route('/updateLocalPlayer', methods=['POST'])
+def update_local_player():
+    body = request.get_json() or {}
+    original_name = body.get("original_name", "").strip()
+    name    = body.get("name", "").strip()
+    team    = body.get("team", "")
+    country = body.get("country", "")
+    if not original_name or not name:
+        return "400", 400
+    try:
+        players = _read_local_players()
+        if original_name in players:
+            del players[original_name]
+        players[name] = {"name": name, "team": team, "country": country}
+        FileUtils.write_file(local_players_file, players)
+    except Exception as e:
+        print(f"updateLocalPlayer error: {e}")
+    return "200"
+
+@api.route('/deleteLocalPlayer', methods=['POST'])
+def delete_local_player():
     name = (request.get_json() or {}).get("name", "").strip()
     if not name:
         return "400", 400
     try:
-        data = FileUtils.read_file(local_players_file)
-        players = data.get("players", [])
-        if name not in players:
-            players.append(name)
-            players.sort(key=str.lower)
-            FileUtils.write_file(local_players_file, {"players": players})
+        players = _read_local_players()
+        if name in players:
+            del players[name]
+            FileUtils.write_file(local_players_file, players)
     except Exception as e:
-        print(f"saveLocalPlayer error: {e}")
+        print(f"deleteLocalPlayer error: {e}")
     return "200"
 
 

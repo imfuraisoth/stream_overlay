@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Players — Stream Overlay</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;900&family=Barlow:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="icon" type="image/png" href="../images/V.png">
+  <link href="style.css" rel="stylesheet" type="text/css">
+</head>
+<body>
+
+<!-- NAV -->
+<div class="top-navbar-container">
+  <div class="header-item"><a href="../commentators/commentators.html">Commentators</a></div>
+  <span class="header-sep">|</span>
+  <div class="header-item"><a href="../index.html">Event Dashboard</a></div>
+  <span class="header-sep">|</span>
+  <div class="header-item"><a href="../top8/top8.html">Top 8</a></div>
+  <span class="header-sep">|</span>
+  <div class="header-item"><a href="../playerinfo/characterselect.html">Character Select</a></div>
+  <span class="header-sep">|</span>
+  <div class="header-item"><a href="../stations/stations.html">Stations</a></div>
+  <span class="header-sep">|</span>
+  <div class="header-item active">Players</div>
+</div>
+
+<!-- TOOLBAR -->
+<div class="toolbar">
+  <div class="toolbar-left">
+    <input type="text" id="searchInput" placeholder="Search players…" oninput="renderTable()">
+    <button class="btn" onclick="openAddModal()">+ Add Player</button>
+  </div>
+  <div class="toolbar-right">
+    <span class="player-count" id="playerCount"></span>
+    <button class="btn sec sm" onclick="loadPlayers()">↺ Refresh</button>
+  </div>
+</div>
+
+<!-- TABLE -->
+<div class="content">
+  <div id="tableWrap">
+    <div class="empty-state"><span class="spinner"></span> Loading…</div>
+  </div>
+</div>
+
+<!-- ADD / EDIT MODAL -->
+<div class="modal-backdrop" id="modal" onclick="onBackdropClick(event)">
+  <div class="modal-content">
+    <div class="modal-header">
+      <span class="modal-title" id="modalTitle">Add Player</span>
+      <button class="modal-close" onclick="closeModal()">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="field-group">
+        <label for="mName">Name</label>
+        <input type="text" id="mName" placeholder="Gamer tag">
+      </div>
+      <div class="field-group">
+        <label for="mTeam">Team</label>
+        <input type="text" id="mTeam" placeholder="Team name or abbreviation">
+      </div>
+      <div class="field-group">
+        <label for="mCountry">Country</label>
+        <select id="mCountry"></select>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn sec" onclick="closeModal()">Cancel</button>
+      <button class="btn" id="modalSaveBtn" onclick="saveModal()">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- DELETE CONFIRM -->
+<div class="modal-backdrop" id="deleteModal" onclick="onDeleteBackdropClick(event)">
+  <div class="modal-content modal-sm">
+    <div class="modal-header">
+      <span class="modal-title">Delete Player</span>
+      <button class="modal-close" onclick="closeDeleteModal()">×</button>
+    </div>
+    <div class="modal-body">
+      <p style="color:var(--fg);font-size:14px;">Delete <strong id="deletePlayerName" style="color:var(--accent2);"></strong>?</p>
+      <p style="color:var(--fg2);font-size:12px;margin-top:6px;">This cannot be undone.</p>
+    </div>
+    <div class="modal-footer">
+      <button class="btn sec" onclick="closeDeleteModal()">Cancel</button>
+      <button class="btn danger" onclick="confirmDelete()">Delete</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const countries = [
+  '','AF','AL','DZ','AR','AU','AT','AZ','BE','BO','BR','CA','CL','CN','CO',
+  'HR','CZ','DK','EC','EG','EE','FI','FR','DE','GH','GR','GT','HN','HK',
+  'HU','IN','ID','IE','IL','IT','JP','KZ','KE','KR','KW','LV','LT','MY',
+  'MX','MA','NL','NZ','NG','NO','PK','PE','PH','PL','PT','PR','QA','RO',
+  'RU','SA','RS','SG','SK','ZA','ES','SE','CH','TW','TH','TR','UA','GB',
+  'US','UY','VE','VN'
+];
+
+let _players = [];
+let _editingOrigName = null;
+
+// Populate country selects
+function populateCountrySelect(sel, selected) {
+  sel.innerHTML = countries.map(c =>
+    `<option value="${c}"${c === selected ? ' selected' : ''}>${c || '— None —'}</option>`
+  ).join('');
+}
+populateCountrySelect(document.getElementById('mCountry'), '');
+
+// ── LOAD ──────────────────────────────────────────────────────────
+async function loadPlayers() {
+  try {
+    const res = await fetch('/getLocalPlayers');
+    _players = await res.json();
+    renderTable();
+  } catch(e) {
+    document.getElementById('tableWrap').innerHTML =
+      '<div class="empty-state"><strong>Could not load players</strong><div class="hint">Make sure the server is running.</div></div>';
+  }
+}
+
+// ── RENDER TABLE ──────────────────────────────────────────────────
+function renderTable() {
+  const q = document.getElementById('searchInput').value.trim().toLowerCase();
+  const filtered = q
+    ? _players.filter(p => (p.name||'').toLowerCase().includes(q) ||
+                           (p.team||'').toLowerCase().includes(q) ||
+                           (p.country||'').toLowerCase().includes(q))
+    : _players;
+
+  document.getElementById('playerCount').textContent =
+    filtered.length + ' of ' + _players.length + ' player' + (_players.length !== 1 ? 's' : '');
+
+  if (!filtered.length) {
+    document.getElementById('tableWrap').innerHTML = q
+      ? '<div class="empty-state"><strong>No results</strong><div class="hint">Try a different search term.</div></div>'
+      : '<div class="empty-state"><strong>No players saved yet</strong><div class="hint">Player names are saved automatically when you enter them on the Event Dashboard or Top 8.</div></div>';
+    return;
+  }
+
+  let html = `<table class="player-table">
+    <thead><tr>
+      <th onclick="sortBy('name')" class="sortable">Name <span class="sort-icon">⇅</span></th>
+      <th onclick="sortBy('team')" class="sortable">Team <span class="sort-icon">⇅</span></th>
+      <th onclick="sortBy('country')" class="sortable">Country <span class="sort-icon">⇅</span></th>
+      <th class="col-actions">Actions</th>
+    </tr></thead><tbody>`;
+
+  filtered.forEach(function(p) {
+    const name    = escHtml(p.name    || '');
+    const team    = escHtml(p.team    || '');
+    const country = escHtml(p.country || '');
+    html += `<tr>
+      <td class="col-name">${name}</td>
+      <td class="col-team">${team ? `<span class="team-badge">${team}</span>` : '<span class="cell-empty">—</span>'}</td>
+      <td class="col-country">${country || '<span class="cell-empty">—</span>'}</td>
+      <td class="col-actions">
+        <button class="action-btn edit-btn" onclick="openEditModal('${escAttr(p.name)}')">✎ Edit</button>
+        <button class="action-btn del-btn"  onclick="openDeleteModal('${escAttr(p.name)}')">✕</button>
+      </td>
+    </tr>`;
+  });
+
+  html += '</tbody></table>';
+  document.getElementById('tableWrap').innerHTML = html;
+}
+
+let _sortKey = 'name', _sortAsc = true;
+function sortBy(key) {
+  if (_sortKey === key) { _sortAsc = !_sortAsc; }
+  else { _sortKey = key; _sortAsc = true; }
+  _players.sort(function(a, b) {
+    const av = (a[key] || '').toLowerCase();
+    const bv = (b[key] || '').toLowerCase();
+    return _sortAsc ? av.localeCompare(bv) : bv.localeCompare(av);
+  });
+  renderTable();
+}
+
+// ── ADD MODAL ─────────────────────────────────────────────────────
+function openAddModal() {
+  _editingOrigName = null;
+  document.getElementById('modalTitle').textContent = 'Add Player';
+  document.getElementById('mName').value = '';
+  document.getElementById('mTeam').value = '';
+  populateCountrySelect(document.getElementById('mCountry'), '');
+  document.getElementById('modal').classList.add('open');
+  document.getElementById('mName').focus();
+}
+
+function openEditModal(name) {
+  const p = _players.find(function(x) { return x.name === name; });
+  if (!p) return;
+  _editingOrigName = p.name;
+  document.getElementById('modalTitle').textContent = 'Edit Player';
+  document.getElementById('mName').value    = p.name    || '';
+  document.getElementById('mTeam').value    = p.team    || '';
+  populateCountrySelect(document.getElementById('mCountry'), p.country || '');
+  document.getElementById('modal').classList.add('open');
+  document.getElementById('mName').focus();
+}
+
+function closeModal() { document.getElementById('modal').classList.remove('open'); }
+function onBackdropClick(e) { if (e.target.id === 'modal') closeModal(); }
+
+async function saveModal() {
+  const name    = document.getElementById('mName').value.trim();
+  const team    = document.getElementById('mTeam').value.trim();
+  const country = document.getElementById('mCountry').value;
+  if (!name) { document.getElementById('mName').focus(); return; }
+
+  const endpoint = _editingOrigName ? '/updateLocalPlayer' : '/saveLocalPlayer';
+  const body = _editingOrigName
+    ? { original_name: _editingOrigName, name, team, country }
+    : { name, team, country };
+
+  try {
+    await fetch(endpoint, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body)
+    });
+    closeModal();
+    await loadPlayers();
+  } catch(e) { console.error('Save error:', e); }
+}
+
+// ── DELETE MODAL ──────────────────────────────────────────────────
+let _deletingName = null;
+function openDeleteModal(name) {
+  _deletingName = name;
+  document.getElementById('deletePlayerName').textContent = name;
+  document.getElementById('deleteModal').classList.add('open');
+}
+function closeDeleteModal() { document.getElementById('deleteModal').classList.remove('open'); }
+function onDeleteBackdropClick(e) { if (e.target.id === 'deleteModal') closeDeleteModal(); }
+
+async function confirmDelete() {
+  if (!_deletingName) return;
+  try {
+    await fetch('/deleteLocalPlayer', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name: _deletingName })
+    });
+    closeDeleteModal();
+    await loadPlayers();
+  } catch(e) { console.error('Delete error:', e); }
+}
+
+// ── UTILS ─────────────────────────────────────────────────────────
+function escHtml(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+function escAttr(s) {
+  return String(s).replace(/'/g,'&apos;').replace(/"/g,'&quot;');
+}
+
+// Enter key in modal
+document.getElementById('mName').addEventListener('keydown', function(e) { if (e.key === 'Enter') saveModal(); });
+document.getElementById('mTeam').addEventListener('keydown', function(e) { if (e.key === 'Enter') saveModal(); });
+
+// Load on start
+loadPlayers();
+</script>
+</body>
+</html>
