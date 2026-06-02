@@ -11,6 +11,11 @@
   <link rel="icon" type="image/png" href="../images/V.png">
   <script src="https://kit.fontawesome.com/2c93766a80.js" crossorigin="anonymous"></script>
   <script class="u-script" type="text/javascript" src="top8.js" defer=""></script>
+  <script>
+    // Apply saved theme before paint to prevent flash
+    (function(){var s=localStorage.getItem('sc_theme');if(!s)return;try{var v=JSON.parse(s);Object.keys(v).forEach(function(k){document.documentElement.style.setProperty(k,v[k])});}catch(e){}})();
+  </script>
+  <link href="../theme/theme.css" rel="stylesheet" type="text/css">
 </head>
 <body>
 
@@ -405,5 +410,6 @@
 
   </div><!-- /page-content -->
   <datalist id="next_player_suggestions"></datalist>
+  <script src="../theme/theme.js" defer></script>
 </body>
 </html>

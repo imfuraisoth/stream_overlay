@@ -9,6 +9,11 @@
   <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;900&family=Barlow:wght@400;500&display=swap" rel="stylesheet">
   <link rel="icon" type="image/png" href="../images/V.png">
   <link href="style.css" rel="stylesheet" type="text/css">
+  <script>
+    // Apply saved theme before paint to prevent flash
+    (function(){var s=localStorage.getItem('sc_theme');if(!s)return;try{var v=JSON.parse(s);Object.keys(v).forEach(function(k){document.documentElement.style.setProperty(k,v[k])});}catch(e){}})();
+  </script>
+  <link href="../theme/theme.css" rel="stylesheet" type="text/css">
 </head>
 <body>
 
@@ -315,5 +320,6 @@ document.getElementById('mTeam').addEventListener('keydown', function(e) { if (e
 loadPlayers();
 </script>
 
+  <script src="../theme/theme.js" defer></script>
 </body>
 </html>

@@ -6,6 +6,11 @@
   <title>Stations — Stream Overlay</title>
   <link rel="icon" type="image/png" href="../images/V.png">
   <link href="style.css" rel="stylesheet" type="text/css">
+  <script>
+    // Apply saved theme before paint to prevent flash
+    (function(){var s=localStorage.getItem('sc_theme');if(!s)return;try{var v=JSON.parse(s);Object.keys(v).forEach(function(k){document.documentElement.style.setProperty(k,v[k])});}catch(e){}})();
+  </script>
+  <link href="../theme/theme.css" rel="stylesheet" type="text/css">
 </head>
 <body>
 
@@ -400,5 +405,6 @@ document.getElementById('tourneySlug').addEventListener('keydown', e => { if (e.
 // Auto-populate from server on load
 document.addEventListener('DOMContentLoaded', restoreSettings);
 </script>
+  <script src="../theme/theme.js" defer></script>
 </body>
 </html>

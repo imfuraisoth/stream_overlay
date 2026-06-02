@@ -11,6 +11,11 @@
   <script src="https://kit.fontawesome.com/2c93766a80.js" crossorigin="anonymous"></script>
   <script class="u-script" type="text/javascript" src="characterselect.js" defer=""></script>
   <link href="characterselect.css" rel="stylesheet" type="text/css" />
+  <script>
+    // Apply saved theme before paint to prevent flash
+    (function(){var s=localStorage.getItem('sc_theme');if(!s)return;try{var v=JSON.parse(s);Object.keys(v).forEach(function(k){document.documentElement.style.setProperty(k,v[k])});}catch(e){}})();
+  </script>
+  <link href="../theme/theme.css" rel="stylesheet" type="text/css">
 </head>
 <body>
 
@@ -64,5 +69,6 @@
     </div>
 
   </div>
+  <script src="../theme/theme.js" defer></script>
 </body>
 </html>
