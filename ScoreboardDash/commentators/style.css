@@ -141,3 +141,33 @@ form { display: flex; flex-direction: column; gap: 10px; }
   margin-top: 10px; width: 100%; font-size: 11px !important;
   padding: 5px 10px !important;
 }
+
+/* ── NAME PICKER ── */
+.name-input-wrap {
+  display: flex; align-items: stretch; gap: 4px; width: 100%;
+}
+.name-input-wrap input {
+  flex: 1; min-width: 0;
+}
+select.name-picker {
+  flex-shrink: 0;
+  width: 28px;
+  min-width: 28px;
+  max-width: 28px;
+  padding: 0;
+  margin: 0;
+  background: var(--bg4);
+  border: 1px solid var(--border) !important;
+  color: var(--accent);
+  font-size: 11px;
+  border-radius: 4px;
+  cursor: pointer;
+  outline: none;
+  appearance: none;
+  -webkit-appearance: none;
+  text-align: center;
+  align-self: stretch;
+  box-sizing: border-box;
+}
+select.name-picker:focus { border-color: var(--accent) !important; }
+select.name-picker option { font-size: 13px; }

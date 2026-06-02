@@ -1,3 +1,55 @@
+// ── NAME PICKERS ──────────────────────────────────────────────────
+function rebuildT8NamePickers() {
+    var source = localStorage.getItem('player_source') || 'both';
+    var names = [];
+    if (source === 'startgg' || source === 'both') {
+        playersMap.forEach(function(_, name) { names.push(name); });
+    }
+    if (source === 'local' || source === 'both') {
+        _localPlayersByName.forEach(function(_, name) { names.push(name); });
+    }
+    names = names.filter(function(v,i,a) { return a.indexOf(v) === i; });
+    names.sort(function(a,b) { return a.toLowerCase().localeCompare(b.toLowerCase()); });
+    // Populate select pickers
+    document.querySelectorAll('select.name-picker').forEach(function(sel) {
+        sel.innerHTML = '<option value="">▾</option>';
+        names.forEach(function(name) {
+            var opt = document.createElement('option');
+            opt.value = name; opt.textContent = name;
+            sel.appendChild(opt);
+        });
+    });
+    // Populate datalist for typing autocomplete
+    var dl = document.getElementById('next_player_suggestions');
+    if (dl) {
+        dl.innerHTML = '';
+        names.forEach(function(name) {
+            var opt = document.createElement('option');
+            opt.value = name; dl.appendChild(opt);
+        });
+    }
+}
+
+function pickName(inputId, sel, updateFn) {
+    if (!sel.value) return;
+    var input = document.getElementById(inputId);
+    if (input) input.value = sel.value;
+    sel.selectedIndex = 0;
+    if (updateFn) updateFn();
+}
+
+function pickBracketName(inputId, sel) {
+    if (!sel.value) return;
+    var input = document.getElementById(inputId);
+    if (!input) { sel.selectedIndex = 0; return; }
+    input.value = sel.value;
+    sel.selectedIndex = 0;
+    // Fire the input's onchange
+    var evt = document.createEvent('Event');
+    evt.initEvent('change', true, true);
+    input.dispatchEvent(evt);
+}
+
 // Safe element helper — silently skips missing IDs from old SVG layout
 // Maps old button IDs to new equivalents
 const _idAliases = {
@@ -196,16 +248,6 @@ function getSocialFromLocalDB(name) {
 
 function loadLocalPlayersIntoDatalist() {
     var source = localStorage.getItem('player_source') || 'both';
-    var dl = document.getElementById('next_player_suggestions');
-    if (!dl) return;
-
-    // Clear and rebuild based on preference
-    // Start.gg players are already in the datalist from populateTop8PlayerData —
-    // so for 'startgg' mode we leave whatever is there; for 'local' we clear first
-    if (source === 'local') {
-        dl.innerHTML = '';
-    }
-
     if (source === 'local' || source === 'both') {
         fetch('/getLocalPlayers')
             .then(function(r) { return r.json(); })
@@ -237,19 +279,7 @@ function setTop8PlayerSource(src) {
         var btn = document.getElementById('t8srcBtn' + s.charAt(0).toUpperCase() + s.slice(1));
         if (btn) btn.classList.toggle('active', s === src);
     });
-    // Rebuild datalist immediately
-    var dl = document.getElementById('next_player_suggestions');
-    if (!dl) return;
-    dl.innerHTML = '';
-    if (src === 'startgg' || src === 'both') {
-        playersMap.forEach(function(_, name) {
-            var opt = document.createElement('option');
-            opt.value = name; dl.appendChild(opt);
-        });
-    }
-    if (src === 'local' || src === 'both') {
-        loadLocalPlayersIntoDatalist();
-    }
+    rebuildT8NamePickers();
 }
 
 document.addEventListener('DOMContentLoaded', function() {
@@ -963,19 +993,7 @@ function loadPlayerData(fromCache) {
                 playersMap.set(player.name, player);
             });
 
-            // Populate datalist based on source preference
-            var source = localStorage.getItem('player_source') || 'both';
-            nextPlaySuggestions.innerHTML = '';
-            if (source === 'startgg' || source === 'both') {
-                playersMap.forEach(function(_, name) {
-                    const option = document.createElement('option');
-                    option.value = name;
-                    nextPlaySuggestions.appendChild(option);
-                });
-            }
-            if (source === 'local' || source === 'both') {
-                loadLocalPlayersIntoDatalist();
-            }
+            rebuildT8NamePickers();
         })
         .catch(function (err) {
               console.log('error: ' + err);

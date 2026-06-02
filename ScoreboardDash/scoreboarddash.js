@@ -13,23 +13,62 @@ function setPlayerSource(src) {
         if (btn) btn.classList.toggle('active', s === src);
     });
     // Repopulate datalist from scratch with new preference
-    refreshDatalist();
+    rebuildNamePickers();
 }
 
-function refreshDatalist() {
+function populateNamePickers(names) {
+    // Populate select pickers
+    document.querySelectorAll('select.name-picker').forEach(function(sel) {
+        var existing = new Set(Array.from(sel.options).map(function(o) { return o.value; }).filter(Boolean));
+        names.forEach(function(name) {
+            if (name && !existing.has(name)) {
+                var opt = document.createElement('option');
+                opt.value = name; opt.textContent = name;
+                sel.appendChild(opt);
+            }
+        });
+    });
+    // Also populate datalist for typing autocomplete
     var dl = document.getElementById('next_player_suggestions');
-    if (!dl) return;
-    dl.innerHTML = '';
-    if (_playerSource === 'startgg' || _playerSource === 'both') {
-        // Re-add from playersMap (Start.gg players already fetched)
-        playersMap.forEach(function(_, name) {
-            var opt = document.createElement('option');
-            opt.value = name; dl.appendChild(opt);
+    if (dl) {
+        var existing = new Set(Array.from(dl.options).map(function(o) { return o.value; }));
+        names.forEach(function(name) {
+            if (name && !existing.has(name)) {
+                var opt = document.createElement('option');
+                opt.value = name; dl.appendChild(opt);
+            }
         });
     }
-    if (_playerSource === 'local' || _playerSource === 'both') {
-        loadLocalPlayers();
+}
+
+function rebuildNamePickers() {
+    // Clear and rebuild all pickers and datalist based on current source preference
+    document.querySelectorAll('select.name-picker').forEach(function(sel) {
+        sel.innerHTML = '<option value="">▾</option>';
+    });
+    var dl = document.getElementById('next_player_suggestions');
+    if (dl) dl.innerHTML = '';
+    var names = [];
+    if (_playerSource === 'startgg' || _playerSource === 'both') {
+        playersMap.forEach(function(_, name) { names.push(name); });
     }
+    if (_playerSource === 'local' || _playerSource === 'both') {
+        _localPlayersByName.forEach(function(_, name) { names.push(name); });
+    }
+    names.sort(function(a,b) { return a.toLowerCase().localeCompare(b.toLowerCase()); });
+    // Deduplicate
+    names = names.filter(function(v,i,a) { return a.indexOf(v) === i; });
+    populateNamePickers(names);
+}
+
+function refreshDatalist() { rebuildNamePickers(); }
+
+function pickName(inputId, sel, updateFn) {
+    if (!sel.value) return;
+    var input = document.getElementById(inputId);
+    if (input) { input.value = sel.value; }
+    sel.selectedIndex = 0; // reset picker back to ▾
+    if (updateFn) updateFn();
 }
 
 var _localPlayersMap = new Map();     // id   -> player record
@@ -124,17 +163,7 @@ function loadLocalPlayers() {
             });
             // Write social fields for any players already on screen
             refreshSocialFields();
-            var dl = document.getElementById('next_player_suggestions');
-            if (!dl) return;
-            var existing = new Set(Array.from(dl.options).map(function(o) { return o.value; }));
-            players.forEach(function(p) {
-                var name = typeof p === 'string' ? p : p.name;
-                if (name && !existing.has(name)) {
-                    var opt = document.createElement('option');
-                    opt.value = name;
-                    dl.appendChild(opt);
-                }
-            });
+            populateNamePickers(players.map(function(p) { return typeof p === 'string' ? p : p.name; }));
         })
         .catch(function(e) { console.log('loadLocalPlayers error:', e); });
 }
@@ -731,9 +760,6 @@ function nextRoundUpdate(data) {
 	jsonData.resultplayer1 = data.p1Name;
 	jsonData.resultplayer2 = data.p2Name;
 	jsonData.current_game = data.current_game;
-	if (jsonData.current_game == undefined || jsonData.current_game === "") {
-	    alert("GOT EMPTY CURRENT GAME");
-	}
     jsonData.com1 = data.com1;
     jsonData.com2 = data.com2;
     jsonData.soc1 = data.soc1;

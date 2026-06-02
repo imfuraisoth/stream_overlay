@@ -69,7 +69,7 @@
           <!-- P1 -->
           <div id="current1p" class="player-col p1">
             <div class="player-col-label">Player 1</div>
-            <input class="form_name_1p" type="text" id="form_name_1p" placeholder="P1 Name" onchange="updatePlayer1();">
+            <div class="name-input-wrap"><input class="form_name_1p" type="text" id="form_name_1p" placeholder="P1 Name" list="next_player_suggestions" onchange="updatePlayer1();"><select class="name-picker" id="pick_name_1p" onchange="pickName('form_name_1p',this,updatePlayer1)"><option value="">▾</option></select></div>
             <input class="form_team_1p" type="text" id="form_team_1p" placeholder="P1 Team" onchange="updateTeam1();">
             <select id="dropdown_country_current_1" onchange="countryDropdown('dropdown_country_current_1');">
               <option>US</option><option>CA</option><option>JP</option><option>KR</option>
@@ -104,7 +104,7 @@
           <!-- P2 -->
           <div id="current2p" class="player-col p2">
             <div class="player-col-label">Player 2</div>
-            <input class="form_name_2p" type="text" id="form_name_2p" placeholder="P2 Name" onchange="updatePlayer2();">
+            <div class="name-input-wrap"><input class="form_name_2p" type="text" id="form_name_2p" placeholder="P2 Name" list="next_player_suggestions" onchange="updatePlayer2();"><select class="name-picker" id="pick_name_2p" onchange="pickName('form_name_2p',this,updatePlayer2)"><option value="">▾</option></select></div>
             <input class="form_team_2p" type="text" id="form_team_2p" placeholder="P2 Team" onchange="updateTeam2();">
             <select id="dropdown_country_current_2" onchange="countryDropdown('dropdown_country_current_2');">
               <option>US</option><option>CA</option><option>JP</option><option>KR</option>
@@ -125,13 +125,13 @@
               <div id="next1p" class="next-player-col p1">
                 <div class="next-player-label">P1</div>
                 <select id="dropdown_country_next1" onchange="countryDropdown('dropdown_country_next1');"><option>US</option><option>CA</option><option>JP</option><option>KR</option><option>MX</option><option>GB</option><option>ES</option><option>FR</option><option>FI</option><option>SE</option><option>PR</option></select>
-                <input type="text" id="form_next_round_name_1p" placeholder="Next P1 Name" value="" onchange="updateNextPlayer1();">
+                <div class="name-input-wrap"><input type="text" id="form_next_round_name_1p" placeholder="Next P1 Name" value="" list="next_player_suggestions" onchange="updateNextPlayer1();"><select class="name-picker" id="pick_next_name_1p" onchange="pickName('form_next_round_name_1p',this,updateNextPlayer1)"><option value="">▾</option></select></div>
                 <input type="text" id="form_next_round_team_1p" placeholder="Next P1 Team" value="" onchange="updateNextTeam1();">
               </div>
               <div id="next2p" class="next-player-col p2">
                 <div class="next-player-label">P2</div>
                 <select id="dropdown_country_next2" onchange="countryDropdown('dropdown_country_next2');"><option>US</option><option>CA</option><option>JP</option><option>KR</option><option>MX</option><option>GB</option><option>ES</option><option>FR</option><option>FI</option><option>SE</option><option>PR</option></select>
-                <input type="text" id="form_next_round_name_2p" placeholder="Next P2 Name" value="" onchange="updateNextPlayer2();">
+                <div class="name-input-wrap"><input type="text" id="form_next_round_name_2p" placeholder="Next P2 Name" value="" list="next_player_suggestions" onchange="updateNextPlayer2();"><select class="name-picker" id="pick_next_name_2p" onchange="pickName('form_next_round_name_2p',this,updateNextPlayer2)"><option value="">▾</option></select></div>
                 <input type="text" id="form_next_round_team_2p" placeholder="Next P2 Team" value="" onchange="updateNextTeam2();">
               </div>
             </div>
@@ -141,8 +141,7 @@
       </div>
     </div>
 
-    <datalist id="next_player_suggestions"></datalist>
-
+    
     <!-- ═══ WINNERS BRACKET ═══ -->
     <div class="section-panel">
       <div class="section-header">Winners Bracket</div>
@@ -158,14 +157,14 @@
             <div class="bracket-player">
               <span class="bracket-player-label">P1</span>
               <select id="dropdown_country_w1" onchange="countryDropdown('dropdown_country_w1','r1','p1');"><option>US</option><option>CA</option><option>JP</option><option>KR</option><option>MX</option><option>GB</option><option>ES</option><option>FR</option><option>FI</option><option>SE</option><option>PR</option></select>
-              <input id="form_name_w1" type="text" placeholder="Name" value="" list="next_player_suggestions" onchange="updateTop8PlayerInfo('r1','p1','name',value,'w1');">
+              <div class="name-input-wrap"><input id="form_name_w1" type="text" placeholder="Name" value="" list="next_player_suggestions" onchange="updateTop8PlayerInfo('r1','p1','name',value,'w1');"><select class="name-picker" id="pick_form_name_w1" onchange="pickBracketName('form_name_w1',this)"><option value="">▾</option></select></div>
               <input type="hidden" id="form_team_w1" value="">
               <input class="score-field" id="form_score_w1" type="text" value="" onchange="updateTop8PlayerInfo('r1','p1','score',value);">
             </div>
             <div class="bracket-player" style="margin-top:5px;">
               <span class="bracket-player-label">P2</span>
               <select id="dropdown_country_w2" onchange="countryDropdown('dropdown_country_w2','r1','p2');"><option>US</option><option>CA</option><option>JP</option><option>KR</option><option>MX</option><option>GB</option><option>ES</option><option>FR</option><option>FI</option><option>SE</option><option>PR</option></select>
-              <input id="form_name_w2" type="text" placeholder="Name" value="" list="next_player_suggestions" onchange="updateTop8PlayerInfo('r1','p2','name',value,'w2');">
+              <div class="name-input-wrap"><input id="form_name_w2" type="text" placeholder="Name" value="" list="next_player_suggestions" onchange="updateTop8PlayerInfo('r1','p2','name',value,'w2');"><select class="name-picker" id="pick_form_name_w2" onchange="pickBracketName('form_name_w2',this)"><option value="">▾</option></select></div>
               <input type="hidden" id="form_team_w2" value="">
               <input class="score-field" id="form_score_w2" type="text" value="" onchange="updateTop8PlayerInfo('r1','p2','score',value);">
             </div>
@@ -182,14 +181,14 @@
             <div class="bracket-player">
               <span class="bracket-player-label">P1</span>
               <select id="dropdown_country_w3" onchange="countryDropdown('dropdown_country_w3','r2','p1');"><option>US</option><option>CA</option><option>JP</option><option>KR</option><option>MX</option><option>GB</option><option>ES</option><option>FR</option><option>FI</option><option>SE</option><option>PR</option></select>
-              <input id="form_name_w3" type="text" placeholder="Name" value="" list="next_player_suggestions" onchange="updateTop8PlayerInfo('r2','p1','name',value,'w3');">
+              <div class="name-input-wrap"><input id="form_name_w3" type="text" placeholder="Name" value="" list="next_player_suggestions" onchange="updateTop8PlayerInfo('r2','p1','name',value,'w3');"><select class="name-picker" id="pick_form_name_w3" onchange="pickBracketName('form_name_w3',this)"><option value="">▾</option></select></div>
               <input type="hidden" id="form_team_w3" value="">
               <input class="score-field" id="form_score_w3" type="text" value="" onchange="updateTop8PlayerInfo('r2','p1','score',value);">
             </div>
             <div class="bracket-player" style="margin-top:5px;">
               <span class="bracket-player-label">P2</span>
               <select id="dropdown_country_w4" onchange="countryDropdown('dropdown_country_w4','r2','p2');"><option>US</option><option>CA</option><option>JP</option><option>KR</option><option>MX</option><option>GB</option><option>ES</option><option>FR</option><option>FI</option><option>SE</option><option>PR</option></select>
-              <input id="form_name_w4" type="text" placeholder="Name" value="" list="next_player_suggestions" onchange="updateTop8PlayerInfo('r2','p2','name',value,'w4');">
+              <div class="name-input-wrap"><input id="form_name_w4" type="text" placeholder="Name" value="" list="next_player_suggestions" onchange="updateTop8PlayerInfo('r2','p2','name',value,'w4');"><select class="name-picker" id="pick_form_name_w4" onchange="pickBracketName('form_name_w4',this)"><option value="">▾</option></select></div>
               <input type="hidden" id="form_team_w4" value="">
               <input class="score-field" id="form_score_w4" type="text" value="" onchange="updateTop8PlayerInfo('r2','p2','score',value);">
             </div>
@@ -208,13 +207,13 @@
             </div>
             <div class="bracket-player">
               <span class="bracket-player-label">P1</span>
-              <input id="form_name_w1_wf" type="text" placeholder="Name" value="" style="flex:1;" onchange="updateTop8PlayerInfo('r5','p1','name',value);">
+              <div class="name-input-wrap"><input id="form_name_w1_wf" type="text" placeholder="Name" value="" list="next_player_suggestions" style="flex:1;" onchange="updateTop8PlayerInfo('r5','p1','name',value);"><select class="name-picker" id="pick_form_name_w1_wf" onchange="pickBracketName('form_name_w1_wf',this)"><option value="">▾</option></select></div>
               <input type="hidden" id="form_team_w1_wf" value="">
               <input class="score-field" id="form_score_w1_wf" type="text" value="" onchange="updateTop8PlayerInfo('r5','p1','score',value);">
             </div>
             <div class="bracket-player" style="margin-top:5px;">
               <span class="bracket-player-label">P2</span>
-              <input id="form_name_w2_wf" type="text" placeholder="Name" value="" style="flex:1;" onchange="updateTop8PlayerInfo('r5','p2','name',value);">
+              <div class="name-input-wrap"><input id="form_name_w2_wf" type="text" placeholder="Name" value="" list="next_player_suggestions" style="flex:1;" onchange="updateTop8PlayerInfo('r5','p2','name',value);"><select class="name-picker" id="pick_form_name_w2_wf" onchange="pickBracketName('form_name_w2_wf',this)"><option value="">▾</option></select></div>
               <input type="hidden" id="form_team_w2_wf" value="">
               <input class="score-field" id="form_score_w2_wf" type="text" value="" onchange="updateTop8PlayerInfo('r5','p2','score',value);">
             </div>
@@ -232,14 +231,14 @@
             </div>
             <div class="bracket-player">
               <span class="bracket-player-label">P1</span>
-              <input id="form_name_w1_gf" type="text" placeholder="Name" value="" style="flex:1;" onchange="updateTop8PlayerInfo('r10','p1','name',value);">
+              <div class="name-input-wrap"><input id="form_name_w1_gf" type="text" placeholder="Name" value="" list="next_player_suggestions" style="flex:1;" onchange="updateTop8PlayerInfo('r10','p1','name',value);"><select class="name-picker" id="pick_form_name_w1_gf" onchange="pickBracketName('form_name_w1_gf',this)"><option value="">▾</option></select></div>
               <input type="hidden" id="form_team_w1_gf" value="">
               <input class="score-field" id="form_score_w1_gf" type="text" value="" onchange="updateTop8PlayerInfo('r10','p1','score',value);">
               <input class="score-field score-field-reset" id="form_score_w1_gf2" type="text" value="" onchange="updateTop8PlayerInfo('r10','p1','score2',value);" title="Reset game score">
             </div>
             <div class="bracket-player" style="margin-top:5px;">
               <span class="bracket-player-label">P2</span>
-              <input id="form_name_w2_gf" type="text" placeholder="Name" value="" style="flex:1;" onchange="updateTop8PlayerInfo('r10','p2','name',value);">
+              <div class="name-input-wrap"><input id="form_name_w2_gf" type="text" placeholder="Name" value="" list="next_player_suggestions" style="flex:1;" onchange="updateTop8PlayerInfo('r10','p2','name',value);"><select class="name-picker" id="pick_form_name_w2_gf" onchange="pickBracketName('form_name_w2_gf',this)"><option value="">▾</option></select></div>
               <input type="hidden" id="form_team_w2_gf" value="">
               <input class="score-field" id="form_score_w2_gf" type="text" value="" onchange="updateTop8PlayerInfo('r10','p2','score',value);">
               <input class="score-field score-field-reset" id="form_score_w2_gf2" type="text" value="" onchange="updateTop8PlayerInfo('r10','p2','score2',value);" title="Reset game score">
@@ -269,14 +268,14 @@
               <div class="bracket-player">
                 <span class="bracket-player-label">P1</span>
                 <select id="dropdown_country_l1" onchange="countryDropdown('dropdown_country_l1','r3','p1');"><option>US</option><option>CA</option><option>JP</option><option>KR</option><option>MX</option><option>GB</option><option>ES</option><option>FR</option><option>FI</option><option>SE</option><option>PR</option></select>
-                <input id="form_name_l1" type="text" placeholder="Name" value="" list="next_player_suggestions" onchange="updateTop8PlayerInfo('r3','p1','name',value,'l1');">
+                <div class="name-input-wrap"><input id="form_name_l1" type="text" placeholder="Name" value="" list="next_player_suggestions" onchange="updateTop8PlayerInfo('r3','p1','name',value,'l1');"><select class="name-picker" id="pick_form_name_l1" onchange="pickBracketName('form_name_l1',this)"><option value="">▾</option></select></div>
                 <input type="hidden" id="form_team_l1" value="">
                 <input class="score-field" id="form_score_l1" type="text" value="" onchange="updateTop8PlayerInfo('r3','p1','score',value);">
               </div>
               <div class="bracket-player" style="margin-top:5px;">
                 <span class="bracket-player-label">P2</span>
                 <select id="dropdown_country_l2" onchange="countryDropdown('dropdown_country_l2','r3','p2');"><option>US</option><option>CA</option><option>JP</option><option>KR</option><option>MX</option><option>GB</option><option>ES</option><option>FR</option><option>FI</option><option>SE</option><option>PR</option></select>
-                <input id="form_name_l2" type="text" placeholder="Name" value="" list="next_player_suggestions" onchange="updateTop8PlayerInfo('r3','p2','name',value,'l2');">
+                <div class="name-input-wrap"><input id="form_name_l2" type="text" placeholder="Name" value="" list="next_player_suggestions" onchange="updateTop8PlayerInfo('r3','p2','name',value,'l2');"><select class="name-picker" id="pick_form_name_l2" onchange="pickBracketName('form_name_l2',this)"><option value="">▾</option></select></div>
                 <input type="hidden" id="form_team_l2" value="">
                 <input class="score-field" id="form_score_l2" type="text" value="" onchange="updateTop8PlayerInfo('r3','p2','score',value);">
               </div>
@@ -289,13 +288,13 @@
               </div>
               <div class="bracket-player">
                 <span class="bracket-player-label">P1</span>
-                <input id="form_name_l1_lq" type="text" placeholder="Name" value="" style="flex:1;" onchange="updateTop8PlayerInfo('r6','p1','name',value);">
+                <div class="name-input-wrap"><input id="form_name_l1_lq" type="text" placeholder="Name" value="" list="next_player_suggestions" style="flex:1;" onchange="updateTop8PlayerInfo('r6','p1','name',value);"><select class="name-picker" id="pick_form_name_l1_lq" onchange="pickBracketName('form_name_l1_lq',this)"><option value="">▾</option></select></div>
                 <input type="hidden" id="form_team_l1_lq" value="">
                 <input class="score-field" id="form_score_l1_lq" type="text" value="" onchange="updateTop8PlayerInfo('r6','p1','score',value);">
               </div>
               <div class="bracket-player" style="margin-top:5px;">
                 <span class="bracket-player-label">P2</span>
-                <input id="form_name_l2_lq" type="text" placeholder="Name" value="" style="flex:1;" onchange="updateTop8PlayerInfo('r6','p2','name',value);">
+                <div class="name-input-wrap"><input id="form_name_l2_lq" type="text" placeholder="Name" value="" list="next_player_suggestions" style="flex:1;" onchange="updateTop8PlayerInfo('r6','p2','name',value);"><select class="name-picker" id="pick_form_name_l2_lq" onchange="pickBracketName('form_name_l2_lq',this)"><option value="">▾</option></select></div>
                 <input type="hidden" id="form_team_l2_lq" value="">
                 <input class="score-field" id="form_score_l2_lq" type="text" value="" onchange="updateTop8PlayerInfo('r6','p2','score',value);">
               </div>
@@ -314,14 +313,14 @@
               <div class="bracket-player">
                 <span class="bracket-player-label">P1</span>
                 <select id="dropdown_country_l3" onchange="countryDropdown('dropdown_country_l3','r4','p1');"><option>US</option><option>CA</option><option>JP</option><option>KR</option><option>MX</option><option>GB</option><option>ES</option><option>FR</option><option>FI</option><option>SE</option><option>PR</option></select>
-                <input id="form_name_l3" type="text" placeholder="Name" value="" list="next_player_suggestions" onchange="updateTop8PlayerInfo('r4','p1','name',value,'l3');">
+                <div class="name-input-wrap"><input id="form_name_l3" type="text" placeholder="Name" value="" list="next_player_suggestions" onchange="updateTop8PlayerInfo('r4','p1','name',value,'l3');"><select class="name-picker" id="pick_form_name_l3" onchange="pickBracketName('form_name_l3',this)"><option value="">▾</option></select></div>
                 <input type="hidden" id="form_team_l3" value="">
                 <input class="score-field" id="form_score_l3" type="text" value="" onchange="updateTop8PlayerInfo('r4','p1','score',value);">
               </div>
               <div class="bracket-player" style="margin-top:5px;">
                 <span class="bracket-player-label">P2</span>
                 <select id="dropdown_country_l4" onchange="countryDropdown('dropdown_country_l4','r4','p2');"><option>US</option><option>CA</option><option>JP</option><option>KR</option><option>MX</option><option>GB</option><option>ES</option><option>FR</option><option>FI</option><option>SE</option><option>PR</option></select>
-                <input id="form_name_l4" type="text" placeholder="Name" value="" list="next_player_suggestions" onchange="updateTop8PlayerInfo('r4','p2','name',value,'l4');">
+                <div class="name-input-wrap"><input id="form_name_l4" type="text" placeholder="Name" value="" list="next_player_suggestions" onchange="updateTop8PlayerInfo('r4','p2','name',value,'l4');"><select class="name-picker" id="pick_form_name_l4" onchange="pickBracketName('form_name_l4',this)"><option value="">▾</option></select></div>
                 <input type="hidden" id="form_team_l4" value="">
                 <input class="score-field" id="form_score_l4" type="text" value="" onchange="updateTop8PlayerInfo('r4','p2','score',value);">
               </div>
@@ -334,13 +333,13 @@
               </div>
               <div class="bracket-player">
                 <span class="bracket-player-label">P1</span>
-                <input id="form_name_l3_lq" type="text" placeholder="Name" value="" style="flex:1;" onchange="updateTop8PlayerInfo('r7','p1','name',value);">
+                <div class="name-input-wrap"><input id="form_name_l3_lq" type="text" placeholder="Name" value="" list="next_player_suggestions" style="flex:1;" onchange="updateTop8PlayerInfo('r7','p1','name',value);"><select class="name-picker" id="pick_form_name_l3_lq" onchange="pickBracketName('form_name_l3_lq',this)"><option value="">▾</option></select></div>
                 <input type="hidden" id="form_team_l3_lq" value="">
                 <input class="score-field" id="form_score_l3_lq" type="text" value="" onchange="updateTop8PlayerInfo('r7','p1','score',value);">
               </div>
               <div class="bracket-player" style="margin-top:5px;">
                 <span class="bracket-player-label">P2</span>
-                <input id="form_name_l4_lq" type="text" placeholder="Name" value="" style="flex:1;" onchange="updateTop8PlayerInfo('r7','p2','name',value);">
+                <div class="name-input-wrap"><input id="form_name_l4_lq" type="text" placeholder="Name" value="" list="next_player_suggestions" style="flex:1;" onchange="updateTop8PlayerInfo('r7','p2','name',value);"><select class="name-picker" id="pick_form_name_l4_lq" onchange="pickBracketName('form_name_l4_lq',this)"><option value="">▾</option></select></div>
                 <input type="hidden" id="form_team_l4_lq" value="">
                 <input class="score-field" id="form_score_l4_lq" type="text" value="" onchange="updateTop8PlayerInfo('r7','p2','score',value);">
               </div>
@@ -361,13 +360,13 @@
             </div>
             <div class="bracket-player">
               <span class="bracket-player-label">P1</span>
-              <input id="form_name_l1_ls" type="text" placeholder="Name" value="" style="flex:1;" onchange="updateTop8PlayerInfo('r8','p1','name',value);">
+              <div class="name-input-wrap"><input id="form_name_l1_ls" type="text" placeholder="Name" value="" list="next_player_suggestions" style="flex:1;" onchange="updateTop8PlayerInfo('r8','p1','name',value);"><select class="name-picker" id="pick_form_name_l1_ls" onchange="pickBracketName('form_name_l1_ls',this)"><option value="">▾</option></select></div>
               <input type="hidden" id="form_team_l1_ls" value="">
               <input class="score-field" id="form_score_l1_ls" type="text" value="" onchange="updateTop8PlayerInfo('r8','p1','score',value);">
             </div>
             <div class="bracket-player" style="margin-top:5px;">
               <span class="bracket-player-label">P2</span>
-              <input id="form_name_l2_ls" type="text" placeholder="Name" value="" style="flex:1;" onchange="updateTop8PlayerInfo('r8','p2','name',value);">
+              <div class="name-input-wrap"><input id="form_name_l2_ls" type="text" placeholder="Name" value="" list="next_player_suggestions" style="flex:1;" onchange="updateTop8PlayerInfo('r8','p2','name',value);"><select class="name-picker" id="pick_form_name_l2_ls" onchange="pickBracketName('form_name_l2_ls',this)"><option value="">▾</option></select></div>
               <input type="hidden" id="form_team_l2_ls" value="">
               <input class="score-field" id="form_score_l2_ls" type="text" value="" onchange="updateTop8PlayerInfo('r8','p2','score',value);">
             </div>
@@ -386,13 +385,13 @@
             </div>
             <div class="bracket-player">
               <span class="bracket-player-label">P1</span>
-              <input id="form_name_l1_lf" type="text" placeholder="Name" value="" style="flex:1;" onchange="updateTop8PlayerInfo('r9','p1','name',value);">
+              <div class="name-input-wrap"><input id="form_name_l1_lf" type="text" placeholder="Name" value="" list="next_player_suggestions" style="flex:1;" onchange="updateTop8PlayerInfo('r9','p1','name',value);"><select class="name-picker" id="pick_form_name_l1_lf" onchange="pickBracketName('form_name_l1_lf',this)"><option value="">▾</option></select></div>
               <input type="hidden" id="form_team_l1_lf" value="">
               <input class="score-field" id="form_score_l1_lf" type="text" value="" onchange="updateTop8PlayerInfo('r9','p1','score',value);">
             </div>
             <div class="bracket-player" style="margin-top:5px;">
               <span class="bracket-player-label">P2</span>
-              <input id="form_name_l2_lf" type="text" placeholder="Name" value="" style="flex:1;" onchange="updateTop8PlayerInfo('r9','p2','name',value);">
+              <div class="name-input-wrap"><input id="form_name_l2_lf" type="text" placeholder="Name" value="" list="next_player_suggestions" style="flex:1;" onchange="updateTop8PlayerInfo('r9','p2','name',value);"><select class="name-picker" id="pick_form_name_l2_lf" onchange="pickBracketName('form_name_l2_lf',this)"><option value="">▾</option></select></div>
               <input type="hidden" id="form_team_l2_lf" value="">
               <input class="score-field" id="form_score_l2_lf" type="text" value="" onchange="updateTop8PlayerInfo('r9','p2','score',value);">
             </div>
@@ -405,5 +404,6 @@
 
 
   </div><!-- /page-content -->
+  <datalist id="next_player_suggestions"></datalist>
 </body>
 </html>

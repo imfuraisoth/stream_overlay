@@ -1,3 +1,37 @@
+// ── NAME PICKERS ──────────────────────────────────────────────────
+function populateComPickers(names) {
+    // Populate select pickers
+    document.querySelectorAll('select.name-picker').forEach(function(sel) {
+        var existing = new Set(Array.from(sel.options).map(function(o) { return o.value; }).filter(Boolean));
+        names.forEach(function(name) {
+            if (name && !existing.has(name)) {
+                var opt = document.createElement('option');
+                opt.value = name; opt.textContent = name;
+                sel.appendChild(opt);
+            }
+        });
+    });
+    // Also populate datalist for typing autocomplete
+    var dl = document.getElementById('com_name_suggestions');
+    if (dl) {
+        var existing = new Set(Array.from(dl.options).map(function(o) { return o.value; }));
+        names.forEach(function(name) {
+            if (name && !existing.has(name)) {
+                var opt = document.createElement('option');
+                opt.value = name; dl.appendChild(opt);
+            }
+        });
+    }
+}
+
+function pickName(inputId, sel, updateFn) {
+    if (!sel.value) return;
+    var input = document.getElementById(inputId);
+    if (input) input.value = sel.value;
+    sel.selectedIndex = 0;
+    if (updateFn) updateFn();
+}
+
 // ── LOCAL PLAYER DB ───────────────────────────────────────────────
 var _localPlayersMap = new Map();
 var jsonData = {};
@@ -13,15 +47,7 @@ function loadLocalPlayers() {
         .then(function(players) {
             if (!players || !players.length) return;
             players.forEach(function(p) { if (p && p.name) _localPlayersMap.set(p.name, p); });
-            var dl = document.getElementById('com_name_suggestions');
-            if (!dl) return;
-            var existing = new Set(Array.from(dl.options).map(function(o) { return o.value; }));
-            players.forEach(function(p) {
-                var n = p.name;
-                if (n && !existing.has(n)) {
-                    var opt = document.createElement('option'); opt.value = n; dl.appendChild(opt);
-                }
-            });
+            populateComPickers(players.map(function(p) { return p.name; }));
         })
         .catch(function(e) { console.log('loadLocalPlayers error:', e); });
 }
@@ -85,14 +111,7 @@ function saveCommentatorToDb(name, social_handle, social_platform) {
         existing.name = name.trim();
         if (social_handle) existing.social_handle = social_handle;
         _localPlayersMap.set(name.trim(), existing);
-        // Add to datalist if new
-        var dl = document.getElementById('com_name_suggestions');
-        if (dl) {
-            var existing_names = new Set(Array.from(dl.options).map(function(o) { return o.value; }));
-            if (!existing_names.has(name.trim())) {
-                var opt = document.createElement('option'); opt.value = name.trim(); dl.appendChild(opt);
-            }
-        }
+        populateComPickers([name.trim()]);
     }).catch(function(e) { console.log('saveCommentatorToDb error:', e); });
 }
 

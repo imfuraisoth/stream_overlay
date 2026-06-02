@@ -35,6 +35,7 @@
   </div>
   <div class="toolbar-right">
     <span class="player-count" id="playerCount"></span>
+    <button class="btn sec sm" onclick="cleanupDuplicates()">🧹 Clean Duplicates</button>
     <button class="btn sec sm" onclick="loadPlayers()">↺ Refresh</button>
   </div>
 </div>
@@ -127,6 +128,20 @@ function populateCountrySelect(sel, selected) {
 populateCountrySelect(document.getElementById('mCountry'), '');
 
 // ── LOAD ──────────────────────────────────────────────────────────
+async function cleanupDuplicates() {
+  if (!confirm('Remove all entries without a proper player ID? This will clean up any duplicate name-keyed entries.')) return;
+  try {
+    const res = await fetch('/cleanupLocalPlayers', { method: 'POST' });
+    const data = await res.json();
+    if (data.removed === 0) {
+      alert('No duplicates found — database is clean.');
+    } else {
+      alert(`Removed ${data.removed} duplicate entr${data.removed === 1 ? 'y' : 'ies'}: ${data.keys.join(', ')}`);
+    }
+    await loadPlayers();
+  } catch(e) { console.error('Cleanup error:', e); }
+}
+
 async function loadPlayers() {
   try {
     const res = await fetch('/getLocalPlayers');

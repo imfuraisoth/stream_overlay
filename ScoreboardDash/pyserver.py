@@ -277,9 +277,27 @@ def delete_local_player():
     return "200"
 
 
+
+@api.route('/cleanupLocalPlayers', methods=['POST'])
+def cleanup_local_players():
+    """Remove any entries not keyed by p_XXXXXX (leftovers from old name-keyed format)."""
+    try:
+        players = FileUtils.read_file(local_players_file)
+        bad_keys = [k for k in players if not k.startswith('p_')]
+        if not bad_keys:
+            return json.dumps({"removed": 0}), 200
+        for k in bad_keys:
+            del players[k]
+        FileUtils.write_file(local_players_file, players)
+        print(f"[cleanup] Removed {len(bad_keys)} non-ID-keyed entries: {bad_keys}")
+        return json.dumps({"removed": len(bad_keys), "keys": bad_keys}), 200
+    except Exception as e:
+        print(f"cleanupLocalPlayers error: {e}")
+        return "500", 500
+
+
 @api.route('/getCommentators', methods=['GET'])
 def get_commentators():
-    # Proxy to player DB — return in original {name: {name, soc}} format for backwards compat
     players = _read_local_players()
     result = {p["name"]: {"name": p["name"], "soc": p.get("social_handle", "")}
               for p in players.values()}
@@ -293,11 +311,13 @@ def add_commentator():
     if not name:
         return "400", 400
     players = _read_local_players()
-    existing = players.get(name, {"name": name, "team": "", "country": "", "social_handle": "", "social_platform": ""})
+    pid, existing = _find_player_by_name(players, name)
+    if pid is None:
+        pid = _next_player_id(players)
+        existing = {"id": pid, "name": name, "team": "", "country": "", "social_handle": "", "social_platform": ""}
     if data.get("soc"):
         existing["social_handle"] = data["soc"]
-    existing["name"] = name
-    players[name] = existing
+    players[pid] = existing
     FileUtils.write_file(local_players_file, players)
     return "200"
 
@@ -307,8 +327,9 @@ def delete_commentator():
     names = request.get_json() or []
     players = _read_local_players()
     for name in names:
-        if name in players:
-            del players[name]
+        pid, _ = _find_player_by_name(players, name)
+        if pid:
+            del players[pid]
     FileUtils.write_file(local_players_file, players)
     return "200"
 
@@ -958,37 +979,7 @@ def get_server_info():
     return ip, port_num, info
 
 
-def _migrate_commentators_to_players():
-    """One-time migration: import commentators.json entries into local_players.json."""
-    try:
-        commentators = FileUtils.read_file(commentators_file)
-        if not commentators:
-            return
-        players = _read_local_players()
-        changed = False
-        for key, c in commentators.items():
-            name = c.get("name", key).strip()
-            if not name:
-                continue
-            if name not in players:
-                players[name] = {
-                    "name": name,
-                    "team": "",
-                    "country": "",
-                    "social_handle": c.get("soc", ""),
-                    "social_platform": ""
-                }
-                changed = True
-                print(f"[migration] Imported commentator: {name}")
-        if changed:
-            FileUtils.write_file(local_players_file, players)
-            print("[migration] commentators.json merged into local_players.json")
-    except Exception as e:
-        print(f"[migration] commentator migration error: {e}")
-
-
 if __name__ == "__main__":
-    _migrate_commentators_to_players()
     try:
         print("Now we talk'n, server started ...")
         parser = argparse.ArgumentParser(description = 'Scoreboard server')

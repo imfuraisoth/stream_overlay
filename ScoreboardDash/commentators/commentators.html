@@ -45,7 +45,7 @@
         <div id="com_primary" class="com-fields">
           <div class="field-group">
             <label>Name</label>
-            <input class="form_name_1" type="text" id="form_name_1" placeholder="Name" list="com_name_suggestions" onchange="updateCom1();">
+            <div class="name-input-wrap"><input class="form_name_1" type="text" id="form_name_1" placeholder="Name" list="com_name_suggestions" onchange="updateCom1();"><select class="name-picker" id="pick_com_1" onchange="pickName('form_name_1',this,updateCom1)"><option value="">▾</option></select></div>
           </div>
           <div class="field-group">
             <label>Social</label>
@@ -70,7 +70,7 @@
         <div id="com_secondary" class="com-fields">
           <div class="field-group">
             <label>Name</label>
-            <input class="form_name_2" type="text" id="form_name_2" placeholder="Name" list="com_name_suggestions" onchange="updateCom2();">
+            <div class="name-input-wrap"><input class="form_name_2" type="text" id="form_name_2" placeholder="Name" list="com_name_suggestions" onchange="updateCom2();"><select class="name-picker" id="pick_com_2" onchange="pickName('form_name_2',this,updateCom2)"><option value="">▾</option></select></div>
           </div>
           <div class="field-group">
             <label>Social</label>
@@ -95,6 +95,6 @@
 
   </div>
 
-  <datalist id="com_name_suggestions"></datalist>
+    <datalist id="com_name_suggestions"></datalist>
 </body>
 </html>
