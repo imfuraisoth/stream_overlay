@@ -235,8 +235,8 @@ function openAddModal() {
   document.getElementById('mName').focus();
 }
 
-function openEditModal(name) {
-  const p = _players.find(function(x) { return x.name === name; });
+function openEditModal(id) {
+  const p = _players.find(function(x) { return (x.id || x.name) === id; });
   if (!p) return;
   _editingOrigName = p.id || p.name;
   document.getElementById('modalTitle').textContent = 'Edit Player';
