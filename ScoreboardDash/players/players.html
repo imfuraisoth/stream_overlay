@@ -77,13 +77,18 @@
         <div class="social-row">
           <select id="mSocialPlatform">
             <option value="">— Platform —</option>
-            <option value="twitter">𝕏 Twitter</option>
-            <option value="bluesky">🦋 Bluesky</option>
-            <option value="instagram">📷 Instagram</option>
-            <option value="facebook">👤 Facebook</option>
+            <option value="twitter">Twitter</option>
+            <option value="bluesky">Bluesky</option>
+            <option value="instagram">Instagram</option>
+            <option value="facebook">Facebook</option>
+            <option value="twitch">Twitch</option>
           </select>
           <input type="text" id="mSocialHandle" placeholder="@handle" style="flex:1;">
         </div>
+      </div>
+      <div class="field-group" style="flex-direction:row;align-items:center;gap:8px;">
+        <input type="checkbox" id="mIsCommentator" style="width:14px;height:14px;accent-color:var(--accent);flex-shrink:0;">
+        <label for="mIsCommentator" style="font-family:var(--font-d);font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--fg2);cursor:pointer;">Commentator</label>
       </div>
     </div>
     <div class="modal-footer">
@@ -184,6 +189,7 @@ function renderTable() {
       <th onclick="sortBy('team')" class="sortable">Team <span class="sort-icon">⇅</span></th>
       <th onclick="sortBy('country')" class="sortable">Country <span class="sort-icon">⇅</span></th>
       <th onclick="sortBy('social_handle')" class="sortable">Social <span class="sort-icon">⇅</span></th>
+      <th class="col-com">Com</th>
       <th class="col-actions">Actions</th>
     </tr></thead><tbody>`;
 
@@ -199,6 +205,7 @@ function renderTable() {
       <td class="col-socials">${p.social_handle
         ? `<span class="platform-badge platform-${escHtml(p.social_platform||'')}">${platformIcon(p.social_platform)}${escHtml(p.social_handle)}</span>`
         : '<span class="cell-empty">—</span>'}</td>
+      <td class="col-com">${p.is_commentator ? '<span style="color:var(--accent);">✓</span>' : ''}</td>
       <td class="col-actions">
         <button class="action-btn edit-btn" onclick="openEditModal('${escAttr(p.id || p.name)}')">✎ Edit</button>
         <button class="action-btn del-btn"  onclick="openDeleteModal('${escAttr(p.id || p.name)}', '${escAttr(p.name)}')">✕</button>
@@ -228,6 +235,7 @@ function openAddModal() {
   document.getElementById('modalTitle').textContent = 'Add Player';
   document.getElementById('mName').value    = '';
   document.getElementById('mTeam').value    = '';
+  document.getElementById('mIsCommentator').checked = false;
   document.getElementById('mSocialHandle').value = '';
   document.getElementById('mSocialPlatform').value = '';
   populateCountrySelect(document.getElementById('mCountry'), '');
@@ -243,6 +251,7 @@ function openEditModal(id) {
   document.getElementById('mName').value    = p.name    || '';
   document.getElementById('mTeam').value    = p.team    || '';
   populateCountrySelect(document.getElementById('mCountry'), p.country || '');
+  document.getElementById('mIsCommentator').checked = p.is_commentator || false;
   document.getElementById('mSocialHandle').value   = p.social_handle   || '';
   document.getElementById('mSocialPlatform').value = p.social_platform || '';
   document.getElementById('modal').classList.add('open');
@@ -256,14 +265,15 @@ async function saveModal() {
   const name    = document.getElementById('mName').value.trim();
   const team    = document.getElementById('mTeam').value.trim();
   const country = document.getElementById('mCountry').value;
-  const social_handle   = document.getElementById('mSocialHandle').value.trim();
+  const social_handle     = document.getElementById('mSocialHandle').value.trim();
+  const is_commentator    = document.getElementById('mIsCommentator').checked;
   const social_platform = document.getElementById('mSocialPlatform').value;
   if (!name) { document.getElementById('mName').focus(); return; }
 
   const endpoint = _editingOrigName ? '/updateLocalPlayer' : '/saveLocalPlayer';
   const body = _editingOrigName
-    ? { id: _editingOrigName, name, team, country, social_handle, social_platform }
-    : { name, team, country, social_handle, social_platform };
+    ? { id: _editingOrigName, name, team, country, social_handle, social_platform, is_commentator }
+    : { name, team, country, social_handle, social_platform, is_commentator };
 
   try {
     await fetch(endpoint, {
@@ -302,8 +312,18 @@ async function confirmDelete() {
 }
 
 // ── UTILS ─────────────────────────────────────────────────────────
-const PLATFORM_ICONS = { twitter: '𝕏 ', bluesky: '🦋 ', instagram: '📷 ', facebook: '👤 ' };
-function platformIcon(p) { return PLATFORM_ICONS[p] || ''; }
+const PLATFORM_ICONS = {
+    twitter:   '../resources/twitter.png',
+    bluesky:   '../resources/bsky.png',
+    instagram: '../resources/instagram.png',
+    facebook:  '../resources/facebook.png',
+    twitch:    '../resources/twitch.png',
+};
+function platformIcon(p) {
+    return PLATFORM_ICONS[p]
+        ? '<img src="' + PLATFORM_ICONS[p] + '" style="width:16px;height:16px;vertical-align:middle;margin-right:4px;object-fit:contain;">'
+        : '';
+}
 
 function escHtml(s) {
   return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');

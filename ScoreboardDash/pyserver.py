@@ -160,7 +160,7 @@ def _read_local_players():
                 migrated = {}
                 for i, n in enumerate(old_list, 1):
                     pid = f"p_{i:06d}"
-                    migrated[pid] = {"id": pid, "name": n, "team": "", "country": "", "social_handle": "", "social_platform": ""}
+                    migrated[pid] = {"id": pid, "name": n, "team": "", "country": "", "social_handle": "", "social_platform": "", "is_commentator": False}
                 FileUtils.write_file(local_players_file, migrated)
                 return migrated
 
@@ -221,12 +221,13 @@ def save_local_player():
         if pid is None:
             # New player — assign next ID
             pid = _next_player_id(players)
-            existing = {"id": pid, "name": name, "team": "", "country": "", "social_handle": "", "social_platform": ""}
+            existing = {"id": pid, "name": name, "team": "", "country": "", "social_handle": "", "social_platform": "", "is_commentator": False}
         # Only overwrite fields that are explicitly provided and non-empty
         if body.get("team"):            existing["team"]            = body["team"]
         if body.get("country"):         existing["country"]         = body["country"]
         if body.get("social_handle"):   existing["social_handle"]   = body["social_handle"]
         if body.get("social_platform"): existing["social_platform"] = body["social_platform"]
+        if "is_commentator" in body:        existing["is_commentator"]  = bool(body["is_commentator"])
         existing["name"] = name
         players[pid] = existing
         FileUtils.write_file(local_players_file, players)
@@ -243,6 +244,7 @@ def update_local_player():
     country         = body.get("country", "")
     social_handle   = body.get("social_handle", "")
     social_platform = body.get("social_platform", "")
+    is_commentator  = bool(body.get("is_commentator", False))
     if not pid or not name:
         return "400", 400
     try:
@@ -250,7 +252,8 @@ def update_local_player():
         if pid not in players:
             return "404", 404
         players[pid] = {"id": pid, "name": name, "team": team, "country": country,
-                        "social_handle": social_handle, "social_platform": social_platform}
+                        "social_handle": social_handle, "social_platform": social_platform,
+                        "is_commentator": is_commentator}
         FileUtils.write_file(local_players_file, players)
     except Exception as e:
         print(f"updateLocalPlayer error: {e}")
@@ -304,6 +307,16 @@ def get_commentators():
     return json.dumps(result, ensure_ascii=False), 200
 
 
+@api.route('/getCommentatorPlayers', methods=['GET'])
+def get_commentator_players():
+    players = _read_local_players()
+    result = sorted(
+        [p for p in players.values() if p.get("is_commentator")],
+        key=lambda p: p.get("name", "").lower()
+    )
+    return json.dumps(result, ensure_ascii=False), 200
+
+
 @api.route('/addCommentator', methods=['POST'])
 def add_commentator():
     data = request.get_json() or {}
@@ -314,7 +327,7 @@ def add_commentator():
     pid, existing = _find_player_by_name(players, name)
     if pid is None:
         pid = _next_player_id(players)
-        existing = {"id": pid, "name": name, "team": "", "country": "", "social_handle": "", "social_platform": ""}
+        existing = {"id": pid, "name": name, "team": "", "country": "", "social_handle": "", "social_platform": "", "is_commentator": False}
     if data.get("soc"):
         existing["social_handle"] = data["soc"]
     players[pid] = existing

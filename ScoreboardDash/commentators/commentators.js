@@ -39,10 +39,21 @@ var jsonData = {};
 function setPlatformSelect(selId, platform) {
     var sel = document.getElementById(selId);
     if (sel) sel.value = platform || '';
+    // Update adjacent icon img if present
+    var wrap = sel ? sel.closest('.social-preview-row') : null;
+    var icon = wrap ? wrap.querySelector('.platform-icon-img') : null;
+    if (icon) {
+        if (platform && PLATFORM_ICONS[platform]) {
+            icon.src = PLATFORM_ICONS[platform];
+            icon.style.display = 'inline';
+        } else {
+            icon.style.display = 'none';
+        }
+    }
 }
 
 function loadLocalPlayers() {
-    fetch('/getLocalPlayers')
+    fetch('/getCommentatorPlayers')
         .then(function(r) { return r.json(); })
         .then(function(players) {
             if (!players || !players.length) return;
@@ -211,22 +222,23 @@ function reverseCommentatorNames() {
 
 // ── INIT ──────────────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', function() {
-    // Load local players first, then fetch current scoreboard data
-    // so _localPlayersMap is ready when we try to look up platform badges
+    // Load all players into _localPlayersMap for social lookups,
+    // then load commentator-flagged players into the pickers/datalist,
+    // then fetch current scoreboard data.
     fetch('/getLocalPlayers')
         .then(function(r) { return r.json(); })
         .then(function(players) {
             if (players && players.length) {
                 players.forEach(function(p) { if (p && p.name) _localPlayersMap.set(p.name, p); });
-                var dl = document.getElementById('com_name_suggestions');
-                if (dl) {
-                    var existing = new Set(Array.from(dl.options).map(function(o) { return o.value; }));
-                    players.forEach(function(p) {
-                        if (p.name && !existing.has(p.name)) {
-                            var opt = document.createElement('option'); opt.value = p.name; dl.appendChild(opt);
-                        }
-                    });
-                }
+            }
+            // Now load only commentator-flagged players into the pickers
+            return fetch('/getCommentatorPlayers');
+        })
+        .then(function(r) { return r.json(); })
+        .then(function(comPlayers) {
+            if (comPlayers && comPlayers.length) {
+                var names = comPlayers.map(function(p) { return p.name; });
+                populateComPickers(names);
             }
             // Now fetch scoreboard — _localPlayersMap is ready
             return fetch('/getdata');
