@@ -307,10 +307,8 @@ function updatePlayer1() {
     // Auto-fill team/country/social from local DB if available
     var localPlayer = _localPlayersByName.get(jsonData.p1Name);
     if (localPlayer) {
-        if (localPlayer.team) {
-            jsonData.p1Team = localPlayer.team;
-            document.getElementById("form_team_1p").value = localPlayer.team;
-        }
+        jsonData.p1Team = localPlayer.team || '';
+        document.getElementById("form_team_1p").value = localPlayer.team || '';
         if (localPlayer.country) {
             jsonData.p1Country = localPlayer.country;
             var sel = document.getElementById("dropdown_country_1p");
@@ -338,10 +336,8 @@ function updatePlayer2() {
     // Auto-fill team/country/social from local DB if available
     var localPlayer = _localPlayersByName.get(jsonData.p2Name);
     if (localPlayer) {
-        if (localPlayer.team) {
-            jsonData.p2Team = localPlayer.team;
-            document.getElementById("form_team_2p").value = localPlayer.team;
-        }
+        jsonData.p2Team = localPlayer.team || '';
+        document.getElementById("form_team_2p").value = localPlayer.team || '';
         if (localPlayer.country) {
             jsonData.p2Country = localPlayer.country;
             var sel = document.getElementById("dropdown_country_2p");
