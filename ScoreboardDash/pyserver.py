@@ -45,16 +45,16 @@ today_date = datetime.today().strftime('%Y-%m-%d')
 replay_prefix = "Replay_"
 replays_folder = "recordings/replays"
 saved_replays_folder = "../../clips"
-scoreboard_data_file = "../data/scoreboard.json"
-commentators_file = "../data/commentators.json"
-player_1 = "../data/player1.txt"
-player_2 = "../data/player2.txt"
-next_player_1 = "../data/nextplayer1.txt"
-next_player_2 = "../data/nextplayer2.txt"
-result1 = "../data/result1.txt"
-result2 = "../data/result2.txt"
-result_name_1 = "../data/resultname1.txt"
-result_name_2 = "../data/resultname2.txt"
+scoreboard_data_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), "../data/scoreboard.json")
+commentators_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), "../data/commentators.json")
+player_1 = os.path.join(os.path.dirname(os.path.abspath(__file__)), "../data/player1.txt")
+player_2 = os.path.join(os.path.dirname(os.path.abspath(__file__)), "../data/player2.txt")
+next_player_1 = os.path.join(os.path.dirname(os.path.abspath(__file__)), "../data/nextplayer1.txt")
+next_player_2 = os.path.join(os.path.dirname(os.path.abspath(__file__)), "../data/nextplayer2.txt")
+result1 = os.path.join(os.path.dirname(os.path.abspath(__file__)), "../data/result1.txt")
+result2 = os.path.join(os.path.dirname(os.path.abspath(__file__)), "../data/result2.txt")
+result_name_1 = os.path.join(os.path.dirname(os.path.abspath(__file__)), "../data/resultname1.txt")
+result_name_2 = os.path.join(os.path.dirname(os.path.abspath(__file__)), "../data/resultname2.txt")
 players_list_map = {}
 players_db = PlayerStatsDB
 countdown = Countdown
@@ -132,7 +132,7 @@ def get_startgg_token():
         return json.dumps({"token": ""}), 200
 
 
-local_players_file = "../data/local_players.json"
+local_players_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), "../data/local_players.json")
 
 def _next_player_id(players):
     """Return next sequential ID like 000001, 000002, etc."""
@@ -152,42 +152,14 @@ def _read_local_players():
         data = FileUtils.read_file(local_players_file)
         if not isinstance(data, dict):
             return {}
-
-        # ── Migration: old flat list {name: str} ──
-        if "players" in data:
-            old_list = data["players"]
-            if old_list and isinstance(old_list[0], str):
-                migrated = {}
-                for i, n in enumerate(old_list, 1):
-                    pid = f"p_{i:06d}"
-                    migrated[pid] = {"id": pid, "name": n, "team": "", "country": "", "social_handle": "", "social_platform": "", "is_commentator": False}
-                FileUtils.write_file(local_players_file, migrated)
-                return migrated
-
-        # ── Migration: name-keyed dict → id-keyed dict ──
-        if data and not next(iter(data)).startswith('p_'):
-            migrated = {}
-            for i, (k, v) in enumerate(data.items(), 1):
-                pid = f"p_{i:06d}"
-                migrated[pid] = {
-                    "id":              pid,
-                    "name":            v.get("name", k),
-                    "team":            v.get("team", ""),
-                    "country":         v.get("country", ""),
-                    "social_handle":   v.get("social_handle", v.get("socials", "")),
-                    "social_platform": v.get("social_platform", "")
-                }
-            FileUtils.write_file(local_players_file, migrated)
-            print(f"[migration] Migrated {len(migrated)} players to ID-keyed format")
-            return migrated
-
-        # Already id-keyed — ensure all fields present
+        # Ensure all fields present on each record
         for pid, v in data.items():
             v.setdefault("id", pid)
             v.setdefault("team", "")
             v.setdefault("country", "")
             v.setdefault("social_handle", "")
             v.setdefault("social_platform", "")
+            v.setdefault("is_commentator", False)
         return data
     except Exception as e:
         print(f"_read_local_players error: {e}")
@@ -225,8 +197,8 @@ def save_local_player():
         # Only overwrite fields that are explicitly provided and non-empty
         if body.get("team"):            existing["team"]            = body["team"]
         if body.get("country"):         existing["country"]         = body["country"]
-        if body.get("social_handle"):   existing["social_handle"]   = body["social_handle"]
-        if body.get("social_platform"): existing["social_platform"] = body["social_platform"]
+        if "social_handle"   in body:              existing["social_handle"]   = body["social_handle"]
+        if "social_platform" in body:              existing["social_platform"] = body["social_platform"]
         if "is_commentator" in body:        existing["is_commentator"]  = bool(body["is_commentator"])
         existing["name"] = name
         players[pid] = existing
@@ -598,14 +570,9 @@ def update_comm_data():
     global full_data
     with full_data_lock:
         temp = copy.deepcopy(full_data)
-        if "com1" in json_data:
-            temp["com1"] = json_data.get("com1", "")
-        if "com2" in json_data:
-            temp["com2"] = json_data.get("com2", "")
-        if "soc1" in json_data:
-            temp["soc1"] = json_data.get("soc1", "")
-        if "soc2" in json_data:
-            temp["soc2"] = json_data.get("soc2", "")
+        for key in ["com1", "com2", "soc1", "soc2", "com1Plat", "com2Plat"]:
+            if key in json_data:
+                temp[key] = json_data[key]
         full_data = temp
     FileUtils.write_file(scoreboard_data_file, full_data)
     return "200"
@@ -640,6 +607,14 @@ def update_data_no_scores():
         temp["nextRound"] = json_data.get("nextRound", temp["round"])
         temp["p1Seed"] = json_data.get("p1Seed", "")
         temp["p2Seed"] = json_data.get("p2Seed", "")
+        temp["p1SocialHandle"]    = json_data.get("p1SocialHandle",    "")
+        temp["p1SocialPlatform"]  = json_data.get("p1SocialPlatform",  "")
+        temp["p2SocialHandle"]    = json_data.get("p2SocialHandle",    "")
+        temp["p2SocialPlatform"]  = json_data.get("p2SocialPlatform",  "")
+        temp["nextSocial1Handle"]   = json_data.get("nextSocial1Handle",   "")
+        temp["nextSocial1Platform"] = json_data.get("nextSocial1Platform", "")
+        temp["nextSocial2Handle"]   = json_data.get("nextSocial2Handle",   "")
+        temp["nextSocial2Platform"] = json_data.get("nextSocial2Platform", "")
         full_data = temp
     FileUtils.write_file(scoreboard_data_file, full_data)
     return "200"
