@@ -225,7 +225,7 @@ function saveLocalPlayerName(name, team, country) {
     if (team)                     payload.team            = team;
     if (country)                  payload.country         = country;
     if (existing.social_handle)   payload.social_handle   = existing.social_handle;
-    if (existing.social_platform) payload.social_platform = existing.social_platform;
+    payload.social_platform = existing.social_platform || '';
     fetch('/saveLocalPlayer', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },

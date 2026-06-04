@@ -78,6 +78,8 @@ function getDataFromServer() {
         .then(function(r) { return r.json(); })
         .then(function(data) {
             jsonData = data;
+            if (!jsonData.com1Plat) jsonData.com1Plat = '';
+            if (!jsonData.com2Plat) jsonData.com2Plat = '';
             updateElement('form_name_1',   data.com1);
             updateElement('form_name_2',   data.com2);
             updateElement('form_social_1', data.soc1);
@@ -139,13 +141,15 @@ function updateCom1() {
     jsonData.com1 = document.getElementById('form_name_1').value;
     var p = _localPlayersMap.get(jsonData.com1);
     if (p) {
-        if (p.social_handle) {
-            jsonData.soc1 = p.social_handle;
-            document.getElementById('form_social_1').value = p.social_handle;
-        }
+        jsonData.soc1 = p.social_handle || '';
+        document.getElementById('form_social_1').value = p.social_handle || '';
         setPlatformSelect('soc1_platform_sel', p.social_platform || '');
+        jsonData.com1Plat = p.social_platform || '';
     } else {
+        jsonData.soc1 = '';
+        document.getElementById('form_social_1').value = '';
         setPlatformSelect('soc1_platform_sel', '');
+        jsonData.com1Plat = '';
     }
     saveCommentatorToDb(jsonData.com1, jsonData.soc1, document.getElementById('soc1_platform_sel').value);
     sendJSON();
@@ -155,13 +159,15 @@ function updateCom2() {
     jsonData.com2 = document.getElementById('form_name_2').value;
     var p = _localPlayersMap.get(jsonData.com2);
     if (p) {
-        if (p.social_handle) {
-            jsonData.soc2 = p.social_handle;
-            document.getElementById('form_social_2').value = p.social_handle;
-        }
+        jsonData.soc2 = p.social_handle || '';
+        document.getElementById('form_social_2').value = p.social_handle || '';
         setPlatformSelect('soc2_platform_sel', p.social_platform || '');
+        jsonData.com2Plat = p.social_platform || '';
     } else {
+        jsonData.soc2 = '';
+        document.getElementById('form_social_2').value = '';
         setPlatformSelect('soc2_platform_sel', '');
+        jsonData.com2Plat = '';
     }
     saveCommentatorToDb(jsonData.com2, jsonData.soc2, document.getElementById('soc2_platform_sel').value);
     sendJSON();
@@ -184,7 +190,9 @@ function updatePlatform1() {
     var existing = _localPlayersMap.get(jsonData.com1) || {};
     existing.social_platform = platform;
     if (jsonData.com1) _localPlayersMap.set(jsonData.com1, existing);
+    jsonData.com1Plat = platform;
     saveCommentatorToDb(jsonData.com1, jsonData.soc1, platform);
+    sendJSON();
 }
 
 function updatePlatform2() {
@@ -192,14 +200,16 @@ function updatePlatform2() {
     var existing = _localPlayersMap.get(jsonData.com2) || {};
     existing.social_platform = platform;
     if (jsonData.com2) _localPlayersMap.set(jsonData.com2, existing);
+    jsonData.com2Plat = platform;
     saveCommentatorToDb(jsonData.com2, jsonData.soc2, platform);
+    sendJSON();
 }
 
 function clearCom1() {
     document.getElementById('form_name_1').value   = '';
     document.getElementById('form_social_1').value = '';
     setPlatformSelect('soc1_platform_sel', '');
-    jsonData.com1 = ''; jsonData.soc1 = '';
+    jsonData.com1 = ''; jsonData.soc1 = ''; jsonData.com1Plat = '';
     sendJSON();
 }
 
@@ -207,7 +217,7 @@ function clearCom2() {
     document.getElementById('form_name_2').value   = '';
     document.getElementById('form_social_2').value = '';
     setPlatformSelect('soc2_platform_sel', '');
-    jsonData.com2 = ''; jsonData.soc2 = '';
+    jsonData.com2 = ''; jsonData.soc2 = ''; jsonData.com2Plat = '';
     sendJSON();
 }
 
@@ -255,6 +265,8 @@ document.addEventListener('DOMContentLoaded', function() {
         .then(function(r) { return r.json(); })
         .then(function(data) {
             jsonData = data;
+            if (!jsonData.com1Plat) jsonData.com1Plat = '';
+            if (!jsonData.com2Plat) jsonData.com2Plat = '';
             updateElement('form_name_1',   data.com1);
             updateElement('form_name_2',   data.com2);
             updateElement('form_social_1', data.soc1);
