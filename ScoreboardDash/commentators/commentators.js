@@ -1,3 +1,12 @@
+const PLATFORM_ICONS = {
+    twitter:   '../resources/twitter.png',
+    bluesky:   '../resources/bsky.png',
+    instagram: '../resources/instagram.png',
+    facebook:  '../resources/facebook.png',
+    twitch:    '../resources/twitch.png',
+};
+const PLATFORM_COLORS = { twitter: '#1d9bf0', bluesky: '#0085ff', instagram: '#e1306c', facebook: '#1877f2', twitch: '#9146ff' };
+
 // ── NAME PICKERS ──────────────────────────────────────────────────
 function populateComPickers(names) {
     // Populate select pickers
