@@ -26,9 +26,9 @@
 	<div id="scoreboard">
 		<div id="leftWrapper">
 			<span id="p1Score" class="scores"></span>
-			<span id="f1Wrapper" class="fWrappers">
-				<img id="p1Country" class="cFlags"></img>
-			</span>
+		</div>
+		<div id="f1Wrapper" class="fWrappers">
+			<img id="p1Country" class="cFlags"></img>
 		</div>
 		<span id="p1Wrapper">
 			<div id="p1Team" class="teams"></div> <!-- team/name spans nested within wrapper span to allow them to align the same without overlapping each other -->
@@ -36,9 +36,10 @@
 		</span>
 		<div id="rightWrapper">
 			<span id="p2Score" class="scores"></span>
-			<span id="f2Wrapper" class="fWrappers">
-				<img id="p2Country" class="cFlags"></img>
-			</span>
+
+		</div>
+		<div id="f2Wrapper" class="fWrappers">
+			<img id="p2Country" class="cFlags"></img>
 		</div>
 		<span id="p2Wrapper">
 			<div id="p2Name" class="names"></div>
@@ -58,6 +59,8 @@
 		<div id="next2">
 			<span id="nextPlayer2" class="names"></span>
 		</div>
+		<div id="p1Bracket" class="bracket"></div>
+		<div id="p2Bracket" class="bracket"></div>
 		<div id="rdWrapper">
 			<span id="round"></span>
 		</div>
@@ -70,12 +73,12 @@
 
 <script type="text/javascript">
 
-	var resultNameSize = '30px';
-	var resultScoreSize = '35px';
+	var resultNameSize = '28px';
+	var resultScoreSize = '50px';
 	var nextNameSize = '30px';
-	var teamNameSize = '20px';
-	var nameSize = '45px'; //default font size of name wrappers, should match 'font-size' value of .wrappers
-	var rdSize = '48px'; //default font size of round container, should match 'font-size' value of #round
+	var teamNameSize = '36px';
+	var nameSize = '55px'; //default font size of name wrappers, should match 'font-size' value of .wrappers
+	var rdSize = '36px'; //default font size of round container, should match 'font-size' value of #round
 	var p1Move = '-25px'; //distance on x-axis that P1 name should initially be set to prior to load-in animation
 	var p2Move = '25px'; //distance on x-axis that P2 name should initially be set to prior to load-in animation
 	var rdMove = '-40px'; //distance on y-axis that round should initially be set to prior to load-in animation
