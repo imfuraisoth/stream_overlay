@@ -591,6 +591,8 @@ function resetNamesAndScore() {
 	jsonData.p2Score = "0";
 	jsonData.p1Seed = "";
 	jsonData.p2Seed = "";
+    jsonData.p1Bracket = "";
+    jsonData.p2Bracket = "";
 	updateCurrentPlayerDisplay();
 	sendJsonToEndpoint("updatealldata");
 }
@@ -690,6 +692,8 @@ function resetScores() {
 	document.getElementById("form_score_2p").value = "0";
 	jsonData.p1Score = "0";
 	jsonData.p2Score = "0";
+    jsonData.p1Bracket = "";
+    jsonData.p2Bracket = "";
 	updateCurrentPlayerDisplay();
 	sendJsonToEndpoint('updateCurrentScore');
 }
@@ -734,6 +738,8 @@ function resetAll() {
 	jsonData.resultplayer2 = "";
 	jsonData.resultscore1 = "";
 	jsonData.resultscore2 = "";
+	jsonData.p1Bracket = "";
+	jsonData.p2Bracket = "";
 	jsonData.maxScore = "";
 	jsonData.round = "Casuals";
 	jsonData.nextRound = "Casuals";
