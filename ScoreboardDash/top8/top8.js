@@ -200,6 +200,7 @@ function populateData(data) {
 	updateElement("form_results_name_2p", data.resultplayer2);
 	updateElement("form_results_score_2p", data.resultscore2);
 	jsonData = data;
+	charBoot();
 }
 
 function updateElement(id, value) {
@@ -214,7 +215,7 @@ var _localPlayersByName = new Map(); // name -> player record
 
 function saveLocalPlayerName(name, team, country) {
     if (!name || !name.trim()) return;
-    var existing = _localPlayersMap.get(name.trim()) || { name: name.trim() };
+    var existing = _localPlayersByName.get(name.trim()) || _localPlayersMap.get(name.trim()) || { name: name.trim() };
     if (team)    existing.team    = team;
     if (country) existing.country = country;
     existing.name = name.trim();
@@ -301,6 +302,7 @@ function updatePlayer1() {
     jsonData.p1SocialPlatform = soc1.platform;
     saveLocalPlayerName(jsonData.p1Name, jsonData.p1Team, jsonData.p1Country);
     sendJsonToEndpoint('updateCurrentPlayers');
+    charRestoreFor(1);
 }
 
 function updatePlayer2() {
@@ -313,6 +315,7 @@ function updatePlayer2() {
     jsonData.p2SocialPlatform = soc2.platform;
     saveLocalPlayerName(jsonData.p2Name, jsonData.p2Team, jsonData.p2Country);
     sendJsonToEndpoint('updateCurrentPlayers');
+    charRestoreFor(2);
 }
 
 function updateTeam1() {
@@ -334,6 +337,7 @@ function updateNextPlayer1() {
     jsonData.nextcountry1 = safeEl("dropdown_country_next1").value;
     saveLocalPlayerName(jsonData.nextplayer1, jsonData.nextteam1, jsonData.nextcountry1);
     sendJsonToEndpoint('updateNextPlayers');
+    charRestoreFor('1Next');
 }
 
 function updateNextPlayer2() {
@@ -343,6 +347,7 @@ function updateNextPlayer2() {
     jsonData.nextcountry2 = safeEl("dropdown_country_next2").value;
     saveLocalPlayerName(jsonData.nextplayer2, jsonData.nextteam2, jsonData.nextcountry2);
     sendJsonToEndpoint('updateNextPlayers');
+    charRestoreFor('2Next');
 }
 
 function updateNextTeam1() {
@@ -383,6 +388,8 @@ function resetNamesAndScore() {
 	jsonData.p2Name = "";
 	jsonData.p1Team = "";
 	jsonData.p2Team = "";
+        jsonData.p1Bracket = "";
+        jsonData.p2Bracket = "";
 	jsonData.p1Country = "US";
 	jsonData.p2Country = "US";
 	jsonData.p1Score = "0";
@@ -485,6 +492,8 @@ function resetScores() {
 	safeEl("form_score_2p").value = "0";
 	jsonData.p1Score = "0";
 	jsonData.p2Score = "0";
+        jsonData.p1Bracket = "";
+	jsonData.p2Bracket = "";
 	sendJsonToEndpoint('updateCurrentScore');
 }
 
@@ -602,6 +611,15 @@ function resetAll() {
 	jsonData.resultscore2 = "";
 	jsonData.maxScore = "";
 	jsonData.round = "Casuals";
+        jsonData.p1Bracket = "";
+	jsonData.p2Bracket = "";
+	CHAR_PLAYERS.forEach(function(p) {
+		charApplyList(p, null, true);
+		jsonData['p' + p + 'Character'] = '';
+		jsonData['p' + p + 'CharacterPack'] = '';
+		jsonData['p' + p + 'Palette'] = 0;
+		jsonData['p' + p + 'CharacterFile'] = '';
+	});
 	setButtonColourAndText("rectangle_button_18", "#675267", "Start Top 8");
 	updateAllData(resetTop8);
 }
@@ -1002,3 +1020,435 @@ function loadPlayerData(fromCache) {
 
 getDataFromServer();
 getStartggInfo();
+
+// ════════════════════════════════════════════════════════════════
+// CHARACTER PICKER (current match) — ported from the event dashboard.
+// Reads game/slots from the server, shows the player's roster first,
+// saves picks to the player profile, and pushes scoreboard updates
+// through /updatePlayerCharacters.
+// ════════════════════════════════════════════════════════════════
+var CHAR_PLAYERS = [1, 2, '1Next', '2Next'];
+var _gameSlots = {};
+var _activeSlot = { 1: 0, 2: 0, '1Next': 0, '2Next': 0 };
+var _charMaps = {};
+var _forceFullList = { 1: false, 2: false, '1Next': false, '2Next': false };
+var _charBooted = false;
+
+function charGetGame() { return (jsonData && jsonData.current_game) || ''; }
+function charGetSlots(game) { return _gameSlots[game] || 1; }
+
+function charPlayerName(player) {
+    if (!jsonData) return '';
+    if (player === '1Next') return jsonData.nextplayer1;
+    if (player === '2Next') return jsonData.nextplayer2;
+    return jsonData['p' + player + 'Name'];
+}
+
+function charGetLocalPlayer(player) {
+    var name = charPlayerName(player);
+    return name ? _localPlayersByName.get(name.trim()) : null;
+}
+
+function charBoot() {
+    if (_charBooted) return;
+    _charBooted = true;
+    fetch('/getGames')
+        .then(function(r) { return r.json(); })
+        .then(function(games) {
+            _gameSlots = games || {};
+            CHAR_PLAYERS.forEach(function(p) {
+                // Restore from scoreboard.json state written by the dashboard
+                var list = jsonData['p' + p + 'Characters'];
+                if (Array.isArray(list) && list.length) charApplyList(p, list, false);
+                else charRenderSlotTabs(p);
+            });
+        })
+        .catch(function(e) { console.log('charBoot error:', e); });
+    charLoadPacks();
+}
+
+function charLoadPacks() {
+    var game = charGetGame();
+    if (!game) return;
+    fetch('/getCharacterPacks?game=' + encodeURIComponent(game))
+        .then(function(r) { return r.json(); })
+        .then(function(packs) {
+            CHAR_PLAYERS.forEach(function(p) {
+                var sel = document.getElementById('p' + p + 'CharPack');
+                if (!sel) return;
+                sel.innerHTML = '<option value="">Pack</option>';
+                (packs || []).forEach(function(pk) {
+                    var opt = document.createElement('option');
+                    opt.value = pk; opt.textContent = pk;
+                    sel.appendChild(opt);
+                });
+                if (packs && packs.length === 1) sel.value = packs[0];
+            });
+        })
+        .catch(function(e) { console.log('charLoadPacks error:', e); });
+}
+
+function charLoadChars(player) {
+    var game = charGetGame();
+    var pack = document.getElementById('p' + player + 'CharPack').value;
+    charClosePopover(player);
+    if (!game || !pack) return;
+    var key = game + '/' + pack;
+    if (_charMaps[key]) return;  // already cached
+    fetch('/getCharacterList?game=' + encodeURIComponent(game) + '&pack=' + encodeURIComponent(pack))
+        .then(function(r) { return r.json(); })
+        .then(function(charMap) { _charMaps[key] = charMap; });
+}
+
+function charGetList(player) {
+    var list = jsonData['p' + player + 'Characters'];
+    if (!Array.isArray(list)) { list = []; jsonData['p' + player + 'Characters'] = list; }
+    return list;
+}
+
+function charCompactPicks(player) {
+    var picks = [];
+    charGetList(player).forEach(function(p, i) {
+        if (p && p.file) picks.push({ slot: i, pack: p.pack,
+            character: p.character, palette: p.palette, file: p.file });
+    });
+    return picks;
+}
+
+function charPushToServer(player) {
+    fetch('/updatePlayerCharacters', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ player: String(player), characters: charCompactPicks(player) })
+    }).catch(function(e) { console.log('updatePlayerCharacters error:', e); });
+}
+
+function charUpdateButton(player) {
+    var pick  = charGetList(player)[_activeSlot[player]];
+    var thumb = document.getElementById('p' + player + 'CharThumb');
+    var label = document.getElementById('p' + player + 'CharLabel');
+    var packSel = document.getElementById('p' + player + 'CharPack');
+    if (pick && pick.file) {
+        if (thumb) { thumb.src = '/' + pick.file; thumb.style.display = 'inline'; }
+        if (label) label.textContent = pick.character + ' (' + pick.palette + ')';
+        if (packSel && pick.pack) packSel.value = pick.pack;
+    } else {
+        if (thumb) { thumb.src = ''; thumb.style.display = 'none'; }
+        if (label) label.textContent = '\u2014';
+    }
+}
+
+function charRenderSlotTabs(player) {
+    var wrap = document.getElementById('p' + player + 'CharSlots');
+    var slots = charGetSlots(charGetGame());
+    if (_activeSlot[player] >= slots) _activeSlot[player] = 0;
+    if (wrap) {
+        if (slots <= 1) {
+            wrap.style.display = 'none';
+            wrap.innerHTML = '';
+        } else {
+            wrap.style.display = 'flex';
+            wrap.innerHTML = '';
+            var list = charGetList(player);
+            for (var s = 0; s < slots; s++) (function(s) {
+                var pick = list[s];
+                var tab = document.createElement('div');
+                tab.className = 'char-slot-tab' +
+                    (s === _activeSlot[player] ? ' active' : '') +
+                    (pick && pick.file ? ' filled' : '');
+                if (pick && pick.file) {
+                    var im = document.createElement('img');
+                    im.src = '/' + pick.file;
+                    im.className = 'char-preview-target';
+                    im.dataset.char = pick.character;
+                    im.dataset.palette = pick.palette;
+                    im.onerror = function() { this.style.display = 'none'; };
+                    tab.appendChild(im);
+                } else {
+                    var sp = document.createElement('span');
+                    sp.textContent = (s + 1);
+                    tab.appendChild(sp);
+                }
+                tab.title = pick && pick.character
+                    ? 'Slot ' + (s + 1) + ': ' + pick.character + ' (' + pick.palette + ')'
+                    : 'Slot ' + (s + 1) + ' (empty)';
+                tab.onclick = function(e) {
+                    e.stopPropagation();
+                    _activeSlot[player] = s;
+                    charRenderSlotTabs(player);
+                };
+                wrap.appendChild(tab);
+            })(s);
+        }
+    }
+    charUpdateButton(player);
+}
+
+function charApplyList(player, saved, push) {
+    if (saved && !Array.isArray(saved)) saved = [saved];
+    var list = [];
+    (saved || []).forEach(function(p, i) {
+        if (!p || !p.file) return;
+        var s = (typeof p.slot === 'number') ? p.slot : i;
+        list[s] = { slot: s, pack: p.pack || '', character: p.character || '',
+                    palette: p.palette || 0, file: p.file };
+    });
+    jsonData['p' + player + 'Characters'] = list;
+    _activeSlot[player] = 0;
+    charRenderSlotTabs(player);
+    if (push) charPushToServer(player);
+}
+
+function charRestoreFor(player) {
+    var game = charGetGame();
+    var lp = charGetLocalPlayer(player);
+    charApplyList(player, (game && lp && lp.characters) ? lp.characters[game] : null, true);
+}
+
+function charClosePopover(player) {
+    _forceFullList[player] = false;
+    var popover = document.getElementById('p' + player + 'CharPopover');
+    var btn     = document.getElementById('p' + player + 'CharPickerBtn');
+    if (popover) popover.style.display = 'none';
+    if (btn) btn.classList.remove('open');
+}
+
+function charClearSlot(player) {
+    var list = charGetList(player);
+    var s = _activeSlot[player];
+    charClosePopover(player);
+    if (!list[s]) return;
+    list[s] = undefined;
+    charRenderSlotTabs(player);
+    charPushToServer(player);
+    var game = charGetGame();
+    var lp = charGetLocalPlayer(player);
+    if (game && lp && lp.id) {
+        var picks = charCompactPicks(player);
+        if (!lp.characters) lp.characters = {};
+        lp.characters[game] = picks;
+        var u = {}; u[game] = picks;
+        fetch('/saveLocalPlayer', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id: lp.id, name: lp.name, characters: u })
+        }).catch(function(e) { console.log('clearSlot save error:', e); });
+    }
+}
+
+function charPopoverFooter(player, popover, mode, hasRoster) {
+    var foot = document.createElement('div');
+    foot.className = 'char-popover-footer';
+    var slots = charGetSlots(charGetGame());
+    var active = _activeSlot[player];
+    if (charGetList(player)[active]) {
+        var clr = document.createElement('button');
+        clr.className = 'char-popover-footbtn';
+        clr.textContent = '\u2715 Clear' + (slots > 1 ? ' slot ' + (active + 1) : '');
+        clr.onclick = function(e) { e.stopPropagation(); charClearSlot(player); };
+        foot.appendChild(clr);
+    }
+    if (mode === 'roster') {
+        var full = document.createElement('button');
+        full.className = 'char-popover-footbtn';
+        full.textContent = 'Load full roster \u25B8';
+        full.onclick = function(e) {
+            e.stopPropagation();
+            charClosePopover(player);
+            _forceFullList[player] = true;
+            charTogglePicker(player);
+        };
+        foot.appendChild(full);
+    } else if (hasRoster) {
+        var ros = document.createElement('button');
+        ros.className = 'char-popover-footbtn';
+        ros.textContent = '\u25C2 Player roster';
+        ros.onclick = function(e) {
+            e.stopPropagation();
+            charClosePopover(player);
+            charTogglePicker(player);
+        };
+        foot.appendChild(ros);
+    }
+    if (foot.children.length) popover.appendChild(foot);
+}
+
+function charRenderRosterPopover(player, game, roster, popover, btn) {
+    popover.innerHTML = '';
+    var head = document.createElement('div');
+    head.className = 'char-roster-head';
+    head.textContent = (charPlayerName(player) || 'Player') + "'s roster";
+    popover.appendChild(head);
+    roster.forEach(function(entry) {
+        if (!entry || !entry.file) return;
+        var row = document.createElement('div');
+        row.className = 'char-row';
+        row.innerHTML =
+            '<img class="char-row-thumb char-preview-target" data-char="' + entry.character +
+            '" data-palette="' + entry.palette + '" src="/' + entry.file + '">' +
+            '<span class="char-row-name">' + entry.character +
+            ' <span class="char-roster-pal">(' + entry.palette + ')</span></span>';
+        row.querySelector('.char-row-thumb').onerror = function() { this.style.display = 'none'; };
+        row.onclick = function(e) {
+            e.stopPropagation();
+            charSelectPalette(player, game, entry.pack, entry.character,
+                              entry.palette, entry.file, null, popover);
+        };
+        popover.appendChild(row);
+    });
+    charPopoverFooter(player, popover, 'roster', true);
+    popover.style.display = 'block';
+    btn.classList.add('open');
+}
+
+function charTogglePicker(player) {
+    var popover = document.getElementById('p' + player + 'CharPopover');
+    var btn     = document.getElementById('p' + player + 'CharPickerBtn');
+    if (!popover || !btn) return;
+    if (popover.style.display === 'block') { charClosePopover(player); return; }
+    CHAR_PLAYERS.forEach(function(p) { if (p !== player) charClosePopover(p); });
+
+    var game = charGetGame();
+    if (!game) { alert('Set a current game on the Event Dashboard first.'); return; }
+
+    var localPlayer = charGetLocalPlayer(player);
+    var roster = (localPlayer && localPlayer.roster && localPlayer.roster[game]) || [];
+    if (roster.length > 0 && !_forceFullList[player]) {
+        charRenderRosterPopover(player, game, roster, popover, btn);
+        return;
+    }
+
+    var pack = document.getElementById('p' + player + 'CharPack').value;
+    if (!pack) { alert('Select a pack first.'); return; }
+    var key = game + '/' + pack;
+
+    function render(charMap) {
+        popover.innerHTML = '';
+        Object.keys(charMap).sort().forEach(function(char) {
+            var palettes = charMap[char];
+            if (!palettes || !palettes.length) return;
+            var defaultImg = '/' + palettes[0].file;
+            var row = document.createElement('div');
+            row.className = 'char-row';
+            row.innerHTML =
+                '<img class="char-row-thumb char-preview-target" data-char="' + char +
+                '" data-palette="' + palettes[0].palette + '" src="' + defaultImg + '">' +
+                '<span class="char-row-name">' + char + '</span>' +
+                '<span class="char-row-arrow">\u203A</span>';
+            row.querySelector('.char-row-thumb').onerror = function() { this.style.display = 'none'; };
+            var strip = document.createElement('div');
+            strip.className = 'char-palette-strip';
+            strip.style.display = 'none';
+            palettes.forEach(function(p) {
+                var img = document.createElement('img');
+                img.className = 'char-palette-thumb';
+                img.src = '/' + p.file;
+                img.dataset.char = char;
+                img.dataset.palette = p.palette;
+                img.onerror = function() { this.style.display = 'none'; };
+                img.onclick = function(e) {
+                    e.stopPropagation();
+                    charSelectPalette(player, game, pack, char, p.palette, p.file, img, popover);
+                };
+                strip.appendChild(img);
+            });
+            row.onclick = function(e) {
+                e.stopPropagation();
+                var open = strip.style.display !== 'none';
+                popover.querySelectorAll('.char-palette-strip').forEach(function(s) { s.style.display = 'none'; });
+                strip.style.display = open ? 'none' : 'flex';
+            };
+            popover.appendChild(row);
+            popover.appendChild(strip);
+        });
+        var lp = charGetLocalPlayer(player);
+        var hasRoster = !!(lp && lp.roster && lp.roster[game] && lp.roster[game].length);
+        charPopoverFooter(player, popover, 'full', hasRoster);
+        popover.style.display = 'block';
+        btn.classList.add('open');
+    }
+
+    if (_charMaps[key]) { render(_charMaps[key]); return; }
+    fetch('/getCharacterList?game=' + encodeURIComponent(game) + '&pack=' + encodeURIComponent(pack))
+        .then(function(r) { return r.json(); })
+        .then(function(charMap) {
+            _charMaps[key] = charMap || {};
+            render(_charMaps[key]);
+        })
+        .catch(function(e) { console.log('getCharacterList error:', e); });
+}
+
+function charSelectPalette(player, game, pack, char, palette, file, imgEl, popover) {
+    popover.querySelectorAll('.char-palette-thumb.selected').forEach(function(el) {
+        el.classList.remove('selected');
+    });
+    if (imgEl) imgEl.classList.add('selected');
+
+    var list = charGetList(player);
+    list[_activeSlot[player]] = { slot: _activeSlot[player], pack: pack,
+                                  character: char, palette: palette, file: file };
+    charRenderSlotTabs(player);
+    charPushToServer(player);
+    charClosePopover(player);
+
+    var localPlayer = charGetLocalPlayer(player);
+    if (game && localPlayer && localPlayer.id) {
+        var picks = charCompactPicks(player);
+        if (!localPlayer.characters) localPlayer.characters = {};
+        localPlayer.characters[game] = picks;
+        if (!localPlayer.roster) localPlayer.roster = {};
+        var rlist = localPlayer.roster[game] || [];
+        var found = false;
+        rlist.forEach(function(e) {
+            if (e.character === char) { e.pack = pack; e.palette = palette; e.file = file; found = true; }
+        });
+        if (!found) rlist.push({ character: char, pack: pack, palette: palette, file: file });
+        localPlayer.roster[game] = rlist;
+        var cu = {}; cu[game] = picks;
+        var ru = {}; ru[game] = rlist;
+        fetch('/saveLocalPlayer', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id: localPlayer.id, name: localPlayer.name,
+                                   characters: cu, roster: ru })
+        }).catch(function(e) { console.log('saveCharacter error:', e); });
+    }
+}
+
+// Close popovers on outside click
+document.addEventListener('click', function(e) {
+    if (!e.target.closest('.char-select-row')) {
+        CHAR_PLAYERS.forEach(charClosePopover);
+    }
+});
+
+// ── CHARACTER HOVER PREVIEW ─────────────────────────────────────
+(function() {
+    var p = document.getElementById('char-preview');
+    var img = document.getElementById('char-preview-img');
+    var lbl = document.getElementById('char-preview-label');
+    if (!p) return;
+    function move(e) {
+        if (p.style.display === 'none') return;
+        var x = e.clientX + 16, y = e.clientY + 16;
+        if (x + 140 > window.innerWidth)  x = e.clientX - 148;
+        if (y + 155 > window.innerHeight) y = e.clientY - 158;
+        p.style.left = x + 'px'; p.style.top = y + 'px';
+    }
+    document.addEventListener('mouseover', function(e) {
+        var t = e.target.closest('.char-palette-thumb, .char-preview-target');
+        if (!t) { p.style.display = 'none'; return; }
+        img.src = t.src;
+        lbl.textContent = (t.dataset.char || '') +
+            (t.dataset.palette !== undefined ? ' \u00b7 ' + t.dataset.palette : '');
+        p.style.display = 'block';
+        move(e);
+    });
+    document.addEventListener('mousemove', move);
+    document.addEventListener('mouseout', function(e) {
+        var t = e.target.closest('.char-palette-thumb, .char-preview-target');
+        if (t && !(e.relatedTarget && e.relatedTarget.closest('.char-palette-thumb, .char-preview-target'))) {
+            p.style.display = 'none';
+        }
+    });
+})();

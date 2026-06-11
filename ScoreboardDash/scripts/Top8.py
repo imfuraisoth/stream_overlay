@@ -9,23 +9,27 @@ defaultCurrentDataJson = {
         "name": "",
         "team": "",
         "country": "",
-        "score": ""
+        "score": "",
+        "bracket": ""
     },
     "player2": {
         "name": "",
         "team": "",
         "country": "",
-        "score": ""
+        "score": "",
+        "bracket": ""
     },
     "nextPlayer1": {
         "name": "",
         "team": "",
-        "country": ""
+        "country": "",
+        "bracket": ""
     },
     "nextPlayer2": {
         "name": "",
         "team": "",
-        "country": ""
+        "country": "",
+        "bracket": ""
     },
     "currentRound": 1,
     "nextRound": 2,
@@ -43,13 +47,15 @@ defaultPlayerData = {
             "name": "",
             "team": "",
             "country": "US",
-            "score": ""
+            "score": "",
+            "bracket": ""
         },
         "p2": {
             "name": "",
             "team": "",
             "country": "US",
-            "score": ""
+            "score": "",
+            "bracket": ""
         }
     },
     "r2": {
@@ -58,13 +64,15 @@ defaultPlayerData = {
             "name": "",
             "team": "",
             "country": "US",
-            "score": ""
+            "score": "",
+            "bracket": ""
         },
         "p2": {
             "name": "",
             "team": "",
             "country": "US",
-            "score": ""
+            "score": "",
+            "bracket": ""
         }
     },
     "r3": {
@@ -73,13 +81,15 @@ defaultPlayerData = {
             "name": "",
             "team": "",
             "country": "US",
-            "score": ""
+            "score": "",
+            "bracket": ""
         },
         "p2": {
             "name": "",
             "team": "",
             "country": "US",
-            "score": ""
+            "score": "",
+            "bracket": ""
         }
     },
     "r4": {
@@ -88,13 +98,15 @@ defaultPlayerData = {
             "name": "",
             "team": "",
             "country": "US",
-            "score": ""
+            "score": "",
+            "bracket": ""
         },
         "p2": {
             "name": "",
             "team": "",
             "country": "US",
-            "score": ""
+            "score": "",
+            "bracket": ""
         }
     },
     "r5": {
@@ -103,13 +115,15 @@ defaultPlayerData = {
             "name": "",
             "team": "",
             "country": "",
-            "score": ""
+            "score": "",
+            "bracket": ""
         },
         "p2": {
             "name": "",
             "team": "",
             "country": "",
-            "score": ""
+            "score": "",
+            "bracket": ""
         }
     },
     "r6": {
@@ -118,13 +132,15 @@ defaultPlayerData = {
             "name": "",
             "team": "",
             "country": "",
-            "score": ""
+            "score": "",
+            "bracket": ""
         },
         "p2": {
             "name": "",
             "team": "",
             "country": "",
-            "score": ""
+            "score": "",
+            "bracket": ""
         }
     },
     "r7": {
@@ -133,13 +149,15 @@ defaultPlayerData = {
             "name": "",
             "team": "",
             "country": "",
-            "score": ""
+            "score": "",
+            "bracket": ""
         },
         "p2": {
             "name": "",
             "team": "",
             "country": "",
-            "score": ""
+            "score": "",
+            "bracket": ""
         }
     },
     "r8": {
@@ -148,13 +166,15 @@ defaultPlayerData = {
             "name": "",
             "team": "",
             "country": "",
-            "score": ""
+            "score": "",
+            "bracket": ""
         },
         "p2": {
             "name": "",
             "team": "",
             "country": "",
-            "score": ""
+            "score": "",
+            "bracket": ""
         }
     },
     "r9": {
@@ -163,13 +183,15 @@ defaultPlayerData = {
             "name": "",
             "team": "",
             "country": "",
-            "score": ""
+            "score": "",
+            "bracket": ""
         },
         "p2": {
             "name": "",
             "team": "",
             "country": "",
-            "score": ""
+            "score": "",
+            "bracket": ""
         }
     },
     "r10": {
@@ -179,14 +201,16 @@ defaultPlayerData = {
             "team": "",
             "country": "",
             "score": "",
-            "score2": ""
+            "score2": "",
+            "bracket": ""
         },
         "p2": {
             "name": "",
             "team": "",
             "country": "",
             "score": "",
-            "score2": ""
+            "score2": "",
+            "bracket": ""
         }
     }
 }
@@ -259,7 +283,7 @@ def initialize(skip_scoreboard_update=False):
     started = True
     current_next_data["started"] = started
     if not skip_scoreboard_update:
-        update_scoreboard_json(current_next_data, "", "", "", "", current_next_data["currentRoundName"], current_round)
+        update_scoreboard_json(current_next_data, "", "", "", "", current_next_data["currentRoundName"], current_round, "", "")
     FileUtils.write_file(current_next_data_file, current_next_data)
     print("Top 8 started!")
 
@@ -280,6 +304,7 @@ def update_next_player_data(player_id, player_data):
 
 
 _restoring = False
+
 
 def progress_to_next_round():
     global current_next_data, _restoring
@@ -362,7 +387,10 @@ def progress_to_next_round():
             copy_player_data(global_player_data[key]["p2"], current_next_data["nextPlayer2"])
             current_next_data["nextRound"] = next_round
         else:
-            current_next_data["player2"]["name"] = current_next_data["player2"]["name"] + " [L]"
+            current_next_data["player2"]["name"] = current_next_data["player2"]["name"]
+            current_next_data["player2"]["bracket"] = "L"
+            if not current_next_data["player1"]["bracket"]:
+                current_next_data["player1"]["bracket"] = "W"
             current_next_data["nextPlayer1"]["name"] = ""
             current_next_data["nextPlayer2"]["name"] = ""
             current_next_data["nextPlayer1"]["team"] = ""
@@ -375,7 +403,7 @@ def progress_to_next_round():
         global roundNamesMap
         current_round_name = roundNamesMap.get(current_round)
         current_next_data["currentRoundName"] = current_round_name
-        update_scoreboard_json(current_next_data, result1_name, result2_name, p1_score_string, p2_score_string, current_round_name, current_round)
+        update_scoreboard_json(current_next_data, result1_name, result2_name, p1_score_string, p2_score_string, current_round_name, current_round, current_next_data["player1"]["bracket"], current_next_data["player2"]["bracket"])
         current_next_data["reverseNames"] = False
         FileUtils.write_file(current_next_data_file, current_next_data)
         return json.loads(json.dumps(current_next_data, ensure_ascii=False))
@@ -421,9 +449,15 @@ def update_final_round(global_player_round_data, current_round_data, p1_score, p
             current_round_data["player1"]["score"] = "0"
             current_round_data["player2"]["score"] = "0"
             if reverse_names:
-                current_round_data["player2"]["name"] = p2_name + " [L]"
+                current_round_data["player2"]["name"] = p2_name
+                current_round_data["player2"]["bracket"] = "L"
+                if not current_next_data["player1"]["bracket"]:
+                    current_round_data["player1"]["bracket"] = "W"
             else:
-                current_round_data["player1"]["name"] = p1_name + " [L]"
+                current_round_data["player1"]["name"] = p1_name
+                current_round_data["player1"]["bracket"] = "L"
+                if not current_next_data["player2"]["bracket"]:
+                    current_round_data["player2"]["bracket"] = "W"
         print("Completed Round 10")
     else:
         if reverse_names:
@@ -440,13 +474,13 @@ def update_final_round(global_player_round_data, current_round_data, p1_score, p
     global roundNamesMap
     current_round_name = roundNamesMap.get(current_round)
     current_next_data["currentRoundName"] = current_round_name
-    update_scoreboard_json(current_next_data, p1_name, p2_name, str(p1_score), str(p2_score), current_round_name, current_round)
+    update_scoreboard_json(current_next_data, p1_name, p2_name, str(p1_score), str(p2_score), current_round_name, current_round, current_round_data["player1"]["bracket"], current_round_data["player2"]["bracket"])
     FileUtils.write_file(player_data_file_name, global_player_round_data)
     FileUtils.write_file(current_next_data_file, current_next_data)
     return json.loads(json.dumps(current_round_data, ensure_ascii=False))
 
 
-def update_scoreboard_json(data, result_name_1, result_name_2, result1, result2, current_round_name, current_round):
+def update_scoreboard_json(data, result_name_1, result_name_2, result1, result2, current_round_name, current_round, current_p1_bracket, current_p2_bracket):    
     scoreboard_data = read_file(scoreboard_json_file)
     scoreboard_data["p1Name"] = data["player1"]["name"]
     scoreboard_data["p1Team"] = data["player1"]["team"]
@@ -456,6 +490,8 @@ def update_scoreboard_json(data, result_name_1, result_name_2, result1, result2,
     scoreboard_data["p2Team"] = data["player2"]["team"]
     scoreboard_data["p2Country"] = data["player2"]["country"]
     scoreboard_data["p2Score"] = "0"
+    scoreboard_data["p1Bracket"] = current_p1_bracket
+    scoreboard_data["p2Bracket"] = current_p2_bracket
     # Stop updating next and results when we are at grand finals
     if current_round < 10:
         scoreboard_data["resultplayer1"] = result_name_1
@@ -542,6 +578,7 @@ def snapshot_before_next_round():
         "p2Score": scoreboard_data.get("p2Score", "0"),
     }
 
+
 def restore_snapshot():
     """Restore bracket state to before the last next_round call."""
     global _undo_snapshot, current_next_data, global_player_data, _restoring
@@ -567,7 +604,9 @@ def restore_snapshot():
             "",
             "",
             current_next_data["currentRoundName"],
-            current_next_data["currentRound"]
+            current_next_data["currentRound"],
+            "",
+            ""
         )
         # Put the scores back (update_scoreboard_json zeros them)
         scoreboard_data = read_file(scoreboard_json_file)
@@ -580,6 +619,7 @@ def restore_snapshot():
         print(f"[restore_snapshot] Restored to round={current_next_data['currentRound']} p1={current_next_data['player1']['name']} p2={current_next_data['player2']['name']}")
         _undo_snapshot = None
     return json.loads(json.dumps(current_next_data, ensure_ascii=False))
+
 
 def reset():
     print("Resetting data..")

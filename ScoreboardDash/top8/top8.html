@@ -26,7 +26,7 @@
     <span class="header-sep">|</span>
     <div class="header-item active"><a href="top8.html">Top 8</a></div>
     <span class="header-sep">|</span>
-    <div class="header-item"><a href="../playerinfo/characterselect.html">Character Select</a></div>
+    <div class="header-item"><a href="../playerinfo/characterselect.html">Games &amp; Assets</a></div>
     <span class="header-sep">|</span>
     <div class="header-item"><a href="../stations/stations.html">Stations</a></div>
     <span class="header-sep">|</span>
@@ -72,6 +72,9 @@
             </div>
           </div>
 
+          <div class="top-right-stack">
+            <div class="current-row-grid">
+
           <!-- P1 -->
           <div id="current1p" class="player-col p1">
             <div class="player-col-label">Player 1</div>
@@ -86,6 +89,19 @@
               <button class="score-btn" onclick="subtractScoreP1();">−</button>
               <input class="score-field" type="text" id="form_score_1p" value="0" onchange="updateScore1();">
               <button class="score-btn" onclick="addScoreP1();">+</button>
+            </div>
+<div class="char-select-row" style="display:flex;flex-direction:column;gap:4px;margin-top:6px;">
+              <span style="font-family:var(--font-d);font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--fg2);">Character</span>
+              <div class="char-picker-inline">
+                <select class="char-select-pack" id="p1CharPack" onchange="charLoadChars(1)"><option value="">-- Pack --</option></select>
+                <div class="char-slot-tabs" id="p1CharSlots" style="display:none;"></div>
+                <div class="char-picker-btn" id="p1CharPickerBtn" onclick="charTogglePicker(1)" title="Select character">
+                  <img id="p1CharThumb" class="char-selected-thumb" src="" style="display:none;">
+                  <span id="p1CharLabel" class="char-selected-label">—</span>
+                  <span class="char-picker-arrow">▾</span>
+                </div>
+              </div>
+              <div class="char-picker-popover" id="p1CharPopover" style="display:none;"></div>
             </div>
           </div>
 
@@ -122,23 +138,65 @@
               <input class="score-field" type="text" id="form_score_2p" value="0" onchange="updateScore2();">
               <button class="score-btn" onclick="addScoreP2();">+</button>
             </div>
+<div class="char-select-row" style="display:flex;flex-direction:column;gap:4px;margin-top:6px;">
+              <span style="font-family:var(--font-d);font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--fg2);">Character</span>
+              <div class="char-picker-inline">
+                <select class="char-select-pack" id="p2CharPack" onchange="charLoadChars(2)"><option value="">-- Pack --</option></select>
+                <div class="char-slot-tabs" id="p2CharSlots" style="display:none;"></div>
+                <div class="char-picker-btn" id="p2CharPickerBtn" onclick="charTogglePicker(2)" title="Select character">
+                  <img id="p2CharThumb" class="char-selected-thumb" src="" style="display:none;">
+                  <span id="p2CharLabel" class="char-selected-label">—</span>
+                  <span class="char-picker-arrow">▾</span>
+                </div>
+              </div>
+              <div class="char-picker-popover" id="p2CharPopover" style="display:none;"></div>
+            </div>
           </div>
 
-          <!-- Next Round -->
-          <div class="top-side-panel">
-            <div class="side-panel-label">Next Round</div>
-            <div class="next-round-side-grid">
+            </div>
+
+            <!-- Next Round -->
+            <div class="top-side-panel">
+              <div class="side-panel-label">Next Round</div>
+              <div class="next-round-side-grid">
               <div id="next1p" class="next-player-col p1">
                 <div class="next-player-label">P1</div>
                 <select id="dropdown_country_next1" onchange="countryDropdown('dropdown_country_next1');"><option>US</option><option>CA</option><option>JP</option><option>KR</option><option>MX</option><option>GB</option><option>ES</option><option>FR</option><option>FI</option><option>SE</option><option>PR</option></select>
                 <div class="name-input-wrap"><input type="text" id="form_next_round_name_1p" placeholder="Next P1 Name" value="" list="next_player_suggestions" onchange="updateNextPlayer1();"><select class="name-picker" id="pick_next_name_1p" onchange="pickName('form_next_round_name_1p',this,updateNextPlayer1)"><option value="">▾</option></select></div>
                 <input type="text" id="form_next_round_team_1p" placeholder="Next P1 Team" value="" onchange="updateNextTeam1();">
+                <div class="char-select-row" style="display:flex;flex-direction:column;gap:4px;margin-top:6px;">
+                <span style="font-family:var(--font-d);font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--fg2);">Character</span>
+                <div class="char-picker-inline">
+                <select class="char-select-pack" id="p1NextCharPack" onchange="charLoadChars('1Next')"><option value="">-- Pack --</option></select>
+                <div class="char-slot-tabs" id="p1NextCharSlots" style="display:none;"></div>
+                <div class="char-picker-btn" id="p1NextCharPickerBtn" onclick="charTogglePicker('1Next')" title="Select character">
+                <img id="p1NextCharThumb" class="char-selected-thumb" src="" style="display:none;">
+                <span id="p1NextCharLabel" class="char-selected-label">—</span>
+                <span class="char-picker-arrow">▾</span>
+                </div>
+                </div>
+                <div class="char-picker-popover" id="p1NextCharPopover" style="display:none;"></div>
+                </div>
               </div>
               <div id="next2p" class="next-player-col p2">
                 <div class="next-player-label">P2</div>
                 <select id="dropdown_country_next2" onchange="countryDropdown('dropdown_country_next2');"><option>US</option><option>CA</option><option>JP</option><option>KR</option><option>MX</option><option>GB</option><option>ES</option><option>FR</option><option>FI</option><option>SE</option><option>PR</option></select>
                 <div class="name-input-wrap"><input type="text" id="form_next_round_name_2p" placeholder="Next P2 Name" value="" list="next_player_suggestions" onchange="updateNextPlayer2();"><select class="name-picker" id="pick_next_name_2p" onchange="pickName('form_next_round_name_2p',this,updateNextPlayer2)"><option value="">▾</option></select></div>
                 <input type="text" id="form_next_round_team_2p" placeholder="Next P2 Team" value="" onchange="updateNextTeam2();">
+                <div class="char-select-row" style="display:flex;flex-direction:column;gap:4px;margin-top:6px;">
+                <span style="font-family:var(--font-d);font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--fg2);">Character</span>
+                <div class="char-picker-inline">
+                <select class="char-select-pack" id="p2NextCharPack" onchange="charLoadChars('2Next')"><option value="">-- Pack --</option></select>
+                <div class="char-slot-tabs" id="p2NextCharSlots" style="display:none;"></div>
+                <div class="char-picker-btn" id="p2NextCharPickerBtn" onclick="charTogglePicker('2Next')" title="Select character">
+                <img id="p2NextCharThumb" class="char-selected-thumb" src="" style="display:none;">
+                <span id="p2NextCharLabel" class="char-selected-label">—</span>
+                <span class="char-picker-arrow">▾</span>
+                </div>
+                </div>
+                <div class="char-picker-popover" id="p2NextCharPopover" style="display:none;"></div>
+                </div>
+              </div>
               </div>
             </div>
           </div>
@@ -412,5 +470,6 @@
   </div><!-- /page-content -->
   <datalist id="next_player_suggestions"></datalist>
   <script src="../theme/theme.js" defer></script>
+<div id="char-preview"><img id="char-preview-img" src=""><div id="char-preview-label"></div></div>
 </body>
 </html>

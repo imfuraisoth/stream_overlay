@@ -69,9 +69,9 @@ a, a:hover, a:visited { color: inherit; text-decoration: none; }
 /* ── TOP ROW: Results | P1 | Controls | P2 | Next Round ── */
 .top-row-grid {
   display: grid;
-  grid-template-columns: 180px 1fr 130px 1fr 280px;
+  grid-template-columns: 180px 1fr;
   gap: 10px;
-  align-items: start;
+  align-items: stretch;
 }
 
 /* Side panels (Results + Next Round) */
@@ -495,3 +495,185 @@ select.name-picker {
 }
 select.name-picker:focus { border-color: var(--accent) !important; }
 select.name-picker option { font-size: 13px; }
+
+/* ── Character picker (ported from event dashboard) ── */
+/* ── CHARACTER SELECT ── */
+.char-select-row { flex-direction: column; align-items: flex-start; gap: 4px; }
+.char-picker-inline {
+  display: flex; gap: 4px; align-items: center; width: 100%; flex-wrap: wrap;
+}
+.char-select-pack { font-size: 11px; flex: 1; min-width: 80px; }
+/* The selected character display button */
+.char-picker-btn {
+  display: flex; align-items: center; gap: 5px; cursor: pointer;
+  background: var(--bg4); border: 1px solid var(--border) !important;
+  border-radius: 4px; padding: 3px 8px; flex: 1;
+  height: 29px; box-sizing: border-box;
+  transition: border-color .15s;
+}
+.char-picker-btn:hover { border-color: var(--accent) !important; }
+.char-picker-btn.open { border-color: var(--accent) !important; }
+.char-selected-thumb { width: 21px; height: 21px; object-fit: contain; flex-shrink: 0; }
+.char-selected-label { font-size: 11px; color: var(--fg); flex: 1; text-transform: capitalize; }
+.char-picker-arrow { font-size: 10px; color: var(--fg2); flex-shrink: 0; }
+/* Popover panel */
+.char-picker-popover {
+  position: relative; z-index: 200;
+  background: var(--bg3); border: 1px solid var(--border);
+  border-radius: 6px; padding: 8px;
+  max-height: 320px; overflow-y: auto;
+  width: 100%;
+}
+/* Character rows in popover */
+.char-row {
+  display: flex; align-items: center; gap: 6px;
+  padding: 4px 6px; border-radius: 4px; cursor: pointer;
+  transition: background .1s;
+}
+.char-row:hover { background: var(--bg4); }
+.char-row.expanded { background: var(--bg4); }
+.char-row-thumb {
+  width: 36px; height: 36px; object-fit: contain; flex-shrink: 0;
+}
+.char-row-name {
+  font-size: 12px; font-family: var(--font-d); font-weight: 700;
+  letter-spacing: .06em; text-transform: capitalize; color: var(--fg); flex: 1;
+}
+.char-row-arrow { font-size: 10px; color: var(--fg2); transition: transform .15s; }
+.char-row.expanded .char-row-arrow { transform: rotate(90deg); }
+/* Palette strip shown under expanded character */
+.char-palette-strip {
+  display: flex; flex-wrap: wrap; gap: 3px;
+  padding: 4px 6px 6px 48px;
+}
+.char-palette-thumb {
+  width: 36px; height: 36px; object-fit: contain;
+  border-radius: 3px; cursor: pointer;
+  border: 2px solid transparent; transition: border-color .1s, transform .1s;
+}
+.char-palette-thumb:hover { border-color: var(--fg2); transform: scale(1.1); }
+.char-palette-thumb.selected { border-color: var(--accent); box-shadow: 0 0 5px var(--accent); }
+/* ── CHARACTER PALETTE PREVIEW ── */
+#char-preview {
+  position: fixed;
+  z-index: 9999;
+  pointer-events: none;
+  display: none;
+  background: var(--bg2);
+  border: 1px solid var(--accent);
+  border-radius: 6px;
+  padding: 4px;
+  box-shadow: 0 4px 16px rgba(0,0,0,.6);
+}
+#char-preview img {
+  display: block;
+  width: 120px;
+  height: 120px;
+  object-fit: contain;
+  image-rendering: pixelated;
+}
+#char-preview-label {
+  font-family: var(--font-d);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: .06em;
+  text-transform: capitalize;
+  color: var(--fg2);
+  text-align: center;
+  padding: 3px 0 1px;
+}
+/* ── CHARACTER PORTRAIT (score area) ── */
+.score-portrait-row {
+  display: flex; align-items: center; gap: 10px;
+}
+.char-portrait {
+  width: 112px; height: 112px; object-fit: contain;
+  image-rendering: pixelated; flex-shrink: 0;
+  border-radius: 3px; margin-left: auto;
+}
+#p2CharPortrait {
+  transform: scaleX(-1);
+}
+/* ── Character slot tabs (multi-pick games) ─────────────────── */
+.char-slot-tabs {
+	display: flex;
+	gap: 3px;
+	align-items: center;
+	flex-shrink: 0;
+}
+.char-slot-tab {
+	width: 24px;
+	height: 24px;
+	border: 1px solid var(--border, #555);
+	border-radius: 4px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	cursor: pointer;
+	font-size: 11px;
+	color: var(--fg2, #aaa);
+	background: var(--bg2, transparent);
+	box-sizing: border-box;
+	overflow: hidden;
+}
+.char-slot-tab img { width: 20px; height: 20px; object-fit: contain; }
+.char-slot-tab:hover { border-color: var(--accent, #e33); }
+.char-slot-tab.active { border-color: var(--accent, #e33); box-shadow: 0 0 0 1px var(--accent, #e33) inset; }
+.char-slot-tab.filled span { display: none; }
+/* ── Roster popover view + footer ───────────────────────────── */
+.char-roster-head {
+	font-family: var(--font-d);
+	font-size: 10px;
+	font-weight: 700;
+	letter-spacing: .1em;
+	text-transform: uppercase;
+	color: var(--fg2, #aaa);
+	padding: 6px 8px 4px;
+	border-bottom: 1px solid var(--border, #555);
+}
+.char-roster-pal { color: var(--fg2, #aaa); font-size: 10px; }
+.char-popover-footer {
+	display: flex;
+	gap: 6px;
+	padding: 6px 8px;
+	border-top: 1px solid var(--border, #555);
+}
+.char-popover-footbtn {
+	flex: 1;
+	font-family: var(--font-d);
+	font-size: 10px;
+	padding: 4px 6px;
+	cursor: pointer;
+	background: var(--bg2, transparent);
+	color: var(--fg, #eee);
+	border: 1px solid var(--border, #555);
+	border-radius: 4px;
+}
+.char-popover-footbtn:hover { border-color: var(--accent, #e33); }
+
+/* ── Current match + next round stacked right of Results ───── */
+.top-right-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 0;
+}
+.current-row-grid {
+  display: grid;
+  grid-template-columns: 1fr 130px 1fr;
+  gap: 10px;
+  align-items: start;
+}
+.next-round-three-col {
+  grid-template-columns: 1fr 1fr 160px;
+}
+.next-advance-col {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.next-advance-col button { width: 100%; font-size: 10px; }
+@media (max-width: 1100px) {
+  .top-row-grid { grid-template-columns: 1fr; }
+  .next-round-three-col { grid-template-columns: 1fr 1fr; }
+}

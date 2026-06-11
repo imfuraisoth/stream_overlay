@@ -25,7 +25,7 @@
   <span class="header-sep">|</span>
   <div class="header-item"><a href="../top8/top8.html">Top 8</a></div>
   <span class="header-sep">|</span>
-  <div class="header-item"><a href="../playerinfo/characterselect.html">Character Select</a></div>
+  <div class="header-item"><a href="../playerinfo/characterselect.html">Games &amp; Assets</a></div>
   <span class="header-sep">|</span>
   <div class="header-item"><a href="../stations/stations.html">Stations</a></div>
   <span class="header-sep">|</span>
@@ -40,7 +40,6 @@
   </div>
   <div class="toolbar-right">
     <span class="player-count" id="playerCount"></span>
-    <button class="btn sec sm" onclick="cleanupDuplicates()">🧹 Clean Duplicates</button>
     <button class="btn sec sm" onclick="loadPlayers()">↺ Refresh</button>
   </div>
 </div>
@@ -90,6 +89,26 @@
         <input type="checkbox" id="mIsCommentator" style="width:14px;height:14px;accent-color:var(--accent);flex-shrink:0;">
         <label for="mIsCommentator" style="font-family:var(--font-d);font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--fg2);cursor:pointer;">Commentator</label>
       </div>
+      <div class="field-group" id="mCharactersSection">
+        <label>Characters</label>
+        <div style="display:flex;gap:6px;align-items:center;">
+          <select id="mCharGameSelect" onchange="mCharGameChanged()" style="flex:1;">
+            <option value="">— Select game —</option>
+          </select>
+          <button class="btn sec" onclick="mCharDeleteGame()" style="padding:4px 8px;font-size:10px;" title="Remove this game's roster and picks">✕</button>
+        </div>
+        <div id="mRosterArea" style="display:none;flex-direction:column;gap:6px;margin-top:6px;">
+          <div style="font-family:var(--font-d);font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--fg2);">Roster</div>
+          <div id="mRosterChips" style="display:flex;flex-wrap:wrap;gap:4px;"></div>
+          <button class="btn sec" id="mAddCharBtn" onclick="mToggleCharPicker()" style="align-self:flex-start;padding:4px 10px;font-size:10px;">+ Add character</button>
+          <div id="mCharPicker" style="display:none;flex-direction:column;gap:6px;padding:8px;background:var(--bg3);border-radius:4px;max-height:260px;overflow-y:auto;">
+            <select id="mPickerPack" onchange="mPickerLoadChars()"><option value="">-- Pack --</option></select>
+            <div id="mPickerList"></div>
+          </div>
+          <div style="font-family:var(--font-d);font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--fg2);margin-top:4px;">Current picks</div>
+          <div id="mSlotsArea" style="display:flex;flex-direction:column;gap:4px;"></div>
+        </div>
+      </div>
     </div>
     <div class="modal-footer">
       <button class="btn sec" onclick="closeModal()">Cancel</button>
@@ -138,20 +157,6 @@ function populateCountrySelect(sel, selected) {
 populateCountrySelect(document.getElementById('mCountry'), '');
 
 // ── LOAD ──────────────────────────────────────────────────────────
-async function cleanupDuplicates() {
-  if (!confirm('Remove all entries without a proper player ID? This will clean up any duplicate name-keyed entries.')) return;
-  try {
-    const res = await fetch('/cleanupLocalPlayers', { method: 'POST' });
-    const data = await res.json();
-    if (data.removed === 0) {
-      alert('No duplicates found — database is clean.');
-    } else {
-      alert(`Removed ${data.removed} duplicate entr${data.removed === 1 ? 'y' : 'ies'}: ${data.keys.join(', ')}`);
-    }
-    await loadPlayers();
-  } catch(e) { console.error('Cleanup error:', e); }
-}
-
 async function loadPlayers() {
   try {
     const res = await fetch('/getLocalPlayers');
@@ -229,16 +234,51 @@ function sortBy(key) {
   renderTable();
 }
 
-// ── ADD MODAL ─────────────────────────────────────────────────────
+// ── ADD/EDIT MODAL ─────────────────────────────────────────
+let _gamesRegistry = {};   // game -> char_slots
+
+async function loadGamesRegistry() {
+  try {
+    const res = await fetch('/getGames');
+    _gamesRegistry = await res.json() || {};
+  } catch(e) { _gamesRegistry = {}; }
+}
+
+function mPopulateGameSelect(selected) {
+  var sel = document.getElementById('mCharGameSelect');
+  sel.innerHTML = '<option value="">\u2014 Select game \u2014</option>';
+  Object.keys(_gamesRegistry).sort().forEach(function(g) {
+    var opt = document.createElement('option');
+    opt.value = g; opt.textContent = g + ' (' + (_gamesRegistry[g] || 1) + ' pick' + ((_gamesRegistry[g] || 1) > 1 ? 's' : '') + ')';
+    sel.appendChild(opt);
+  });
+  sel.value = selected || '';
+}
+
+function mNormalizeGameData(obj) {
+  // legacy single dicts -> arrays
+  var out = {};
+  Object.keys(obj || {}).forEach(function(g) {
+    var v = obj[g];
+    if (v && !Array.isArray(v)) v = [v];
+    out[g] = (v || []).filter(function(p) { return p && p.file; });
+  });
+  return out;
+}
+
 function openAddModal() {
   _editingOrigName = null;
   document.getElementById('modalTitle').textContent = 'Add Player';
+  window._editingCharacters = {};
+  window._editingRoster = {};
   document.getElementById('mName').value    = '';
   document.getElementById('mTeam').value    = '';
   document.getElementById('mIsCommentator').checked = false;
   document.getElementById('mSocialHandle').value = '';
   document.getElementById('mSocialPlatform').value = '';
   populateCountrySelect(document.getElementById('mCountry'), '');
+  mPopulateGameSelect('');
+  mCharGameChanged();
   document.getElementById('modal').classList.add('open');
   document.getElementById('mName').focus();
 }
@@ -248,14 +288,209 @@ function openEditModal(id) {
   if (!p) return;
   _editingOrigName = p.id || p.name;
   document.getElementById('modalTitle').textContent = 'Edit Player';
-  document.getElementById('mName').value    = p.name    || '';
-  document.getElementById('mTeam').value    = p.team    || '';
-  populateCountrySelect(document.getElementById('mCountry'), p.country || '');
-  document.getElementById('mIsCommentator').checked = p.is_commentator || false;
-  document.getElementById('mSocialHandle').value   = p.social_handle   || '';
+  document.getElementById('mName').value    = p.name || '';
+  document.getElementById('mTeam').value    = p.team || '';
+  document.getElementById('mIsCommentator').checked = !!p.is_commentator;
+  document.getElementById('mSocialHandle').value = p.social_handle || '';
   document.getElementById('mSocialPlatform').value = p.social_platform || '';
+  populateCountrySelect(document.getElementById('mCountry'), p.country || '');
+  window._editingCharacters = mNormalizeGameData(JSON.parse(JSON.stringify(p.characters || {})));
+  window._editingRoster     = mNormalizeGameData(JSON.parse(JSON.stringify(p.roster || {})));
+  // Default to the first game this player has data for
+  var withData = Object.keys(window._editingRoster).filter(function(g) { return window._editingRoster[g].length; })
+    .concat(Object.keys(window._editingCharacters).filter(function(g) { return window._editingCharacters[g].length; }));
+  mPopulateGameSelect(withData.length ? withData[0] : '');
+  mCharGameChanged();
   document.getElementById('modal').classList.add('open');
-  document.getElementById('mName').focus();
+}
+
+function mCharGameChanged() {
+  var game = document.getElementById('mCharGameSelect').value;
+  var area = document.getElementById('mRosterArea');
+  document.getElementById('mCharPicker').style.display = 'none';
+  if (!game) { area.style.display = 'none'; return; }
+  area.style.display = 'flex';
+  mRenderRoster();
+  mRenderSlots();
+}
+
+function mRenderRoster() {
+  var game = document.getElementById('mCharGameSelect').value;
+  var chips = document.getElementById('mRosterChips');
+  chips.innerHTML = '';
+  var roster = (window._editingRoster[game] || []);
+  if (!roster.length) {
+    chips.innerHTML = '<span style="font-family:var(--font-d);font-size:11px;color:var(--fg2);">No characters yet \u2014 add some below.</span>';
+    return;
+  }
+  roster.forEach(function(entry) {
+    var chip = document.createElement('span');
+    chip.className = 'roster-chip';
+    var img = document.createElement('img');
+    img.src = '/' + entry.file;
+    img.className = 'char-preview-target';
+    img.dataset.char = entry.character;
+    img.dataset.palette = entry.palette;
+    img.onerror = function() { this.style.display = 'none'; };
+    chip.appendChild(img);
+    var txt = document.createElement('span');
+    txt.textContent = entry.character + ' (' + entry.palette + ')';
+    chip.appendChild(txt);
+    var x = document.createElement('span');
+    x.className = 'roster-chip-x';
+    x.textContent = '\u2715';
+    x.title = 'Remove from roster';
+    x.onclick = function() { mRemoveRosterEntry(entry.character); };
+    chip.appendChild(x);
+    chips.appendChild(chip);
+  });
+}
+
+function mRemoveRosterEntry(character) {
+  var game = document.getElementById('mCharGameSelect').value;
+  window._editingRoster[game] = (window._editingRoster[game] || []).filter(function(e) {
+    return e.character !== character;
+  });
+  // Drop any slot picks that referenced the removed character
+  if (window._editingCharacters[game]) {
+    window._editingCharacters[game] = window._editingCharacters[game].filter(function(p) {
+      return p.character !== character;
+    });
+  }
+  mRenderRoster();
+  mRenderSlots();
+}
+
+function mToggleCharPicker() {
+  var picker = document.getElementById('mCharPicker');
+  var open = picker.style.display !== 'none';
+  picker.style.display = open ? 'none' : 'flex';
+  if (!open) mPickerLoadPacks();
+}
+
+async function mPickerLoadPacks() {
+  var game = document.getElementById('mCharGameSelect').value;
+  var sel = document.getElementById('mPickerPack');
+  sel.innerHTML = '<option value="">-- Pack --</option>';
+  document.getElementById('mPickerList').innerHTML = '';
+  if (!game) return;
+  try {
+    var res = await fetch('/getCharacterPacks?game=' + encodeURIComponent(game));
+    var packs = await res.json();
+    (packs || []).forEach(function(p) {
+      var opt = document.createElement('option');
+      opt.value = p; opt.textContent = p;
+      sel.appendChild(opt);
+    });
+    if (packs && packs.length === 1) { sel.value = packs[0]; mPickerLoadChars(); }
+  } catch(e) { console.error('mPickerLoadPacks:', e); }
+}
+
+async function mPickerLoadChars() {
+  var game = document.getElementById('mCharGameSelect').value;
+  var pack = document.getElementById('mPickerPack').value;
+  var listEl = document.getElementById('mPickerList');
+  listEl.innerHTML = '';
+  if (!game || !pack) return;
+  try {
+    var res = await fetch('/getCharacterList?game=' + encodeURIComponent(game) + '&pack=' + encodeURIComponent(pack));
+    var charMap = await res.json();
+    Object.keys(charMap).sort().forEach(function(char) {
+      var row = document.createElement('div');
+      row.className = 'mpicker-row';
+      var name = document.createElement('span');
+      name.className = 'mpicker-name';
+      name.textContent = char;
+      row.appendChild(name);
+      var strip = document.createElement('span');
+      strip.className = 'mpicker-strip';
+      charMap[char].forEach(function(p) {
+        var img = document.createElement('img');
+        img.src = '/' + p.file;
+        img.className = 'char-preview-target';
+        img.dataset.char = char;
+        img.dataset.palette = p.palette;
+        img.title = char + ' palette ' + p.palette;
+        img.onerror = function() { this.style.display = 'none'; };
+        img.onclick = function() { mAddRosterEntry(char, pack, p.palette, p.file); };
+        strip.appendChild(img);
+      });
+      row.appendChild(strip);
+      listEl.appendChild(row);
+    });
+  } catch(e) { console.error('mPickerLoadChars:', e); }
+}
+
+function mAddRosterEntry(character, pack, palette, file) {
+  var game = document.getElementById('mCharGameSelect').value;
+  if (!window._editingRoster[game]) window._editingRoster[game] = [];
+  var roster = window._editingRoster[game];
+  var found = roster.find(function(e) { return e.character === character; });
+  if (found) { found.pack = pack; found.palette = palette; found.file = file; }
+  else roster.push({ character: character, pack: pack, palette: palette, file: file });
+  mRenderRoster();
+  mRenderSlots();
+}
+
+function mRenderSlots() {
+  var game = document.getElementById('mCharGameSelect').value;
+  var area = document.getElementById('mSlotsArea');
+  area.innerHTML = '';
+  var slots = _gamesRegistry[game] || 1;
+  var roster = window._editingRoster[game] || [];
+  var picks = window._editingCharacters[game] || [];
+  for (var s = 0; s < slots; s++) (function(s) {
+    var row = document.createElement('div');
+    row.style.cssText = 'display:flex;align-items:center;gap:6px;';
+    if (slots > 1) {
+      var lbl = document.createElement('span');
+      lbl.style.cssText = 'font-family:var(--font-d);font-size:10px;color:var(--fg2);width:38px;flex-shrink:0;';
+      lbl.textContent = 'Slot ' + (s + 1);
+      row.appendChild(lbl);
+    }
+    var sel = document.createElement('select');
+    sel.style.cssText = 'flex:1;';
+    var none = document.createElement('option');
+    none.value = ''; none.textContent = '(empty)';
+    sel.appendChild(none);
+    roster.forEach(function(e) {
+      var opt = document.createElement('option');
+      opt.value = e.character;
+      opt.textContent = e.character + ' (' + e.palette + ')';
+      sel.appendChild(opt);
+    });
+    var current = picks.find(function(p) { return (p.slot !== undefined ? p.slot : picks.indexOf(p)) === s; });
+    if (current) sel.value = current.character;
+    sel.onchange = function() { mSlotsChanged(); };
+    sel.dataset.slot = s;
+    row.appendChild(sel);
+    area.appendChild(row);
+  })(s);
+}
+
+function mSlotsChanged() {
+  var game = document.getElementById('mCharGameSelect').value;
+  var roster = window._editingRoster[game] || [];
+  var picks = [];
+  document.querySelectorAll('#mSlotsArea select').forEach(function(sel) {
+    var character = sel.value;
+    if (!character) return;
+    var entry = roster.find(function(e) { return e.character === character; });
+    if (!entry) return;
+    picks.push({ slot: parseInt(sel.dataset.slot, 10), pack: entry.pack,
+                 character: entry.character, palette: entry.palette, file: entry.file });
+  });
+  window._editingCharacters[game] = picks;
+}
+
+function mCharDeleteGame() {
+  var game = document.getElementById('mCharGameSelect').value;
+  if (!game) return;
+  if (!confirm('Remove ' + game + ' roster and picks for this player?')) return;
+  delete window._editingRoster[game];
+  delete window._editingCharacters[game];
+  mRenderRoster();
+  mRenderSlots();
 }
 
 function closeModal() { document.getElementById('modal').classList.remove('open'); }
@@ -272,8 +507,10 @@ async function saveModal() {
 
   const endpoint = _editingOrigName ? '/updateLocalPlayer' : '/saveLocalPlayer';
   const body = _editingOrigName
-    ? { id: _editingOrigName, name, team, country, social_handle, social_platform, is_commentator }
-    : { name, team, country, social_handle, social_platform, is_commentator };
+    ? { id: _editingOrigName, name, team, country, social_handle, social_platform, is_commentator,
+        characters: window._editingCharacters, roster: window._editingRoster }
+    : { name, team, country, social_handle, social_platform, is_commentator,
+        characters: window._editingCharacters, roster: window._editingRoster };
 
   try {
     await fetch(endpoint, {
@@ -337,9 +574,41 @@ document.getElementById('mName').addEventListener('keydown', function(e) { if (e
 document.getElementById('mTeam').addEventListener('keydown', function(e) { if (e.key === 'Enter') saveModal(); });
 
 // Load on start
-loadPlayers();
+loadGamesRegistry().then(loadPlayers);
 </script>
 
   <script src="../theme/theme.js" defer></script>
+<div id="char-preview"><img id="char-preview-img" src=""><div id="char-preview-label"></div></div>
+<script>
+// ── CHARACTER HOVER PREVIEW ───────────────────────────────
+(function() {
+  var p = document.getElementById('char-preview');
+  var img = document.getElementById('char-preview-img');
+  var lbl = document.getElementById('char-preview-label');
+  function move(e) {
+    if (p.style.display === 'none') return;
+    var x = e.clientX + 16, y = e.clientY + 16;
+    if (x + 140 > window.innerWidth)  x = e.clientX - 148;
+    if (y + 155 > window.innerHeight) y = e.clientY - 158;
+    p.style.left = x + 'px'; p.style.top = y + 'px';
+  }
+  document.addEventListener('mouseover', function(e) {
+    var t = e.target.closest('.char-preview-target');
+    if (!t) { p.style.display = 'none'; return; }
+    img.src = t.src;
+    lbl.textContent = (t.dataset.char || '') +
+      (t.dataset.palette !== undefined ? ' \u00b7 ' + t.dataset.palette : '');
+    p.style.display = 'block';
+    move(e);
+  });
+  document.addEventListener('mousemove', move);
+  document.addEventListener('mouseout', function(e) {
+    var t = e.target.closest('.char-preview-target');
+    if (t && !(e.relatedTarget && e.relatedTarget.closest('.char-preview-target'))) {
+      p.style.display = 'none';
+    }
+  });
+})();
+</script>
 </body>
 </html>

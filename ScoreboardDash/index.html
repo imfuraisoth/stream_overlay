@@ -31,7 +31,7 @@
     <span class="header-sep">|</span>
     <div class="header-item"><a href="top8/top8.html">Top 8</a></div>
     <span class="header-sep">|</span>
-    <div class="header-item"><a href="playerinfo/characterselect.html">Character Select</a></div>
+    <div class="header-item"><a href="playerinfo/characterselect.html">Games &amp; Assets</a></div>
     <span class="header-sep">|</span>
     <div class="header-item"><a href="stations/stations.html">Stations</a></div>
     <span class="header-sep">|</span>
@@ -78,6 +78,19 @@
 									<span>Social</span>
 									<span class="social-display-value" id="p1SocialValue"></span>
 								</div>
+								<div class="playerCardItem char-select-row">
+									<span>Character</span>
+									<div class="char-picker-inline">
+										<select class="char-select-pack" id="p1CharPack" onchange="charLoadChars(1)"><option value="">-- Pack --</option></select>
+										<div class="char-slot-tabs" id="p1CharSlots" style="display:none;"></div>
+										<div class="char-picker-btn" id="p1CharPickerBtn" onclick="charTogglePicker(1)" title="Select character">
+											<img id="p1CharThumb" class="char-selected-thumb" src="" style="display:none;">
+											<span id="p1CharLabel" class="char-selected-label">—</span>
+											<span class="char-picker-arrow">▾</span>
+										</div>
+									</div>
+								</div>
+								<div class="char-picker-popover" id="p1CharPopover" style="display:none;"></div>
 							</div>
 						</div>
 						<div class="playerCardItem">
@@ -86,10 +99,13 @@
 						</div>
 						<div class="playerCardItem">
 							<span>Score</span>
-							<div class="cardScoreItem">
-								<button class="scoreButton" onclick="subtractScoreP1();"><span class="minus">−</span></button>
-								<input class="form_score_1p" type="text" id="form_score_1p" value="0" onchange="updateScore1();">
-								<button class="scoreButton" onclick="addScoreP1();">+</button>
+							<div class="score-portrait-row">
+								<div class="cardScoreItem">
+									<button class="scoreButton" onclick="subtractScoreP1();"><span class="minus">−</span></button>
+									<input class="form_score_1p" type="text" id="form_score_1p" value="0" onchange="updateScore1();">
+									<button class="scoreButton" onclick="addScoreP1();">+</button>
+								</div>
+								<img id="p1CharPortrait" class="char-portrait" src="" style="display:none;">
 							</div>
 						</div>
 					</div>
@@ -97,6 +113,32 @@
 					<!-- Center column -->
 					<div class="currentMatchInfoDisplay">
 						<div id="text_current_match"><span>CURRENT MATCH</span></div>
+						<div id="round" style="width:100%;">
+							<select id="dropdown_round" class="dropdown_round" onchange="updateRound();" style="width:100%;">
+								<option>Casuals</option>
+								<option>Pools</option>
+								<option>Winners Round 1</option>
+								<option>Winners Round 2</option>
+								<option>Winners Round 3</option>
+								<option>Winners Round 4</option>
+								<option>Winners Quarters</option>
+								<option>Winners Semis</option>
+								<option>Winners Finals</option>
+								<option>Grand Finals</option>
+								<option>Losers Round 1</option>
+								<option>Losers Round 2</option>
+								<option>Losers Round 3</option>
+								<option>Losers Round 4</option>
+								<option>Losers Quarters</option>
+								<option>Losers Semis</option>
+								<option>Losers Finals</option>
+								<option>Exhibitions</option>
+								<option>FT3</option>
+								<option>FT5</option>
+								<option>FT10</option>
+								<option>FT?</option>
+							</select>
+						</div>
 						<div id="button_reverse_names">
 							<button class="rectangle_button" id="rectangle_button_7" onclick="reversePlayerNames();">⇄ Swap Names</button>
 						</div>
@@ -130,6 +172,19 @@
 								<span>Social</span>
 								<span class="social-display-value" id="p2SocialValue"></span>
 							</div>
+							<div class="playerCardItem char-select-row">
+								<span>Character</span>
+								<div class="char-picker-inline">
+									<select class="char-select-pack" id="p2CharPack" onchange="charLoadChars(2)"><option value="">-- Pack --</option></select>
+									<div class="char-slot-tabs" id="p2CharSlots" style="display:none;"></div>
+										<div class="char-picker-btn" id="p2CharPickerBtn" onclick="charTogglePicker(2)" title="Select character">
+										<img id="p2CharThumb" class="char-selected-thumb" src="" style="display:none;">
+										<span id="p2CharLabel" class="char-selected-label">—</span>
+										<span class="char-picker-arrow">▾</span>
+									</div>
+								</div>
+							</div>
+							<div class="char-picker-popover" id="p2CharPopover" style="display:none;"></div>
 						</div>
 						<div class="cardCountry">
 							<div class="playerCardItem">
@@ -139,10 +194,13 @@
 						</div>
 						<div class="playerCardItem">
 							<span>Score</span>
-							<div class="cardScoreItem">
-								<button class="scoreButton" onclick="subtractScoreP2();"><span class="minus">−</span></button>
-								<input class="form_score_2p" type="text" id="form_score_2p" value="0" onchange="updateScore2();">
-								<button class="scoreButton" onclick="addScoreP2();">+</button>
+							<div class="score-portrait-row">
+								<div class="cardScoreItem">
+									<button class="scoreButton" onclick="subtractScoreP2();"><span class="minus">−</span></button>
+									<input class="form_score_2p" type="text" id="form_score_2p" value="0" onchange="updateScore2();">
+									<button class="scoreButton" onclick="addScoreP2();">+</button>
+								</div>
+								<img id="p2CharPortrait" class="char-portrait" src="" style="display:none;">
 							</div>
 						</div>
 					</div>
@@ -154,40 +212,6 @@
 
 					<!-- Left column: Round, FT, Game, Start.gg, Stats -->
 					<div class="leftSectionContainer">
-
-						<div class="round-section-container">
-							<div class="round-contents">
-								<div class="contents-item-dropdown">
-									<div class="header-type">Round Type</div>
-									<div id="round">
-										<select id="dropdown_round" class="dropdown_round" onchange="updateRound();">
-											<option>Casuals</option>
-											<option>Pools</option>
-											<option>Winners Round 1</option>
-											<option>Winners Round 2</option>
-											<option>Winners Round 3</option>
-											<option>Winners Round 4</option>
-											<option>Winners Quarters</option>
-											<option>Winners Semis</option>
-											<option>Winners Finals</option>
-											<option>Grand Finals</option>
-											<option>Losers Round 1</option>
-											<option>Losers Round 2</option>
-											<option>Losers Round 3</option>
-											<option>Losers Round 4</option>
-											<option>Losers Quarters</option>
-											<option>Losers Semis</option>
-											<option>Losers Finals</option>
-											<option>Exhibitions</option>
-											<option>FT3</option>
-											<option>FT5</option>
-											<option>FT10</option>
-											<option>FT?</option>
-										</select>
-									</div>
-								</div>
-							</div>
-						</div>
 
 						<div class="leftMidContainer">
 							<div class="ftContainer">
@@ -361,6 +385,19 @@
 									<span>Team</span>
 									<input class="form_next_round_team_1p" type="text" id="form_next_round_team_1p" value="" placeholder="Next P1 Team" onchange="updateNextTeam1();">
 								</div>
+								<div class="nextRoundItem char-select-row">
+									<span>Character</span>
+									<div class="char-picker-inline">
+										<select class="char-select-pack" id="p1NextCharPack" onchange="charLoadChars('1Next')"><option value="">-- Pack --</option></select>
+										<div class="char-slot-tabs" id="p1NextCharSlots" style="display:none;"></div>
+										<div class="char-picker-btn" id="p1NextCharPickerBtn" onclick="charTogglePicker('1Next')" title="Select character">
+											<img id="p1NextCharThumb" class="char-selected-thumb" src="" style="display:none;">
+											<span id="p1NextCharLabel" class="char-selected-label">—</span>
+											<span class="char-picker-arrow">▾</span>
+										</div>
+									</div>
+									<div class="char-picker-popover" id="p1NextCharPopover" style="display:none;"></div>
+								</div>
 								<div class="nextRoundItem social-display-row" id="next1SocialDisplay" style="display:none;">
 									<span>Social</span>
 									<span class="social-display-value" id="next1SocialValue"></span>
@@ -381,6 +418,19 @@
 								<div class="nextRoundItem" id="text_next_round_team_2p">
 									<span>Team</span>
 									<input class="form_next_round_team_2p" type="text" id="form_next_round_team_2p" value="" placeholder="Next P2 Team" onchange="updateNextTeam2();">
+								</div>
+								<div class="nextRoundItem char-select-row">
+									<span>Character</span>
+									<div class="char-picker-inline">
+										<select class="char-select-pack" id="p2NextCharPack" onchange="charLoadChars('2Next')"><option value="">-- Pack --</option></select>
+										<div class="char-slot-tabs" id="p2NextCharSlots" style="display:none;"></div>
+										<div class="char-picker-btn" id="p2NextCharPickerBtn" onclick="charTogglePicker('2Next')" title="Select character">
+											<img id="p2NextCharThumb" class="char-selected-thumb" src="" style="display:none;">
+											<span id="p2NextCharLabel" class="char-selected-label">—</span>
+											<span class="char-picker-arrow">▾</span>
+										</div>
+									</div>
+									<div class="char-picker-popover" id="p2NextCharPopover" style="display:none;"></div>
 								</div>
 								<div class="nextRoundItem social-display-row" id="next2SocialDisplay" style="display:none;">
 									<span>Social</span>
@@ -559,5 +609,6 @@
 	</script>
 	<datalist id="next_player_suggestions"></datalist>
   <script src="theme/theme.js" defer></script>
+<div id="char-preview"><img id="char-preview-img" src=""><div id="char-preview-label"></div></div>
 </body>
 </html>

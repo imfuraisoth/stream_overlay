@@ -1,5 +1,5 @@
 // ── LOCAL PLAYER PERSISTENCE ──────────────────────────────────────
-// Saves any manually entered name to data/local_players.json on the server
+// Saves any manually entered name to the local players database on the server
 // and merges them into the next_player_suggestions datalist on load.
 
 var _playerSource = localStorage.getItem('player_source') || 'both';
@@ -119,7 +119,7 @@ function updateSocialDisplays() {
 function saveLocalPlayerName(name, team, country) {
     if (!name || name.trim() === '') return;
     // Merge into existing map entry — never overwrite with blanks
-    var existing = _localPlayersMap.get(name.trim()) || { name: name.trim() };
+    var existing = _localPlayersByName.get(name.trim()) || _localPlayersMap.get(name.trim()) || { name: name.trim() };
     if (team)    existing.team    = team;
     if (country) existing.country = country;
     existing.name = name.trim();
@@ -165,6 +165,15 @@ function loadLocalPlayers() {
             // Write social fields for any players already on screen
             refreshSocialFields();
             populateNamePickers(players.map(function(p) { return typeof p === 'string' ? p : p.name; }));
+            // Restore characters for currently displayed players now that map is loaded
+            CHAR_PLAYERS.forEach(function(player) {
+                var name = charPlayerName(player);
+                if (!name) return;
+                var localPlayer = _localPlayersByName.get(name.trim());
+                var game = charGetGame();
+                var saved = (game && localPlayer && localPlayer.characters) ? localPlayer.characters[game] : null;
+                if (saved) charApplyList(player, saved);
+            });
         })
         .catch(function(e) { console.log('loadLocalPlayers error:', e); });
 }
@@ -243,6 +252,24 @@ function populateData(data) {
     if (jsonData.nextSocial2Platform == undefined) { jsonData.nextSocial2Platform = ""; }
     refreshSocialFields();
 	updateCurrentPlayerDisplay();
+	// Restore character UI from scoreboard.json values
+	function restoreCharUI(player) {
+		var list = jsonData['p' + player + 'Characters'];
+		if (Array.isArray(list) && list.length) { charApplyList(player, list); return; }
+		// Legacy single-pick fields from an older scoreboard.json
+		var file = jsonData['p' + player + 'CharacterFile'];
+		if (file) {
+			charApplyList(player, [{ slot: 0, pack: jsonData['p' + player + 'CharacterPack'] || '',
+				character: jsonData['p' + player + 'Character'] || '',
+				palette: jsonData['p' + player + 'Palette'] || 0, file: file }]);
+		} else {
+			charApplyList(player, null);
+		}
+	}
+	restoreCharUI(1);
+	restoreCharUI(2);
+	restoreCharUI('1Next');
+	restoreCharUI('2Next');
 }
 
 const countriesDropDownList = ['US', 'CA', 'JP', 'KR', 'MX', 'GB', 'ES', 'FR', 'FI', 'SE', 'PR', 'BR'];
@@ -316,9 +343,13 @@ function updatePlayer1() {
         }
         jsonData.p1SocialHandle   = localPlayer.social_handle   || '';
         jsonData.p1SocialPlatform = localPlayer.social_platform || '';
+        // Restore saved characters for current game (clears if none)
+        var _game1 = charGetGame();
+        charApplyList(1, (_game1 && localPlayer.characters) ? localPlayer.characters[_game1] : null);
     } else {
         jsonData.p1SocialHandle   = '';
         jsonData.p1SocialPlatform = '';
+        clearCharacterSelect(1);
     }
     saveLocalPlayerName(jsonData.p1Name, jsonData.p1Team, jsonData.p1Country);
     updateCurrentPlayerDisplay();
@@ -345,9 +376,13 @@ function updatePlayer2() {
         }
         jsonData.p2SocialHandle   = localPlayer.social_handle   || '';
         jsonData.p2SocialPlatform = localPlayer.social_platform || '';
+        // Restore saved characters for current game (clears if none)
+        var _game2 = charGetGame();
+        charApplyList(2, (_game2 && localPlayer.characters) ? localPlayer.characters[_game2] : null);
     } else {
         jsonData.p2SocialHandle   = '';
         jsonData.p2SocialPlatform = '';
+        clearCharacterSelect(2);
     }
     saveLocalPlayerName(jsonData.p2Name, jsonData.p2Team, jsonData.p2Country);
     updateCurrentPlayerDisplay();
@@ -399,6 +434,9 @@ function updateNextPlayer1() {
         jsonData.nextcountry1 = player.country;
         document.getElementById("dropdown_country_next1").value = jsonData.nextcountry1;
 	}
+    var _nlp1 = charGetLocalPlayer('1Next');
+    var _ng1 = charGetGame();
+    charApplyList('1Next', (_ng1 && _nlp1 && _nlp1.characters) ? _nlp1.characters[_ng1] : null);
 	sendJSON();
 }
 
@@ -435,6 +473,9 @@ function updateNextPlayer2() {
         jsonData.nextcountry2 = player.country;
         document.getElementById("dropdown_country_next2").value = jsonData.nextcountry2;
     }
+    var _nlp2 = charGetLocalPlayer('2Next');
+    var _ng2 = charGetGame();
+    charApplyList('2Next', (_ng2 && _nlp2 && _nlp2.characters) ? _nlp2.characters[_ng2] : null);
 	sendJSON();
 }
 
@@ -520,6 +561,8 @@ function resetNamesAndScore() {
 	jsonData.p2Score = "0";
 	jsonData.p1Seed = "";
 	jsonData.p2Seed = "";
+        jsonData.p1Bracket = "";
+                   jsonData.p2Bracket = "";
 	updateCurrentPlayerDisplay();
 	sendJsonToEndpoint("updatealldata");
 }
@@ -619,6 +662,8 @@ function resetScores() {
 	document.getElementById("form_score_2p").value = "0";
 	jsonData.p1Score = "0";
 	jsonData.p2Score = "0";
+        jsonData.p1Bracket = "";
+                   jsonData.p2Bracket = "";
 	updateCurrentPlayerDisplay();
 	sendJsonToEndpoint('updateCurrentScore');
 }
@@ -663,6 +708,8 @@ function resetAll() {
 	jsonData.resultplayer2 = "";
 	jsonData.resultscore1 = "";
 	jsonData.resultscore2 = "";
+        jsonData.p1Bracket = "";
+	jsonData.p2Bracket = "";
 	jsonData.maxScore = "";
 	jsonData.round = "Casuals";
 	jsonData.nextRound = "Casuals";
@@ -685,7 +732,19 @@ function countryDropdown2() {
     sendJSON();
 }
 
+function clearCharacterSelect(player) {
+    jsonData['p' + player + 'Characters'] = [];
+    charSyncLegacy(player);
+    _activeSlot[player] = 0;
+    charRenderSlotTabs(player);
+    // Clear selected highlight in popover
+    var popover = document.getElementById('p' + player + 'CharPopover');
+    if (popover) popover.querySelectorAll('.char-palette-thumb.selected').forEach(function(el) { el.classList.remove('selected'); });
+}
+
 function nextRound() {
+    clearCharacterSelect(1);
+    clearCharacterSelect(2);
     fetch('/getdata')
         .then(function(response) {
             return response.json();
@@ -757,6 +816,7 @@ function nextRoundUpdate(data) {
 	jsonData.resultplayer1 = data.p1Name;
 	jsonData.resultplayer2 = data.p2Name;
 	jsonData.current_game = data.current_game;
+	if (data.current_game) { charRefreshPacks(); }
     jsonData.com1 = data.com1;
     jsonData.com2 = data.com2;
     jsonData.soc1 = data.soc1;
@@ -842,6 +902,14 @@ function nextRoundUpdate(data) {
     document.getElementById("dropdown_country_next1").value = jsonData.nextcountry1;
     document.getElementById("dropdown_country_next2").value = jsonData.nextcountry2;
 
+	// Restore characters for the new players
+	function restoreCharForPlayer(player, name) {
+		var game = charGetGame();
+		var localPlayer = _localPlayersByName.get((name || '').trim());
+		charApplyList(player, (game && localPlayer && localPlayer.characters) ? localPlayer.characters[game] : null);
+	}
+	restoreCharForPlayer(1, jsonData.p1Name);
+	restoreCharForPlayer(2, jsonData.p2Name);
 	updateCurrentPlayerDisplay();
     refreshSocialFields();
 	sendJsonToEndpoint("updatealldata");
@@ -1319,6 +1387,14 @@ function clearNextPlayers(event) {
 
 function updateCurrentGame() {
     jsonData["current_game"] = document.getElementById('gameSelect').value;
+    charRefreshPacks();
+    // Re-apply each player's saved picks for the newly selected game
+    // (charApplyList clears the picker when they have none for this game)
+    CHAR_PLAYERS.forEach(function(p) {
+        var lp = charGetLocalPlayer(p);
+        var game = jsonData["current_game"];
+        charApplyList(p, (game && lp && lp.characters) ? lp.characters[game] : null);
+    });
     sendJSON();
 }
 
@@ -1357,6 +1433,8 @@ function getAllGames() {
                       option.style.color = "black";
                       games.appendChild(option);
                   });
+                  // Load character packs for the currently selected game
+                  if (currentGame) { charRefreshPacks(); }
               })
               .catch(function (err) {
                     console.log('error: ' + err);
@@ -1370,3 +1448,515 @@ createEventsWithStatsDropdown();
 addEventListenersForNextRound('form_next_round_name_1p');
 addEventListenersForNextRound('form_next_round_name_2p');
 getAllGames();
+charLoadGameSlots();
+
+// ── CHARACTER SELECT ──────────────────────────────────────────────
+var _charMaps = {};  // cache: "game/pack" -> charMap
+var _gameSlots = {};            // game -> char_slots (from /getGames)
+var CHAR_PLAYERS = [1, 2, '1Next', '2Next'];
+var _activeSlot = { 1: 0, 2: 0, '1Next': 0, '2Next': 0 };
+
+function charGetSlots(game) { return _gameSlots[game] || 1; }
+
+function charLoadGameSlots() {
+    fetch('/getGames')
+        .then(function(r) { return r.json(); })
+        .then(function(games) {
+            _gameSlots = games || {};
+            CHAR_PLAYERS.forEach(charRenderSlotTabs);
+        })
+        .catch(function(e) { console.log('charLoadGameSlots error:', e); });
+}
+
+function charGetList(player) {
+    var list = jsonData['p' + player + 'Characters'];
+    if (!Array.isArray(list)) { list = []; jsonData['p' + player + 'Characters'] = list; }
+    return list;
+}
+
+function charSyncLegacy(player) {
+    // Mirror slot 0 into the original single-pick fields so existing
+    // overlay consumers keep working unchanged
+    var first = charGetList(player)[0];
+    jsonData['p' + player + 'Character']     = first ? (first.character || '') : '';
+    jsonData['p' + player + 'CharacterPack'] = first ? (first.pack || '')      : '';
+    jsonData['p' + player + 'Palette']       = first ? (first.palette || 0)    : 0;
+    jsonData['p' + player + 'CharacterFile'] = first ? (first.file || '')      : '';
+}
+
+function charUpdateButton(player) {
+    var pick     = charGetList(player)[_activeSlot[player]];
+    var thumb    = document.getElementById('p' + player + 'CharThumb');
+    var label    = document.getElementById('p' + player + 'CharLabel');
+    var portrait = document.getElementById('p' + player + 'CharPortrait');
+    var packSel  = document.getElementById('p' + player + 'CharPack');
+    if (pick && pick.file) {
+        if (thumb)    { thumb.src = '/' + pick.file; thumb.style.display = 'inline'; }
+        if (label)    label.textContent = pick.character + ' (' + pick.palette + ')';
+        if (portrait) { portrait.src = '/' + pick.file; portrait.style.display = 'block'; }
+        if (packSel && pick.pack) packSel.value = pick.pack;
+    } else {
+        if (thumb)    { thumb.src = ''; thumb.style.display = 'none'; }
+        if (label)    label.textContent = '\u2014';
+        if (portrait) { portrait.src = ''; portrait.style.display = 'none'; }
+    }
+}
+
+function charRenderSlotTabs(player) {
+    var wrap = document.getElementById('p' + player + 'CharSlots');
+    var game = charGetGame();
+    var slots = charGetSlots(game);
+    if (_activeSlot[player] >= slots) _activeSlot[player] = 0;
+    if (wrap) {
+        if (slots <= 1) {
+            wrap.style.display = 'none';
+            wrap.innerHTML = '';
+        } else {
+            wrap.style.display = 'flex';
+            wrap.innerHTML = '';
+            var list = charGetList(player);
+            for (var s = 0; s < slots; s++) (function(s) {
+                var pick = list[s];
+                var tab = document.createElement('div');
+                tab.className = 'char-slot-tab' +
+                    (s === _activeSlot[player] ? ' active' : '') +
+                    (pick && pick.file ? ' filled' : '');
+                if (pick && pick.file) {
+                    var im = document.createElement('img');
+                    im.src = '/' + pick.file;
+                    im.className = 'char-preview-target';
+                    im.dataset.char = pick.character;
+                    im.dataset.palette = pick.palette;
+                    im.onerror = function() { this.style.display = 'none'; };
+                    tab.appendChild(im);
+                } else {
+                    var sp = document.createElement('span');
+                    sp.textContent = (s + 1);
+                    tab.appendChild(sp);
+                }
+                tab.title = pick && pick.character
+                    ? 'Slot ' + (s + 1) + ': ' + pick.character + ' (' + pick.palette + ')'
+                    : 'Slot ' + (s + 1) + ' (empty)';
+                tab.onclick = function(e) {
+                    e.stopPropagation();
+                    _activeSlot[player] = s;
+                    charRenderSlotTabs(player);
+                };
+                wrap.appendChild(tab);
+            })(s);
+        }
+    }
+    charUpdateButton(player);
+}
+
+function charApplyList(player, saved) {
+    // Accepts the new per-game list shape, the legacy single dict,
+    // or null/empty (which clears the picker)
+    if (saved && !Array.isArray(saved)) saved = [saved];
+    var list = [];
+    (saved || []).forEach(function(p, i) {
+        if (!p || !p.file) return;
+        var s = (typeof p.slot === 'number') ? p.slot : i;
+        list[s] = { slot: s, pack: p.pack || '', character: p.character || '',
+                    palette: p.palette || 0, file: p.file };
+    });
+    jsonData['p' + player + 'Characters'] = list;
+    charSyncLegacy(player);
+    _activeSlot[player] = 0;
+    charRenderSlotTabs(player);
+}
+
+function charGetGame() {
+    // Use the current game from the main game dropdown
+    return (jsonData && jsonData.current_game) ? jsonData.current_game : '';
+}
+
+function charRefreshPacks() {
+    // Called when current_game changes -- reload packs for both players
+    // and refresh per-game slot counts
+    charLoadGameSlots();
+    CHAR_PLAYERS.forEach(function(p) { charLoadPacksForPlayer(p); });
+}
+
+function charLoadPacksForPlayer(player) {
+    var game = charGetGame();
+    var packSel = document.getElementById('p' + player + 'CharPack');
+    if (!packSel) return;
+    packSel.innerHTML = '<option value="">-- Pack --</option>';
+    charClosePopover(player);
+    if (!game) { console.log('charLoadPacksForPlayer: no game set'); return; }
+    console.log('charLoadPacksForPlayer: fetching packs for', game, 'player', player);
+    fetch('/getCharacterPacks?game=' + encodeURIComponent(game))
+        .then(function(r) { return r.json(); })
+        .then(function(packs) {
+            console.log('charLoadPacksForPlayer: got packs', packs);
+            packs.forEach(function(p) {
+                var opt = document.createElement('option');
+                opt.value = p; opt.textContent = p;
+                packSel.appendChild(opt);
+            });
+        })
+        .catch(function(e) { console.log('charLoadPacksForPlayer error:', e); });
+}
+
+function charLoadChars(player) {
+    var game = charGetGame();
+    var pack = document.getElementById('p' + player + 'CharPack').value;
+    charClosePopover(player);
+    if (!game || !pack) return;
+    var key = game + '/' + pack;
+    if (_charMaps[key]) return;  // already cached
+    fetch('/getCharacterList?game=' + encodeURIComponent(game) + '&pack=' + encodeURIComponent(pack))
+        .then(function(r) { return r.json(); })
+        .then(function(charMap) { _charMaps[key] = charMap; });
+}
+
+var _forceFullList = { 1: false, 2: false, '1Next': false, '2Next': false };
+
+function charPlayerName(player) {
+    if (player === '1Next') return jsonData.nextplayer1;
+    if (player === '2Next') return jsonData.nextplayer2;
+    return jsonData['p' + player + 'Name'];
+}
+
+function charGetLocalPlayer(player) {
+    var name = charPlayerName(player);
+    return name ? _localPlayersByName.get(name.trim()) : null;
+}
+
+function charClearSlot(player) {
+    var list = charGetList(player);
+    var s = _activeSlot[player];
+    if (!list[s]) { charClosePopover(player); return; }
+    list[s] = undefined;
+    charSyncLegacy(player);
+    sendJSON();
+    charRenderSlotTabs(player);
+    charClosePopover(player);
+    // Persist the trimmed pick list to the player profile
+    var game = charGetGame();
+    var localPlayer = charGetLocalPlayer(player);
+    if (game && localPlayer && localPlayer.id) {
+        var picks = [];
+        list.forEach(function(p, i) {
+            if (p && p.file) picks.push({ slot: i, pack: p.pack,
+                character: p.character, palette: p.palette, file: p.file });
+        });
+        if (!localPlayer.characters) localPlayer.characters = {};
+        localPlayer.characters[game] = picks;
+        var charUpdate = {}; charUpdate[game] = picks;
+        fetch('/saveLocalPlayer', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id: localPlayer.id, name: localPlayer.name, characters: charUpdate })
+        }).catch(function(e) { console.log('clearSlot save error:', e); });
+    }
+}
+
+function charPopoverFooter(player, popover, mode, hasRoster) {
+    var foot = document.createElement('div');
+    foot.className = 'char-popover-footer';
+    var slots = charGetSlots(charGetGame());
+    var active = _activeSlot[player];
+    if (charGetList(player)[active]) {
+        var clr = document.createElement('button');
+        clr.className = 'char-popover-footbtn';
+        clr.textContent = '\u2715 Clear' + (slots > 1 ? ' slot ' + (active + 1) : '');
+        clr.onclick = function(e) { e.stopPropagation(); charClearSlot(player); };
+        foot.appendChild(clr);
+    }
+    if (mode === 'roster') {
+        var full = document.createElement('button');
+        full.className = 'char-popover-footbtn';
+        full.textContent = 'Load full roster \u25B8';
+        full.onclick = function(e) {
+            e.stopPropagation();
+            charClosePopover(player);
+            _forceFullList[player] = true;
+            charTogglePicker(player);
+        };
+        foot.appendChild(full);
+    } else if (hasRoster) {
+        var ros = document.createElement('button');
+        ros.className = 'char-popover-footbtn';
+        ros.textContent = '\u25C2 Player roster';
+        ros.onclick = function(e) {
+            e.stopPropagation();
+            charClosePopover(player);   // resets the force flag
+            charTogglePicker(player);
+        };
+        foot.appendChild(ros);
+    }
+    if (foot.children.length) popover.appendChild(foot);
+}
+
+function charRenderRosterPopover(player, game, roster, popover, btn) {
+    popover.innerHTML = '';
+    var head = document.createElement('div');
+    head.className = 'char-roster-head';
+    var pname = charPlayerName(player) || 'Player';
+    head.textContent = pname + "'s roster";
+    popover.appendChild(head);
+    roster.forEach(function(entry) {
+        if (!entry || !entry.file) return;
+        var row = document.createElement('div');
+        row.className = 'char-row';
+        row.innerHTML =
+            '<img class="char-row-thumb char-preview-target" data-char="' + entry.character +
+            '" data-palette="' + entry.palette + '" src="/' + entry.file + '">' +
+            '<span class="char-row-name">' + entry.character +
+            ' <span class="char-roster-pal">(' + entry.palette + ')</span></span>';
+        row.querySelector('.char-row-thumb').onerror = function() { this.style.display = 'none'; };
+        row.onclick = function(e) {
+            e.stopPropagation();
+            charSelectPalette(player, game, entry.pack, entry.character,
+                              entry.palette, entry.file, null, popover);
+        };
+        popover.appendChild(row);
+    });
+    charPopoverFooter(player, popover, 'roster', true);
+    popover.style.display = 'block';
+    btn.classList.add('open');
+}
+
+function charTogglePicker(player) {
+    var popover = document.getElementById('p' + player + 'CharPopover');
+    var btn     = document.getElementById('p' + player + 'CharPickerBtn');
+    if (popover.style.display !== 'none') {
+        charClosePopover(player);
+        return;
+    }
+    var game = charGetGame();
+    if (!game) { alert('Set a current game first using the Game dropdown.'); return; }
+
+    // Roster-first: if this player has a saved roster for the game,
+    // offer just their characters (one click = preferred palette)
+    var localPlayer = charGetLocalPlayer(player);
+    var roster = (localPlayer && localPlayer.roster && localPlayer.roster[game]) || [];
+    if (roster.length > 0 && !_forceFullList[player]) {
+        charRenderRosterPopover(player, game, roster, popover, btn);
+        return;
+    }
+
+    var pack = document.getElementById('p' + player + 'CharPack').value;
+    if (!pack) { alert('Select a pack first.'); return; }
+    var key  = game + '/' + pack;
+
+    function renderPopover(charMap) {
+        _charMaps[key] = charMap;
+        popover.innerHTML = '';
+        var chars = Object.keys(charMap).sort();
+        chars.forEach(function(char) {
+            var palettes = charMap[char];
+            var defaultImg = '/' + palettes[0].file;
+
+            // Row
+            var row = document.createElement('div');
+            row.className = 'char-row';
+            row.innerHTML =
+                '<img class="char-row-thumb char-preview-target" data-char="' + char +
+                '" data-palette="' + palettes[0].palette + '" src="' + defaultImg + '">' +
+                '<span class="char-row-name">' + char + '</span>' +
+                '<span class="char-row-arrow">›</span>';
+            row.querySelector('.char-row-thumb').onerror = function() { this.style.display = 'none'; };
+
+            // Palette strip (hidden until row clicked)
+            var strip = document.createElement('div');
+            strip.className = 'char-palette-strip';
+            strip.style.display = 'none';
+            palettes.forEach(function(p) {
+                var img = document.createElement('img');
+                img.className = 'char-palette-thumb';
+                img.src = '/' + p.file;
+                img.title = 'Palette ' + p.palette;
+                img.dataset.char = char;
+                img.dataset.palette = p.palette;
+                img.onerror = function() { this.style.display = 'none'; };
+                img.onclick = function(e) {
+                    e.stopPropagation();
+                    charSelectPalette(player, game, pack, char, p.palette, p.file, img, popover);
+                };
+                strip.appendChild(img);
+            });
+
+            row.onclick = function() {
+                var isOpen = row.classList.contains('expanded');
+                // Close all other expanded rows
+                popover.querySelectorAll('.char-row.expanded').forEach(function(r) {
+                    r.classList.remove('expanded');
+                    r.nextElementSibling.style.display = 'none';
+                });
+                if (!isOpen) {
+                    row.classList.add('expanded');
+                    strip.style.display = 'flex';
+                    strip.scrollIntoView({ block: 'nearest' });
+                }
+            };
+
+            popover.appendChild(row);
+            popover.appendChild(strip);
+        });
+
+        var lp = charGetLocalPlayer(player);
+        var hasRoster = !!(lp && lp.roster && lp.roster[game] && lp.roster[game].length);
+        charPopoverFooter(player, popover, 'full', hasRoster);
+        popover.style.display = 'block';
+        btn.classList.add('open');
+    }
+
+    if (_charMaps[key]) {
+        renderPopover(_charMaps[key]);
+    } else {
+        fetch('/getCharacterList?game=' + encodeURIComponent(game) + '&pack=' + encodeURIComponent(pack))
+            .then(function(r) { return r.json(); })
+            .then(renderPopover);
+    }
+}
+
+function charClosePopover(player) {
+    _forceFullList[player] = false;
+    var popover = document.getElementById('p' + player + 'CharPopover');
+    var btn     = document.getElementById('p' + player + 'CharPickerBtn');
+    if (popover) popover.style.display = 'none';
+    if (btn) btn.classList.remove('open');
+}
+
+function charSelectPalette(player, game, pack, char, palette, file, imgEl, popover) {
+    // Highlight selection (roster rows pass no thumbnail element)
+    popover.querySelectorAll('.char-palette-thumb.selected').forEach(function(el) {
+        el.classList.remove('selected');
+    });
+    if (imgEl) imgEl.classList.add('selected');
+
+    // Update the picker button
+    var thumb = document.getElementById('p' + player + 'CharThumb');
+    var label = document.getElementById('p' + player + 'CharLabel');
+    if (thumb) { thumb.src = '/' + file; thumb.style.display = 'inline'; }
+    if (label) label.textContent = char + ' (' + palette + ')';
+    // Update portrait
+    var portrait = document.getElementById('p' + player + 'CharPortrait');
+    if (portrait) { portrait.src = '/' + file; portrait.style.display = 'block'; }
+
+    // Write to the active slot in jsonData
+    var list = charGetList(player);
+    list[_activeSlot[player]] = { slot: _activeSlot[player], pack: pack,
+                                  character: char, palette: palette, file: file };
+    charSyncLegacy(player);
+    sendJSON();
+    charRenderSlotTabs(player);
+
+    // Save the full pick list for this game to the player profile
+    var playerName = charPlayerName(player);
+    var game = charGetGame();
+    if (playerName && game) {
+        var localPlayer = _localPlayersByName.get(playerName.trim());
+        if (localPlayer && localPlayer.id) {
+            var picks = [];
+            list.forEach(function(p, i) {
+                if (p && p.file) picks.push({ slot: i, pack: p.pack,
+                    character: p.character, palette: p.palette, file: p.file });
+            });
+            if (!localPlayer.characters) localPlayer.characters = {};
+            localPlayer.characters[game] = picks;
+            var charUpdate = {};
+            charUpdate[game] = picks;
+            // Auto-add to the player's roster (or update preferred look)
+            if (!localPlayer.roster) localPlayer.roster = {};
+            var rlist = localPlayer.roster[game] || [];
+            var found = false;
+            rlist.forEach(function(e) {
+                if (e.character === char) {
+                    e.pack = pack; e.palette = palette; e.file = file;
+                    found = true;
+                }
+            });
+            if (!found) rlist.push({ character: char, pack: pack, palette: palette, file: file });
+            localPlayer.roster[game] = rlist;
+            var rosterUpdate = {};
+            rosterUpdate[game] = rlist;
+            fetch('/saveLocalPlayer', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ id: localPlayer.id, name: localPlayer.name,
+                                       characters: charUpdate, roster: rosterUpdate })
+            }).catch(function(e) { console.log('saveCharacter error:', e); });
+        }
+    }
+
+    // Close popover after short delay
+    setTimeout(function() { charClosePopover(player); }, 300);
+}
+
+// Close popovers on outside click
+document.addEventListener('click', function(e) {
+    [1, 2].forEach(function(p) {
+        var btn     = document.getElementById('p' + p + 'CharPickerBtn');
+        var popover = document.getElementById('p' + p + 'CharPopover');
+        if (!btn || !popover) return;
+        if (!btn.contains(e.target) && !popover.contains(e.target)) {
+            charClosePopover(p);
+        }
+    });
+});
+
+// Packs load when current_game is set via the game dropdown
+
+// ── CHARACTER PALETTE PREVIEW ──────────────────────────────────
+(function() {
+  var preview = null, previewImg = null, previewLabel = null;
+
+  function getPreview() {
+    if (!preview) {
+      preview      = document.getElementById('char-preview');
+      previewImg   = document.getElementById('char-preview-img');
+      previewLabel = document.getElementById('char-preview-label');
+    }
+    return preview;
+  }
+
+  function showPreview(e, src, label) {
+    var p = getPreview();
+    if (!p) return;
+    previewImg.src = src;
+    previewLabel.textContent = label;
+    p.style.display = 'block';
+    movePreview(e);
+  }
+
+  function movePreview(e) {
+    var p = getPreview();
+    if (!p || p.style.display === 'none') return;
+    var x = e.clientX + 16;
+    var y = e.clientY + 16;
+    // Keep within viewport
+    if (x + 140 > window.innerWidth)  x = e.clientX - 148;
+    if (y + 155 > window.innerHeight) y = e.clientY - 158;
+    p.style.left = x + 'px';
+    p.style.top  = y + 'px';
+  }
+
+  function hidePreview() {
+    var p = getPreview();
+    if (p) p.style.display = 'none';
+  }
+
+  // Attach to dynamically created palette thumbs via event delegation
+  document.addEventListener('mouseover', function(e) {
+    var thumb = e.target.closest('.char-palette-thumb, .char-preview-target');
+    if (!thumb) { hidePreview(); return; }
+    var char    = thumb.dataset.char    || '';
+    var palette = thumb.dataset.palette !== undefined ? thumb.dataset.palette : '';
+    showPreview(e, thumb.src, char + (palette !== '' ? ' · ' + palette : ''));
+  });
+
+  document.addEventListener('mousemove', function(e) {
+    movePreview(e);
+  });
+
+  document.addEventListener('mouseout', function(e) {
+    var thumb = e.target.closest('.char-palette-thumb, .char-preview-target');
+    if (thumb && !e.relatedTarget?.closest('.char-palette-thumb, .char-preview-target')) {
+      hidePreview();
+    }
+  });
+})();
