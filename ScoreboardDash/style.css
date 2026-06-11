@@ -886,6 +886,3 @@ select.name-picker option { font-size: 13px; }
   image-rendering: pixelated; flex-shrink: 0;
   border-radius: 3px; margin-left: auto;
 }
-#p2CharPortrait {
-  transform: scaleX(-1);
-}
