@@ -16,7 +16,6 @@
     (function(){var s=localStorage.getItem('sc_theme');if(!s)return;try{var v=JSON.parse(s);Object.keys(v).forEach(function(k){document.documentElement.style.setProperty(k,v[k])});}catch(e){}})();
   </script>
   <link href="../theme/theme.css" rel="stylesheet" type="text/css">
-  <style>.page-content { max-width: 100% !important; width: 100% !important; }</style>
 </head>
 <body>
 
@@ -71,103 +70,5 @@
 
   </div>
   <script src="../theme/theme.js" defer></script>
-
-  <!-- StreamHelper Asset Downloader -->
-  <div class="section-panel" style="margin-top:12px;">
-    <div class="section-header">StreamHelper Asset Downloader</div>
-    <div style="padding:14px;display:flex;flex-direction:column;gap:10px;">
-
-      <div style="display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap;">
-        <div style="display:flex;flex-direction:column;gap:4px;flex:1;min-width:160px;">
-          <label style="font-family:var(--font-d);font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--fg2);">Game</label>
-          <select id="sh-game-select" onchange="shLoadPacks()" style="width:100%;">
-            <option value="">-- Load games --</option>
-          </select>
-        </div>
-        <div style="display:flex;flex-direction:column;gap:4px;flex:1;min-width:160px;">
-          <label style="font-family:var(--font-d);font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--fg2);">Icon Pack</label>
-          <select id="sh-pack-select" style="width:100%;">
-            <option value="">-- Select game first --</option>
-          </select>
-        </div>
-        <button class="btn-sec" onclick="shLoadGames()" style="flex-shrink:0;">↺ Load Games</button>
-        <button onclick="shDownload()" style="flex-shrink:0;" id="sh-download-btn">⬇ Download Pack</button>
-      </div>
-
-      <div id="sh-status" style="font-family:var(--font-d);font-size:11px;color:var(--fg2);min-height:18px;"></div>
-    </div>
-  </div>
-
-  <script>
-  function shStatus(msg, color) {
-    var el = document.getElementById('sh-status');
-    if (el) { el.textContent = msg; el.style.color = color || 'var(--fg2)'; }
-  }
-
-  async function shLoadGames() {
-    shStatus('Loading game list from StreamHelperAssets...');
-    try {
-      var res = await fetch('/streamhelper/games');
-      var games = await res.json();
-      if (games.error) { shStatus('Error: ' + games.error, 'var(--accent2)'); return; }
-      var sel = document.getElementById('sh-game-select');
-      sel.innerHTML = '<option value="">-- Select game --</option>';
-      games.forEach(function(g) {
-        var opt = document.createElement('option');
-        opt.value = g; opt.textContent = g;
-        sel.appendChild(opt);
-      });
-      shStatus('Loaded ' + games.length + ' games.', 'var(--green)');
-    } catch(e) { shStatus('Error: ' + e, 'var(--accent2)'); }
-  }
-
-  async function shLoadPacks() {
-    var game = document.getElementById('sh-game-select').value;
-    if (!game) return;
-    shStatus('Loading icon packs for ' + game + '...');
-    var packSel = document.getElementById('sh-pack-select');
-    packSel.innerHTML = '<option value="">Loading...</option>';
-    try {
-      var res = await fetch('/streamhelper/packs?game=' + encodeURIComponent(game));
-      var packs = await res.json();
-      if (packs.error) { shStatus('Error: ' + packs.error, 'var(--accent2)'); return; }
-      packSel.innerHTML = '<option value="">-- Select pack --</option>';
-      packs.forEach(function(p) {
-        var opt = document.createElement('option');
-        opt.value = p; opt.textContent = p;
-        packSel.appendChild(opt);
-      });
-      shStatus('Found ' + packs.length + ' pack(s) for ' + game + '.');
-    } catch(e) { shStatus('Error: ' + e, 'var(--accent2)'); }
-  }
-
-  async function shDownload() {
-    var game = document.getElementById('sh-game-select').value;
-    var pack = document.getElementById('sh-pack-select').value;
-    if (!game || !pack) { shStatus('Please select a game and icon pack.', 'var(--accent2)'); return; }
-    var btn = document.getElementById('sh-download-btn');
-    btn.disabled = true;
-    btn.textContent = 'Downloading...';
-    shStatus('Downloading ' + pack + ' for ' + game + '... this may take a moment.');
-    try {
-      var res = await fetch('/streamhelper/download', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ game: game, pack: pack })
-      });
-      var data = await res.json();
-      if (data.error) {
-        shStatus('Error: ' + data.error, 'var(--accent2)');
-      } else {
-        var msg = 'Downloaded ' + data.downloaded + ' icons for ' + data.game + ' (' + data.pack + ').';
-        if (data.failed > 0) msg += ' ' + data.failed + ' failed.';
-        shStatus(msg, 'var(--green)');
-      }
-    } catch(e) { shStatus('Error: ' + e, 'var(--accent2)'); }
-    btn.disabled = false;
-    btn.textContent = '⬇ Download Pack';
-  }
-  </script>
-
 </body>
 </html>

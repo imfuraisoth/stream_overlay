@@ -90,22 +90,6 @@
         <input type="checkbox" id="mIsCommentator" style="width:14px;height:14px;accent-color:var(--accent);flex-shrink:0;">
         <label for="mIsCommentator" style="font-family:var(--font-d);font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--fg2);cursor:pointer;">Commentator</label>
       </div>
-      <div class="field-group" id="mCharactersSection" style="display:none;">
-        <label>Characters</label>
-        <div style="display:flex;gap:6px;align-items:center;">
-          <select id="mCharGameSelect" onchange="mCharGameChanged()" style="flex:1;">
-            <option value="">— Select game —</option>
-          </select>
-          <button class="btn sec" onclick="mCharDeleteGame()" style="padding:4px 8px;font-size:10px;" title="Remove this game's character">✕</button>
-        </div>
-        <div id="mCharDisplay" style="display:none;margin-top:6px;align-items:center;gap:8px;padding:6px;background:var(--bg3);border-radius:4px;">
-          <img id="mCharPortrait" style="width:48px;height:48px;object-fit:contain;image-rendering:pixelated;border-radius:3px;" src="">
-          <div>
-            <div id="mCharName" style="font-family:var(--font-d);font-size:13px;font-weight:700;color:var(--fg);text-transform:capitalize;"></div>
-            <div id="mCharDetail" style="font-family:var(--font-d);font-size:10px;color:var(--fg2);margin-top:2px;"></div>
-          </div>
-        </div>
-      </div>
     </div>
     <div class="modal-footer">
       <button class="btn sec" onclick="closeModal()">Cancel</button>
@@ -249,73 +233,14 @@ function sortBy(key) {
 function openAddModal() {
   _editingOrigName = null;
   document.getElementById('modalTitle').textContent = 'Add Player';
-  window._editingCharacters = {};
-  document.getElementById('mCharactersSection').style.display = 'none';
-  document.getElementById('mCharDisplay').style.display = 'none';
   document.getElementById('mName').value    = '';
   document.getElementById('mTeam').value    = '';
   document.getElementById('mIsCommentator').checked = false;
   document.getElementById('mSocialHandle').value = '';
   document.getElementById('mSocialPlatform').value = '';
   populateCountrySelect(document.getElementById('mCountry'), '');
-  // Populate characters section
-  var chars = p.characters || {};
-  var games = Object.keys(chars);
-  var charSec = document.getElementById('mCharactersSection');
-  var gameSelect = document.getElementById('mCharGameSelect');
-  gameSelect.innerHTML = '<option value="">— Select game —</option>';
-  if (games.length > 0) {
-    charSec.style.display = 'flex';
-    games.forEach(function(g) {
-      var opt = document.createElement('option');
-      opt.value = g; opt.textContent = g;
-      gameSelect.appendChild(opt);
-    });
-  } else {
-    charSec.style.display = 'none';
-    document.getElementById('mCharDisplay').style.display = 'none';
-  }
-  window._editingCharacters = JSON.parse(JSON.stringify(chars)); // deep copy
   document.getElementById('modal').classList.add('open');
   document.getElementById('mName').focus();
-}
-
-function mCharGameChanged() {
-  var game = document.getElementById('mCharGameSelect').value;
-  var chars = window._editingCharacters || {};
-  var saved = game ? chars[game] : null;
-  var display = document.getElementById('mCharDisplay');
-  if (saved && saved.file) {
-    document.getElementById('mCharPortrait').src = '/' + saved.file;
-    document.getElementById('mCharName').textContent = saved.character + ' (palette ' + saved.palette + ')';
-    document.getElementById('mCharDetail').textContent = saved.pack + ' · ' + game;
-    display.style.display = 'flex';
-  } else {
-    display.style.display = 'none';
-  }
-}
-
-function mCharDeleteGame() {
-  var game = document.getElementById('mCharGameSelect').value;
-  if (!game || !window._editingCharacters) return;
-  if (!confirm('Remove ' + game + ' character data for this player?')) return;
-  delete window._editingCharacters[game];
-  // Rebuild dropdown
-  var gameSelect = document.getElementById('mCharGameSelect');
-  var games = Object.keys(window._editingCharacters);
-  gameSelect.innerHTML = '<option value="">— Select game —</option>';
-  games.forEach(function(g) {
-    var opt = document.createElement('option');
-    opt.value = g; opt.textContent = g;
-    gameSelect.appendChild(opt);
-  });
-  if (games.length > 0) {
-    gameSelect.value = games[0];
-    mCharGameChanged();
-  } else {
-    document.getElementById('mCharDisplay').style.display = 'none';
-    document.getElementById('mCharactersSection').style.display = 'none';
-  }
 }
 
 function openEditModal(id) {
@@ -329,64 +254,8 @@ function openEditModal(id) {
   document.getElementById('mIsCommentator').checked = p.is_commentator || false;
   document.getElementById('mSocialHandle').value   = p.social_handle   || '';
   document.getElementById('mSocialPlatform').value = p.social_platform || '';
-  // Populate characters section
-  var chars = p.characters || {};
-  var games = Object.keys(chars);
-  var charSec = document.getElementById('mCharactersSection');
-  var gameSelect = document.getElementById('mCharGameSelect');
-  gameSelect.innerHTML = '<option value="">— Select game —</option>';
-  if (games.length > 0) {
-    charSec.style.display = 'flex';
-    games.forEach(function(g) {
-      var opt = document.createElement('option');
-      opt.value = g; opt.textContent = g;
-      gameSelect.appendChild(opt);
-    });
-  } else {
-    charSec.style.display = 'none';
-    document.getElementById('mCharDisplay').style.display = 'none';
-  }
-  window._editingCharacters = JSON.parse(JSON.stringify(chars)); // deep copy
   document.getElementById('modal').classList.add('open');
   document.getElementById('mName').focus();
-}
-
-function mCharGameChanged() {
-  var game = document.getElementById('mCharGameSelect').value;
-  var chars = window._editingCharacters || {};
-  var saved = game ? chars[game] : null;
-  var display = document.getElementById('mCharDisplay');
-  if (saved && saved.file) {
-    document.getElementById('mCharPortrait').src = '/' + saved.file;
-    document.getElementById('mCharName').textContent = saved.character + ' (palette ' + saved.palette + ')';
-    document.getElementById('mCharDetail').textContent = saved.pack + ' · ' + game;
-    display.style.display = 'flex';
-  } else {
-    display.style.display = 'none';
-  }
-}
-
-function mCharDeleteGame() {
-  var game = document.getElementById('mCharGameSelect').value;
-  if (!game || !window._editingCharacters) return;
-  if (!confirm('Remove ' + game + ' character data for this player?')) return;
-  delete window._editingCharacters[game];
-  // Rebuild dropdown
-  var gameSelect = document.getElementById('mCharGameSelect');
-  var games = Object.keys(window._editingCharacters);
-  gameSelect.innerHTML = '<option value="">— Select game —</option>';
-  games.forEach(function(g) {
-    var opt = document.createElement('option');
-    opt.value = g; opt.textContent = g;
-    gameSelect.appendChild(opt);
-  });
-  if (games.length > 0) {
-    gameSelect.value = games[0];
-    mCharGameChanged();
-  } else {
-    document.getElementById('mCharDisplay').style.display = 'none';
-    document.getElementById('mCharactersSection').style.display = 'none';
-  }
 }
 
 function closeModal() { document.getElementById('modal').classList.remove('open'); }
@@ -403,7 +272,7 @@ async function saveModal() {
 
   const endpoint = _editingOrigName ? '/updateLocalPlayer' : '/saveLocalPlayer';
   const body = _editingOrigName
-    ? { id: _editingOrigName, name, team, country, social_handle, social_platform, is_commentator, characters: window._editingCharacters }
+    ? { id: _editingOrigName, name, team, country, social_handle, social_platform, is_commentator }
     : { name, team, country, social_handle, social_platform, is_commentator };
 
   try {

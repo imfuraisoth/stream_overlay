@@ -119,7 +119,7 @@ function updateSocialDisplays() {
 function saveLocalPlayerName(name, team, country) {
     if (!name || name.trim() === '') return;
     // Merge into existing map entry — never overwrite with blanks
-    var existing = _localPlayersByName.get(name.trim()) || _localPlayersMap.get(name.trim()) || { name: name.trim() };
+    var existing = _localPlayersMap.get(name.trim()) || { name: name.trim() };
     if (team)    existing.team    = team;
     if (country) existing.country = country;
     existing.name = name.trim();
@@ -165,28 +165,6 @@ function loadLocalPlayers() {
             // Write social fields for any players already on screen
             refreshSocialFields();
             populateNamePickers(players.map(function(p) { return typeof p === 'string' ? p : p.name; }));
-            // Restore characters for currently displayed players now that map is loaded
-            [1, 2].forEach(function(player) {
-                var name = jsonData['p' + player + 'Name'];
-                if (!name) return;
-                var localPlayer = _localPlayersByName.get(name.trim());
-                var game = charGetGame();
-                var saved = (game && localPlayer && localPlayer.characters) ? localPlayer.characters[game] : null;
-                if (saved && saved.file) {
-                    jsonData['p' + player + 'Character']     = saved.character || '';
-                    jsonData['p' + player + 'CharacterPack'] = saved.pack || '';
-                    jsonData['p' + player + 'Palette']       = saved.palette || 0;
-                    jsonData['p' + player + 'CharacterFile'] = saved.file || '';
-                    var thumb   = document.getElementById('p' + player + 'CharThumb');
-                    var label   = document.getElementById('p' + player + 'CharLabel');
-                    var portrait = document.getElementById('p' + player + 'CharPortrait');
-                    var packSel = document.getElementById('p' + player + 'CharPack');
-                    if (thumb)   { thumb.src = '/' + saved.file; thumb.style.display = 'inline'; }
-                    if (label)   label.textContent = saved.character + ' (' + saved.palette + ')';
-                    if (portrait){ portrait.src = '/' + saved.file; portrait.style.display = 'block'; }
-                    if (packSel) packSel.value = saved.pack;
-                }
-            });
         })
         .catch(function(e) { console.log('loadLocalPlayers error:', e); });
 }
@@ -265,29 +243,6 @@ function populateData(data) {
     if (jsonData.nextSocial2Platform == undefined) { jsonData.nextSocial2Platform = ""; }
     refreshSocialFields();
 	updateCurrentPlayerDisplay();
-	// Restore character UI from scoreboard.json values
-	function restoreCharUI(player) {
-		var file = jsonData['p' + player + 'CharacterFile'];
-		var char = jsonData['p' + player + 'Character'];
-		var palette = jsonData['p' + player + 'Palette'];
-		var pack = jsonData['p' + player + 'CharacterPack'];
-		var thumb   = document.getElementById('p' + player + 'CharThumb');
-		var label   = document.getElementById('p' + player + 'CharLabel');
-		var portrait = document.getElementById('p' + player + 'CharPortrait');
-		var packSel = document.getElementById('p' + player + 'CharPack');
-		if (file) {
-			if (thumb)   { thumb.src = '/' + file; thumb.style.display = 'inline'; }
-			if (label)   label.textContent = char + ' (' + palette + ')';
-			if (portrait){ portrait.src = '/' + file; portrait.style.display = 'block'; }
-			if (packSel && pack) packSel.value = pack;
-		} else {
-			if (thumb)   { thumb.src = ''; thumb.style.display = 'none'; }
-			if (label)   label.textContent = '—';
-			if (portrait){ portrait.src = ''; portrait.style.display = 'none'; }
-		}
-	}
-	restoreCharUI(1);
-	restoreCharUI(2);
 }
 
 const countriesDropDownList = ['US', 'CA', 'JP', 'KR', 'MX', 'GB', 'ES', 'FR', 'FI', 'SE', 'PR', 'BR'];
@@ -361,22 +316,9 @@ function updatePlayer1() {
         }
         jsonData.p1SocialHandle   = localPlayer.social_handle   || '';
         jsonData.p1SocialPlatform = localPlayer.social_platform || '';
-        // Restore saved character for current game
-        var _game1 = charGetGame();
-        var _saved1 = (_game1 && localPlayer.characters) ? localPlayer.characters[_game1] : null;
-        if (_saved1 && _saved1.file) {
-            jsonData.p1Character = _saved1.character || ''; jsonData.p1CharacterPack = _saved1.pack || '';
-            jsonData.p1Palette = _saved1.palette || 0; jsonData.p1CharacterFile = _saved1.file || '';
-            var _t1 = document.getElementById('p1CharThumb'); var _l1 = document.getElementById('p1CharLabel'); var _p1 = document.getElementById('p1CharPortrait');
-            if (_t1) { _t1.src = '/' + _saved1.file; _t1.style.display = 'inline'; }
-            if (_l1) _l1.textContent = _saved1.character + ' (' + _saved1.palette + ')';
-            if (_p1) { _p1.src = '/' + _saved1.file; _p1.style.display = 'block'; }
-            var _pk1 = document.getElementById('p1CharPack'); if (_pk1) _pk1.value = _saved1.pack;
-        } else { clearCharacterSelect(1); }
     } else {
         jsonData.p1SocialHandle   = '';
         jsonData.p1SocialPlatform = '';
-        clearCharacterSelect(1);
     }
     saveLocalPlayerName(jsonData.p1Name, jsonData.p1Team, jsonData.p1Country);
     updateCurrentPlayerDisplay();
@@ -403,22 +345,9 @@ function updatePlayer2() {
         }
         jsonData.p2SocialHandle   = localPlayer.social_handle   || '';
         jsonData.p2SocialPlatform = localPlayer.social_platform || '';
-        // Restore saved character for current game
-        var _game2 = charGetGame();
-        var _saved2 = (_game2 && localPlayer.characters) ? localPlayer.characters[_game2] : null;
-        if (_saved2 && _saved2.file) {
-            jsonData.p2Character = _saved2.character || ''; jsonData.p2CharacterPack = _saved2.pack || '';
-            jsonData.p2Palette = _saved2.palette || 0; jsonData.p2CharacterFile = _saved2.file || '';
-            var _t2 = document.getElementById('p2CharThumb'); var _l2 = document.getElementById('p2CharLabel'); var _p2 = document.getElementById('p2CharPortrait');
-            if (_t2) { _t2.src = '/' + _saved2.file; _t2.style.display = 'inline'; }
-            if (_l2) _l2.textContent = _saved2.character + ' (' + _saved2.palette + ')';
-            if (_p2) { _p2.src = '/' + _saved2.file; _p2.style.display = 'block'; }
-            var _pk2 = document.getElementById('p2CharPack'); if (_pk2) _pk2.value = _saved2.pack;
-        } else { clearCharacterSelect(2); }
     } else {
         jsonData.p2SocialHandle   = '';
         jsonData.p2SocialPlatform = '';
-        clearCharacterSelect(2);
     }
     saveLocalPlayerName(jsonData.p2Name, jsonData.p2Team, jsonData.p2Country);
     updateCurrentPlayerDisplay();
@@ -756,25 +685,7 @@ function countryDropdown2() {
     sendJSON();
 }
 
-function clearCharacterSelect(player) {
-    jsonData['p' + player + 'Character']     = '';
-    jsonData['p' + player + 'CharacterPack'] = '';
-    jsonData['p' + player + 'Palette']       = 0;
-    jsonData['p' + player + 'CharacterFile'] = '';
-    var thumb   = document.getElementById('p' + player + 'CharThumb');
-    var label   = document.getElementById('p' + player + 'CharLabel');
-    var portrait = document.getElementById('p' + player + 'CharPortrait');
-    if (thumb)    { thumb.src = ''; thumb.style.display = 'none'; }
-    if (label)    label.textContent = '—';
-    if (portrait) { portrait.src = ''; portrait.style.display = 'none'; }
-    // Clear selected highlight in popover
-    var popover = document.getElementById('p' + player + 'CharPopover');
-    if (popover) popover.querySelectorAll('.char-palette-thumb.selected').forEach(function(el) { el.classList.remove('selected'); });
-}
-
 function nextRound() {
-    clearCharacterSelect(1);
-    clearCharacterSelect(2);
     fetch('/getdata')
         .then(function(response) {
             return response.json();
@@ -846,7 +757,6 @@ function nextRoundUpdate(data) {
 	jsonData.resultplayer1 = data.p1Name;
 	jsonData.resultplayer2 = data.p2Name;
 	jsonData.current_game = data.current_game;
-	if (data.current_game) { charRefreshPacks(); }
     jsonData.com1 = data.com1;
     jsonData.com2 = data.com2;
     jsonData.soc1 = data.soc1;
@@ -932,30 +842,6 @@ function nextRoundUpdate(data) {
     document.getElementById("dropdown_country_next1").value = jsonData.nextcountry1;
     document.getElementById("dropdown_country_next2").value = jsonData.nextcountry2;
 
-	// Restore characters for the new players
-	function restoreCharForPlayer(player, name) {
-		var game = charGetGame();
-		var localPlayer = _localPlayersByName.get((name || '').trim());
-		var saved = (game && localPlayer && localPlayer.characters) ? localPlayer.characters[game] : null;
-		if (saved && saved.file) {
-			jsonData['p' + player + 'Character']     = saved.character || '';
-			jsonData['p' + player + 'CharacterPack'] = saved.pack || '';
-			jsonData['p' + player + 'Palette']       = saved.palette || 0;
-			jsonData['p' + player + 'CharacterFile'] = saved.file || '';
-			var thumb   = document.getElementById('p' + player + 'CharThumb');
-			var label   = document.getElementById('p' + player + 'CharLabel');
-			var portrait = document.getElementById('p' + player + 'CharPortrait');
-			var packSel = document.getElementById('p' + player + 'CharPack');
-			if (thumb)   { thumb.src = '/' + saved.file; thumb.style.display = 'inline'; }
-			if (label)   label.textContent = saved.character + ' (' + saved.palette + ')';
-			if (portrait){ portrait.src = '/' + saved.file; portrait.style.display = 'block'; }
-			if (packSel) packSel.value = saved.pack;
-		} else {
-			clearCharacterSelect(player);
-		}
-	}
-	restoreCharForPlayer(1, jsonData.p1Name);
-	restoreCharForPlayer(2, jsonData.p2Name);
 	updateCurrentPlayerDisplay();
     refreshSocialFields();
 	sendJsonToEndpoint("updatealldata");
@@ -1433,7 +1319,6 @@ function clearNextPlayers(event) {
 
 function updateCurrentGame() {
     jsonData["current_game"] = document.getElementById('gameSelect').value;
-    charRefreshPacks();
     sendJSON();
 }
 
@@ -1472,8 +1357,6 @@ function getAllGames() {
                       option.style.color = "black";
                       games.appendChild(option);
                   });
-                  // Load character packs for the currently selected game
-                  if (currentGame) { charRefreshPacks(); }
               })
               .catch(function (err) {
                     console.log('error: ' + err);
@@ -1487,256 +1370,3 @@ createEventsWithStatsDropdown();
 addEventListenersForNextRound('form_next_round_name_1p');
 addEventListenersForNextRound('form_next_round_name_2p');
 getAllGames();
-
-// ── CHARACTER SELECT ──────────────────────────────────────────────
-var _charMaps = {};  // cache: "game/pack" -> charMap
-
-function charGetGame() {
-    // Use the current game from the main game dropdown
-    return (jsonData && jsonData.current_game) ? jsonData.current_game : '';
-}
-
-function charRefreshPacks() {
-    // Called when current_game changes -- reload packs for both players
-    [1, 2].forEach(function(p) { charLoadPacksForPlayer(p); });
-}
-
-function charLoadPacksForPlayer(player) {
-    var game = charGetGame();
-    var packSel = document.getElementById('p' + player + 'CharPack');
-    if (!packSel) return;
-    packSel.innerHTML = '<option value="">-- Pack --</option>';
-    charClosePopover(player);
-    if (!game) { console.log('charLoadPacksForPlayer: no game set'); return; }
-    console.log('charLoadPacksForPlayer: fetching packs for', game, 'player', player);
-    fetch('/getCharacterPacks?game=' + encodeURIComponent(game))
-        .then(function(r) { return r.json(); })
-        .then(function(packs) {
-            console.log('charLoadPacksForPlayer: got packs', packs);
-            packs.forEach(function(p) {
-                var opt = document.createElement('option');
-                opt.value = p; opt.textContent = p;
-                packSel.appendChild(opt);
-            });
-        })
-        .catch(function(e) { console.log('charLoadPacksForPlayer error:', e); });
-}
-
-function charLoadChars(player) {
-    var game = charGetGame();
-    var pack = document.getElementById('p' + player + 'CharPack').value;
-    charClosePopover(player);
-    if (!game || !pack) return;
-    var key = game + '/' + pack;
-    if (_charMaps[key]) return;  // already cached
-    fetch('/getCharacterList?game=' + encodeURIComponent(game) + '&pack=' + encodeURIComponent(pack))
-        .then(function(r) { return r.json(); })
-        .then(function(charMap) { _charMaps[key] = charMap; });
-}
-
-function charTogglePicker(player) {
-    var popover = document.getElementById('p' + player + 'CharPopover');
-    var btn     = document.getElementById('p' + player + 'CharPickerBtn');
-    if (popover.style.display !== 'none') {
-        charClosePopover(player);
-        return;
-    }
-    var game = charGetGame();
-    var pack = document.getElementById('p' + player + 'CharPack').value;
-    if (!game) { alert('Set a current game first using the Game dropdown.'); return; }
-    if (!pack) { alert('Select a pack first.'); return; }
-    var key  = game + '/' + pack;
-
-    function renderPopover(charMap) {
-        _charMaps[key] = charMap;
-        popover.innerHTML = '';
-        var chars = Object.keys(charMap).sort();
-        chars.forEach(function(char) {
-            var palettes = charMap[char];
-            var defaultImg = '/' + palettes[0].file;
-
-            // Row
-            var row = document.createElement('div');
-            row.className = 'char-row';
-            row.innerHTML =
-                '<img class="char-row-thumb" src="' + defaultImg + '">' +
-                '<span class="char-row-name">' + char + '</span>' +
-                '<span class="char-row-arrow">›</span>';
-            row.querySelector('.char-row-thumb').onerror = function() { this.style.display = 'none'; };
-
-            // Palette strip (hidden until row clicked)
-            var strip = document.createElement('div');
-            strip.className = 'char-palette-strip';
-            strip.style.display = 'none';
-            palettes.forEach(function(p) {
-                var img = document.createElement('img');
-                img.className = 'char-palette-thumb';
-                img.src = '/' + p.file;
-                img.title = 'Palette ' + p.palette;
-                img.dataset.char = char;
-                img.dataset.palette = p.palette;
-                img.onerror = function() { this.style.display = 'none'; };
-                img.onclick = function(e) {
-                    e.stopPropagation();
-                    charSelectPalette(player, game, pack, char, p.palette, p.file, img, popover);
-                };
-                strip.appendChild(img);
-            });
-
-            row.onclick = function() {
-                var isOpen = row.classList.contains('expanded');
-                // Close all other expanded rows
-                popover.querySelectorAll('.char-row.expanded').forEach(function(r) {
-                    r.classList.remove('expanded');
-                    r.nextElementSibling.style.display = 'none';
-                });
-                if (!isOpen) {
-                    row.classList.add('expanded');
-                    strip.style.display = 'flex';
-                    strip.scrollIntoView({ block: 'nearest' });
-                }
-            };
-
-            popover.appendChild(row);
-            popover.appendChild(strip);
-        });
-
-        popover.style.display = 'block';
-        btn.classList.add('open');
-    }
-
-    if (_charMaps[key]) {
-        renderPopover(_charMaps[key]);
-    } else {
-        fetch('/getCharacterList?game=' + encodeURIComponent(game) + '&pack=' + encodeURIComponent(pack))
-            .then(function(r) { return r.json(); })
-            .then(renderPopover);
-    }
-}
-
-function charClosePopover(player) {
-    var popover = document.getElementById('p' + player + 'CharPopover');
-    var btn     = document.getElementById('p' + player + 'CharPickerBtn');
-    if (popover) popover.style.display = 'none';
-    if (btn) btn.classList.remove('open');
-}
-
-function charSelectPalette(player, game, pack, char, palette, file, imgEl, popover) {
-    // Highlight selection
-    popover.querySelectorAll('.char-palette-thumb.selected').forEach(function(el) {
-        el.classList.remove('selected');
-    });
-    imgEl.classList.add('selected');
-
-    // Update the picker button
-    var thumb = document.getElementById('p' + player + 'CharThumb');
-    var label = document.getElementById('p' + player + 'CharLabel');
-    if (thumb) { thumb.src = '/' + file; thumb.style.display = 'inline'; }
-    if (label) label.textContent = char + ' (' + palette + ')';
-    // Update portrait
-    var portrait = document.getElementById('p' + player + 'CharPortrait');
-    if (portrait) { portrait.src = '/' + file; portrait.style.display = 'block'; }
-
-    // Write to jsonData and save
-    jsonData['p' + player + 'Character']     = char;
-    jsonData['p' + player + 'CharacterPack'] = pack;
-    jsonData['p' + player + 'Palette']       = palette;
-    jsonData['p' + player + 'CharacterFile'] = file;
-    sendJSON();
-
-    // Save character to player profile and update in-memory map
-    var playerName = jsonData['p' + player + 'Name'];
-    var game = charGetGame();
-    if (playerName && game) {
-        var localPlayer = _localPlayersByName.get(playerName.trim());
-        if (localPlayer && localPlayer.id) {
-            // Update in-memory record immediately
-            if (!localPlayer.characters) localPlayer.characters = {};
-            localPlayer.characters[game] = { pack: pack, character: char, palette: palette, file: file };
-            var charUpdate = {};
-            charUpdate[game] = { pack: pack, character: char, palette: palette, file: file };
-            fetch('/saveLocalPlayer', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ id: localPlayer.id, name: localPlayer.name, characters: charUpdate })
-            }).catch(function(e) { console.log('saveCharacter error:', e); });
-        }
-    }
-
-    // Close popover after short delay
-    setTimeout(function() { charClosePopover(player); }, 300);
-}
-
-// Close popovers on outside click
-document.addEventListener('click', function(e) {
-    [1, 2].forEach(function(p) {
-        var btn     = document.getElementById('p' + p + 'CharPickerBtn');
-        var popover = document.getElementById('p' + p + 'CharPopover');
-        if (!btn || !popover) return;
-        if (!btn.contains(e.target) && !popover.contains(e.target)) {
-            charClosePopover(p);
-        }
-    });
-});
-
-// Packs load when current_game is set via the game dropdown
-
-// ── CHARACTER PALETTE PREVIEW ──────────────────────────────────
-(function() {
-  var preview = null, previewImg = null, previewLabel = null;
-
-  function getPreview() {
-    if (!preview) {
-      preview      = document.getElementById('char-preview');
-      previewImg   = document.getElementById('char-preview-img');
-      previewLabel = document.getElementById('char-preview-label');
-    }
-    return preview;
-  }
-
-  function showPreview(e, src, label) {
-    var p = getPreview();
-    if (!p) return;
-    previewImg.src = src;
-    previewLabel.textContent = label;
-    p.style.display = 'block';
-    movePreview(e);
-  }
-
-  function movePreview(e) {
-    var p = getPreview();
-    if (!p || p.style.display === 'none') return;
-    var x = e.clientX + 16;
-    var y = e.clientY + 16;
-    // Keep within viewport
-    if (x + 140 > window.innerWidth)  x = e.clientX - 148;
-    if (y + 155 > window.innerHeight) y = e.clientY - 158;
-    p.style.left = x + 'px';
-    p.style.top  = y + 'px';
-  }
-
-  function hidePreview() {
-    var p = getPreview();
-    if (p) p.style.display = 'none';
-  }
-
-  // Attach to dynamically created palette thumbs via event delegation
-  document.addEventListener('mouseover', function(e) {
-    var thumb = e.target.closest('.char-palette-thumb');
-    if (!thumb) { hidePreview(); return; }
-    var char    = thumb.dataset.char    || '';
-    var palette = thumb.dataset.palette !== undefined ? thumb.dataset.palette : '';
-    showPreview(e, thumb.src, char + (palette !== '' ? ' · ' + palette : ''));
-  });
-
-  document.addEventListener('mousemove', function(e) {
-    movePreview(e);
-  });
-
-  document.addEventListener('mouseout', function(e) {
-    var thumb = e.target.closest('.char-palette-thumb');
-    if (thumb && !e.relatedTarget?.closest('.char-palette-thumb')) {
-      hidePreview();
-    }
-  });
-})();
