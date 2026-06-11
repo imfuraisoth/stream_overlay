@@ -8,7 +8,7 @@
     <meta social2="viewport" content="width=device-width">
     <meta nextPlayer1="viewport" content="width=device-width">
     <meta nextPlayer2="viewport" content="width=device-width">
-	<link rel="stylesheet" href="https://use.typekit.net/vsy6ybb.css">
+    <link rel="stylesheet" href="https://use.typekit.net/ogo7pba.css">
     <title>Commentator Overlay</title>
     <link href="style.css" rel="stylesheet" type="text/css" />
     <script src="https://kit.fontawesome.com/2c93766a80.js" crossorigin="anonymous"></script>
@@ -16,9 +16,6 @@
   </head>
   <body>
     <script>
-	// Delay time in milliseconds (e.g., 5000 milliseconds = 5 seconds)
-	const delayTime = 200;
-	
     var com1Value = "";
     var com2Value = "";
     var soc1Value = "";
@@ -29,7 +26,6 @@
 	var resultName2 = "";
 	var result1 = "";
 	var result2 = "";
-	var bgLoaded = false;
     var serverIp = readServerIp();
 
     function readServerIp() {
@@ -40,7 +36,8 @@
         return returnValue;
     }
 
-    function loadElements() {			
+    function loadElements() {
+			
       fetch('http://' + serverIp + '/getdata')
           .then(function (response) {
             return response.json();
@@ -51,99 +48,244 @@
           .catch(function (err) {
             console.log('error: ' + err);
           });
-          async function appendData(data) {
-			if (data.com1 !== com1Value && data.soc1 !== soc1Value) {
-				com1Value = data.com1;
-				soc1Value = data.soc1;
-				updatePair("name1", "soc1", com1Value, soc1Value);
-			} else {
-				if (data.com1 !== com1Value) {
-					com1Value = data.com1;
-					await updateElement("name1", com1Value);
-				}
-				if (data.soc1 !== soc1Value) {
-					soc1Value = data.soc1;
-					await updateElement("soc1", soc1Value);
-				}
-			}
-			if (data.com2 !== com2Value && data.soc2 !== soc2Value) {
-				com2Value = data.com2;
-				soc2Value = data.soc2;
-				updatePair("name2", "soc2", com2Value, soc2Value);
-			} else {
-				if (data.com2 !== com2Value) {
-					com2Value = data.com2;
-					await updateElement("name2", com2Value);
-				}
-				if (data.soc2 !== soc2Value) {
-					soc2Value = data.soc2;
-					await updateElement("soc2", soc2Value);
-				}
-			}
+          function appendData(data) {
+            if (data.com1 !== com1Value) {
+              var element = document.getElementById("name1Div");
+              if (!!element) {
+                fadeOutElement(element);
+              }
+				sleep(1000).then(() => {
+				  com1Value = data.com1;
+				  if (data.com1.length > 0) {
+					var name1 = document.createElement("span");
+					name1.setAttribute("id", "name1");
+					name1.style.color = "#FFFFFF";
+					name1.innerHTML = data.com1;
+					var div = document.createElement("div");
+					div.setAttribute("id", "name1Div");
+					div.appendChild(name1);
+					document.body.appendChild(div);
+				  }
+				});  
+            }
+
+            if (data.com2 !== com2Value) {
+              var element = document.getElementById("name2Div");
+              if (!!element) {
+                fadeOutElement(element);
+              }
+			  sleep(1000).then(() => {
+				  com2Value = data.com2;
+				  if (data.com2.length > 0) {
+					var name2 = document.createElement("span");
+					name2.setAttribute("id", "name2");
+					name2.style.color = "#FFFFFF";
+					name2.innerHTML = data.com2;
+					var div = document.createElement("div");
+					div.setAttribute("id", "name2Div");
+					div.appendChild(name2);
+					document.body.appendChild(div);
+				  }
+				 }); 
+            }
+
+            if (data.soc1 !== soc1Value) {
+              var element = document.getElementById("soc1Div");
+              if (!!element) {
+                fadeOutElement(element);
+              }
+			  sleep(1000).then(() => {
+				  soc1Value = data.soc1;
+				  if (data.soc1.length > 0) {
+					var soc1 = document.createElement("span");
+					soc1.setAttribute("id", "social1");
+					soc1.style.color = "#FFFFFF";
+					soc1.innerHTML = data.soc1;
+					var div = document.createElement("div");
+					div.setAttribute("id", "soc1Div");
+					div.appendChild(soc1);
+					document.body.appendChild(div);
+				  }
+				}); 
+            }
+
+            if (data.soc2 !== soc2Value) {
+              var element = document.getElementById("soc2Div");
+              if (!!element) {
+                fadeOutElement(element);
+              }
+			  sleep(1000).then(() => {
+				  soc2Value = data.soc2;
+				  if (data.soc2.length > 0) {
+					var soc2 = document.createElement("span");
+					soc2.setAttribute("id", "social2");
+					soc2.style.color = "#FFFFFF";
+					soc2.innerHTML = data.soc2;
+					var div = document.createElement("div");
+					div.setAttribute("id", "soc2Div");
+					div.appendChild(soc2);
+					document.body.appendChild(div);
+				  }
+			  }); 
+            }
+
+            if (data.nextplayer1 !== nextPlayer1) {
+              var element = document.getElementById("next1");
+              if (!!element) {
+                fadeOutElement(element);
+              }
+			  sleep(1000).then(() => {
+				  nextPlayer1 = data.nextplayer1;
+				  if (data.nextplayer1.length > 0) {
+					var np1 = document.createElement("span");
+					np1.setAttribute("id", "nextPlayer1");
+					np1.style.color = "#FFFFFF";
+					np1.innerHTML = data.nextplayer1;
+					var div = document.createElement("div");
+					div.setAttribute("id", "next1");
+					div.appendChild(np1);
+					document.body.appendChild(div);
+				  }
+				});	  
+            }
+
+            if (data.nextplayer2 !== nextPlayer2) {
+              var element = document.getElementById("next2");
+              if (!!element) {
+                fadeOutElement(element);
+              }
+			  sleep(1000).then(() => {
+				  nextPlayer2 = data.nextplayer2;
+				  if (data.nextplayer2.length > 0) {
+					var np2 = document.createElement("span");
+					np2.setAttribute("id", "nextPlayer2");
+					np2.style.color = "#FFFFFF";
+					np2.innerHTML = data.nextplayer2;
+					var div = document.createElement("div");
+					div.setAttribute("id", "next2");
+					div.appendChild(np2);
+					document.body.appendChild(div);
+				  }
+			  });
+            }
+			
+			if (data.resultplayer1 !== resultName1 || data.resultscore1 !== result1) {
+              var element = document.getElementById("results1");
+              if (!!element) {
+                fadeOutElement(element);
+              }
+			  sleep(1000).then(() => {
+				  resultName1 = data.resultplayer1;
+				  result1 = data.resultscore1;
+
+				  if (resultName1.length > 0) {
+					var rp1 = document.createElement("td");
+					rp1.setAttribute("id", "resultName1");
+					rp1.style.color = "#FFFFFF";
+					rp1.innerHTML = resultName1;
+					
+					var r1 = document.createElement("td");
+					r1.setAttribute("id", "result1");
+					r1.style.color = "#FFFFFF";
+					r1.innerHTML = result1
+					if (result1.length > 1) {
+						r1.style.fontSize = "35px";
+					} else {
+						r1.style.fontSize = "45px";
+					}
+					
+					var div = document.createElement("table");
+					div.setAttribute("id", "results1");
+					div.appendChild(rp1);
+					div.appendChild(r1);
+					div.style.scrollWidth = "10px";
+					document.body.appendChild(div);
+				  }
+				});
+            }	
+
+			if (data.resultplayer2 !== resultName2 || data.resultscore2 !== result2) {
+              var element = document.getElementById("results2");
+              if (!!element) {
+                fadeOutElement(element);
+              }
+			  
+			  sleep(1000).then(() => {
+				  resultName2 = data.resultplayer2;
+				  result2 = data.resultscore2;
+				  if (resultName2.length > 0) {
+					var rp2 = document.createElement("td");
+					rp2.setAttribute("id", "resultName2");
+					rp2.style.color = "#FFFFFF";
+					rp2.innerHTML = resultName2;
+					
+					var r2 = document.createElement("td");
+					r2.setAttribute("id", "result2");
+					r2.style.color = "#FFFFFF";
+					r2.innerHTML = result2
+					if (result2.length > 1) {
+						r2.style.fontSize = "35px";
+					} else {
+						r2.style.fontSize = "45px";
+					}
+					
+					var div = document.createElement("table");
+					div.setAttribute("id", "results2");
+					div.appendChild(rp2);
+					div.appendChild(r2);
+					div.style.scrollWidth = "150px";
+					document.body.appendChild(div);
+				  }
+			  });
+            }	
           }  
     }
 
+    function fadeOutElement(element) {
+        var op = 1;  // initial opacity
+        var timer = setInterval(function () {
+            if (op <= 0.1) {
+                clearInterval(timer);
+                element.style.display = 'none';
+                element.remove();
+                return;
+            } else {
+              element.style.opacity = op;
+              element.style.filter = 'alpha(opacity=' + op * 100 + ")";
+              op -= op * 0.1;
+            }
+        }, 30);
+    }	
 	
 	function sleep (time) {
 		return new Promise((resolve) => setTimeout(resolve, time));
-	}
-	
-	async function updatePair(nameId, socId, nameValue, socValue) {
-		const nameEl = document.getElementById(nameId);
-		const socEl = document.getElementById(socId);
-
-		// fade BOTH out at same time
-		nameEl.classList.remove("show");
-		socEl.classList.remove("show");
-
-		await sleep(1000);
-
-		// update both at same time
-		nameEl.textContent = nameValue;
-		socEl.textContent = socValue;
-
-		// fade BOTH in at same time
-		nameEl.classList.add("show");
-		socEl.classList.add("show");
-	}
-
-	async function updateElement(id, newValue) {
-		const element = document.getElementById(id);
-
-		// Don't animate if nothing changed
-		if (element.textContent === newValue) {
-			return;
-		}
-
-		// Fade out
-		element.classList.remove("show");
-
-		// Wait for fade-out to finish
-		await sleep(1000);
-
-		// Update text
-		element.textContent = newValue;
-
-		// Fade back in
-		if (newValue.length > 0) {
-			element.classList.add("show");
-		}
 	}
 
     window.setInterval(loadElements, 2000);
     </script>
 	
-		<video id="commentatorBG" width="1920" height="1080">
-		  Your browser does not support the video tag.
-		</video>
 		<div id="scoreboard">
+			<div id="results1" class="resultContainer">
+				<span id="result1Name" class="names"></span>
+			</div>
+			<div><span id="result1" class="scores"></span></div>
+			<div id="results2" class="resultContainer">
+				<span id="result2Name" class="names"></span>
+			</div>
+			<div><span id="result2" class="scores"></span></div>
+			<div id="next1">
+				<span id="nextPlayer1" class="names"></span>
+			</div>
+			<div id="next2">
+				<span id="nextPlayer2" class="names"></span>
+			</div>
 			<div id="name1Div">
-				<span id="name1" class="fade-in"></span>
-				<span id="soc1" class="fade-in"></span>
+				<span id="name1" class="names"></span>
+				<span id="soc1" class="names"></span>
 			</div>
 			<div id="name2Div">
-				<span id="name2" class="fade-in"></span>
-				<span id="soc2" class="fade-in"></span>
+				<span id="name2" class="names"></span>
+				<span id="soc2" class="names"></span>
 			</div>
 		</div>
 	

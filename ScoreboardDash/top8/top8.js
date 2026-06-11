@@ -383,8 +383,6 @@ function resetNamesAndScore() {
 	jsonData.p2Name = "";
 	jsonData.p1Team = "";
 	jsonData.p2Team = "";
-    jsonData.p1Bracket = "";
-    jsonData.p2Bracket = "";
 	jsonData.p1Country = "US";
 	jsonData.p2Country = "US";
 	jsonData.p1Score = "0";
@@ -487,8 +485,6 @@ function resetScores() {
 	safeEl("form_score_2p").value = "0";
 	jsonData.p1Score = "0";
 	jsonData.p2Score = "0";
-	jsonData.p1Bracket = "";
-	jsonData.p2Bracket = "";
 	sendJsonToEndpoint('updateCurrentScore');
 }
 
@@ -606,8 +602,6 @@ function resetAll() {
 	jsonData.resultscore2 = "";
 	jsonData.maxScore = "";
 	jsonData.round = "Casuals";
-	jsonData.p1Bracket = "";
-	jsonData.p2Bracket = "";
 	setButtonColourAndText("rectangle_button_18", "#675267", "Start Top 8");
 	updateAllData(resetTop8);
 }
