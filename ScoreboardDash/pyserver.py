@@ -28,6 +28,7 @@ import os
 import webbrowser
 import shutil
 import copy
+import requests
 from datetime import datetime
 from scripts import PlayerStats
 from scripts import TTLCache
@@ -153,6 +154,7 @@ def _read_local_players():
         if not isinstance(data, dict):
             return {}
         # Ensure all fields present on each record
+        changed = False
         for pid, v in data.items():
             v.setdefault("id", pid)
             v.setdefault("team", "")
@@ -160,6 +162,11 @@ def _read_local_players():
             v.setdefault("social_handle", "")
             v.setdefault("social_platform", "")
             v.setdefault("is_commentator", False)
+            if "characters" not in v:
+                v["characters"] = {}
+                changed = True
+        if changed:
+            FileUtils.write_file(local_players_file, data)
         return data
     except Exception as e:
         print(f"_read_local_players error: {e}")
@@ -193,13 +200,17 @@ def save_local_player():
         if pid is None:
             # New player — assign next ID
             pid = _next_player_id(players)
-            existing = {"id": pid, "name": name, "team": "", "country": "", "social_handle": "", "social_platform": "", "is_commentator": False}
+            existing = {"id": pid, "name": name, "team": "", "country": "", "social_handle": "", "social_platform": "", "is_commentator": False, "characters": {}}
         # Only overwrite fields that are explicitly provided and non-empty
         if body.get("team"):            existing["team"]            = body["team"]
         if body.get("country"):         existing["country"]         = body["country"]
         if "social_handle"   in body:              existing["social_handle"]   = body["social_handle"]
         if "social_platform" in body:              existing["social_platform"] = body["social_platform"]
         if "is_commentator" in body:        existing["is_commentator"]  = bool(body["is_commentator"])
+        if "characters" in body:
+            if not isinstance(existing.get("characters"), dict):
+                existing["characters"] = {}
+            existing["characters"].update(body["characters"])
         existing["name"] = name
         players[pid] = existing
         FileUtils.write_file(local_players_file, players)
@@ -223,9 +234,16 @@ def update_local_player():
         players = _read_local_players()
         if pid not in players:
             return "404", 404
+        # Preserve existing characters unless new ones are provided
+        existing_chars = players[pid].get("characters", {})
+        new_chars = body.get("characters")
+        if new_chars is not None:
+            characters = new_chars  # Use the edited characters dict from modal
+        else:
+            characters = existing_chars
         players[pid] = {"id": pid, "name": name, "team": team, "country": country,
                         "social_handle": social_handle, "social_platform": social_platform,
-                        "is_commentator": is_commentator}
+                        "is_commentator": is_commentator, "characters": characters}
         FileUtils.write_file(local_players_file, players)
     except Exception as e:
         print(f"updateLocalPlayer error: {e}")
@@ -251,6 +269,68 @@ def delete_local_player():
         print(f"deleteLocalPlayer error: {e}")
     return "200"
 
+
+
+@api.route('/getCharacterPacks', methods=['GET'])
+def get_character_packs():
+    """List all packs available for a game (subfolders of images/games/<game>/)."""
+    game = request.args.get("game", "").strip()
+    if not game:
+        return jsonify([]), 200
+    try:
+        base = os.path.join(os.path.dirname(os.path.abspath(__file__)), "images/games", game)
+        if not os.path.isdir(base):
+            return jsonify([]), 200
+        packs = sorted([p for p in os.listdir(base)
+                        if os.path.isdir(os.path.join(base, p))])
+        return jsonify(packs), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@api.route('/getCharacterList', methods=['GET'])
+def get_character_list():
+    """Return character names + palette paths for a game/pack."""
+    game = request.args.get("game", "").strip()
+    pack = request.args.get("pack", "").strip()
+    if not game or not pack:
+        return jsonify({}), 200
+    try:
+        pack_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                                "images/games", game, pack)
+        if not os.path.isdir(pack_dir):
+            return jsonify({}), 200
+
+        image_exts = {".png", ".jpg", ".jpeg", ".gif", ".webp"}
+        char_map = {}  # { characterName: [ {palette: N, path: "..."}, ... ] }
+
+        for fname in sorted(os.listdir(pack_dir)):
+            stem, ext = os.path.splitext(fname)
+            if ext.lower() not in image_exts:
+                continue
+            if "_" not in stem:
+                continue
+            char, palette = stem.rsplit("_", 1)
+            if not palette.isdigit():
+                continue
+            # Strip game code prefix (e.g. "ssf2x-ryu" -> "ryu")
+            if "-" in char:
+                char = char.split("-", 1)[1]
+            if char not in char_map:
+                char_map[char] = []
+            # Path served relative to ScoreboardDash root via Flask static handler
+            char_map[char].append({
+                "palette": int(palette),
+                "file": f"images/games/{game}/{pack}/{fname}"
+            })
+
+        # Sort palettes within each character
+        for char in char_map:
+            char_map[char].sort(key=lambda x: x["palette"])
+
+        return jsonify(char_map), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 
 @api.route('/cleanupLocalPlayers', methods=['POST'])
@@ -441,9 +521,11 @@ def get_all_game_image_dir():
     current_game = full_data.get("current_game")
     if not current_game:
         current_game = ""
+    games = character_image_loader.list_games()
+    print(f"[getAllGameImageDir] games_path={character_image_loader.games_path} games={games}")
     result = {
         "current_game": current_game,
-        "game_list": character_image_loader.list_games()
+        "game_list": games
     }
     return jsonify(result), 200
 
@@ -453,6 +535,155 @@ def get_character_images():
     global character_image_loader
     game = request.args.get("game")
     return jsonify(character_image_loader.get_character_images(game)), 200
+
+
+GITHUB_API  = "https://api.github.com/repos/joaorb64/StreamHelperAssets/contents/games"
+GITHUB_RAW  = "https://raw.githubusercontent.com/joaorb64/StreamHelperAssets/main/games"
+IMAGES_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "images/games")
+
+
+@api.route('/streamhelper/games', methods=['GET'])
+def streamhelper_list_games():
+    """List all games available in StreamHelperAssets."""
+    try:
+        resp = requests.get(GITHUB_API, timeout=10,
+                            headers={"Accept": "application/vnd.github.v3+json"})
+        if not resp.ok:
+            return jsonify({"error": f"GitHub API error {resp.status_code}"}), 500
+        games = [item["name"] for item in resp.json() if item["type"] == "dir"]
+        games.sort()
+        return jsonify(games), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@api.route('/streamhelper/packs', methods=['GET'])
+def streamhelper_list_packs():
+    """List icon packs available for a game (all dirs except base_files)."""
+    game = request.args.get("game", "")
+    if not game:
+        return jsonify({"error": "game required"}), 400
+    try:
+        # Packs live at game root level, excluding base_files
+        url = f"{GITHUB_API}/{game}"
+        resp = requests.get(url, timeout=10,
+                            headers={"Accept": "application/vnd.github.v3+json"})
+        if not resp.ok:
+            return jsonify({"error": f"GitHub API error {resp.status_code}"}), 500
+        packs = [item["name"] for item in resp.json()
+                 if item["type"] == "dir"]
+        packs.sort()
+        return jsonify(packs), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@api.route('/streamhelper/download', methods=['POST'])
+def streamhelper_download():
+    """Download a full icon pack for a game from StreamHelperAssets."""
+    body     = request.get_json() or {}
+    game     = body.get("game", "").strip()
+    pack     = body.get("pack", "").strip()
+    if not game or not pack:
+        return jsonify({"error": "game and pack required"}), 400
+
+    try:
+        # 1. Fetch config.json to get character codenames
+        config_url = f"{GITHUB_RAW}/{game}/base_files/config.json"
+        config_resp = requests.get(config_url, timeout=10)
+        if not config_resp.ok:
+            return jsonify({"error": f"Could not fetch config.json: {config_resp.status_code}"}), 500
+        config = config_resp.json()
+
+        # character_to_codename maps name → {codename, ...}
+        char_map = config.get("character_to_codename", {})
+        # Build list of codenames
+        codenames = list({v.get("codename", k) if isinstance(v, dict) else v
+                          for k, v in char_map.items()})
+        if not codenames:
+            # Fallback: list files in the pack directory via API
+            pack_url = f"{GITHUB_API}/{game}/base_files/{pack}"
+            pack_resp = requests.get(pack_url, timeout=10,
+                                     headers={"Accept": "application/vnd.github.v3+json"})
+            if pack_resp.ok:
+                codenames = [item["name"].rsplit(".", 1)[0]
+                             for item in pack_resp.json()
+                             if item["type"] == "file" and
+                             item["name"].lower().endswith((".png",".jpg",".jpeg",".webp",".gif"))]
+
+        # 2. Ensure output directory exists
+        out_dir = os.path.join(IMAGES_PATH, game, pack)
+        os.makedirs(out_dir, exist_ok=True)
+
+        # 3. Fetch each icon and save with _skin suffix
+        downloaded = []
+        failed = []
+        # Each codename may have multiple skins (named codename_0.png, codename_1.png...)
+        # First try to list the pack to get actual filenames
+        pack_api_url = f"{GITHUB_API}/{game}/{pack}"
+        pack_api_resp = requests.get(pack_api_url, timeout=10,
+                                     headers={"Accept": "application/vnd.github.v3+json"})
+        # For base_files, recursively collect files from subfolders
+        if pack_api_resp.ok:
+            items = pack_api_resp.json()
+            subdirs = [item["name"] for item in items if item["type"] == "dir"]
+            files = [item["name"] for item in items
+                     if item["type"] == "file" and
+                     item["name"].lower().endswith((".png",".jpg",".jpeg",".webp",".gif"))]
+            # If pack has subdirs (like base_files/icon/), collect from each
+            for subdir in subdirs:
+                sub_url = f"{GITHUB_API}/{game}/{pack}/{subdir}"
+                sub_resp = requests.get(sub_url, timeout=10,
+                                        headers={"Accept": "application/vnd.github.v3+json"})
+                if sub_resp.ok:
+                    for item in sub_resp.json():
+                        if item["type"] == "file" and                            item["name"].lower().endswith((".png",".jpg",".jpeg",".webp")):
+                            files.append(subdir + "/" + item["name"])
+        else:
+            files = [f"{c}_0.png" for c in codenames]
+
+        for fname in files:
+            # Strip subdir prefix if present (e.g. "icon/ryu_0.png" -> "ryu_0.png")
+            flat_fname = fname.split("/")[-1]
+            stem = flat_fname.rsplit(".", 1)[0]  # e.g. ryu_0
+            if "_" not in stem or not stem.rsplit("_", 1)[1].isdigit():
+                dest_name = stem + "_0.png"
+            else:
+                dest_name = flat_fname
+            # Route logo files to a Logos subfolder
+            is_logo = stem.lower().startswith("logo")
+            if is_logo:
+                logo_dir = os.path.join(IMAGES_PATH, game, "game_logo")
+                os.makedirs(logo_dir, exist_ok=True)
+                file_dest_dir = logo_dir
+            else:
+                file_dest_dir = out_dir
+
+            raw_url = f"{GITHUB_RAW}/{game}/{pack}/{fname}"
+            img_resp = requests.get(raw_url, timeout=15)
+            if img_resp.ok:
+                # Preserve original extension
+                orig_ext = os.path.splitext(fname.split("/")[-1])[1]
+                dest_name_ext = os.path.splitext(dest_name)[0] + orig_ext
+                dest = os.path.join(file_dest_dir, dest_name_ext)
+                with open(dest, "wb") as f:
+                    f.write(img_resp.content)
+                downloaded.append(dest_name)
+            else:
+                failed.append(fname)
+
+        return jsonify({
+            "downloaded": len(downloaded),
+            "failed":     len(failed),
+            "failed_files": failed[:10],
+            "game":       game,
+            "pack":       pack,
+            "out_dir":    out_dir
+        }), 200
+
+    except Exception as e:
+        import traceback
+        return jsonify({"error": str(e), "trace": traceback.format_exc()}), 500
 
 
 @api.route('/savePlayerCharacterData', methods=['POST'])
@@ -615,6 +846,14 @@ def update_data_no_scores():
         temp["nextSocial1Platform"] = json_data.get("nextSocial1Platform", "")
         temp["nextSocial2Handle"]   = json_data.get("nextSocial2Handle",   "")
         temp["nextSocial2Platform"] = json_data.get("nextSocial2Platform", "")
+        temp["p1Character"]     = json_data.get("p1Character",     "")
+        temp["p1CharacterPack"] = json_data.get("p1CharacterPack", "")
+        temp["p1Palette"]       = json_data.get("p1Palette",       0)
+        temp["p1CharacterFile"] = json_data.get("p1CharacterFile", "")
+        temp["p2Character"]     = json_data.get("p2Character",     "")
+        temp["p2CharacterPack"] = json_data.get("p2CharacterPack", "")
+        temp["p2Palette"]       = json_data.get("p2Palette",       0)
+        temp["p2CharacterFile"] = json_data.get("p2CharacterFile", "")
         full_data = temp
     FileUtils.write_file(scoreboard_data_file, full_data)
     return "200"
@@ -968,6 +1207,8 @@ def get_server_info():
 
 
 if __name__ == "__main__":
+    # Set working directory to ScoreboardDash/ so all relative paths resolve correctly
+    os.chdir(os.path.dirname(os.path.abspath(__file__)))
     try:
         print("Now we talk'n, server started ...")
         parser = argparse.ArgumentParser(description = 'Scoreboard server')
