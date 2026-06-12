@@ -696,3 +696,32 @@ select.name-picker option { font-size: 13px; }
   font-size: 10px;
   padding: 6px 8px;
 }
+
+/* ── Grand Finals bracket-reset indicator ───────────────────── */
+.gf-reset-badge {
+  display: inline-block;
+  margin-left: 8px;
+  padding: 2px 8px;
+  background: #C62828;
+  color: #fff;
+  font-family: var(--font-d);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  border-radius: 10px;
+  vertical-align: middle;
+  animation: gf-reset-pulse 1.6s ease-in-out infinite;
+}
+@keyframes gf-reset-pulse {
+  0%, 100% { opacity: 1; }
+  50%      { opacity: .55; }
+}
+
+/* ── Popout: GF reset-set score cell ────────────────────────── */
+.gf2-score {
+  margin-left: 4px;
+  opacity: .85;
+  border-left: 1px solid var(--border);
+  padding-left: 6px;
+}

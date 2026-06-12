@@ -233,7 +233,7 @@ roundNamesMap = {
     8: "Losers Semis",
     9: "Losers Finals",
     10: "Grand Finals",
-    11: "Grand Finals"
+    11: "Grand Finals Reset"
 }
 
 
@@ -487,7 +487,9 @@ def update_final_round(global_player_round_data, current_round_data, p1_score, p
 
     # Save off top 8 player data to file
     global roundNamesMap
-    current_round_name = roundNamesMap.get(current_round)
+    # Name by the round that is now current: after a bracket reset
+    # currentRound has moved to 11 ("Grand Finals Reset")
+    current_round_name = roundNamesMap.get(current_next_data["currentRound"], roundNamesMap.get(current_round))
     current_next_data["currentRoundName"] = current_round_name
     update_scoreboard_json(current_next_data, p1_name, p2_name, str(p1_score), str(p2_score), current_round_name, current_round, current_round_data["player1"]["bracket"], current_round_data["player2"]["bracket"])
     FileUtils.write_file(player_data_file_name, global_player_round_data)

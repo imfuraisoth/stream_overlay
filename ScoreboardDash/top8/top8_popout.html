@@ -147,16 +147,18 @@
 
         <div class="bracket-col bracket-col-center">
           <div class="bracket-match" id="winners_finals">
-            <div class="bracket-match-header"><span class="bracket-match-title">Grand Finals</span></div>
+            <div class="bracket-match-header"><span class="bracket-match-title">Grand Finals</span> <span class="gf-reset-badge" id="gf_reset_badge" style="display:none;">Bracket Reset</span></div>
             <div class="bracket-player">
               <span class="bracket-team-tag" id="po-team-w1-gf"></span>
               <div class="name-input-wrap"><input id="po-name-w1-gf" type="text" readonly placeholder="—"></div>
               <span class="bracket-score-display" id="po-score-w1-gf"></span>
+              <span class="bracket-score-display gf2-score" id="po-score2-w1-gf" style="display:none;" title="Reset set score"></span>
             </div>
             <div class="bracket-player" style="margin-top:5px;">
               <span class="bracket-team-tag" id="po-team-w2-gf"></span>
               <div class="name-input-wrap"><input id="po-name-w2-gf" type="text" readonly placeholder="—"></div>
               <span class="bracket-score-display" id="po-score-w2-gf"></span>
+              <span class="bracket-score-display gf2-score" id="po-score2-w2-gf" style="display:none;" title="Reset set score"></span>
             </div>
           </div>
         </div>
@@ -305,6 +307,25 @@ function update(data) {
     set('po-team-'  + s.id, p.team  || '');
     set('po-score-' + s.id, (p.score !== undefined && p.score !== '') ? p.score : '');
   });
+  // Grand Finals reset-set scores (r10 score2)
+  var gf = data.r10 || {};
+  var s2a = (gf.p1 && gf.p1.score2 !== undefined) ? gf.p1.score2 : '';
+  var s2b = (gf.p2 && gf.p2.score2 !== undefined) ? gf.p2.score2 : '';
+  var hasS2 = (s2a !== '' || s2b !== '');
+  _gfHasScore2 = hasS2;
+  set('po-score2-w1-gf', s2a);
+  set('po-score2-w2-gf', s2b);
+  updateGf2Visibility();
+}
+
+var _gfResetLive = false;
+var _gfHasScore2 = false;
+function updateGf2Visibility() {
+  var show = _gfResetLive || _gfHasScore2;
+  ['po-score2-w1-gf', 'po-score2-w2-gf'].forEach(function(id) {
+    var el = document.getElementById(id);
+    if (el) el.style.display = show ? '' : 'none';
+  });
 }
 
 function load() {
@@ -312,6 +333,15 @@ function load() {
     .then(function(r) { return r.json(); })
     .then(update)
     .catch(function(e) { console.log('popout error:', e); });
+  fetch('/getTop8CurrentNextData')
+    .then(function(r) { return r.json(); })
+    .then(function(cn) {
+      var badge = document.getElementById('gf_reset_badge');
+      _gfResetLive = !!(cn && parseInt(cn.currentRound, 10) === 11);
+      if (badge) badge.style.display = _gfResetLive ? '' : 'none';
+      updateGf2Visibility();
+    })
+    .catch(function(e) { console.log('popout state error:', e); });
 }
 
 load();

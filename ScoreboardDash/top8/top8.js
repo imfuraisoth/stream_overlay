@@ -831,6 +831,8 @@ function updateCurrentAndNextInfo(currentNextData) {
 }
 
 function highlightCurrentRoundForms(round) {
+    var gfBadge = document.getElementById('gf_reset_badge');
+    if (gfBadge) gfBadge.style.display = (parseInt(round, 10) === 11) ? '' : 'none';
     for (const suffix of lastRoundSuffix) {
         safeEl("form_team_" + suffix).style.border="";
         safeEl("form_name_" + suffix).style.border="";
