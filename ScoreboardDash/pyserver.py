@@ -338,9 +338,10 @@ def get_character_list():
 
 @api.route('/getCommentators', methods=['GET'])
 def get_commentators():
+    """Players flagged as commentators in their profile."""
     players = _read_local_players()
     result = {p["name"]: {"name": p["name"], "soc": p.get("social_handle", "")}
-              for p in players.values()}
+              for p in players.values() if p.get("is_commentator")}
     return json.dumps(result, ensure_ascii=False), 200
 
 

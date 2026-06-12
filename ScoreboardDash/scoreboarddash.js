@@ -98,7 +98,23 @@ function refreshSocialFields() {
     if (changed) sendJSON();
 }
 
-const SOCIAL_ICONS = { twitter: '𝕏', bluesky: '🦋', instagram: '📷', facebook: '👤' };
+const PLATFORM_ICONS = {
+    twitter:   'resources/twitter.png',
+    bluesky:   'resources/bsky.png',
+    instagram: 'resources/instagram.png',
+    facebook:  'resources/facebook.png',
+    twitch:    'resources/twitch.png',
+};
+
+function platformIcon(p) {
+    return PLATFORM_ICONS[p]
+        ? '<img src="' + PLATFORM_ICONS[p] + '" style="width:16px;height:16px;vertical-align:middle;margin-right:4px;object-fit:contain;">'
+        : '';
+}
+
+function escSocialText(s) {
+    return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
 
 function updateSocialDisplays() {
     function setDisplay(rowId, valueId, handle, platform) {
@@ -106,8 +122,7 @@ function updateSocialDisplays() {
         var val = document.getElementById(valueId);
         if (!row || !val) return;
         if (handle) {
-            var icon = SOCIAL_ICONS[platform] ? SOCIAL_ICONS[platform] + ' ' : '';
-            val.textContent = icon + handle;
+            val.innerHTML = platformIcon(platform) + escSocialText(handle);
             row.style.display = '';
         } else {
             row.style.display = 'none';
