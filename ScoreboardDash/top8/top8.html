@@ -45,8 +45,6 @@
         <button class="toggle-btn" id="t8srcBtnStartgg" onclick="setTop8PlayerSource('startgg')">Start.gg</button>
         <button class="toggle-btn" id="t8srcBtnLocal"   onclick="setTop8PlayerSource('local')">Local</button>
       </div>
-      <button class="btn-sec" id="rectangle_button_1" onclick="resetAll();">Reset All</button>
-      <button class="btn-sec" id="rectangle_button_2" onclick="resetNamesAndScore();">Reset Names &amp; Scores</button>
     </div>
 
     <!-- ═══ CURRENT MATCH + NEXT ROUND + RESULTS ═══ -->
@@ -55,7 +53,12 @@
       <div class="section-body">
         <div class="top-row-grid">
 
-          <!-- Results -->
+          <!-- Resets + Results (left column) -->
+          <div class="top-left-stack">
+            <div class="reset-stack">
+              <button class="btn-sec" id="button_reset_bracket" onclick="resetBracket();" title="Restart the run, keep the 8 seeded players">Reset Bracket</button>
+              <button class="btn-sec" id="rectangle_button_1" onclick="resetAll();">Reset All</button>
+            </div>
           <div class="top-side-panel">
             <div class="side-panel-label" id="text_results">Results</div>
             <div class="results-rows">
@@ -70,6 +73,7 @@
                 <input class="form_results_name_2p" type="text" id="form_results_name_2p" value="" placeholder="P2 Name" onchange="updateResults();">
               </div>
             </div>
+          </div>
           </div>
 
           <div class="top-right-stack">

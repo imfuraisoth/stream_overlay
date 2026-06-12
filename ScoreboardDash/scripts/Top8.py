@@ -647,6 +647,34 @@ def reset():
         FileUtils.write_file(current_next_data_file, current_next_data)
 
 
+def reset_bracket():
+    """Restart the top 8 run while keeping the eight seeded players.
+
+    Keeps names/teams/countries in r1-r4 (the seed rounds), clears all
+    scores, wipes the derived rounds (r5-r10) completely, and resets
+    the run state so Start Top 8 begins again from Winners Semis."""
+    print("Resetting bracket (keeping seeds)..")
+    global current_next_data
+    global global_player_data
+    with top8_lock:
+        for key, round_data in global_player_data.items():
+            for pid in ("p1", "p2"):
+                player = round_data.get(pid)
+                if not isinstance(player, dict):
+                    continue
+                player["score"] = ""
+                if "score2" in player:
+                    player["score2"] = ""
+                if key not in ("r1", "r2", "r3", "r4"):
+                    player["name"] = ""
+                    player["team"] = ""
+                    player["country"] = ""
+                    player["bracket"] = ""
+        current_next_data = copy.deepcopy(defaultCurrentDataJson)
+        FileUtils.write_file(player_data_file_name, global_player_data)
+        FileUtils.write_file(current_next_data_file, current_next_data)
+
+
 def update_current_players_info(scoreboard_json):
     global current_next_data
     with top8_lock:

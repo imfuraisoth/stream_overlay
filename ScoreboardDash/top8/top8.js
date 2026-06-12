@@ -371,30 +371,6 @@ function updateRound() {
 	sendJsonToEndpoint('updateCurrentPlayers');
 }
 
-function resetNamesAndScore() {
-	safeEl("form_name_1p").value = "";
-	safeEl("form_name_2p").value = "";
-	safeEl("form_team_1p").value = "";
-	safeEl("form_team_2p").value = "";
-	safeEl("form_score_1p").value = "0";
-	safeEl("form_score_2p").value = "0";
-	safeEl("dropdown_country_current_1").value = "US";
-    safeEl("dropdown_country_current_2").value = "US";
-	jsonData.p1Name = "";
-	jsonData.p2Name = "";
-	jsonData.p1Team = "";
-	jsonData.p2Team = "";
-        jsonData.p1Bracket = "";
-        jsonData.p2Bracket = "";
-	jsonData.p1Country = "US";
-	jsonData.p2Country = "US";
-	jsonData.p1Score = "0";
-	jsonData.p2Score = "0";
-	jsonData.p1Seed = "";
-	jsonData.p2Seed = "";
-	sendJsonToEndpoint("updatealldata");
-}
-
 function reversePlayerNames() {
 	var p1 = safeEl("form_name_1p").value;
 	var p2 = safeEl("form_name_2p").value;
@@ -636,7 +612,7 @@ function updateTop8PlayerInfo(round, player_id, field, value, position) {
         var team    = safeEl('form_team_' + position).value    || '';
         var country = safeEl('dropdown_country_' + position).value || '';
         // Auto-fill from local DB if available
-        var localP = _localPlayersMap.get(value);
+        var localP = _localPlayersByName.get(value) || _localPlayersMap.get(value);
         if (localP) {
             if (localP.team) {
                 safeEl('form_team_' + position).value = localP.team;
@@ -784,15 +760,26 @@ function updateTop8StartedButton(currentNextData) {
     if (top8Started) {
         setButtonColourAndText("rectangle_button_18", "#C62828", "In Progress");
     } else {
-        setButtonColourAndText("rectangle_button_18", "#675267", "Start Top 8");
+        resetStartButton();
     }
+}
+
+function resetStartButton() {
+    // Clear the inline override so the stylesheet's green .btn-start
+    // styling (including hover) applies again
+    var element = safeEl("rectangle_button_18");
+    element.style.removeProperty('background');
+    element.style.removeProperty('color');
+    element.innerText = "\u25B6 Start Top 8";
 }
 
 function setButtonColourAndText(id, bgColour, text) {
     var element = safeEl(id);
-    element.style.background = bgColour;
+    // 'important' priority so the .btn-start !important stylesheet
+    // rules (incl. :hover) can't override the state colour
+    element.style.setProperty('background', bgColour, 'important');
     element.innerText = text;
-    element.style.color = "white";
+    element.style.setProperty('color', 'white', 'important');
 }
 
 function updateCurrentAndNextInfo(currentNextData) {
@@ -913,11 +900,26 @@ function callServer(endpoint) {
         .catch(function(err) { console.log('error: ' + err); });
 }
 
+function resetBracket() {
+    if (!confirm("Reset the bracket run? Scores and progress are cleared; the 8 seeded players (names, teams, countries) are kept.")) return;
+    fetch('/resetBracket', { method: 'POST' })
+        .then(function(response) {
+            if (response.ok) {
+                // Server state changed wholesale -- reload so every panel
+                // (bracket, current/next, button state) reflects it
+                location.reload();
+            } else {
+                alert('Reset bracket failed (' + response.status + ')');
+            }
+        })
+        .catch(function(err) { console.log('resetBracket error: ' + err); });
+}
+
 function resetTop8() {
     fetch('/resetTop8', { method: 'POST' })
         .then(function(response) {
             if (response.ok) {
-                safeEl("rectangle_button_18").style.background = "#675267";
+                resetStartButton();
                 for (const suffix of lastRoundSuffix) {
                     safeEl("form_team_" + suffix).style.border="";
                     safeEl("form_name_" + suffix).style.border="";

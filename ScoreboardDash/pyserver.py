@@ -110,6 +110,13 @@ def get_top8_current_next_data():
     return top8.get_current_next_data(), 200
 
 
+@api.route('/resetBracket', methods=['POST'])
+def reset_bracket():
+    """Reset the top 8 run but keep the eight seeded players."""
+    Top8.reset_bracket()
+    return "200"
+
+
 @api.route('/resetTop8', methods=['POST'])
 def reset_top8_data():
     top8.reset()

@@ -677,3 +677,22 @@ select.name-picker option { font-size: 13px; }
   .top-row-grid { grid-template-columns: 1fr; }
   .next-round-three-col { grid-template-columns: 1fr 1fr; }
 }
+
+/* ── Reset buttons stacked above Results ────────────────────── */
+.top-left-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 0;
+}
+.top-left-stack .top-side-panel { flex: 1; }
+.reset-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.reset-stack button {
+  width: 100%;
+  font-size: 10px;
+  padding: 6px 8px;
+}
