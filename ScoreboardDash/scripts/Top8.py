@@ -3,6 +3,7 @@ import threading
 from io import open
 import copy
 from scripts.FileUtils import FileUtils
+import os
 
 defaultCurrentDataJson = {
     "player1": {
@@ -215,9 +216,10 @@ defaultPlayerData = {
     }
 }
 
-player_data_file_name = "../data/top8_players.json"
-scoreboard_json_file = "../data/scoreboard.json"
-current_next_data_file = "../data/current_next.json"
+_base = os.path.dirname(os.path.abspath(__file__))
+player_data_file_name = os.path.join(_base, "../../data/top8_players.json")
+scoreboard_json_file = os.path.join(_base, "../../data/scoreboard.json")
+current_next_data_file = os.path.join(_base, "../../data/current_next.json")
 winner_round_progression_mapping = {1: "r5:p1", 2: "r5:p2", 3: "r6:p1", 4: "r7:p1", 5: "r10:p1", 6: "r8:p1", 7: "r8:p2", 8: "r9:p1", 9: "r10:p2"}
 losers_round_progression_mapping = {1: "r7:p2", 2: "r6:p2", 5: "r9:p2"}
 roundNamesMap = {
@@ -244,9 +246,17 @@ def read_file(file_name):
         return json.load(json_file)
 
 
-current_next_data = read_file(current_next_data_file)
+if os.path.exists(current_next_data_file):
+    current_next_data = read_file(current_next_data_file)
+else:
+    current_next_data = copy.deepcopy(defaultCurrentDataJson)
+    FileUtils.write_file(current_next_data_file, current_next_data)
 current_next_data["started"] = False
-global_player_data = read_file(player_data_file_name)
+if os.path.exists(player_data_file_name):
+    global_player_data = read_file(player_data_file_name)
+else:
+    global_player_data = copy.deepcopy(defaultPlayerData)
+    FileUtils.write_file(player_data_file_name, global_player_data)
 _undo_snapshot = None
 _restoring = False
 
@@ -379,6 +389,11 @@ def progress_to_next_round():
         # Reset any overrides for next round
         copy_player_data(current_next_data["nextPlayer1"], current_next_data["player1"])
         copy_player_data(current_next_data["nextPlayer2"], current_next_data["player2"])
+        # New match starts 0-0 in the bracket state too -- otherwise the
+        # previous match's scores linger here and a second Next Round
+        # click would advance a bogus "winner" before any score is set
+        current_next_data["player1"]["score"] = "0"
+        current_next_data["player2"]["score"] = "0"
         next_round = get_next_round(current_round)
         if next_round is not None and next_round <= 10:
             # Stop processing next rounds if on last round

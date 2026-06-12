@@ -260,15 +260,8 @@ function loadLocalPlayersIntoDatalist() {
                     _localPlayersMap.set(p.id || p.name, p);
                     _localPlayersByName.set(p.name, p);
                 });
-                var existing = new Set(Array.from(dl.options).map(function(o) { return o.value; }));
-                players.forEach(function(p) {
-                    var name = typeof p === 'string' ? p : p.name;
-                    if (name && !existing.has(name)) {
-                        var opt = document.createElement('option');
-                        opt.value = name;
-                        dl.appendChild(opt);
-                    }
-                });
+                // Populate pickers + datalist now that the maps are built
+                rebuildT8NamePickers();
             })
             .catch(function(e) { console.log('loadLocalPlayers error:', e); });
     }
@@ -281,6 +274,9 @@ function setTop8PlayerSource(src) {
         if (btn) btn.classList.toggle('active', s === src);
     });
     rebuildT8NamePickers();
+    if (src === 'local' || src === 'both') {
+        loadLocalPlayersIntoDatalist();  // fresh fetch; rebuilds again when done
+    }
 }
 
 document.addEventListener('DOMContentLoaded', function() {
@@ -786,7 +782,7 @@ function startTop8() {
 function updateTop8StartedButton(currentNextData) {
     var top8Started = currentNextData.started;
     if (top8Started) {
-        setButtonColourAndText("rectangle_button_18", "#14BF01", "In Progress");
+        setButtonColourAndText("rectangle_button_18", "#C62828", "In Progress");
     } else {
         setButtonColourAndText("rectangle_button_18", "#675267", "Start Top 8");
     }

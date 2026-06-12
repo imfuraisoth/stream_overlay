@@ -14,6 +14,9 @@ function setPlayerSource(src) {
     });
     // Repopulate datalist from scratch with new preference
     rebuildNamePickers();
+    if (src === 'local' || src === 'both') {
+        loadLocalPlayers();  // fetch + merge; repopulates when done
+    }
 }
 
 function populateNamePickers(names) {
@@ -180,12 +183,9 @@ function loadLocalPlayers() {
 
 // On load: restore toggle state and seed datalist
 document.addEventListener('DOMContentLoaded', function() {
-    // Restore toggle button active state
+    // Restore toggle state; setPlayerSource also loads the local DB
+    // when the preference includes it
     setPlayerSource(_playerSource);
-    // Seed with local players if preference includes local
-    if (_playerSource === 'local' || _playerSource === 'both') {
-        loadLocalPlayers();
-    }
 });
 
 function getDataFromServer() {
