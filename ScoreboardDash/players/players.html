@@ -30,6 +30,8 @@
   <div class="header-item"><a href="../stations/stations.html">Stations</a></div>
   <span class="header-sep">|</span>
   <div class="header-item active">Players</div>
+  <span class="header-sep">|</span>
+  <div class="header-item"><a href="imports/imports.html">Match Imports</a></div>
 </div>
 
 <!-- TOOLBAR -->
@@ -37,6 +39,7 @@
   <div class="toolbar-left">
     <input type="text" id="searchInput" placeholder="Search players…" oninput="renderTable()">
     <button class="btn" onclick="openAddModal()">+ Add Player</button>
+    <button class="btn sec" onclick="openMergeModal()">⇄ Merge</button>
   </div>
   <div class="toolbar-right">
     <span class="player-count" id="playerCount"></span>
@@ -85,6 +88,14 @@
           <input type="text" id="mSocialHandle" placeholder="@handle" style="flex:1;">
         </div>
       </div>
+      <div class="field-group">
+        <label>Aliases</label>
+        <div id="mAliasChips" style="display:flex;flex-wrap:wrap;gap:4px;"></div>
+        <div style="display:flex;gap:6px;">
+          <input type="text" id="mAliasInput" placeholder="Add alias…" style="flex:1;" onkeydown="if(event.key==='Enter'){event.preventDefault();mAddAlias();}">
+          <button class="btn sec sm" onclick="mAddAlias()">Add</button>
+        </div>
+      </div>
       <div class="field-group" style="flex-direction:row;align-items:center;gap:8px;">
         <input type="checkbox" id="mIsCommentator" style="width:14px;height:14px;accent-color:var(--accent);flex-shrink:0;">
         <label for="mIsCommentator" style="font-family:var(--font-d);font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--fg2);cursor:pointer;">Commentator</label>
@@ -118,6 +129,24 @@
 </div>
 
 <!-- DELETE CONFIRM -->
+<div class="modal-backdrop" id="mergeModal" onclick="if(event.target.id==='mergeModal')closeMergeModal()">
+  <div class="modal-content modal-sm">
+    <h3 style="margin-top:0;">Merge Players</h3>
+    <div class="field-group">
+      <label>Keep (primary)</label>
+      <select id="mergePrimary" onchange="mergeSelectionChanged()"></select>
+    </div>
+    <div class="field-group">
+      <label>Merge into primary (will be removed)</label>
+      <select id="mergeDuplicate" onchange="mergeSelectionChanged()"></select>
+    </div>
+    <div id="mergeSummary" style="font-family:var(--font-d);font-size:11px;color:var(--fg2);min-height:34px;margin:6px 0;"></div>
+    <div class="modal-actions">
+      <button class="btn sec" onclick="closeMergeModal()">Cancel</button>
+      <button class="btn" id="mergeConfirmBtn" onclick="doMerge()" disabled>Merge</button>
+    </div>
+  </div>
+</div>
 <div class="modal-backdrop" id="deleteModal" onclick="onDeleteBackdropClick(event)">
   <div class="modal-content modal-sm">
     <div class="modal-header">
@@ -204,7 +233,8 @@ function renderTable() {
     const country = escHtml(p.country || '');
     html += `<tr>
       <td class="col-id">${escHtml(p.id || '')}</td>
-      <td class="col-name">${name}</td>
+      <td class="col-name">${name}${(p.aliases && p.aliases.length)
+        ? `<div style="font-size:10px;color:var(--fg2);font-weight:400;">aka ${escHtml(p.aliases.join(', '))}</div>` : ''}</td>
       <td class="col-team">${team ? `<span class="team-badge">${team}</span>` : '<span class="cell-empty">—</span>'}</td>
       <td class="col-country">${country || '<span class="cell-empty">—</span>'}</td>
       <td class="col-socials">${p.social_handle
@@ -271,6 +301,8 @@ function openAddModal() {
   document.getElementById('modalTitle').textContent = 'Add Player';
   window._editingCharacters = {};
   window._editingRoster = {};
+  window._editingAliases = [];
+  mRenderAliases();
   document.getElementById('mName').value    = '';
   document.getElementById('mTeam').value    = '';
   document.getElementById('mIsCommentator').checked = false;
@@ -296,6 +328,8 @@ function openEditModal(id) {
   populateCountrySelect(document.getElementById('mCountry'), p.country || '');
   window._editingCharacters = mNormalizeGameData(JSON.parse(JSON.stringify(p.characters || {})));
   window._editingRoster     = mNormalizeGameData(JSON.parse(JSON.stringify(p.roster || {})));
+  window._editingAliases = (p.aliases || []).slice();
+  mRenderAliases();
   // Default to the first game this player has data for
   var withData = Object.keys(window._editingRoster).filter(function(g) { return window._editingRoster[g].length; })
     .concat(Object.keys(window._editingCharacters).filter(function(g) { return window._editingCharacters[g].length; }));
@@ -508,9 +542,9 @@ async function saveModal() {
   const endpoint = _editingOrigName ? '/updateLocalPlayer' : '/saveLocalPlayer';
   const body = _editingOrigName
     ? { id: _editingOrigName, name, team, country, social_handle, social_platform, is_commentator,
-        characters: window._editingCharacters, roster: window._editingRoster }
+        characters: window._editingCharacters, roster: window._editingRoster, aliases: window._editingAliases }
     : { name, team, country, social_handle, social_platform, is_commentator,
-        characters: window._editingCharacters, roster: window._editingRoster };
+        characters: window._editingCharacters, roster: window._editingRoster, aliases: window._editingAliases };
 
   try {
     await fetch(endpoint, {
@@ -580,6 +614,99 @@ loadGamesRegistry().then(loadPlayers);
   <script src="../theme/theme.js" defer></script>
 <div id="char-preview"><img id="char-preview-img" src=""><div id="char-preview-label"></div></div>
 <script>
+function mRenderAliases() {
+  var wrap = document.getElementById('mAliasChips');
+  if (!wrap) return;
+  wrap.innerHTML = '';
+  (window._editingAliases || []).forEach(function(a) {
+    var chip = document.createElement('span');
+    chip.className = 'roster-chip';
+    var txt = document.createElement('span');
+    txt.textContent = a;
+    txt.style.textTransform = 'none';
+    chip.appendChild(txt);
+    var x = document.createElement('span');
+    x.className = 'roster-chip-x';
+    x.textContent = '\u2715';
+    x.onclick = function() {
+      window._editingAliases = window._editingAliases.filter(function(v) { return v !== a; });
+      mRenderAliases();
+    };
+    chip.appendChild(x);
+    wrap.appendChild(chip);
+  });
+}
+
+function mAddAlias() {
+  var input = document.getElementById('mAliasInput');
+  var v = (input.value || '').trim();
+  if (!v) return;
+  var lower = v.toLowerCase();
+  if (!window._editingAliases) window._editingAliases = [];
+  var exists = window._editingAliases.some(function(a) { return a.toLowerCase() === lower; });
+  var isOwnName = (document.getElementById('mName').value || '').trim().toLowerCase() === lower;
+  if (!exists && !isOwnName) window._editingAliases.push(v);
+  input.value = '';
+  mRenderAliases();
+}
+
+function openMergeModal() {
+  var opts = _players.slice().sort(function(a, b) {
+    return (a.name || '').toLowerCase().localeCompare((b.name || '').toLowerCase());
+  });
+  ['mergePrimary', 'mergeDuplicate'].forEach(function(id) {
+    var sel = document.getElementById(id);
+    sel.innerHTML = '<option value="">\u2014 Select player \u2014</option>';
+    opts.forEach(function(p) {
+      var o = document.createElement('option');
+      o.value = p.id;
+      o.textContent = p.name + (p.team ? ' (' + p.team + ')' : '');
+      sel.appendChild(o);
+    });
+  });
+  document.getElementById('mergeSummary').textContent = '';
+  document.getElementById('mergeConfirmBtn').disabled = true;
+  document.getElementById('mergeModal').classList.add('open');
+}
+
+function closeMergeModal() {
+  document.getElementById('mergeModal').classList.remove('open');
+}
+
+function mergeSelectionChanged() {
+  var pid = document.getElementById('mergePrimary').value;
+  var did = document.getElementById('mergeDuplicate').value;
+  var btn = document.getElementById('mergeConfirmBtn');
+  var sum = document.getElementById('mergeSummary');
+  if (!pid || !did || pid === did) {
+    btn.disabled = true;
+    sum.textContent = (pid && did && pid === did) ? 'Pick two different players.' : '';
+    return;
+  }
+  var p = _players.find(function(x) { return x.id === pid; });
+  var d = _players.find(function(x) { return x.id === did; });
+  sum.textContent = '"' + d.name + '" will be removed. Their characters and roster move to "'
+    + p.name + '" (existing data wins), and "' + d.name + '" becomes an alias of "' + p.name + '".';
+  btn.disabled = false;
+}
+
+async function doMerge() {
+  var pid = document.getElementById('mergePrimary').value;
+  var did = document.getElementById('mergeDuplicate').value;
+  if (!pid || !did || pid === did) return;
+  try {
+    var res = await fetch('/mergePlayers', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ primary_id: pid, duplicate_id: did })
+    });
+    var data = await res.json();
+    if (!data.ok) { alert('Merge failed: ' + (data.message || res.status)); return; }
+    closeMergeModal();
+    await loadPlayers();
+  } catch (e) { console.error('merge error:', e); alert('Merge failed: ' + e); }
+}
+
 // ── CHARACTER HOVER PREVIEW ───────────────────────────────
 (function() {
   var p = document.getElementById('char-preview');
@@ -609,6 +736,15 @@ loadGamesRegistry().then(loadPlayers);
     }
   });
 })();
+</script>
+<script src="../sync.js"></script>
+<script>
+if (window.liveSync) {
+  liveSync.on('players', function() {
+    // Skip while a modal is open so an in-progress edit isn't disturbed
+    if (!document.querySelector('.modal-backdrop.open')) loadPlayers();
+  });
+}
 </script>
 </body>
 </html>

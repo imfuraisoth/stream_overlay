@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Match Imports — Stream Overlay</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;900&family=Barlow:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="icon" type="image/png" href="../images/V.png">
+  <link href="../players/style.css" rel="stylesheet" type="text/css">
+  <script>
+    (function(){var s=localStorage.getItem('sc_theme');if(!s)return;try{var v=JSON.parse(s);Object.keys(v).forEach(function(k){document.documentElement.style.setProperty(k,v[k])});}catch(e){}})();
+  </script>
+  <link href="../theme/theme.css" rel="stylesheet" type="text/css">
+  <style>
+    .imports-wrap { max-width: 1100px; margin: 0 auto; padding: 20px; }
+    .import-bar { display: flex; gap: 8px; align-items: center; margin-bottom: 8px; }
+    .import-bar input { flex: 1; }
+    .hint { font-family: var(--font-d, 'Barlow Condensed'); font-size: 12px; color: var(--fg2); margin-bottom: 20px; }
+    .section-title { font-family: var(--font-d, 'Barlow Condensed'); font-weight: 700; letter-spacing: .08em;
+      text-transform: uppercase; color: var(--fg2); font-size: 13px; margin: 22px 0 8px; }
+    .status-line { font-family: var(--font-d, 'Barlow Condensed'); font-size: 13px; margin: 10px 0; min-height: 18px; }
+    .status-line.ok { color: var(--green, #3aaa5c); }
+    .status-line.err { color: var(--accent2, #c43030); }
+    table.imp { width: 100%; border-collapse: collapse; }
+    table.imp th, table.imp td { text-align: left; padding: 7px 10px; border-bottom: 1px solid var(--border); font-size: 13px; }
+    table.imp th { font-family: var(--font-d, 'Barlow Condensed'); text-transform: uppercase; letter-spacing: .06em;
+      font-size: 11px; color: var(--fg2); }
+    .recon-row select { min-width: 200px; }
+    .recon-tag { font-weight: 600; }
+    .recon-uid { color: var(--fg2); font-size: 11px; }
+    .recon-actions { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+    .pill { font-size: 11px; padding: 2px 8px; border-radius: 10px; background: var(--bg2); border: 1px solid var(--border); color: var(--fg2); }
+    .pill.matched { color: var(--green, #3aaa5c); border-color: var(--green, #3aaa5c); }
+    .events-list td .evname { font-weight: 600; }
+    .events-list td .evmeta { color: var(--fg2); font-size: 11px; }
+    .reimport-btn { font-size: 11px; }
+  </style>
+</head>
+<body>
+
+<!-- NAV -->
+<div class="top-navbar-container">
+  <div class="header-item"><a href="../commentators/commentators.html">Commentators</a></div>
+  <span class="header-sep">|</span>
+  <div class="header-item"><a href="../index.html">Event Dashboard</a></div>
+  <span class="header-sep">|</span>
+  <div class="header-item"><a href="../top8/top8.html">Top 8</a></div>
+  <span class="header-sep">|</span>
+  <div class="header-item"><a href="../playerinfo/characterselect.html">Games &amp; Assets</a></div>
+  <span class="header-sep">|</span>
+  <div class="header-item"><a href="../stations/stations.html">Stations</a></div>
+  <span class="header-sep">|</span>
+  <div class="header-item"><a href="../players/players.html">Players</a></div>
+  <span class="header-sep">|</span>
+  <div class="header-item active">Match Imports</div>
+</div>
+
+<div class="imports-wrap">
+  <h2 style="margin-bottom:4px;">Match History Imports</h2>
+  <div class="hint">Paste a start.gg event URL or slug, import its completed sets, then assign any unmatched players. Re-importing an event refreshes its data without creating duplicates.</div>
+
+  <div class="import-bar">
+    <input type="text" id="slugInput" placeholder="https://www.start.gg/tournament/.../event/...  or  tournament/.../event/...">
+    <button class="btn" id="importBtn" onclick="doImport()">Import</button>
+  </div>
+  <div class="status-line" id="importStatus"></div>
+
+  <div id="reconcileSection" style="display:none;">
+    <div class="section-title">Unmatched players — assign to continue</div>
+    <table class="imp"><thead>
+      <tr><th>start.gg Player</th><th>Action</th></tr>
+    </thead><tbody id="reconcileBody"></tbody></table>
+  </div>
+
+  <div class="section-title">Imported events</div>
+  <table class="imp events-list"><thead>
+    <tr><th>Event</th><th>Sets</th><th>Imported</th><th></th></tr>
+  </thead><tbody id="eventsBody"><tr><td colspan="4" style="color:var(--fg2);">Loading…</td></tr></tbody></table>
+</div>
+
+<script>
+var _players = [];
+var _currentEventSlug = null;
+
+function setStatus(msg, kind) {
+  var el = document.getElementById('importStatus');
+  el.textContent = msg || '';
+  el.className = 'status-line' + (kind ? ' ' + kind : '');
+}
+
+async function loadPlayers() {
+  try {
+    var r = await fetch('/getLocalPlayers');
+    var data = await r.json();
+    _players = Array.isArray(data) ? data : Object.values(data);
+    _players.sort(function(a, b) { return (a.name || '').toLowerCase().localeCompare((b.name || '').toLowerCase()); });
+  } catch (e) { console.log('loadPlayers error:', e); }
+}
+
+async function loadEvents() {
+  try {
+    var r = await fetch('/listImportedEvents');
+    var events = await r.json();
+    var body = document.getElementById('eventsBody');
+    if (!events.length) {
+      body.innerHTML = '<tr><td colspan="4" style="color:var(--fg2);">No events imported yet.</td></tr>';
+      return;
+    }
+    body.innerHTML = '';
+    events.forEach(function(ev) {
+      var tr = document.createElement('tr');
+      tr.innerHTML =
+        '<td><span class="evname">' + escHtml(ev.event_name || ev.event_slug) + '</span>'
+          + '<div class="evmeta">' + escHtml(ev.tournament_name || '') + '</div></td>'
+        + '<td>' + ev.set_count + '</td>'
+        + '<td class="evmeta">' + escHtml((ev.imported_at || '').replace('T', ' ')) + '</td>'
+        + '<td><button class="btn sec reimport-btn">Re-import</button></td>';
+      tr.querySelector('button').onclick = function() {
+        document.getElementById('slugInput').value = ev.event_slug;
+        doImport();
+        window.scrollTo(0, 0);
+      };
+      body.appendChild(tr);
+    });
+  } catch (e) { console.log('loadEvents error:', e); }
+}
+
+function escHtml(s) {
+  return String(s == null ? '' : s)
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
+async function doImport() {
+  var slug = document.getElementById('slugInput').value.trim();
+  if (!slug) { setStatus('Enter an event URL or slug first.', 'err'); return; }
+  var btn = document.getElementById('importBtn');
+  btn.disabled = true; setStatus('Fetching completed sets from start.gg…');
+  try {
+    var r = await fetch('/importStartggEvent', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ slug: slug })
+    });
+    var data = await r.json();
+    if (!data.ok) { setStatus(data.message || ('Import failed (' + r.status + ')'), 'err'); btn.disabled = false; return; }
+    _currentEventSlug = data.event_slug;
+    var unmatched = (data.unassigned || []).length;
+    setStatus('Imported ' + data.set_count + ' sets from "' + data.event_name + '". '
+      + (unmatched ? (unmatched + ' player(s) need assigning below.') : 'All players matched.'), 'ok');
+    renderReconcile(data.unassigned || []);
+    await loadEvents();
+  } catch (e) {
+    setStatus('Import error: ' + e, 'err');
+  }
+  btn.disabled = false;
+}
+
+function playerOptions(selectedId) {
+  var opts = '<option value="">— Select player —</option>';
+  _players.forEach(function(p) {
+    opts += '<option value="' + p.id + '"' + (p.id === selectedId ? ' selected' : '') + '>'
+      + escHtml(p.name) + (p.team ? ' (' + escHtml(p.team) + ')' : '') + '</option>';
+  });
+  return opts;
+}
+
+function renderReconcile(unassigned) {
+  var section = document.getElementById('reconcileSection');
+  var body = document.getElementById('reconcileBody');
+  if (!unassigned.length) { section.style.display = 'none'; body.innerHTML = ''; return; }
+  section.style.display = '';
+  body.innerHTML = '';
+  unassigned.forEach(function(u, i) {
+    var tr = document.createElement('tr');
+    tr.className = 'recon-row';
+    tr.innerHTML =
+      '<td><span class="recon-tag">' + escHtml(u.tag) + '</span>'
+        + (u.user_id ? '<div class="recon-uid">start.gg #' + escHtml(u.user_id) + '</div>' : '<div class="recon-uid">no linked account</div>') + '</td>'
+      + '<td><div class="recon-actions">'
+        + '<select id="reconSel' + i + '">' + playerOptions() + '</select>'
+        + '<button class="btn sec" onclick="assignExisting(' + i + ')">Assign</button>'
+        + '<span class="pill">or</span>'
+        + '<button class="btn sec" onclick="createNew(' + i + ')">Create &quot;' + escHtml(u.tag) + '&quot;</button>'
+        + '<span class="recon-result" id="reconRes' + i + '"></span>'
+        + '</div></td>';
+    tr._data = u;
+    body.appendChild(tr);
+  });
+}
+
+async function _reconcile(idx, action, playerId) {
+  var rows = document.querySelectorAll('#reconcileBody tr');
+  var tr = rows[idx];
+  var u = tr._data;
+  var res = document.getElementById('reconRes' + idx);
+  res.textContent = 'Saving…';
+  try {
+    var r = await fetch('/reconcileImport', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        event_slug: _currentEventSlug, tag: u.tag, user_id: u.user_id,
+        action: action, player_id: playerId
+      })
+    });
+    var data = await r.json();
+    if (!data.ok) { res.innerHTML = '<span class="pill" style="color:var(--accent2);">' + escHtml(data.message || 'failed') + '</span>'; return; }
+    res.innerHTML = '<span class="pill matched">\u2713 assigned</span>';
+    // refresh players (a new one may exist) and prune the resolved rows
+    await loadPlayers();
+    renderReconcile(data.unassigned || []);
+  } catch (e) {
+    res.innerHTML = '<span class="pill" style="color:var(--accent2);">error</span>';
+  }
+}
+
+function assignExisting(idx) {
+  var sel = document.getElementById('reconSel' + idx);
+  if (!sel.value) { document.getElementById('reconRes' + idx).textContent = 'pick a player first'; return; }
+  _reconcile(idx, 'existing', sel.value);
+}
+function createNew(idx) { _reconcile(idx, 'new', null); }
+
+(async function init() {
+  await loadPlayers();
+  await loadEvents();
+})();
+</script>
+</body>
+</html>

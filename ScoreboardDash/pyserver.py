@@ -1,7 +1,7 @@
 import json
 import threading
 from io import open
-from flask import Flask, send_from_directory, jsonify
+from flask import Flask, send_from_directory, jsonify, Response
 from flask import request
 from flask_cors import CORS
 import time
@@ -22,6 +22,7 @@ except Exception as e:
     print(f"AutoScoreUpdaterCPS1 disabled: {e}")
     AutoScoreUpdaterCPS1 = None
 from scripts import startgg_client
+from scripts import MatchHistory
 import argparse
 import socket
 import os
@@ -29,6 +30,7 @@ import webbrowser
 import shutil
 import copy
 import requests
+import re
 from datetime import datetime
 from scripts import PlayerStats
 from scripts import TTLCache
@@ -93,6 +95,72 @@ def serve_webpage():
 @api.route('/<path:filename>')
 def serve_static(filename):
     return send_from_directory(os.path.dirname(__file__), filename)
+
+
+
+# ════════════════════════════════════════════════════════════════
+# LIVE SYNC (server-sent events)
+# Pages subscribe to /events; the server publishes a channel name
+# whenever data changes. Channels: scoreboard, top8, players,
+# commentators. Publishing is driven by write hooks in FileUtils and
+# PlayerStatsDB, so every mutation path is covered automatically.
+# ════════════════════════════════════════════════════════════════
+import queue as _queue
+
+_sse_clients = []
+_sse_lock = threading.Lock()
+
+_SSE_FILE_CHANNELS = {
+    "scoreboard.json": "scoreboard",
+    "current_next.json": "top8",
+    "top8_players.json": "top8",
+    "commentators.json": "commentators",
+}
+
+
+def _sse_publish(channel):
+    with _sse_lock:
+        clients = list(_sse_clients)
+    for q in clients:
+        try:
+            q.put_nowait(channel)
+        except _queue.Full:
+            pass
+
+
+def _sse_on_file_write(file_path):
+    channel = _SSE_FILE_CHANNELS.get(os.path.basename(str(file_path)))
+    if channel:
+        _sse_publish(channel)
+
+
+FileUtils.on_write = _sse_on_file_write
+players_db.on_change = lambda: _sse_publish("players")
+
+
+@api.route('/events')
+def sse_events():
+    def stream():
+        q = _queue.Queue(maxsize=100)
+        with _sse_lock:
+            _sse_clients.append(q)
+        try:
+            yield "retry: 2000\n\n"
+            while True:
+                try:
+                    channel = q.get(timeout=25)
+                    yield "data: " + channel + "\n\n"
+                except _queue.Empty:
+                    yield ": keepalive\n\n"
+        finally:
+            with _sse_lock:
+                try:
+                    _sse_clients.remove(q)
+                except ValueError:
+                    pass
+    return Response(stream(), mimetype='text/event-stream',
+                    headers={'Cache-Control': 'no-cache',
+                             'X-Accel-Buffering': 'no'})
 
 
 @api.route('/getdata', methods=['GET'])
@@ -161,10 +229,17 @@ def _read_local_players():
         return {}
 
 def _find_player_by_name(players, name):
-    """Find a player record by name (case-sensitive). Returns (id, record) or (None, None)."""
+    """Resolve by display name or alias, case-insensitive."""
+    if not name:
+        return None, None
+    n = name.strip().lower()
     for pid, p in players.items():
-        if p.get("name") == name:
+        if p.get("name", "").strip().lower() == n:
             return pid, p
+    for pid, p in players.items():
+        for alias in (p.get("aliases") or []):
+            if alias.strip().lower() == n:
+                return pid, p
     return None, None
 
 @api.route('/getLocalPlayers', methods=['GET'])
@@ -188,7 +263,7 @@ def save_local_player():
         if pid is None:
             # New player — assign next ID
             pid = _next_player_id(players)
-            existing = {"id": pid, "name": name, "team": "", "country": "", "social_handle": "", "social_platform": "", "is_commentator": False, "characters": {}, "roster": {}}
+            existing = {"id": pid, "name": name, "team": "", "country": "", "social_handle": "", "social_platform": "", "is_commentator": False, "characters": {}, "roster": {}, "aliases": []}
         # Only overwrite fields that are explicitly provided and non-empty
         if body.get("team"):            existing["team"]            = body["team"]
         if body.get("country"):         existing["country"]         = body["country"]
@@ -213,6 +288,8 @@ def save_local_player():
                 if isinstance(entries, dict):
                     entries = [entries]
                 existing["roster"][g] = entries
+        if "aliases" in body and isinstance(body["aliases"], list):
+            existing["aliases"] = body["aliases"]
         existing["name"] = name
         players[pid] = existing
         players_db.save_local_players(players)
@@ -243,14 +320,230 @@ def update_local_player():
         existing_roster = players[pid].get("roster", {})
         new_roster = body.get("roster")
         roster = new_roster if new_roster is not None else existing_roster
+        existing_aliases = players[pid].get("aliases", [])
+        new_aliases = body.get("aliases")
+        aliases = new_aliases if new_aliases is not None else existing_aliases
         players[pid] = {"id": pid, "name": name, "team": team, "country": country,
                         "social_handle": social_handle, "social_platform": social_platform,
                         "is_commentator": is_commentator, "characters": characters,
-                        "roster": roster}
+                        "roster": roster, "aliases": aliases}
         players_db.save_local_players(players)
     except Exception as e:
         print(f"updateLocalPlayer error: {e}")
     return "200"
+
+@api.route('/mergePlayers', methods=['POST'])
+def merge_players():
+    """Merge one player record into another.
+
+    Body: { "primary_id": "p_000001", "duplicate_id": "p_000005" }
+    The duplicate's name and aliases become aliases of the primary."""
+    body = request.get_json() or {}
+    primary_id = body.get("primary_id", "")
+    duplicate_id = body.get("duplicate_id", "")
+    if not primary_id or not duplicate_id:
+        return jsonify({"ok": False, "message": "Both players required"}), 400
+    try:
+        ok, message = players_db.merge_players(primary_id, duplicate_id)
+        return jsonify({"ok": ok, "message": message}), (200 if ok else 400)
+    except Exception as e:
+        print(f"mergePlayers error: {e}")
+        return jsonify({"ok": False, "message": str(e)}), 500
+
+
+# ════════════════════════════════════════════════════════════════
+# MATCH HISTORY IMPORT (start.gg -> per-event JSON + all-time rollup)
+# ════════════════════════════════════════════════════════════════
+def _parse_event_slug(raw):
+    """Accept a full start.gg URL or a tournament/.../event/... slug
+    and return (tournament_name, event_name) for the client."""
+    s = (raw or "").strip()
+    # Strip protocol/host and any /overview or trailing bits
+    m = re.search(r"tournament/([^/]+)/event/([^/?#]+)", s)
+    if m:
+        return m.group(1), m.group(2)
+    return None, None
+
+
+def _alias_map_for_rollup():
+    """Identity map is 1:1 today (merge already rewrites ids in the DB),
+    so the rollup needs no remap. Kept as a seam for future use."""
+    return {}
+
+
+def _build_assignments(players):
+    """Map start.gg keys -> local player id for auto-matching.
+
+    Keys: 'u:<user_id>' (from a stored alias like 'sgg:12345') and the
+    raw tag (resolved by name/alias). Tag match is case-insensitive via
+    the player maps."""
+    assignments = {}
+    by_name = {}
+    for pid, p in players.items():
+        by_name[p["name"].strip().lower()] = pid
+        for a in (p.get("aliases") or []):
+            a = a.strip()
+            by_name[a.lower()] = pid
+            # Aliases of the form 'sgg:<userid>' tie a start.gg account
+            if a.lower().startswith("sgg:"):
+                assignments["u:" + a.split(":", 1)[1]] = pid
+    return assignments, by_name
+
+
+@api.route('/importStartggEvent', methods=['POST'])
+def import_startgg_event():
+    """Fetch an event's completed sets and write the per-event file.
+
+    Body: { "slug": "<url or slug>" }
+    Auto-matches entrants to local players by start.gg user id (via
+    'sgg:<id>' aliases) and by tag/alias name. Returns the import
+    summary plus the list of entrants still needing reconciliation."""
+    body = request.get_json() or {}
+    tournament, event = _parse_event_slug(body.get("slug", ""))
+    if not tournament or not event:
+        return jsonify({"ok": False, "message": "Could not parse an event slug from that input"}), 400
+    try:
+        sets = startgg_client.get_completed_sets(tournament, event)
+    except Exception as e:
+        print("importStartggEvent fetch error: " + str(e))
+        return jsonify({"ok": False, "message": "start.gg fetch failed: " + str(e)}), 502
+    try:
+        standings = startgg_client.get_event_standings(tournament, event)
+    except Exception as e:
+        print("importStartggEvent standings warning: " + str(e))
+        standings = None
+    if not sets:
+        return jsonify({"ok": False, "message": "No completed sets found for that event"}), 404
+
+    players = players_db.get_local_players()
+    assignments, by_name = _build_assignments(players)
+    # Also resolve by tag name where user-id didn't match
+    for s in sets:
+        for side in ("p1", "p2"):
+            ent = s[side]
+            uid_key = ("u:" + str(ent["user_id"])) if ent.get("user_id") else None
+            if uid_key and uid_key in assignments:
+                continue
+            pid = by_name.get((ent.get("tag") or "").strip().lower())
+            if pid:
+                assignments[ent.get("tag")] = pid
+
+    event_slug = "tournament/" + tournament + "/event/" + event
+    event_name = sets[0].get("event_name") or event
+    tourn_name = sets[0].get("tournament_name") or tournament
+    count = MatchHistory.save_event_import(
+        event_slug, event_name, tourn_name, sets,
+        datetime.now().isoformat(timespec="seconds"), assignments, standings)
+    MatchHistory.rebuild_alltime(_alias_map_for_rollup())
+    unassigned = MatchHistory.collect_unassigned(event_slug)
+    return jsonify({"ok": True, "event_slug": event_slug, "event_name": event_name,
+                    "tournament_name": tourn_name, "set_count": count,
+                    "unassigned": unassigned}), 200
+
+
+@api.route('/listImportedEvents', methods=['GET'])
+def list_imported_events():
+    return jsonify(MatchHistory.list_events()), 200
+
+
+@api.route('/reconcileImport', methods=['POST'])
+def reconcile_import():
+    """Attach an unmatched start.gg entrant to a local player.
+
+    Body: { "event_slug", "tag", "user_id" (optional),
+             "action": "existing"|"new", "player_id" (for existing) }
+    For 'existing': records the tag (and 'sgg:<user_id>' if present) as
+    aliases of the chosen player, so future imports auto-match. For
+    'new': creates a player from the tag with those same aliases.
+    Then re-stamps the event file and rebuilds the rollup."""
+    body = request.get_json() or {}
+    event_slug = body.get("event_slug", "")
+    tag = (body.get("tag") or "").strip()
+    user_id = body.get("user_id")
+    action = body.get("action")
+    if not event_slug or not tag or action not in ("existing", "new"):
+        return jsonify({"ok": False, "message": "Missing event_slug, tag, or action"}), 400
+
+    players = players_db.get_local_players()
+    new_aliases = [tag]
+    if user_id:
+        new_aliases.append("sgg:" + str(user_id))
+
+    if action == "existing":
+        pid = body.get("player_id", "")
+        if pid not in players:
+            return jsonify({"ok": False, "message": "Unknown player_id"}), 400
+        existing = set(a.lower() for a in players[pid].get("aliases", []))
+        for a in new_aliases:
+            if a.lower() != players[pid]["name"].lower() and a.lower() not in existing:
+                players[pid].setdefault("aliases", []).append(a)
+                existing.add(a.lower())
+    else:  # new
+        pid = _next_player_id(players)
+        players[pid] = {"id": pid, "name": tag, "team": "", "country": "",
+                        "social_handle": "", "social_platform": "",
+                        "is_commentator": False, "characters": {}, "roster": {},
+                        "aliases": [a for a in new_aliases if a.lower() != tag.lower()]}
+    players_db.save_local_players(players)
+
+    # Re-stamp this event with refreshed assignments, then rebuild rollup
+    players = players_db.get_local_players()
+    assignments, by_name = _build_assignments(players)
+    data = MatchHistory.load_event(event_slug)
+    if data:
+        raw_sets = []
+        for s in data.get("sets", {}).values():
+            raw_sets.append({
+                "set_id": s["set_id"], "full_round_text": s.get("round_name", ""),
+                "round": s.get("round"), "completed_at": s.get("completed_at"),
+                "event_name": data.get("event_name"), "tournament_name": data.get("tournament_name"),
+                "p1": {"tag": s["p1"]["tag"], "team": s["p1"].get("team", ""),
+                       "user_id": s["p1"].get("user_id"), "entrant_id": s["p1"].get("entrant_id"), "country": "US"},
+                "p2": {"tag": s["p2"]["tag"], "team": s["p2"].get("team", ""),
+                       "user_id": s["p2"].get("user_id"), "entrant_id": s["p2"].get("entrant_id"), "country": "US"},
+                "p1_score": s.get("p1_score"), "p2_score": s.get("p2_score"),
+                "winner_entrant_id": s.get("winner_entrant_id"), "winner_user_id": s.get("winner_user_id"),
+            })
+        # name-tag resolution pass
+        for s in raw_sets:
+            for side in ("p1", "p2"):
+                ent = s[side]
+                uid_key = ("u:" + str(ent["user_id"])) if ent.get("user_id") else None
+                if uid_key and uid_key in assignments:
+                    continue
+                p = by_name.get((ent.get("tag") or "").strip().lower())
+                if p:
+                    assignments[ent.get("tag")] = p
+        MatchHistory.save_event_import(event_slug, data.get("event_name"),
+                                       data.get("tournament_name"), raw_sets,
+                                       data.get("imported_at"), assignments)
+    MatchHistory.rebuild_alltime(_alias_map_for_rollup())
+    unassigned = MatchHistory.collect_unassigned(event_slug)
+    return jsonify({"ok": True, "player_id": pid, "unassigned": unassigned}), 200
+
+
+@api.route('/getMatchupHistory', methods=['GET'])
+def get_matchup_history():
+    """H2H record between two players.
+
+    Query: ?p1=<id>&p2=<id>&event=<slug optional>
+    Returns all-time record always, plus event record when event given."""
+    p1 = request.args.get("p1", "")
+    p2 = request.args.get("p2", "")
+    if not p1 or not p2:
+        return jsonify({"ok": False, "message": "p1 and p2 required"}), 400
+    aw, al = MatchHistory.alltime_record(p1, p2)
+    out = {"ok": True, "alltime": {"wins": aw, "losses": al}}
+    event_slug = request.args.get("event")
+    if event_slug:
+        ew, el = MatchHistory.event_record(event_slug, p1, p2)
+        out["event"] = {
+            "wins": ew, "losses": el, "event_slug": event_slug,
+            "p1_placement": MatchHistory.event_placement(event_slug, p1),
+            "p2_placement": MatchHistory.event_placement(event_slug, p2),
+        }
+    return jsonify(out), 200
+
 
 @api.route('/deleteLocalPlayer', methods=['POST'])
 def delete_local_player():
@@ -1257,6 +1550,6 @@ if __name__ == "__main__":
             open_browser("http://" + server_info, '/usr/bin/google-chrome %s')
 
         players_db.init_db()
-        api.run(host=server_ip, port=server_port)
+        api.run(host=server_ip, port=server_port, threaded=True)
     except KeyboardInterrupt:
         pass

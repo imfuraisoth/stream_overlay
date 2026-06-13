@@ -725,3 +725,95 @@ select.name-picker option { font-size: 13px; }
   border-left: 1px solid var(--border);
   padding-left: 6px;
 }
+
+/* ── Explicit player save (card buttons + resolve hints) ────── */
+.player-save-row {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 8px;
+	margin-top: 6px;
+	width: 100%;
+}
+.player-match-hint {
+	font-family: var(--font-d);
+	font-size: 10px;
+	color: var(--fg2);
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	min-width: 0;
+}
+.player-match-hint.matched { color: var(--green, #43a047); }
+.player-match-hint.unmatched { color: var(--amber, #E8A050); }
+.player-save-btn {
+	font-family: var(--font-d);
+	font-size: 10px;
+	font-weight: 700;
+	letter-spacing: .06em;
+	padding: 4px 10px;
+	cursor: pointer;
+	background: var(--bg2, transparent);
+	color: var(--fg, #eee);
+	border: 1px solid var(--border, #555);
+	border-radius: 4px;
+	flex-shrink: 0;
+}
+.player-save-btn:hover { border-color: var(--accent, #e33); }
+
+/* ── Head-to-Head matchup panel ─────────────────────────────── */
+.h2h-panel {
+	margin-top: 8px;
+	padding: 8px 10px;
+	background: var(--bg2, #181714);
+	border: 1px solid var(--border, #333028);
+	border-radius: 6px;
+}
+.h2h-label {
+	font-family: var(--font-d, 'Barlow Condensed');
+	font-size: 10px;
+	font-weight: 700;
+	letter-spacing: .1em;
+	text-transform: uppercase;
+	color: var(--fg2, #9a9280);
+	margin-bottom: 5px;
+}
+.h2h-stream-btn {
+	display: block;
+	width: 100%;
+	font-size: 9px;
+	padding: 5px 6px;
+	margin-bottom: 5px;
+	/* Match the Event Dashboard's amber Show-on-Stream button */
+	background: var(--accent) !important;
+	color: #0e0d0b !important;
+	font-weight: 700;
+	letter-spacing: .07em;
+	text-transform: uppercase;
+	border: none !important;
+	border-radius: 4px;
+}
+.h2h-stream-btn:hover { background: #f0b030 !important; }
+.h2h-scope-select {
+	display: block;
+	width: 100%;
+	box-sizing: border-box;
+	font-size: 11px;
+	padding: 3px 6px;
+	margin-bottom: 6px;
+}
+.h2h-result {
+	font-family: var(--font-d, 'Barlow Condensed');
+	font-size: 15px;
+	color: var(--fg, #f0ece0);
+	text-align: center;
+	min-height: 18px;
+}
+.h2h-result.muted {
+	font-size: 11px;
+	color: var(--fg2, #9a9280);
+}
+.h2h-result strong { color: var(--accent, #e8a020); }
+
+/* Placement beside name in event-scoped H2H */
+.h2h-place { color: var(--fg2, #9a9280); font-weight: 400; font-size: .85em; }

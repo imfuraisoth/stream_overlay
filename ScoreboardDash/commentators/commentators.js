@@ -42,7 +42,20 @@ function pickName(inputId, sel, updateFn) {
 }
 
 // ── LOCAL PLAYER DB ───────────────────────────────────────────────
-var _localPlayersMap = new Map();
+function _nameKeyedMap() {
+    var m = new Map();
+    function norm(k) { return String(k).trim().toLowerCase(); }
+    return {
+        get: function(k) { return k ? m.get(norm(k)) : undefined; },
+        set: function(k, v) { if (k) m.set(norm(k), v); return this; },
+        has: function(k) { return k ? m.has(norm(k)) : false; },
+        clear: function() { m.clear(); },
+        forEach: function(cb) { m.forEach(cb); },
+        get size() { return m.size; }
+    };
+}
+
+var _localPlayersMap = _nameKeyedMap(); // normalized name/alias -> player record
 var jsonData = {};
 
 function setPlatformSelect(selId, platform) {
@@ -66,7 +79,12 @@ function loadLocalPlayers() {
         .then(function(r) { return r.json(); })
         .then(function(players) {
             if (!players || !players.length) return;
-            players.forEach(function(p) { if (p && p.name) _localPlayersMap.set(p.name, p); });
+            players.forEach(function(p) {
+                if (p && p.name) {
+                    _localPlayersMap.set(p.name, p);
+                    (p.aliases || []).forEach(function(a) { _localPlayersMap.set(a, p); });
+                }
+            });
             populateComPickers(players.map(function(p) { return p.name; }));
         })
         .catch(function(e) { console.log('loadLocalPlayers error:', e); });
@@ -116,26 +134,6 @@ function sendJsonDataToEndpoint(data, endpoint) {
 }
 
 // ── UPDATE FUNCTIONS ──────────────────────────────────────────────
-function saveCommentatorToDb(name, social_handle, social_platform) {
-    if (!name || !name.trim()) return;
-    var existing = _localPlayersMap.get(name.trim()) || {};
-    fetch('/saveLocalPlayer', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-            name: name.trim(),
-            social_handle: social_handle || existing.social_handle || '',
-            social_platform: social_platform !== undefined ? social_platform : (existing.social_platform || ''),
-            team: existing.team || '',
-            country: existing.country || ''
-        })
-    }).then(function() {
-        existing.name = name.trim();
-        if (social_handle) existing.social_handle = social_handle;
-        _localPlayersMap.set(name.trim(), existing);
-        populateComPickers([name.trim()]);
-    }).catch(function(e) { console.log('saveCommentatorToDb error:', e); });
-}
 
 function updateCom1() {
     jsonData.com1 = document.getElementById('form_name_1').value;
@@ -151,7 +149,7 @@ function updateCom1() {
         setPlatformSelect('soc1_platform_sel', '');
         jsonData.com1Plat = '';
     }
-    saveCommentatorToDb(jsonData.com1, jsonData.soc1, document.getElementById('soc1_platform_sel').value);
+    updateComHint(1);
     sendJSON();
 }
 
@@ -169,19 +167,19 @@ function updateCom2() {
         setPlatformSelect('soc2_platform_sel', '');
         jsonData.com2Plat = '';
     }
-    saveCommentatorToDb(jsonData.com2, jsonData.soc2, document.getElementById('soc2_platform_sel').value);
+    updateComHint(2);
     sendJSON();
 }
 
 function updateSoc1() {
     jsonData.soc1 = document.getElementById('form_social_1').value;
-    saveCommentatorToDb(jsonData.com1, jsonData.soc1, document.getElementById('soc1_platform_sel').value);
+    updateComHint(1);
     sendJSON();
 }
 
 function updateSoc2() {
     jsonData.soc2 = document.getElementById('form_social_2').value;
-    saveCommentatorToDb(jsonData.com2, jsonData.soc2);
+    updateComHint(2);
     sendJSON();
 }
 
@@ -191,7 +189,7 @@ function updatePlatform1() {
     existing.social_platform = platform;
     if (jsonData.com1) _localPlayersMap.set(jsonData.com1, existing);
     jsonData.com1Plat = platform;
-    saveCommentatorToDb(jsonData.com1, jsonData.soc1, platform);
+    updateComHint(1);
     sendJSON();
 }
 
@@ -201,7 +199,7 @@ function updatePlatform2() {
     existing.social_platform = platform;
     if (jsonData.com2) _localPlayersMap.set(jsonData.com2, existing);
     jsonData.com2Plat = platform;
-    saveCommentatorToDb(jsonData.com2, jsonData.soc2, platform);
+    updateComHint(2);
     sendJSON();
 }
 
@@ -248,7 +246,12 @@ document.addEventListener('DOMContentLoaded', function() {
         .then(function(r) { return r.json(); })
         .then(function(players) {
             if (players && players.length) {
-                players.forEach(function(p) { if (p && p.name) _localPlayersMap.set(p.name, p); });
+                players.forEach(function(p) {
+                if (p && p.name) {
+                    _localPlayersMap.set(p.name, p);
+                    (p.aliases || []).forEach(function(a) { _localPlayersMap.set(a, p); });
+                }
+            });
             }
             // Now load only commentator-flagged players into the pickers
             return fetch('/getCommentatorPlayers');
@@ -278,3 +281,59 @@ document.addEventListener('DOMContentLoaded', function() {
         })
         .catch(function(e) { console.log('init error:', e); });
 });
+
+// ── LIVE SYNC ────────────────────────────────────────────────────
+if (window.liveSync) {
+    liveSync.on('players', function() {
+        loadLocalPlayers();
+    });
+}
+
+
+// ════════════════════════════════════════════════════════════════
+// EXPLICIT COMMENTATOR SAVE
+// ════════════════════════════════════════════════════════════════
+function updateComHint(n) {
+    var el = document.getElementById('com' + n + 'MatchHint');
+    if (!el) return;
+    var name = (jsonData['com' + n] || '').trim();
+    if (!name) { el.textContent = ''; el.className = 'player-match-hint'; return; }
+    var rec = _localPlayersMap.get(name);
+    if (rec && rec.id) {
+        el.textContent = '\u2192 ' + rec.name + (rec.is_commentator ? '' : ' (not flagged commentator yet)');
+        el.className = 'player-match-hint matched';
+    } else {
+        el.textContent = 'not in player DB';
+        el.className = 'player-match-hint unmatched';
+    }
+}
+
+function saveCommentatorCard(n) {
+    var name = (jsonData['com' + n] || '').trim();
+    if (!name) return;
+    var body = {
+        name: name,
+        social_handle: jsonData['soc' + n] || '',
+        social_platform: document.getElementById('soc' + n + '_platform_sel').value || '',
+        is_commentator: true
+    };
+    var btn = document.getElementById('com' + n + 'SaveBtn');
+    fetch('/saveLocalPlayer', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body)
+    }).then(function(r) {
+        if (!r.ok) throw new Error(r.status);
+        if (btn) {
+            btn.textContent = '\u2713 Saved';
+            setTimeout(function() { btn.textContent = 'Save Commentator'; }, 1600);
+        }
+        updateComHint(n);
+    }).catch(function(e) {
+        console.log('saveCommentatorCard error:', e);
+        if (btn) {
+            btn.textContent = 'Save failed';
+            setTimeout(function() { btn.textContent = 'Save Commentator'; }, 2000);
+        }
+    });
+}

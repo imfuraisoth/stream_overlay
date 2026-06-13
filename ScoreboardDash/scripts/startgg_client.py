@@ -30,10 +30,15 @@ country_code_map = read_file(country_prop_file, "{}")
 
 
 def get_api_data(response):
-    response_json = response.json()
+    try:
+        response_json = response.json()
+    except Exception:
+        print("start.gg non-JSON response (HTTP %s): %s" % (getattr(response, "status_code", "?"), getattr(response, "text", "")[:500]))
+        return None
     errors = response_json.get("errors")
     if errors:
         print("start.gg API error: " + str(errors))
+        # Also surface any partial data path so the offending field is clear
         return None
     return response_json.get("data")
 
@@ -437,12 +442,12 @@ def get_seed(seeds):
 
 
 def get_country(participant):
-    user = participant["user"]
+    user = participant.get("user") if isinstance(participant, dict) else None
     country_code = "US"
     if user:
-        location = user["location"]
+        location = user.get("location") if isinstance(user, dict) else None
         if location:
-            country = location["country"]
+            country = location.get("country")
             if country:
                 country_code = country_code_map.get(country)
                 if country_code is None:
@@ -486,6 +491,267 @@ def get_all_players_from_tournament(tournament_name, event_name):
     for page in range(1, pages + 1):
         entrants += get_players_from_tournament(tournament_name, event_name, page)
     return entrants
+
+
+def _entrant_from_slot(slot):
+    """Pull (tag, team, entrant_id, user_id, country) from a set slot.
+
+    user_id is the stable start.gg account id (survives tag changes);
+    None for entrants with no linked account. entrant_id is per-event."""
+    entrant = slot.get("entrant") if slot else None
+    if not entrant:
+        return None
+    name = entrant.get("name") or ""
+    team = ""
+    if " | " in name:
+        team, name = name.split(" | ", 1)
+    parts = entrant.get("participants") or [{}]
+    p0 = parts[0] if parts else {}
+    if not team:
+        team = p0.get("prefix") or ""
+    tag = p0.get("gamerTag") or name
+    user = p0.get("user") or {}
+    user_id = user.get("id")
+    country = get_country(p0) if p0 else "US"
+    return {
+        "tag": tag.strip(),
+        "team": (team or "").strip(),
+        "entrant_id": entrant.get("id"),
+        "user_id": user_id,
+        "country": country,
+    }
+
+
+def _parse_display_score(display_score, tag1, tag2):
+    """Best-effort score parse from start.gg displayScore.
+
+    displayScore looks like 'Owls 3 - Bas 1' (or 'DQ'/None). Returns
+    (score1, score2) aligned to (tag1, tag2), or (None, None) if it
+    can't be parsed. The per-slot standing scores are preferred when
+    available; this is the fallback."""
+    if not display_score or display_score in ("DQ", "0 - 0"):
+        return None, None
+    import re as _re
+    nums = _re.findall(r"-?\d+", display_score)
+    if len(nums) < 2:
+        return None, None
+    # Assume 'tag1 N - tag2 M' ordering as start.gg emits slots in order
+    return int(nums[-2]), int(nums[-1])
+
+
+# Full set query (rich fields) and a minimal fallback that only uses
+# fields from start.gg's official "Sets in Event" example. If the full
+# query is rejected, we retry minimal so the import still succeeds.
+_SETS_QUERY_FULL = '''
+    query EventSets($eventSlug: String!, $page: Int!, $perPage: Int!) {
+      event(slug: $eventSlug) {
+        name
+        tournament { name }
+        sets(page: $page, perPage: $perPage) {
+          pageInfo { total }
+          nodes {
+            id
+            state
+            completedAt
+            round
+            fullRoundText
+            displayScore
+            winnerId
+            slots {
+              standing { stats { score { value } } }
+              entrant {
+                id
+                name
+                participants { gamerTag prefix user { id location { country } } }
+              }
+            }
+          }
+        }
+      }
+    }
+    '''
+
+_SETS_QUERY_MIN = '''
+    query EventSets($eventSlug: String!, $page: Int!, $perPage: Int!) {
+      event(slug: $eventSlug) {
+        name
+        sets(page: $page, perPage: $perPage) {
+          pageInfo { total }
+          nodes {
+            id
+            winnerId
+            displayScore
+            fullRoundText
+            slots {
+              entrant {
+                id
+                name
+                participants { gamerTag prefix }
+              }
+            }
+          }
+        }
+      }
+    }
+    '''
+
+
+def get_completed_sets(tournament_name, event_name, per_page=40, max_pages=50):
+    """Fetch all completed sets for an event.
+
+    Tries a rich query first; if start.gg rejects it, retries with a
+    minimal query built only from documented-safe fields, so the import
+    still works (scores then come from displayScore parsing). Sets
+    without exactly two entrants, or with no winner, are skipped."""
+    token = get_token()
+    event_slug = "tournament/" + tournament_name + "/event/" + event_name
+    headers = {"Authorization": "Bearer " + token}
+
+    # Probe page 1 with the full query; on error, drop to minimal.
+    query = _SETS_QUERY_FULL
+    probe = requests.post(url, json={"query": query, "variables":
+            {"eventSlug": event_slug, "page": 1, "perPage": per_page}}, headers=headers)
+    pj = {}
+    try:
+        pj = probe.json()
+    except Exception:
+        pass
+    if pj.get("errors"):
+        print("start.gg full set query rejected (" + str(pj["errors"])[:160]
+              + ") -- retrying with minimal query")
+        query = _SETS_QUERY_MIN
+    results = []
+    page = 1
+    total_pages = 1
+    while page <= total_pages and page <= max_pages:
+        variables = {"eventSlug": event_slug, "page": page, "perPage": per_page}
+        response = requests.post(url, json={"query": query, "variables": variables}, headers=headers)
+        data = get_api_data(response)
+        if data is None or not data.get("event"):
+            break
+        event = data["event"]
+        ev_name = event.get("name") or event_name
+        tourn = (event.get("tournament") or {}).get("name") or tournament_name
+        sets_block = event.get("sets") or {}
+        page_info = sets_block.get("pageInfo") or {}
+        total_count = page_info.get("total") or 0
+        total_pages = max(1, math.ceil(total_count / per_page))
+        nodes = sets_block.get("nodes") or []
+        if not nodes:
+            break
+        for node in nodes:
+            # Only completed sets (state 3); skip in-progress/pending
+            if node.get("state") not in (3, None):
+                continue
+            slots = node.get("slots") or []
+            if len(slots) != 2:
+                continue
+            # A real completed set has a winner
+            if node.get("winnerId") is None:
+                continue
+            e1 = _entrant_from_slot(slots[0])
+            e2 = _entrant_from_slot(slots[1])
+            if not e1 or not e2:
+                continue
+            # Structured score first
+            def _slot_score(slot):
+                st = (slot.get("standing") or {}).get("stats") or {}
+                sc = (st.get("score") or {})
+                return sc.get("value")
+            s1 = _slot_score(slots[0])
+            s2 = _slot_score(slots[1])
+            if s1 is None or s2 is None:
+                s1, s2 = _parse_display_score(node.get("displayScore"), e1["tag"], e2["tag"])
+            winner_id = node.get("winnerId")
+            winner_user_id = None
+            winner_entrant_id = winner_id
+            if winner_id == e1["entrant_id"]:
+                winner_user_id = e1["user_id"]
+            elif winner_id == e2["entrant_id"]:
+                winner_user_id = e2["user_id"]
+            results.append({
+                "set_id": str(node.get("id")),
+                "round_name": node.get("fullRoundText") or "",
+                "round": node.get("round"),
+                "full_round_text": node.get("fullRoundText") or "",
+                "event_name": ev_name,
+                "tournament_name": tourn,
+                "completed_at": node.get("completedAt"),
+                "p1": e1,
+                "p2": e2,
+                "p1_score": int(s1) if s1 is not None else None,
+                "p2_score": int(s2) if s2 is not None else None,
+                "winner_entrant_id": winner_entrant_id,
+                "winner_user_id": winner_user_id,
+            })
+        page += 1
+    return results
+
+
+def get_event_standings(tournament_name, event_name, per_page=64, max_pages=20):
+    """Final placements for an event, keyed for player matching.
+
+    Returns a list of dicts:
+      { placement, tag, team, user_id, entrant_id }
+    Placement is the start.gg final standing (1 = winner). Paged the
+    same way as sets. Safe to call right after get_completed_sets --
+    it is a separate lightweight query on the same event node."""
+    token = get_token()
+    query = '''
+    query EventStandings($eventSlug: String!, $page: Int!, $perPage: Int!) {
+      event(slug: $eventSlug) {
+        standings(query: { page: $page, perPage: $perPage }) {
+          nodes {
+            placement
+            entrant {
+              id
+              name
+              participants {
+                gamerTag
+                prefix
+                user { id }
+              }
+            }
+          }
+        }
+      }
+    }
+    '''
+    event_slug = "tournament/" + tournament_name + "/event/" + event_name
+    headers = {"Authorization": "Bearer " + token}
+    out = []
+    page = 1
+    while page <= max_pages:
+        variables = {"eventSlug": event_slug, "page": page, "perPage": per_page}
+        response = requests.post(url, json={"query": query, "variables": variables}, headers=headers)
+        data = get_api_data(response)
+        if data is None or not data.get("event"):
+            break
+        block = (data["event"].get("standings") or {})
+        nodes = block.get("nodes") or []
+        if not nodes:
+            break
+        for node in nodes:
+            entrant = node.get("entrant") or {}
+            parts = entrant.get("participants") or [{}]
+            p0 = parts[0] if parts else {}
+            name = entrant.get("name") or ""
+            team = ""
+            if " | " in name:
+                team, name = name.split(" | ", 1)
+            if not team:
+                team = p0.get("prefix") or ""
+            tag = p0.get("gamerTag") or name
+            user = p0.get("user") or {}
+            out.append({
+                "placement": node.get("placement"),
+                "tag": (tag or "").strip(),
+                "team": (team or "").strip(),
+                "user_id": user.get("id"),
+                "entrant_id": entrant.get("id"),
+            })
+        page += 1
+    return out
 
 
 if __name__ == "__main__":

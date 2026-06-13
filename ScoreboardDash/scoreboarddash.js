@@ -56,7 +56,10 @@ function rebuildNamePickers() {
         playersMap.forEach(function(_, name) { names.push(name); });
     }
     if (_playerSource === 'local' || _playerSource === 'both') {
-        _localPlayersByName.forEach(function(_, name) { names.push(name); });
+        var _seen = new Set();
+        _localPlayersByName.forEach(function(p) {
+            if (p && p.name && !_seen.has(p.name)) { _seen.add(p.name); names.push(p.name); }
+        });
     }
     names.sort(function(a,b) { return a.toLowerCase().localeCompare(b.toLowerCase()); });
     // Deduplicate
@@ -75,7 +78,22 @@ function pickName(inputId, sel, updateFn) {
 }
 
 var _localPlayersMap = new Map();     // id   -> player record
-var _localPlayersByName = new Map(); // name -> player record (for fast lookup)
+function _nameKeyedMap() {
+    // Map keyed by normalized (trimmed, lowercased) names so lookups are
+    // case-insensitive; records keep their display-cased .name
+    var m = new Map();
+    function norm(k) { return String(k).trim().toLowerCase(); }
+    return {
+        get: function(k) { return k ? m.get(norm(k)) : undefined; },
+        set: function(k, v) { if (k) m.set(norm(k), v); return this; },
+        has: function(k) { return k ? m.has(norm(k)) : false; },
+        clear: function() { m.clear(); },
+        forEach: function(cb) { m.forEach(cb); },
+        get size() { return m.size; }
+    };
+}
+
+var _localPlayersByName = _nameKeyedMap(); // normalized name/alias -> player record
 
 function refreshSocialFields() {
     if (!jsonData) return;
@@ -135,38 +153,9 @@ function updateSocialDisplays() {
 }
 
 function saveLocalPlayerName(name, team, country) {
-    if (!name || name.trim() === '') return;
-    // Merge into existing map entry — never overwrite with blanks
-    var existing = _localPlayersByName.get(name.trim()) || _localPlayersMap.get(name.trim()) || { name: name.trim() };
-    if (team)    existing.team    = team;
-    if (country) existing.country = country;
-    existing.name = name.trim();
-    _localPlayersMap.set(existing.id || name.trim(), existing);
-    _localPlayersByName.set(name.trim(), existing);
-    // Only send non-empty fields — never send blank socials that would
-    // overwrite correctly stored values on the server
-    var payload = { name: name.trim() };
-    if (team)                     payload.team            = team;
-    if (country)                  payload.country         = country;
-    // Always send social fields even if empty so server clears them
-    payload.social_handle   = existing.social_handle   || '';
-    payload.social_platform = existing.social_platform || '';
-    fetch('/saveLocalPlayer', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-    }).then(function() {
-        // Add to datalist immediately if local is in scope
-        if (_playerSource === 'local' || _playerSource === 'both') {
-            var dl = document.getElementById('next_player_suggestions');
-            if (!dl) return;
-            var existing = new Set(Array.from(dl.options).map(function(o) { return o.value; }));
-            if (!existing.has(name.trim())) {
-                var opt = document.createElement('option');
-                opt.value = name.trim(); dl.appendChild(opt);
-            }
-        }
-    }).catch(function(e) { console.log('saveLocalPlayer error:', e); });
+    // Auto-save retired: profiles are read automatically but only
+    // written via the explicit Save Player buttons (savePlayerCard).
+    // Kept as a no-op so legacy call sites remain harmless.
 }
 
 function loadLocalPlayers() {
@@ -179,11 +168,13 @@ function loadLocalPlayers() {
                 if (!p || !p.name) return;
                 _localPlayersMap.set(p.id || p.name, p);
                 _localPlayersByName.set(p.name, p);
+                (p.aliases || []).forEach(function(a) { _localPlayersByName.set(a, p); });
             });
             // Write social fields for any players already on screen
             refreshSocialFields();
             populateNamePickers(players.map(function(p) { return typeof p === 'string' ? p : p.name; }));
             // Restore characters for currently displayed players now that map is loaded
+            refreshAllMatchHints();
             CHAR_PLAYERS.forEach(function(player) {
                 var name = charPlayerName(player);
                 if (!name) return;
@@ -198,6 +189,7 @@ function loadLocalPlayers() {
 
 // On load: restore toggle state and seed datalist
 document.addEventListener('DOMContentLoaded', function() {
+    loadH2HEvents();
     // Restore toggle state; setPlayerSource also loads the local DB
     // when the preference includes it
     setPlayerSource(_playerSource);
@@ -310,8 +302,9 @@ function updateElementEmptyOkay(id, value) {
 }
 
 function updateElement(id, value) {
-	if (value != null && value.length > 0) {
-		document.getElementById(id).value = value;
+	if (value != null && String(value).length > 0) {
+		var el = document.getElementById(id);
+		if (el) el.value = value;
 	}
 }
 
@@ -361,10 +354,13 @@ function updatePlayer1() {
         // Restore saved characters for current game (clears if none)
         var _game1 = charGetGame();
         charApplyList(1, (_game1 && localPlayer.characters) ? localPlayer.characters[_game1] : null);
+        updateMatchHint(1);
+        refreshH2H();
     } else {
         jsonData.p1SocialHandle   = '';
         jsonData.p1SocialPlatform = '';
         clearCharacterSelect(1);
+        refreshH2H();
     }
     saveLocalPlayerName(jsonData.p1Name, jsonData.p1Team, jsonData.p1Country);
     updateCurrentPlayerDisplay();
@@ -394,10 +390,13 @@ function updatePlayer2() {
         // Restore saved characters for current game (clears if none)
         var _game2 = charGetGame();
         charApplyList(2, (_game2 && localPlayer.characters) ? localPlayer.characters[_game2] : null);
+        updateMatchHint(2);
+        refreshH2H();
     } else {
         jsonData.p2SocialHandle   = '';
         jsonData.p2SocialPlatform = '';
         clearCharacterSelect(2);
+        refreshH2H();
     }
     saveLocalPlayerName(jsonData.p2Name, jsonData.p2Team, jsonData.p2Country);
     updateCurrentPlayerDisplay();
@@ -452,6 +451,7 @@ function updateNextPlayer1() {
     var _nlp1 = charGetLocalPlayer('1Next');
     var _ng1 = charGetGame();
     charApplyList('1Next', (_ng1 && _nlp1 && _nlp1.characters) ? _nlp1.characters[_ng1] : null);
+    updateMatchHint('1Next');
 	sendJSON();
 }
 
@@ -491,6 +491,7 @@ function updateNextPlayer2() {
     var _nlp2 = charGetLocalPlayer('2Next');
     var _ng2 = charGetGame();
     charApplyList('2Next', (_ng2 && _nlp2 && _nlp2.characters) ? _nlp2.characters[_ng2] : null);
+    updateMatchHint('2Next');
 	sendJSON();
 }
 
@@ -925,6 +926,12 @@ function nextRoundUpdate(data) {
 	}
 	restoreCharForPlayer(1, jsonData.p1Name);
 	restoreCharForPlayer(2, jsonData.p2Name);
+	// Also refresh next-round pickers: clears them when the queue is
+	// empty, loads correct saved chars when another match is queued
+	restoreCharForPlayer('1Next', jsonData.nextplayer1);
+	restoreCharForPlayer('2Next', jsonData.nextplayer2);
+	updateMatchHint('1Next');
+	updateMatchHint('2Next');
 	updateCurrentPlayerDisplay();
     refreshSocialFields();
 	sendJsonToEndpoint("updatealldata");
@@ -1975,3 +1982,217 @@ document.addEventListener('click', function(e) {
     }
   });
 })();
+
+// ════════════════════════════════════════════════════════════════
+// LIVE SYNC — refresh when other pages change shared data.
+// sync.js defers these while any field on this page has focus.
+// ════════════════════════════════════════════════════════════════
+if (window.liveSync) {
+    liveSync.on('players', function() {
+        loadLocalPlayers();
+        loadH2HEvents();
+        refreshH2H();
+    });
+}
+
+// ════════════════════════════════════════════════════════════════
+// EXPLICIT PLAYER SAVE — profiles are only written when the operator
+// clicks Save Player on a card. The hint shows what the typed name
+// resolved to (canonical name via alias/case-insensitive matching).
+// ════════════════════════════════════════════════════════════════
+function _cardInfo(token) {
+    if (token === '1Next') return { name: jsonData.nextplayer1, team: jsonData.nextteam1, country: jsonData.nextcountry1 };
+    if (token === '2Next') return { name: jsonData.nextplayer2, team: jsonData.nextteam2, country: jsonData.nextcountry2 };
+    return { name: jsonData['p' + token + 'Name'], team: jsonData['p' + token + 'Team'], country: jsonData['p' + token + 'Country'] };
+}
+
+function updateMatchHint(token) {
+    var el = document.getElementById('p' + token + 'MatchHint');
+    if (!el) return;
+    var info = _cardInfo(token);
+    var name = (info.name || '').trim();
+    if (!name) { el.textContent = ''; el.className = 'player-match-hint'; return; }
+    var rec = _localPlayersByName.get(name);
+    if (rec && rec.id) {
+        el.textContent = '\u2192 ' + rec.name;
+        el.className = 'player-match-hint matched';
+    } else {
+        el.textContent = 'not in player DB';
+        el.className = 'player-match-hint unmatched';
+    }
+}
+
+function refreshAllMatchHints() {
+    CHAR_PLAYERS.forEach(updateMatchHint);
+}
+
+function savePlayerCard(token) {
+    var info = _cardInfo(token);
+    var name = (info.name || '').trim();
+    if (!name) return;
+    var rec = _localPlayersByName.get(name);
+    var body = { name: name };
+    if (info.team)    body.team    = info.team;
+    if (info.country) body.country = info.country;
+    if (!rec || !rec.id) {
+        // Brand-new player: include their current picks so the
+        // characters chosen before saving aren't lost
+        var game = charGetGame();
+        var picks = [];
+        charGetList(token).forEach(function(p, i) {
+            if (p && p.file) picks.push({ slot: i, pack: p.pack,
+                character: p.character, palette: p.palette, file: p.file });
+        });
+        if (game && picks.length) {
+            body.characters = {}; body.characters[game] = picks;
+            body.roster = {}; body.roster[game] = picks.map(function(p) {
+                return { character: p.character, pack: p.pack, palette: p.palette, file: p.file };
+            });
+        }
+    }
+    var btn = document.getElementById('p' + token + 'SaveBtn');
+    fetch('/saveLocalPlayer', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body)
+    }).then(function(r) {
+        if (!r.ok) throw new Error(r.status);
+        if (btn) {
+            btn.textContent = '\u2713 Saved';
+            setTimeout(function() { btn.textContent = 'Save Player'; }, 1600);
+        }
+        // live sync 'players' event refreshes maps + hints everywhere
+    }).catch(function(e) {
+        console.log('savePlayerCard error:', e);
+        if (btn) {
+            btn.textContent = 'Save failed';
+            setTimeout(function() { btn.textContent = 'Save Player'; }, 2000);
+        }
+    });
+}
+
+// ════════════════════════════════════════════════════════════════
+// MATCHUP HISTORY (H2H) — follows the two assigned players; scope
+// (all-time / specific event) is the only manual control.
+// ════════════════════════════════════════════════════════════════
+var _h2hEvents = [];          // imported events for the scope dropdown
+var _h2hScope = 'alltime';    // 'alltime' or an event_slug
+
+function _h2hResolveId(name) {
+    var rec = name ? _localPlayersByName.get(name.trim()) : null;
+    return (rec && rec.id) ? rec.id : null;
+}
+
+function loadH2HEvents() {
+    fetch('/listImportedEvents')
+        .then(function(r) { return r.json(); })
+        .then(function(events) {
+            _h2hEvents = events || [];
+            var sel = document.getElementById('h2hScope');
+            if (!sel) return;
+            var prev = sel.value || 'alltime';
+            sel.innerHTML = '<option value="alltime">All-time</option>';
+            _h2hEvents.forEach(function(ev) {
+                var o = document.createElement('option');
+                o.value = ev.event_slug;
+                o.textContent = ev.event_name || ev.event_slug;
+                sel.appendChild(o);
+            });
+            sel.value = prev;
+            _h2hScope = sel.value;
+        })
+        .catch(function(e) { console.log('loadH2HEvents error:', e); });
+}
+
+function onH2HScopeChange() {
+    var sel = document.getElementById('h2hScope');
+    _h2hScope = sel ? sel.value : 'alltime';
+    refreshH2H();
+}
+
+function refreshH2H() {
+    var box = document.getElementById('h2hResult');
+    if (!box) return;
+    var id1 = _h2hResolveId(jsonData.p1Name);
+    var id2 = _h2hResolveId(jsonData.p2Name);
+    if (!id1 || !id2) {
+        box.textContent = (jsonData.p1Name && jsonData.p2Name)
+            ? 'Both players must be in the player DB for history.'
+            : '';
+        box.className = 'h2h-result muted';
+        _writeH2HFields({ scope: _h2hScope });
+        return;
+    }
+    if (id1 === id2) { box.textContent = ''; return; }
+    var url = '/getMatchupHistory?p1=' + encodeURIComponent(id1) + '&p2=' + encodeURIComponent(id2);
+    if (_h2hScope && _h2hScope !== 'alltime') url += '&event=' + encodeURIComponent(_h2hScope);
+    fetch(url)
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+            if (!data.ok) { box.textContent = ''; return; }
+            var n1 = (_localPlayersByName.get(jsonData.p1Name) || {}).name || jsonData.p1Name;
+            var n2 = (_localPlayersByName.get(jsonData.p2Name) || {}).name || jsonData.p2Name;
+            var rec = (_h2hScope === 'alltime') ? data.alltime : (data.event || {wins:0, losses:0});
+            var total = rec.wins + rec.losses;
+            var evName = '';
+            if (_h2hScope !== 'alltime') {
+                var evMatch = _h2hEvents.filter(function(e) { return e.event_slug === _h2hScope; })[0];
+                evName = evMatch ? (evMatch.event_name || '') : '';
+            }
+            var p1place = (_h2hScope !== 'alltime' && data.event) ? data.event.p1_placement : null;
+            var p2place = (_h2hScope !== 'alltime' && data.event) ? data.event.p2_placement : null;
+            _writeH2HFields({ scope: _h2hScope, eventName: evName,
+                p1w: rec.wins, p1l: rec.losses, p2w: rec.losses, p2l: rec.wins,
+                p1place: p1place, p2place: p2place });
+            if (total === 0) {
+                box.className = 'h2h-result muted';
+                box.textContent = (_h2hScope === 'alltime')
+                    ? 'No recorded matches between these two.'
+                    : 'No matches in this event.';
+                return;
+            }
+            box.className = 'h2h-result';
+            var pl1 = '', pl2 = '';
+            if (_h2hScope !== 'alltime' && data.event) {
+                if (data.event.p1_placement != null) pl1 = ' <span class="h2h-place">(' + _ordinal(data.event.p1_placement) + ')</span>';
+                if (data.event.p2_placement != null) pl2 = '<span class="h2h-place">(' + _ordinal(data.event.p2_placement) + ')</span> ';
+            }
+            box.innerHTML = '<strong>' + _escH2H(n1) + pl1 + ' ' + rec.wins + '</strong>'
+                + ' \u2013 '
+                + '<strong>' + rec.losses + ' ' + pl2 + _escH2H(n2) + '</strong>';
+        })
+        .catch(function(e) { console.log('refreshH2H error:', e); });
+}
+
+function _writeH2HFields(opts) {
+    // Mirror H2H state into scoreboard.json via the normal send path.
+    // opts: { scope, eventName, p1w, p1l, p2w, p2l, p1place, p2place }
+    jsonData.h2hScope            = opts.scope || 'alltime';
+    jsonData.h2hEventName        = opts.eventName || '';
+    jsonData.p1MatchupWins       = (opts.p1w != null) ? opts.p1w : '';
+    jsonData.p1MatchupLosses     = (opts.p1l != null) ? opts.p1l : '';
+    jsonData.p2MatchupWins       = (opts.p2w != null) ? opts.p2w : '';
+    jsonData.p2MatchupLosses     = (opts.p2l != null) ? opts.p2l : '';
+    jsonData.p1EventPlacement    = (opts.p1place != null) ? opts.p1place : '';
+    jsonData.p2EventPlacement    = (opts.p2place != null) ? opts.p2place : '';
+    jsonData.p1EventPlacementText = (opts.p1place != null) ? _ordinal(opts.p1place) : '';
+    jsonData.p2EventPlacementText = (opts.p2place != null) ? _ordinal(opts.p2place) : '';
+    if (typeof sendJSON === 'function') sendJSON();
+}
+
+function toggleH2HVisible() {
+    jsonData.h2hVisible = !jsonData.h2hVisible;
+    var btn = document.getElementById('h2hVisibleBtn');
+    if (btn) btn.textContent = jsonData.h2hVisible ? 'Hide on Stream' : 'Show on Stream';
+    if (typeof sendJSON === 'function') sendJSON();
+}
+
+function _ordinal(n) {
+    if (n == null) return '';
+    var s = ['th', 'st', 'nd', 'rd'], v = n % 100;
+    return n + (s[(v - 20) % 10] || s[v] || s[0]);
+}
+
+function _escH2H(s) {
+    return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}

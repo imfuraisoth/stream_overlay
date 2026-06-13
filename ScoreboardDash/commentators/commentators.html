@@ -10,6 +10,7 @@
   <link href="style.css" rel="stylesheet" type="text/css" />
   <link rel="icon" type="image/png" href="../images/V.png">
   <script src="https://kit.fontawesome.com/2c93766a80.js" crossorigin="anonymous"></script>
+  <script type="text/javascript" src="../sync.js" defer=""></script>
   <script class="u-script" type="text/javascript" src="commentators.js" defer=""></script>
   <script>
     // Apply saved theme before paint to prevent flash
@@ -31,6 +32,8 @@
     <div class="header-item"><a href="../stations/stations.html">Stations</a></div>
     <span class="header-sep">|</span>
     <div class="header-item"><a href="../players/players.html">Players</a></div>
+  <span class="header-sep">|</span>
+  <div class="header-item"><a href="../imports/imports.html">Match Imports</a></div>
   </div>
 
   <div class="page-content">
@@ -68,6 +71,7 @@
             </div>
           </div>
         </div>
+        <div class="player-save-row"><span class="player-match-hint" id="com1MatchHint"></span><button class="player-save-btn" id="com1SaveBtn" onclick="saveCommentatorCard(1)">Save Commentator</button></div>
         <button class="rectangle_button btn-sec btn-clear" onclick="clearCom1();">✕ Clear</button>
       </div>
 
@@ -95,6 +99,7 @@
             </div>
           </div>
         </div>
+        <div class="player-save-row"><span class="player-match-hint" id="com2MatchHint"></span><button class="player-save-btn" id="com2SaveBtn" onclick="saveCommentatorCard(2)">Save Commentator</button></div>
         <button class="rectangle_button btn-sec btn-clear" onclick="clearCom2();">✕ Clear</button>
       </div>
 

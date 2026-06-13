@@ -3,7 +3,8 @@
 <head>
   <meta charset="utf-8">
   <title>Top 8 Bracket</title>
-  <script>
+  <script src="../sync.js"></script>
+<script>
     (function(){
       var s = localStorage.getItem('sc_theme_popout');
       if (!s) return;
@@ -345,7 +346,12 @@ function load() {
 }
 
 load();
-setInterval(load, 3000);
+if (window.liveSync) {
+  liveSync.on('top8', load);
+  setInterval(load, 30000);   // slow fallback if the stream drops
+} else {
+  setInterval(load, 3000);    // no SSE support: original polling
+}
 </script>
 
 <script src="../theme/theme.js" defer></script>

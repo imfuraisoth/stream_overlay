@@ -6,7 +6,10 @@ function rebuildT8NamePickers() {
         playersMap.forEach(function(_, name) { names.push(name); });
     }
     if (source === 'local' || source === 'both') {
-        _localPlayersByName.forEach(function(_, name) { names.push(name); });
+        var _seen = new Set();
+        _localPlayersByName.forEach(function(p) {
+            if (p && p.name && !_seen.has(p.name)) { _seen.add(p.name); names.push(p.name); }
+        });
     }
     names = names.filter(function(v,i,a) { return a.indexOf(v) === i; });
     names.sort(function(a,b) { return a.toLowerCase().localeCompare(b.toLowerCase()); });
@@ -204,34 +207,32 @@ function populateData(data) {
 }
 
 function updateElement(id, value) {
-	if (value != null && value.length > 0) {
+	if (value != null && String(value).length > 0) {
 		safeEl(id).value = value;
 	}
 }
 
 // ── LOCAL PLAYER PERSISTENCE (shared with Event Dashboard) ────────
 var _localPlayersMap = new Map();     // id   -> player record
-var _localPlayersByName = new Map(); // name -> player record
+function _nameKeyedMap() {
+    // Map keyed by normalized (trimmed, lowercased) names so lookups are
+    // case-insensitive; records keep their display-cased .name
+    var m = new Map();
+    function norm(k) { return String(k).trim().toLowerCase(); }
+    return {
+        get: function(k) { return k ? m.get(norm(k)) : undefined; },
+        set: function(k, v) { if (k) m.set(norm(k), v); return this; },
+        has: function(k) { return k ? m.has(norm(k)) : false; },
+        clear: function() { m.clear(); },
+        forEach: function(cb) { m.forEach(cb); },
+        get size() { return m.size; }
+    };
+}
+
+var _localPlayersByName = _nameKeyedMap(); // normalized name/alias -> player record
 
 function saveLocalPlayerName(name, team, country) {
-    if (!name || !name.trim()) return;
-    var existing = _localPlayersByName.get(name.trim()) || _localPlayersMap.get(name.trim()) || { name: name.trim() };
-    if (team)    existing.team    = team;
-    if (country) existing.country = country;
-    existing.name = name.trim();
-    _localPlayersMap.set(existing.id || name.trim(), existing);
-    _localPlayersByName.set(name.trim(), existing);
-    // Only send non-empty fields — never overwrite stored socials with blanks
-    var payload = { name: name.trim() };
-    if (team)                     payload.team            = team;
-    if (country)                  payload.country         = country;
-    if (existing.social_handle)   payload.social_handle   = existing.social_handle;
-    payload.social_platform = existing.social_platform || '';
-    fetch('/saveLocalPlayer', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-    }).catch(function(e) { console.log('saveLocalPlayer error:', e); });
+    // Auto-save retired: see savePlayerCard (explicit Save Player buttons).
 }
 
 function autoFillFromLocalDB(name, teamElId, countryElId) {
@@ -259,9 +260,12 @@ function loadLocalPlayersIntoDatalist() {
                     if (!p || !p.name) return;
                     _localPlayersMap.set(p.id || p.name, p);
                     _localPlayersByName.set(p.name, p);
+                    (p.aliases || []).forEach(function(a) { _localPlayersByName.set(a, p); });
                 });
                 // Populate pickers + datalist now that the maps are built
                 rebuildT8NamePickers();
+                refreshAllMatchHints();
+                refreshH2H();
             })
             .catch(function(e) { console.log('loadLocalPlayers error:', e); });
     }
@@ -280,6 +284,7 @@ function setTop8PlayerSource(src) {
 }
 
 document.addEventListener('DOMContentLoaded', function() {
+    loadH2HEvents();
     var src = localStorage.getItem('player_source') || 'both';
     ['both','startgg','local'].forEach(function(s) {
         var btn = document.getElementById('t8srcBtn' + s.charAt(0).toUpperCase() + s.slice(1));
@@ -299,6 +304,8 @@ function updatePlayer1() {
     saveLocalPlayerName(jsonData.p1Name, jsonData.p1Team, jsonData.p1Country);
     sendJsonToEndpoint('updateCurrentPlayers');
     charRestoreFor(1);
+    updateMatchHint(1);
+    refreshH2H();
 }
 
 function updatePlayer2() {
@@ -312,6 +319,8 @@ function updatePlayer2() {
     saveLocalPlayerName(jsonData.p2Name, jsonData.p2Team, jsonData.p2Country);
     sendJsonToEndpoint('updateCurrentPlayers');
     charRestoreFor(2);
+    updateMatchHint(2);
+    refreshH2H();
 }
 
 function updateTeam1() {
@@ -828,6 +837,14 @@ function updateCurrentAndNextInfo(currentNextData) {
     jsonData.nextplayer2 = currentNextData.nextPlayer2.name;
     jsonData.nextcountry1 = currentNextData.nextPlayer1.country;
     jsonData.nextcountry2 = currentNextData.nextPlayer2.country;
+
+    // Restore saved characters for whoever now occupies each slot --
+    // clears the picker when a slot is empty, loads the right picks
+    // otherwise. Covers current AND next so advancing a round never
+    // leaves a previous player's character behind.
+    CHAR_PLAYERS.forEach(function(p) { charRestoreFor(p); });
+    CHAR_PLAYERS.forEach(function(p) { updateMatchHint(p); });
+    refreshH2H();
 }
 
 function highlightCurrentRoundForms(round) {
@@ -1452,3 +1469,212 @@ document.addEventListener('click', function(e) {
         }
     });
 })();
+
+
+// ════════════════════════════════════════════════════════════════
+// LIVE SYNC — refresh when other pages change shared data.
+// ════════════════════════════════════════════════════════════════
+if (window.liveSync) {
+    liveSync.on('players', function() {
+        loadLocalPlayersIntoDatalist();
+        loadH2HEvents();
+        refreshH2H();
+    });
+    liveSync.on('top8', function() {
+        fetch('/getTop8PlayerData')
+            .then(function(r) { return r.json(); })
+            .then(populateTop8PlayerData)
+            .catch(function(e) { console.log('liveSync top8 refresh error:', e); });
+        fetch('/getTop8CurrentNextData')
+            .then(function(r) { return r.json(); })
+            .then(function(data) {
+                updateTop8StartedButton(data);
+                highlightNextRoundForms(data.nextRound);
+                highlightCurrentRoundForms(data.currentRound);
+            })
+            .catch(function(e) { console.log('liveSync top8 state error:', e); });
+    });
+}
+
+
+// ════════════════════════════════════════════════════════════════
+// EXPLICIT PLAYER SAVE (current match cards)
+// ════════════════════════════════════════════════════════════════
+function updateMatchHint(token) {
+    var el = document.getElementById('p' + token + 'MatchHint');
+    if (!el) return;
+    var name = (charPlayerName(token) || '').trim();
+    if (!name) { el.textContent = ''; el.className = 'player-match-hint'; return; }
+    var rec = _localPlayersByName.get(name);
+    if (rec && rec.id) {
+        el.textContent = '\u2192 ' + rec.name;
+        el.className = 'player-match-hint matched';
+    } else {
+        el.textContent = 'not in player DB';
+        el.className = 'player-match-hint unmatched';
+    }
+}
+
+function refreshAllMatchHints() { CHAR_PLAYERS.forEach(updateMatchHint); }
+
+function savePlayerCard(token) {
+    var name = (charPlayerName(token) || '').trim();
+    if (!name) return;
+    var rec = _localPlayersByName.get(name);
+    var body = { name: name };
+    var team = jsonData['p' + token + 'Team'];
+    var country = jsonData['p' + token + 'Country'];
+    if (team)    body.team    = team;
+    if (country) body.country = country;
+    if (!rec || !rec.id) {
+        var game = charGetGame();
+        var picks = charCompactPicks(token);
+        if (game && picks.length) {
+            body.characters = {}; body.characters[game] = picks;
+            body.roster = {}; body.roster[game] = picks.map(function(p) {
+                return { character: p.character, pack: p.pack, palette: p.palette, file: p.file };
+            });
+        }
+    }
+    var btn = document.getElementById('p' + token + 'SaveBtn');
+    fetch('/saveLocalPlayer', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body)
+    }).then(function(r) {
+        if (!r.ok) throw new Error(r.status);
+        if (btn) {
+            btn.textContent = '\u2713 Saved';
+            setTimeout(function() { btn.textContent = 'Save Player'; }, 1600);
+        }
+    }).catch(function(e) {
+        console.log('savePlayerCard error:', e);
+        if (btn) {
+            btn.textContent = 'Save failed';
+            setTimeout(function() { btn.textContent = 'Save Player'; }, 2000);
+        }
+    });
+}
+
+
+// ════════════════════════════════════════════════════════════════
+// MATCHUP HISTORY (H2H) — follows the two current-match players.
+// ════════════════════════════════════════════════════════════════
+var _h2hEvents = [];
+var _h2hScope = 'alltime';
+
+function _h2hResolveId(name) {
+    var rec = name ? _localPlayersByName.get(name.trim()) : null;
+    return (rec && rec.id) ? rec.id : null;
+}
+
+function loadH2HEvents() {
+    fetch('/listImportedEvents')
+        .then(function(r) { return r.json(); })
+        .then(function(events) {
+            _h2hEvents = events || [];
+            var sel = document.getElementById('h2hScope');
+            if (!sel) return;
+            var prev = sel.value || 'alltime';
+            sel.innerHTML = '<option value="alltime">All-time</option>';
+            _h2hEvents.forEach(function(ev) {
+                var o = document.createElement('option');
+                o.value = ev.event_slug;
+                o.textContent = ev.event_name || ev.event_slug;
+                sel.appendChild(o);
+            });
+            sel.value = prev;
+            _h2hScope = sel.value;
+        })
+        .catch(function(e) { console.log('loadH2HEvents error:', e); });
+}
+
+function onH2HScopeChange() {
+    var sel = document.getElementById('h2hScope');
+    _h2hScope = sel ? sel.value : 'alltime';
+    refreshH2H();
+}
+
+function refreshH2H() {
+    var box = document.getElementById('h2hResult');
+    if (!box) return;
+    var name1 = charPlayerName(1) || '';
+    var name2 = charPlayerName(2) || '';
+    var id1 = _h2hResolveId(name1);
+    var id2 = _h2hResolveId(name2);
+    if (!id1 || !id2) {
+        box.textContent = (name1 && name2) ? 'Both players must be in the player DB.' : '';
+        box.className = 'h2h-result muted';
+        _writeH2HFields({ scope: _h2hScope });
+        return;
+    }
+    if (id1 === id2) { box.textContent = ''; return; }
+    var url = '/getMatchupHistory?p1=' + encodeURIComponent(id1) + '&p2=' + encodeURIComponent(id2);
+    if (_h2hScope && _h2hScope !== 'alltime') url += '&event=' + encodeURIComponent(_h2hScope);
+    fetch(url)
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+            if (!data.ok) { box.textContent = ''; return; }
+            var n1 = (_localPlayersByName.get(name1) || {}).name || name1;
+            var n2 = (_localPlayersByName.get(name2) || {}).name || name2;
+            var rec = (_h2hScope === 'alltime') ? data.alltime : (data.event || {wins:0, losses:0});
+            var total = rec.wins + rec.losses;
+            var evName = '';
+            if (_h2hScope !== 'alltime') {
+                var evMatch = _h2hEvents.filter(function(e) { return e.event_slug === _h2hScope; })[0];
+                evName = evMatch ? (evMatch.event_name || '') : '';
+            }
+            var p1place = (_h2hScope !== 'alltime' && data.event) ? data.event.p1_placement : null;
+            var p2place = (_h2hScope !== 'alltime' && data.event) ? data.event.p2_placement : null;
+            _writeH2HFields({ scope: _h2hScope, eventName: evName,
+                p1w: rec.wins, p1l: rec.losses, p2w: rec.losses, p2l: rec.wins,
+                p1place: p1place, p2place: p2place });
+            if (total === 0) {
+                box.className = 'h2h-result muted';
+                box.textContent = (_h2hScope === 'alltime') ? 'No recorded matches.' : 'None in this event.';
+                return;
+            }
+            box.className = 'h2h-result';
+            var pl1 = '', pl2 = '';
+            if (_h2hScope !== 'alltime' && data.event) {
+                if (data.event.p1_placement != null) pl1 = ' <span class="h2h-place">(' + _ordinal(data.event.p1_placement) + ')</span>';
+                if (data.event.p2_placement != null) pl2 = '<span class="h2h-place">(' + _ordinal(data.event.p2_placement) + ')</span> ';
+            }
+            box.innerHTML = '<strong>' + _escH2H(n1) + pl1 + ' ' + rec.wins + '</strong> \u2013 '
+                + '<strong>' + rec.losses + ' ' + pl2 + _escH2H(n2) + '</strong>';
+        })
+        .catch(function(e) { console.log('refreshH2H error:', e); });
+}
+
+function _writeH2HFields(opts) {
+    // Mirror H2H state into scoreboard.json via the normal send path.
+    // opts: { scope, eventName, p1w, p1l, p2w, p2l, p1place, p2place }
+    jsonData.h2hScope            = opts.scope || 'alltime';
+    jsonData.h2hEventName        = opts.eventName || '';
+    jsonData.p1MatchupWins       = (opts.p1w != null) ? opts.p1w : '';
+    jsonData.p1MatchupLosses     = (opts.p1l != null) ? opts.p1l : '';
+    jsonData.p2MatchupWins       = (opts.p2w != null) ? opts.p2w : '';
+    jsonData.p2MatchupLosses     = (opts.p2l != null) ? opts.p2l : '';
+    jsonData.p1EventPlacement    = (opts.p1place != null) ? opts.p1place : '';
+    jsonData.p2EventPlacement    = (opts.p2place != null) ? opts.p2place : '';
+    jsonData.p1EventPlacementText = (opts.p1place != null) ? _ordinal(opts.p1place) : '';
+    jsonData.p2EventPlacementText = (opts.p2place != null) ? _ordinal(opts.p2place) : '';
+    if (typeof sendJSON === 'function') sendJSON();
+}
+
+function toggleH2HVisible() {
+    jsonData.h2hVisible = !jsonData.h2hVisible;
+    var btn = document.getElementById('h2hVisibleBtn');
+    if (btn) btn.textContent = jsonData.h2hVisible ? 'Hide on Stream' : 'Show on Stream';
+    if (typeof sendJSON === 'function') sendJSON();
+}
+
+function _ordinal(n) {
+    if (n == null) return '';
+    var s = ['th', 'st', 'nd', 'rd'], v = n % 100;
+    return n + (s[(v - 20) % 10] || s[v] || s[0]);
+}
+
+function _escH2H(s) {
+    return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}

@@ -12,6 +12,7 @@
 	<link href="popup.css" rel="stylesheet" type="text/css" />
 	<link rel="icon" type="image/png" href="images/V.png">
 	<script src="https://kit.fontawesome.com/2c93766a80.js" crossorigin="anonymous"></script>
+	<script type="text/javascript" src="sync.js" defer=""></script>
 	<script class="u-script" type="text/javascript" src="scoreboarddash.js" defer=""></script>
   <script>
     // Apply saved theme before paint to prevent flash
@@ -36,6 +37,8 @@
     <div class="header-item"><a href="stations/stations.html">Stations</a></div>
     <span class="header-sep">|</span>
     <div class="header-item"><a href="players/players.html">Players</a></div>
+  <span class="header-sep">|</span>
+  <div class="header-item"><a href="imports/imports.html">Match Imports</a></div>
   </div>
 
 			<!-- EVENT DASHBOARD CONTENT -->
@@ -91,6 +94,7 @@
 									</div>
 								</div>
 								<div class="char-picker-popover" id="p1CharPopover" style="display:none;"></div>
+									<div class="player-save-row"><span class="player-match-hint" id="p1MatchHint"></span><button class="player-save-btn" id="p1SaveBtn" onclick="savePlayerCard(1)">Save Player</button></div>
 							</div>
 						</div>
 						<div class="playerCardItem">
@@ -148,6 +152,12 @@
 								<div><text id="currentScoreInfoDisplay"></text></div>
 							</div>
 						</div>
+						<div class="h2h-panel">
+							<div class="h2h-label">Head-to-Head</div>
+							<button class="rectangle_button h2h-stream-btn" id="h2hVisibleBtn" onclick="toggleH2HVisible()">Show on Stream</button>
+							<select id="h2hScope" class="h2h-scope-select" onchange="onH2HScopeChange()"><option value="alltime">All-time</option></select>
+							<div class="h2h-result muted" id="h2hResult"></div>
+						</div>
 						<div id="button_reverse_scores">
 							<button class="rectangle_button" id="rectangle_button_2" onclick="reverseScores();">⇄ Swap Scores</button>
 						</div>
@@ -185,6 +195,7 @@
 								</div>
 							</div>
 							<div class="char-picker-popover" id="p2CharPopover" style="display:none;"></div>
+									<div class="player-save-row"><span class="player-match-hint" id="p2MatchHint"></span><button class="player-save-btn" id="p2SaveBtn" onclick="savePlayerCard(2)">Save Player</button></div>
 						</div>
 						<div class="cardCountry">
 							<div class="playerCardItem">
@@ -397,6 +408,7 @@
 										</div>
 									</div>
 									<div class="char-picker-popover" id="p1NextCharPopover" style="display:none;"></div>
+									<div class="player-save-row"><span class="player-match-hint" id="p1NextMatchHint"></span><button class="player-save-btn" id="p1NextSaveBtn" onclick="savePlayerCard('1Next')">Save Player</button></div>
 								</div>
 								<div class="nextRoundItem social-display-row" id="next1SocialDisplay" style="display:none;">
 									<span>Social</span>
@@ -431,6 +443,7 @@
 										</div>
 									</div>
 									<div class="char-picker-popover" id="p2NextCharPopover" style="display:none;"></div>
+									<div class="player-save-row"><span class="player-match-hint" id="p2NextMatchHint"></span><button class="player-save-btn" id="p2NextSaveBtn" onclick="savePlayerCard('2Next')">Save Player</button></div>
 								</div>
 								<div class="nextRoundItem social-display-row" id="next2SocialDisplay" style="display:none;">
 									<span>Social</span>

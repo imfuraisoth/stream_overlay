@@ -1,6 +1,10 @@
 import sqlite3, os
 from pathlib import Path
 
+# Optional observer: set on_change = fn() to be notified after any
+# player-data mutation (used for live page sync)
+on_change = None
+
 _base = os.path.dirname(os.path.abspath(__file__))
 db_path = os.path.join(_base, "../../data/players/players.db")
 
@@ -61,6 +65,14 @@ def init_db():
         palette INTEGER DEFAULT 0,
         file TEXT DEFAULT '',
         PRIMARY KEY (player_id, game, character),
+        FOREIGN KEY(player_id) REFERENCES local_players(id) ON DELETE CASCADE
+    )
+    """)
+
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS player_aliases (
+        player_id TEXT NOT NULL,
+        alias TEXT NOT NULL UNIQUE COLLATE NOCASE,
         FOREIGN KEY(player_id) REFERENCES local_players(id) ON DELETE CASCADE
     )
     """)
@@ -221,7 +233,8 @@ def get_local_players():
             "social_platform": soc_p or "",
             "is_commentator": bool(is_comm),
             "characters": {},
-            "roster": {}
+            "roster": {},
+            "aliases": []
         }
 
     cur.execute("""
@@ -238,6 +251,11 @@ def get_local_players():
                 "palette": palette if palette is not None else 0,
                 "file": file or ""
             })
+
+    cur.execute("SELECT player_id, alias FROM player_aliases ORDER BY alias")
+    for pid, alias in cur.fetchall():
+        if pid in players:
+            players[pid]["aliases"].append(alias)
 
     cur.execute("""
         SELECT player_id, game, character, pack, palette, file
@@ -338,6 +356,16 @@ def save_local_players(players):
                             pick.get("file", "")
                         ))
 
+            cur.execute("DELETE FROM player_aliases WHERE player_id=?", (pid,))
+            for alias in (rec.get("aliases") or []):
+                alias = str(alias).strip()
+                if alias:
+                    # UNIQUE NOCASE: silently skip collisions with other
+                    # players' aliases
+                    cur.execute(
+                        "INSERT OR IGNORE INTO player_aliases (player_id, alias) VALUES (?, ?)",
+                        (pid, alias))
+
             cur.execute("DELETE FROM local_player_roster WHERE player_id=?", (pid,))
             roster = rec.get("roster") or {}
             if isinstance(roster, dict):
@@ -374,3 +402,77 @@ def save_local_players(players):
         conn.commit()
     finally:
         conn.close()
+    if on_change:
+        try:
+            on_change()
+        except Exception:
+            pass
+
+
+def resolve_player_id(name):
+    """Resolve a display name OR alias to a player id, case-insensitive.
+
+    Returns the player id string, or None if nothing matches."""
+    if not name or not str(name).strip():
+        return None
+    name = str(name).strip()
+    conn = _connect()
+    cur = conn.cursor()
+    cur.execute("SELECT id FROM local_players WHERE name = ? COLLATE NOCASE", (name,))
+    row = cur.fetchone()
+    if not row:
+        cur.execute("SELECT player_id FROM player_aliases WHERE alias = ? COLLATE NOCASE", (name,))
+        row = cur.fetchone()
+    conn.close()
+    return row[0] if row else None
+
+
+def merge_players(primary_id, duplicate_id):
+    """Merge duplicate's data into primary, then delete the duplicate.
+
+    - Profile fields: primary wins; primary's empty fields are filled
+      from the duplicate; is_commentator is OR'd.
+    - Characters/roster: copied for any game the primary lacks
+      (per-game for picks, per-character for roster entries).
+    - Identity: the duplicate's name and all its aliases become
+      aliases of the primary, so future data under those names
+      resolves correctly.
+
+    Returns (ok, message)."""
+    if primary_id == duplicate_id:
+        return False, "Cannot merge a player into itself"
+    players = get_local_players()
+    primary = players.get(primary_id)
+    duplicate = players.get(duplicate_id)
+    if not primary or not duplicate:
+        return False, "Player not found"
+
+    # Profile: fill primary's blanks from the duplicate
+    for field in ("team", "country", "social_handle", "social_platform"):
+        if not primary.get(field) and duplicate.get(field):
+            primary[field] = duplicate[field]
+    primary["is_commentator"] = bool(primary.get("is_commentator") or duplicate.get("is_commentator"))
+
+    # Picks: per game, primary wins
+    for game, picks in (duplicate.get("characters") or {}).items():
+        if not primary["characters"].get(game):
+            primary["characters"][game] = picks
+
+    # Roster: union per game, primary's entry wins per character
+    for game, entries in (duplicate.get("roster") or {}).items():
+        mine = primary["roster"].setdefault(game, [])
+        have = {e["character"].lower() for e in mine if e.get("character")}
+        for e in entries:
+            if e.get("character") and e["character"].lower() not in have:
+                mine.append(e)
+
+    # Identity: duplicate's name + aliases -> primary's aliases
+    new_aliases = set(a.lower() for a in primary.get("aliases", []))
+    for alias in [duplicate["name"]] + list(duplicate.get("aliases") or []):
+        if alias and alias.lower() != primary["name"].lower() and alias.lower() not in new_aliases:
+            primary.setdefault("aliases", []).append(alias)
+            new_aliases.add(alias.lower())
+
+    del players[duplicate_id]
+    save_local_players(players)
+    return True, "Merged %s into %s" % (duplicate["name"], primary["name"])
