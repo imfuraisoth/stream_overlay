@@ -36,6 +36,8 @@
     .events-list td .evname { font-weight: 600; }
     .events-list td .evmeta { color: var(--fg2); font-size: 11px; }
     .reimport-btn, .delete-btn { font-size: 11px; }
+    .dname-cell { width: 200px; font-size: 12px; padding: 3px 6px; background: var(--bg2); border: 1px solid var(--border); color: var(--fg); border-radius: 4px; }
+    .dname-cell.saved { border-color: var(--green, #3aaa5c); }
     .series-cell { width: 130px; font-size: 12px; padding: 3px 6px; background: var(--bg2); border: 1px solid var(--border); color: var(--fg); border-radius: 4px; }
     .series-cell.saved { border-color: var(--green, #3aaa5c); }
     .delete-btn:hover { border-color: var(--accent2, #c43030); color: var(--accent2, #c43030); }
@@ -81,8 +83,8 @@
 
   <div class="section-title">Imported events</div>
   <table class="imp events-list"><thead>
-    <tr><th>Event</th><th>Series</th><th>Sets</th><th>Imported</th><th></th></tr>
-  </thead><tbody id="eventsBody"><tr><td colspan="5" style="color:var(--fg2);">Loading…</td></tr></tbody></table>
+    <tr><th>Event</th><th>Display Name</th><th>Series</th><th>Sets</th><th>Imported</th><th></th></tr>
+  </thead><tbody id="eventsBody"><tr><td colspan="6" style="color:var(--fg2);">Loading…</td></tr></tbody></table>
 </div>
 
 <script>
@@ -124,7 +126,7 @@ async function loadEvents() {
     var events = await r.json();
     var body = document.getElementById('eventsBody');
     if (!events.length) {
-      body.innerHTML = '<tr><td colspan="5" style="color:var(--fg2);">No events imported yet.</td></tr>';
+      body.innerHTML = '<tr><td colspan="6" style="color:var(--fg2);">No events imported yet.</td></tr>';
       return;
     }
     body.innerHTML = '';
@@ -133,12 +135,30 @@ async function loadEvents() {
       tr.innerHTML =
         '<td><span class="evname">' + escHtml(ev.event_name || ev.event_slug) + '</span>'
           + '<div class="evmeta">' + escHtml(ev.tournament_name || '') + '</div></td>'
+        + '<td><input type="text" class="dname-cell" value="'
+          + escHtml(ev.display_name || '') + '" placeholder="' + escHtml(ev.label || ev.event_name || '') + '"></td>'
         + '<td><input type="text" class="series-cell" list="seriesList" value="'
           + escHtml(ev.series || '') + '" placeholder="\u2014"></td>'
         + '<td>' + ev.set_count + '</td>'
         + '<td class="evmeta">' + escHtml((ev.imported_at || '').replace('T', ' ')) + '</td>'
         + '<td><button class="btn sec reimport-btn">Re-import</button> '
           + '<button class="btn sec delete-btn">Delete</button></td>';
+      var dnameCell = tr.querySelector('.dname-cell');
+      var _dorig = ev.display_name || '';
+      function commitDName() {
+        var val = (dnameCell.value || '').trim();
+        if (val === _dorig) return;
+        _dorig = val;
+        fetch('/setEventDisplayName', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ event_slug: ev.event_slug, display_name: val })
+        }).then(function() { dnameCell.classList.add('saved');
+          setTimeout(function(){ dnameCell.classList.remove('saved'); }, 800); })
+          .catch(function(e){ console.log('setEventDisplayName error:', e); });
+      }
+      dnameCell.onchange = commitDName;
+      dnameCell.onblur = commitDName;
+
       var seriesCell = tr.querySelector('.series-cell');
       var _orig = ev.series || '';
       function commitSeries() {

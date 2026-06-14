@@ -1601,7 +1601,7 @@ function loadH2HEvents() {
             _h2hEvents.forEach(function(ev) {
                 var o = document.createElement('option');
                 o.value = ev.event_slug;
-                o.textContent = ev.event_name || ev.event_slug;
+                o.textContent = ev.label || ev.event_name || ev.event_slug;
                 eg.appendChild(o);
             });
             sel.appendChild(eg);
@@ -1651,7 +1651,7 @@ function refreshH2H() {
             var evName = '';
             if (isEvent) {
                 var evMatch = _h2hEvents.filter(function(e) { return e.event_slug === _h2hScope; })[0];
-                evName = evMatch ? (evMatch.event_name || '') : '';
+                evName = evMatch ? (evMatch.label || evMatch.event_name || '') : '';
             } else if (isSeries) {
                 evName = seriesName;
             }

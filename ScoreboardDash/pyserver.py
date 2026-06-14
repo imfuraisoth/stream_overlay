@@ -547,6 +547,19 @@ def list_series():
     return jsonify(MatchHistory.list_series()), 200
 
 
+@api.route('/setEventDisplayName', methods=['POST'])
+def set_event_display_name():
+    """Set/clear an event's custom display name.
+
+    Body: { "event_slug": "...", "display_name": "Texas Showdown 2026" }"""
+    body = request.get_json() or {}
+    event_slug = body.get("event_slug", "")
+    if not event_slug:
+        return jsonify({"ok": False, "message": "event_slug required"}), 400
+    ok = MatchHistory.set_event_display_name(event_slug, body.get("display_name", ""))
+    return jsonify({"ok": ok}), (200 if ok else 404)
+
+
 @api.route('/setEventSeries', methods=['POST'])
 def set_event_series():
     """Assign/clear an event's series tag.

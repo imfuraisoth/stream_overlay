@@ -30,6 +30,30 @@ def _slug_to_filename(event_slug):
     return os.path.join(MATCHUP_DIR, safe + ".json")
 
 
+def event_display_name(data):
+    """The label to show for an event: custom display_name if set,
+    else 'Tournament -- Event', else the event name, else the slug."""
+    custom = (data.get("display_name") or "").strip()
+    if custom:
+        return custom
+    ev = (data.get("event_name") or "").strip()
+    tn = (data.get("tournament_name") or "").strip()
+    if tn and ev and tn.lower() != ev.lower():
+        return tn + " \u2014 " + ev
+    return ev or tn or data.get("event_slug", "")
+
+
+def set_event_display_name(event_slug, display_name):
+    """Set/clear an event's custom display name. Returns True if written."""
+    data = load_event(event_slug)
+    if not data:
+        return False
+    data["display_name"] = (display_name or "").strip()
+    with open(_slug_to_filename(event_slug), "w", encoding="utf-8") as f:
+        json.dump(data, f, ensure_ascii=False, indent=2)
+    return True
+
+
 def list_events():
     """Return metadata for every imported event, newest first."""
     _ensure_dir()
@@ -44,6 +68,9 @@ def list_events():
                 "event_slug": data.get("event_slug"),
                 "event_name": data.get("event_name"),
                 "tournament_name": data.get("tournament_name"),
+                "display_name": data.get("display_name", ""),
+                "label": event_display_name(data),
+                "series": data.get("series", ""),
                 "imported_at": data.get("imported_at"),
                 "set_count": len(data.get("sets", {})),
                 "file": fn,
@@ -52,6 +79,18 @@ def list_events():
             print("MatchHistory: skipping unreadable %s (%s)" % (fn, e))
     events.sort(key=lambda e: e.get("imported_at") or "", reverse=True)
     return events
+
+
+def delete_event(event_slug):
+    """Remove a per-event file. Caller should rebuild_alltime() after.
+
+    Returns True if a file was removed, False if it didn't exist.
+    Players and aliases are intentionally left untouched."""
+    path = _slug_to_filename(event_slug)
+    if os.path.exists(path):
+        os.remove(path)
+        return True
+    return False
 
 
 def load_event(event_slug):
@@ -63,7 +102,7 @@ def load_event(event_slug):
 
 
 def save_event_import(event_slug, event_name, tournament_name, sets, imported_at,
-                      assignments=None, standings=None):
+                      assignments=None, standings=None, series=None):
     """Write/replace a per-event file from get_completed_sets output.
 
     sets: list of dicts from startgg_client.get_completed_sets.
@@ -124,10 +163,18 @@ def save_event_import(event_slug, event_name, tournament_name, sets, imported_at
     if standings is None and existing:
         placement_map = existing.get("placements", {})
 
+    # Preserve an existing series tag across re-import unless one is
+    # explicitly provided.
+    if series is None and existing:
+        series = existing.get("series", "")
+    # Preserve a custom display name across re-import.
+    display_name = existing.get("display_name", "") if existing else ""
     payload = {
         "event_slug": event_slug,
         "event_name": event_name,
         "tournament_name": tournament_name,
+        "display_name": display_name,
+        "series": series or "",
         "imported_at": imported_at,
         "sets": set_map,
         "placements": placement_map,
@@ -281,4 +328,55 @@ def event_record(event_slug, pid_a, pid_b, alias_map=None):
             wins += 1
         elif winner_local == pid_b:
             losses += 1
+    return wins, losses
+
+
+def list_series():
+    """Distinct non-empty series names across all events, sorted."""
+    names = set()
+    for ev in list_events():
+        s = (ev.get("series") or "").strip()
+        if s:
+            names.add(s)
+    return sorted(names, key=lambda x: x.lower())
+
+
+def set_event_series(event_slug, series):
+    """Set/clear an event's series tag in place. Returns True if written."""
+    data = load_event(event_slug)
+    if not data:
+        return False
+    data["series"] = (series or "").strip()
+    with open(_slug_to_filename(event_slug), "w", encoding="utf-8") as f:
+        json.dump(data, f, ensure_ascii=False, indent=2)
+    return True
+
+
+def series_record(series, pid_a, pid_b, alias_map=None):
+    """(wins, losses) for pid_a vs pid_b across all events in a series."""
+    alias_map = alias_map or {}
+
+    def canon(pid):
+        return alias_map.get(pid, pid) if pid else None
+
+    def resolver(entrant):
+        return canon(entrant.get("player_id"))
+
+    target = (series or "").strip().lower()
+    wins = losses = 0
+    for ev in list_events():
+        if (ev.get("series") or "").strip().lower() != target:
+            continue
+        data = load_event(ev["event_slug"])
+        if not data:
+            continue
+        for s in data.get("sets", {}).values():
+            p1_local, p2_local, winner_local = _winner_local(s, resolver)
+            pair = {p1_local, p2_local}
+            if pair != {pid_a, pid_b}:
+                continue
+            if winner_local == pid_a:
+                wins += 1
+            elif winner_local == pid_b:
+                losses += 1
     return wins, losses
