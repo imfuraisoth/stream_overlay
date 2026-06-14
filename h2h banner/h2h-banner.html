@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>H2H Banner</title>
+  <link rel="stylesheet" href="https://use.typekit.net/vsy6ybb.css">
+  <link href="style.css" rel="stylesheet" type="text/css" />
+</head>
+<body>
+  <!-- Single center-bottom banner. Hides itself unless h2hVisible is on
+       and there's something to show. Style in style.css.
+       #h2h-banner (container) / #h2h-line (the sentence text). -->
+  <div id="h2h-banner">
+    <span id="h2h-line"></span>
+  </div>
+
+  <script>
+    var serverIp = "localhost:8080";
+
+    function ordinalKnown(t) { return t != null && t !== ''; }
+
+    function buildLine(d) {
+      var scope = d.h2hScope || 'alltime';
+      var isEvent = (scope !== 'alltime' && String(scope).indexOf('series:') !== 0);
+      var p1 = d.p1Name, p2 = d.p2Name;
+
+      if (isEvent) {
+        // Placement sentence -- pulls each player's placement
+        // independently; works even if they never met in this event.
+        var evName = d.h2hEventName || 'Event';
+        var pl1 = d.p1EventPlacementText, pl2 = d.p2EventPlacementText;
+        // Need at least one placement to be worth showing
+        if (!ordinalKnown(pl1) && !ordinalKnown(pl2)) return null;
+        var parts = [];
+        if (p1) parts.push(p1 + ': ' + (ordinalKnown(pl1) ? pl1 : '--'));
+        if (p2) parts.push(p2 + ': ' + (ordinalKnown(pl2) ? pl2 : '--'));
+        return evName + ' \u2014 ' + parts.join(', ');
+      }
+
+      // All-time or series: head-to-head record, winner shown first.
+      var w1 = Number(d.p1MatchupWins), l1 = Number(d.p1MatchupLosses);
+      if (!(d.p1MatchupWins !== '' && d.p1MatchupLosses !== '') || (w1 + l1) <= 0) return null;
+
+      var label = (String(scope).indexOf('series:') === 0)
+                  ? (d.h2hSeriesName || 'Series')
+                  : 'Matchup History';
+
+      if (w1 === l1) {
+        // Tie -- both names, no leader: "X and Y even at 2-2"
+        return label + ' \u2014 ' + p1 + ' and ' + p2 + ' even at ' + w1 + '-' + l1;
+      }
+      // Winner first
+      var leader, trailer, hi, lo;
+      if (w1 > l1) { leader = p1; trailer = p2; hi = w1; lo = l1; }
+      else         { leader = p2; trailer = p1; hi = l1; lo = w1; }
+      return label + ' \u2014 ' + leader + ' leads ' + trailer + ' ' + hi + '-' + lo;
+    }
+
+    function apply(d) {
+      var banner = document.getElementById('h2h-banner');
+      var line = (!!d.h2hVisible) ? buildLine(d) : null;
+      if (!line) { banner.classList.remove('show'); return; }
+      document.getElementById('h2h-line').textContent = line;
+      banner.classList.add('show');
+    }
+
+    function load() {
+      fetch('http://' + serverIp + '/getdata')
+        .then(function (r) { return r.json(); })
+        .then(apply)
+        .catch(function (e) { console.log('h2h banner error:', e); });
+    }
+    load();
+    window.setInterval(load, 2000);
+  </script>
+</body>
+</html>

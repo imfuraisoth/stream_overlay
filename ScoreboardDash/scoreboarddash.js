@@ -2217,7 +2217,11 @@ function toggleH2HVisible() {
     jsonData.h2hVisible = !jsonData.h2hVisible;
     var btn = document.getElementById('h2hVisibleBtn');
     if (btn) btn.textContent = jsonData.h2hVisible ? 'Hide on Stream' : 'Show on Stream';
-    if (typeof sendJSON === 'function') sendJSON();
+    // Recompute the record/placement fields so turning the overlay on
+    // always pushes current data (refreshH2H also calls sendJSON). If
+    // refreshH2H is unavailable for any reason, still send the flag.
+    if (typeof refreshH2H === 'function') refreshH2H();
+    else if (typeof sendJSON === 'function') sendJSON();
 }
 
 function _ordinal(n) {

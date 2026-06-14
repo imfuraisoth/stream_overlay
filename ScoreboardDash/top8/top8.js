@@ -1700,7 +1700,8 @@ function toggleH2HVisible() {
     jsonData.h2hVisible = !jsonData.h2hVisible;
     var btn = document.getElementById('h2hVisibleBtn');
     if (btn) btn.textContent = jsonData.h2hVisible ? 'Hide on Stream' : 'Show on Stream';
-    if (typeof sendJSON === 'function') sendJSON();
+    if (typeof refreshH2H === 'function') refreshH2H();
+    else if (typeof sendJSON === 'function') sendJSON();
 }
 
 function _ordinal(n) {
