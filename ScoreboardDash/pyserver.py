@@ -400,6 +400,7 @@ def import_startgg_event():
     summary plus the list of entrants still needing reconciliation."""
     body = request.get_json() or {}
     tournament, event = _parse_event_slug(body.get("slug", ""))
+    series = (body.get("series") or "").strip()
     if not tournament or not event:
         return jsonify({"ok": False, "message": "Could not parse an event slug from that input"}), 400
     try:
@@ -433,9 +434,12 @@ def import_startgg_event():
     tourn_name = sets[0].get("tournament_name") or tournament
     count = MatchHistory.save_event_import(
         event_slug, event_name, tourn_name, sets,
-        datetime.now().isoformat(timespec="seconds"), assignments, standings)
+        datetime.now().isoformat(timespec="seconds"), assignments, standings,
+        series if series else None)
     MatchHistory.rebuild_alltime(_alias_map_for_rollup())
     unassigned = MatchHistory.collect_unassigned(event_slug)
+    print("Imported %d sets from '%s' (%s) -- %d player(s) need reconciling"
+          % (count, event_name, event_slug, len(unassigned)))
     return jsonify({"ok": True, "event_slug": event_slug, "event_name": event_name,
                     "tournament_name": tourn_name, "set_count": count,
                     "unassigned": unassigned}), 200
@@ -522,6 +526,40 @@ def reconcile_import():
     return jsonify({"ok": True, "player_id": pid, "unassigned": unassigned}), 200
 
 
+@api.route('/deleteImportedEvent', methods=['POST'])
+def delete_imported_event():
+    """Remove an imported event's data and rebuild the rollup.
+
+    Body: { "event_slug": "..." }. Players/aliases are left intact."""
+    body = request.get_json() or {}
+    event_slug = body.get("event_slug", "")
+    if not event_slug:
+        return jsonify({"ok": False, "message": "event_slug required"}), 400
+    removed = MatchHistory.delete_event(event_slug)
+    MatchHistory.rebuild_alltime(_alias_map_for_rollup())
+    if removed:
+        print("Removed imported event '%s'" % event_slug)
+    return jsonify({"ok": True, "removed": removed}), 200
+
+
+@api.route('/listSeries', methods=['GET'])
+def list_series():
+    return jsonify(MatchHistory.list_series()), 200
+
+
+@api.route('/setEventSeries', methods=['POST'])
+def set_event_series():
+    """Assign/clear an event's series tag.
+
+    Body: { "event_slug": "...", "series": "STunday" }"""
+    body = request.get_json() or {}
+    event_slug = body.get("event_slug", "")
+    if not event_slug:
+        return jsonify({"ok": False, "message": "event_slug required"}), 400
+    ok = MatchHistory.set_event_series(event_slug, body.get("series", ""))
+    return jsonify({"ok": ok}), (200 if ok else 404)
+
+
 @api.route('/getMatchupHistory', methods=['GET'])
 def get_matchup_history():
     """H2H record between two players.
@@ -534,6 +572,10 @@ def get_matchup_history():
         return jsonify({"ok": False, "message": "p1 and p2 required"}), 400
     aw, al = MatchHistory.alltime_record(p1, p2)
     out = {"ok": True, "alltime": {"wins": aw, "losses": al}}
+    series = request.args.get("series")
+    if series:
+        sw, sl = MatchHistory.series_record(series, p1, p2)
+        out["series"] = {"wins": sw, "losses": sl, "name": series}
     event_slug = request.args.get("event")
     if event_slug:
         ew, el = MatchHistory.event_record(event_slug, p1, p2)

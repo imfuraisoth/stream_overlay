@@ -35,7 +35,10 @@
     .pill.matched { color: var(--green, #3aaa5c); border-color: var(--green, #3aaa5c); }
     .events-list td .evname { font-weight: 600; }
     .events-list td .evmeta { color: var(--fg2); font-size: 11px; }
-    .reimport-btn { font-size: 11px; }
+    .reimport-btn, .delete-btn { font-size: 11px; }
+    .series-cell { width: 130px; font-size: 12px; padding: 3px 6px; background: var(--bg2); border: 1px solid var(--border); color: var(--fg); border-radius: 4px; }
+    .series-cell.saved { border-color: var(--green, #3aaa5c); }
+    .delete-btn:hover { border-color: var(--accent2, #c43030); color: var(--accent2, #c43030); }
   </style>
 </head>
 <body>
@@ -63,8 +66,10 @@
 
   <div class="import-bar">
     <input type="text" id="slugInput" placeholder="https://www.start.gg/tournament/.../event/...  or  tournament/.../event/...">
+    <input type="text" id="seriesInput" list="seriesList" placeholder="Series (optional, e.g. STunday)" style="max-width:220px;flex:0 0 auto;">
     <button class="btn" id="importBtn" onclick="doImport()">Import</button>
   </div>
+  <datalist id="seriesList"></datalist>
   <div class="status-line" id="importStatus"></div>
 
   <div id="reconcileSection" style="display:none;">
@@ -76,8 +81,8 @@
 
   <div class="section-title">Imported events</div>
   <table class="imp events-list"><thead>
-    <tr><th>Event</th><th>Sets</th><th>Imported</th><th></th></tr>
-  </thead><tbody id="eventsBody"><tr><td colspan="4" style="color:var(--fg2);">Loading…</td></tr></tbody></table>
+    <tr><th>Event</th><th>Series</th><th>Sets</th><th>Imported</th><th></th></tr>
+  </thead><tbody id="eventsBody"><tr><td colspan="5" style="color:var(--fg2);">Loading…</td></tr></tbody></table>
 </div>
 
 <script>
@@ -99,13 +104,27 @@ async function loadPlayers() {
   } catch (e) { console.log('loadPlayers error:', e); }
 }
 
+async function loadSeries() {
+  try {
+    var r = await fetch('/listSeries');
+    var names = await r.json();
+    var dl = document.getElementById('seriesList');
+    dl.innerHTML = '';
+    (names || []).forEach(function(n) {
+      var o = document.createElement('option');
+      o.value = n;
+      dl.appendChild(o);
+    });
+  } catch (e) { console.log('loadSeries error:', e); }
+}
+
 async function loadEvents() {
   try {
     var r = await fetch('/listImportedEvents');
     var events = await r.json();
     var body = document.getElementById('eventsBody');
     if (!events.length) {
-      body.innerHTML = '<tr><td colspan="4" style="color:var(--fg2);">No events imported yet.</td></tr>';
+      body.innerHTML = '<tr><td colspan="5" style="color:var(--fg2);">No events imported yet.</td></tr>';
       return;
     }
     body.innerHTML = '';
@@ -114,17 +133,53 @@ async function loadEvents() {
       tr.innerHTML =
         '<td><span class="evname">' + escHtml(ev.event_name || ev.event_slug) + '</span>'
           + '<div class="evmeta">' + escHtml(ev.tournament_name || '') + '</div></td>'
+        + '<td><input type="text" class="series-cell" list="seriesList" value="'
+          + escHtml(ev.series || '') + '" placeholder="\u2014"></td>'
         + '<td>' + ev.set_count + '</td>'
         + '<td class="evmeta">' + escHtml((ev.imported_at || '').replace('T', ' ')) + '</td>'
-        + '<td><button class="btn sec reimport-btn">Re-import</button></td>';
-      tr.querySelector('button').onclick = function() {
+        + '<td><button class="btn sec reimport-btn">Re-import</button> '
+          + '<button class="btn sec delete-btn">Delete</button></td>';
+      var seriesCell = tr.querySelector('.series-cell');
+      var _orig = ev.series || '';
+      function commitSeries() {
+        var val = (seriesCell.value || '').trim();
+        if (val === _orig) return;
+        _orig = val;
+        fetch('/setEventSeries', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ event_slug: ev.event_slug, series: val })
+        }).then(function() { loadSeries(); seriesCell.classList.add('saved');
+          setTimeout(function(){ seriesCell.classList.remove('saved'); }, 800); })
+          .catch(function(e){ console.log('setEventSeries error:', e); });
+      }
+      seriesCell.onchange = commitSeries;
+      seriesCell.onblur = commitSeries;
+      var btns = tr.querySelectorAll('.reimport-btn, .delete-btn');
+      btns[0].onclick = function() {
         document.getElementById('slugInput').value = ev.event_slug;
+        document.getElementById('seriesInput').value = ev.series || '';
         doImport();
         window.scrollTo(0, 0);
       };
+      btns[1].onclick = function() { deleteEvent(ev); };
       body.appendChild(tr);
     });
   } catch (e) { console.log('loadEvents error:', e); }
+}
+
+async function deleteEvent(ev) {
+  var label = ev.event_name || ev.event_slug;
+  if (!confirm('Remove imported event "' + label + '"?\n\nThis deletes its match data and updates all-time records. Players and aliases are kept.')) return;
+  try {
+    var r = await fetch('/deleteImportedEvent', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ event_slug: ev.event_slug })
+    });
+    var data = await r.json();
+    if (!data.ok) { setStatus(data.message || 'Delete failed', 'err'); return; }
+    setStatus('Removed "' + label + '".', 'ok');
+    await loadEvents();
+  } catch (e) { setStatus('Delete error: ' + e, 'err'); }
 }
 
 function escHtml(s) {
@@ -140,7 +195,7 @@ async function doImport() {
   try {
     var r = await fetch('/importStartggEvent', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ slug: slug })
+      body: JSON.stringify({ slug: slug, series: (document.getElementById('seriesInput').value || '').trim() })
     });
     var data = await r.json();
     if (!data.ok) { setStatus(data.message || ('Import failed (' + r.status + ')'), 'err'); btn.disabled = false; return; }
@@ -223,6 +278,7 @@ function createNew(idx) { _reconcile(idx, 'new', null); }
 
 (async function init() {
   await loadPlayers();
+  await loadSeries();
   await loadEvents();
 })();
 </script>

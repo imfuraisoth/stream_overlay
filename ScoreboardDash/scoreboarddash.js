@@ -2092,13 +2092,36 @@ function loadH2HEvents() {
             if (!sel) return;
             var prev = sel.value || 'alltime';
             sel.innerHTML = '<option value="alltime">All-time</option>';
+            // Series tier: distinct series across imported events
+            var seriesNames = [];
+            _h2hEvents.forEach(function(ev) {
+                var s = (ev.series || '').trim();
+                if (s && seriesNames.indexOf(s) === -1) seriesNames.push(s);
+            });
+            seriesNames.sort(function(a, b) { return a.toLowerCase().localeCompare(b.toLowerCase()); });
+            if (seriesNames.length) {
+                var sg = document.createElement('optgroup');
+                sg.label = 'Series';
+                seriesNames.forEach(function(s) {
+                    var o = document.createElement('option');
+                    o.value = 'series:' + s;
+                    o.textContent = s;
+                    sg.appendChild(o);
+                });
+                sel.appendChild(sg);
+            }
+            // Individual events
+            var eg = document.createElement('optgroup');
+            eg.label = 'Events';
             _h2hEvents.forEach(function(ev) {
                 var o = document.createElement('option');
                 o.value = ev.event_slug;
                 o.textContent = ev.event_name || ev.event_slug;
-                sel.appendChild(o);
+                eg.appendChild(o);
             });
+            sel.appendChild(eg);
             sel.value = prev;
+            if (sel.value !== prev) { sel.value = 'alltime'; }
             _h2hScope = sel.value;
         })
         .catch(function(e) { console.log('loadH2HEvents error:', e); });
@@ -2124,36 +2147,45 @@ function refreshH2H() {
         return;
     }
     if (id1 === id2) { box.textContent = ''; return; }
+    var isSeries = _h2hScope.indexOf('series:') === 0;
+    var seriesName = isSeries ? _h2hScope.slice(7) : '';
     var url = '/getMatchupHistory?p1=' + encodeURIComponent(id1) + '&p2=' + encodeURIComponent(id2);
-    if (_h2hScope && _h2hScope !== 'alltime') url += '&event=' + encodeURIComponent(_h2hScope);
+    if (isSeries) url += '&series=' + encodeURIComponent(seriesName);
+    else if (_h2hScope !== 'alltime') url += '&event=' + encodeURIComponent(_h2hScope);
     fetch(url)
         .then(function(r) { return r.json(); })
         .then(function(data) {
             if (!data.ok) { box.textContent = ''; return; }
             var n1 = (_localPlayersByName.get(jsonData.p1Name) || {}).name || jsonData.p1Name;
             var n2 = (_localPlayersByName.get(jsonData.p2Name) || {}).name || jsonData.p2Name;
-            var rec = (_h2hScope === 'alltime') ? data.alltime : (data.event || {wins:0, losses:0});
+            var isEvent = (!isSeries && _h2hScope !== 'alltime');
+            var rec = isSeries ? (data.series || {wins:0,losses:0})
+                    : isEvent ? (data.event || {wins:0,losses:0})
+                    : data.alltime;
             var total = rec.wins + rec.losses;
             var evName = '';
-            if (_h2hScope !== 'alltime') {
+            if (isEvent) {
                 var evMatch = _h2hEvents.filter(function(e) { return e.event_slug === _h2hScope; })[0];
                 evName = evMatch ? (evMatch.event_name || '') : '';
+            } else if (isSeries) {
+                evName = seriesName;
             }
-            var p1place = (_h2hScope !== 'alltime' && data.event) ? data.event.p1_placement : null;
-            var p2place = (_h2hScope !== 'alltime' && data.event) ? data.event.p2_placement : null;
+            // Placements only meaningful for a single event
+            var p1place = (isEvent && data.event) ? data.event.p1_placement : null;
+            var p2place = (isEvent && data.event) ? data.event.p2_placement : null;
             _writeH2HFields({ scope: _h2hScope, eventName: evName,
                 p1w: rec.wins, p1l: rec.losses, p2w: rec.losses, p2l: rec.wins,
                 p1place: p1place, p2place: p2place });
             if (total === 0) {
                 box.className = 'h2h-result muted';
-                box.textContent = (_h2hScope === 'alltime')
-                    ? 'No recorded matches between these two.'
-                    : 'No matches in this event.';
+                box.textContent = isSeries ? ('No matches in ' + seriesName + '.')
+                    : isEvent ? 'No matches in this event.'
+                    : 'No recorded matches between these two.';
                 return;
             }
             box.className = 'h2h-result';
             var pl1 = '', pl2 = '';
-            if (_h2hScope !== 'alltime' && data.event) {
+            if (isEvent && data.event) {
                 if (data.event.p1_placement != null) pl1 = ' <span class="h2h-place">(' + _ordinal(data.event.p1_placement) + ')</span>';
                 if (data.event.p2_placement != null) pl2 = '<span class="h2h-place">(' + _ordinal(data.event.p2_placement) + ')</span> ';
             }
@@ -2169,6 +2201,7 @@ function _writeH2HFields(opts) {
     // opts: { scope, eventName, p1w, p1l, p2w, p2l, p1place, p2place }
     jsonData.h2hScope            = opts.scope || 'alltime';
     jsonData.h2hEventName        = opts.eventName || '';
+    jsonData.h2hSeriesName       = (opts.scope && opts.scope.indexOf('series:') === 0) ? opts.eventName || '' : '';
     jsonData.p1MatchupWins       = (opts.p1w != null) ? opts.p1w : '';
     jsonData.p1MatchupLosses     = (opts.p1l != null) ? opts.p1l : '';
     jsonData.p2MatchupWins       = (opts.p2w != null) ? opts.p2w : '';
