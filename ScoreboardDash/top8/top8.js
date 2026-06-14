@@ -1634,7 +1634,9 @@ function refreshH2H() {
     if (id1 === id2) { box.textContent = ''; return; }
     var isSeries = _h2hScope.indexOf('series:') === 0;
     var seriesName = isSeries ? _h2hScope.slice(7) : '';
+    var _h2hGame = charGetGame();
     var url = '/getMatchupHistory?p1=' + encodeURIComponent(id1) + '&p2=' + encodeURIComponent(id2);
+    if (_h2hGame) url += '&game=' + encodeURIComponent(_h2hGame);
     if (isSeries) url += '&series=' + encodeURIComponent(seriesName);
     else if (_h2hScope !== 'alltime') url += '&event=' + encodeURIComponent(_h2hScope);
     fetch(url)

@@ -70,6 +70,7 @@ def list_events():
                 "tournament_name": data.get("tournament_name"),
                 "display_name": data.get("display_name", ""),
                 "label": event_display_name(data),
+                "game": data.get("game", ""),
                 "series": data.get("series", ""),
                 "imported_at": data.get("imported_at"),
                 "set_count": len(data.get("sets", {})),
@@ -102,7 +103,7 @@ def load_event(event_slug):
 
 
 def save_event_import(event_slug, event_name, tournament_name, sets, imported_at,
-                      assignments=None, standings=None, series=None):
+                      assignments=None, standings=None, series=None, game=None):
     """Write/replace a per-event file from get_completed_sets output.
 
     sets: list of dicts from startgg_client.get_completed_sets.
@@ -167,13 +168,16 @@ def save_event_import(event_slug, event_name, tournament_name, sets, imported_at
     # explicitly provided.
     if series is None and existing:
         series = existing.get("series", "")
-    # Preserve a custom display name across re-import.
+    # Preserve custom display name + game across re-import.
     display_name = existing.get("display_name", "") if existing else ""
+    if game is None:
+        game = existing.get("game", "") if existing else ""
     payload = {
         "event_slug": event_slug,
         "event_name": event_name,
         "tournament_name": tournament_name,
         "display_name": display_name,
+        "game": game or "",
         "series": series or "",
         "imported_at": imported_at,
         "sets": set_map,
@@ -242,44 +246,61 @@ def rebuild_alltime(alias_map=None):
     def resolver(entrant):
         return canon(entrant.get("player_id"))
 
+    # Nested by game: {game: {pid: {opp: {wins, losses}}}}
     rollup = {}
 
-    def _bump(a, b, a_won):
+    def _bump(game, a, b, a_won):
         if not a or not b:
             return
-        rollup.setdefault(a, {}).setdefault(b, {"wins": 0, "losses": 0})
+        g = rollup.setdefault(game or "", {})
+        g.setdefault(a, {}).setdefault(b, {"wins": 0, "losses": 0})
         if a_won:
-            rollup[a][b]["wins"] += 1
+            g[a][b]["wins"] += 1
         else:
-            rollup[a][b]["losses"] += 1
+            g[a][b]["losses"] += 1
 
     for ev in list_events():
         data = load_event(ev["event_slug"])
         if not data:
             continue
+        game = (data.get("game") or "").strip()
         for s in data.get("sets", {}).values():
             p1_local, p2_local, winner_local = _winner_local(s, resolver)
             if not p1_local or not p2_local or winner_local is None:
                 continue  # unreconciled or unknown winner -> not counted
-            _bump(p1_local, p2_local, winner_local == p1_local)
-            _bump(p2_local, p1_local, winner_local == p2_local)
+            _bump(game, p1_local, p2_local, winner_local == p1_local)
+            _bump(game, p2_local, p1_local, winner_local == p2_local)
 
-    payload = {"matchups": rollup}
+    payload = {"matchups_by_game": rollup}
     with open(ALLTIME_FILE, "w", encoding="utf-8") as f:
         json.dump(payload, f, ensure_ascii=False, indent=2)
     return rollup
 
 
-def alltime_record(pid_a, pid_b):
-    """All-time (wins, losses) for pid_a against pid_b."""
+def alltime_record(pid_a, pid_b, game=None):
+    """All-time (wins, losses) for pid_a against pid_b in a game.
+
+    game: filter to this game tag. If None/empty, sums across all games
+    (legacy behavior) -- callers should normally pass the current game.
+    """
     if not os.path.exists(ALLTIME_FILE):
         return 0, 0
     with open(ALLTIME_FILE, encoding="utf-8") as f:
-        rollup = json.load(f).get("matchups", {})
-    rec = rollup.get(pid_a, {}).get(pid_b)
-    if not rec:
-        return 0, 0
-    return rec.get("wins", 0), rec.get("losses", 0)
+        by_game = json.load(f).get("matchups_by_game", {})
+    game = (game or "").strip()
+    if game:
+        rec = by_game.get(game, {}).get(pid_a, {}).get(pid_b)
+        if not rec:
+            return 0, 0
+        return rec.get("wins", 0), rec.get("losses", 0)
+    # No game specified: sum every game
+    wins = losses = 0
+    for g in by_game.values():
+        rec = g.get(pid_a, {}).get(pid_b)
+        if rec:
+            wins += rec.get("wins", 0)
+            losses += rec.get("losses", 0)
+    return wins, losses
 
 
 def event_placement(event_slug, pid, alias_map=None):
@@ -305,8 +326,10 @@ def event_placement(event_slug, pid, alias_map=None):
     return None
 
 
-def event_record(event_slug, pid_a, pid_b, alias_map=None):
-    """(wins, losses) for pid_a vs pid_b within a single event."""
+def event_record(event_slug, pid_a, pid_b, alias_map=None, game=None):
+    """(wins, losses) for pid_a vs pid_b within a single event.
+
+    game: if given, returns 0-0 when the event isn't that game."""
     alias_map = alias_map or {}
 
     def canon(pid):
@@ -317,6 +340,9 @@ def event_record(event_slug, pid_a, pid_b, alias_map=None):
 
     data = load_event(event_slug)
     if not data:
+        return 0, 0
+    game = (game or "").strip()
+    if game and (data.get("game") or "").strip() != game:
         return 0, 0
     wins = losses = 0
     for s in data.get("sets", {}).values():
@@ -352,9 +378,33 @@ def set_event_series(event_slug, series):
     return True
 
 
-def series_record(series, pid_a, pid_b, alias_map=None):
-    """(wins, losses) for pid_a vs pid_b across all events in a series."""
+def set_event_game(event_slug, game):
+    """Set/clear an event's game tag in place. Returns True if written."""
+    data = load_event(event_slug)
+    if not data:
+        return False
+    data["game"] = (game or "").strip()
+    with open(_slug_to_filename(event_slug), "w", encoding="utf-8") as f:
+        json.dump(data, f, ensure_ascii=False, indent=2)
+    return True
+
+
+def list_games_with_events():
+    """Distinct game tags across imported events, sorted."""
+    games = set()
+    for ev in list_events():
+        g = (ev.get("game") or "").strip()
+        if g:
+            games.add(g)
+    return sorted(games, key=lambda x: x.lower())
+
+
+def series_record(series, pid_a, pid_b, alias_map=None, game=None):
+    """(wins, losses) for pid_a vs pid_b across all events in a series.
+
+    game: if given, only counts events tagged with that game."""
     alias_map = alias_map or {}
+    game = (game or "").strip()
 
     def canon(pid):
         return alias_map.get(pid, pid) if pid else None
@@ -366,6 +416,8 @@ def series_record(series, pid_a, pid_b, alias_map=None):
     wins = losses = 0
     for ev in list_events():
         if (ev.get("series") or "").strip().lower() != target:
+            continue
+        if game and (ev.get("game") or "").strip() != game:
             continue
         data = load_event(ev["event_slug"])
         if not data:

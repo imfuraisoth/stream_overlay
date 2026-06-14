@@ -401,6 +401,7 @@ def import_startgg_event():
     body = request.get_json() or {}
     tournament, event = _parse_event_slug(body.get("slug", ""))
     series = (body.get("series") or "").strip()
+    game = (body.get("game") or "").strip()
     if not tournament or not event:
         return jsonify({"ok": False, "message": "Could not parse an event slug from that input"}), 400
     try:
@@ -435,7 +436,7 @@ def import_startgg_event():
     count = MatchHistory.save_event_import(
         event_slug, event_name, tourn_name, sets,
         datetime.now().isoformat(timespec="seconds"), assignments, standings,
-        series if series else None)
+        series if series else None, game if game else None)
     MatchHistory.rebuild_alltime(_alias_map_for_rollup())
     unassigned = MatchHistory.collect_unassigned(event_slug)
     print("Imported %d sets from '%s' (%s) -- %d player(s) need reconciling"
@@ -547,6 +548,20 @@ def list_series():
     return jsonify(MatchHistory.list_series()), 200
 
 
+@api.route('/setEventGame', methods=['POST'])
+def set_event_game():
+    """Assign/clear an event's game tag.
+
+    Body: { "event_slug": "...", "game": "ssf2x" }"""
+    body = request.get_json() or {}
+    event_slug = body.get("event_slug", "")
+    if not event_slug:
+        return jsonify({"ok": False, "message": "event_slug required"}), 400
+    ok = MatchHistory.set_event_game(event_slug, body.get("game", ""))
+    MatchHistory.rebuild_alltime(_alias_map_for_rollup())
+    return jsonify({"ok": ok}), (200 if ok else 404)
+
+
 @api.route('/setEventDisplayName', methods=['POST'])
 def set_event_display_name():
     """Set/clear an event's custom display name.
@@ -583,15 +598,16 @@ def get_matchup_history():
     p2 = request.args.get("p2", "")
     if not p1 or not p2:
         return jsonify({"ok": False, "message": "p1 and p2 required"}), 400
-    aw, al = MatchHistory.alltime_record(p1, p2)
+    game = request.args.get("game", "")  # filter all records to this game
+    aw, al = MatchHistory.alltime_record(p1, p2, game)
     out = {"ok": True, "alltime": {"wins": aw, "losses": al}}
     series = request.args.get("series")
     if series:
-        sw, sl = MatchHistory.series_record(series, p1, p2)
+        sw, sl = MatchHistory.series_record(series, p1, p2, game=game)
         out["series"] = {"wins": sw, "losses": sl, "name": series}
     event_slug = request.args.get("event")
     if event_slug:
-        ew, el = MatchHistory.event_record(event_slug, p1, p2)
+        ew, el = MatchHistory.event_record(event_slug, p1, p2, game=game)
         out["event"] = {
             "wins": ew, "losses": el, "event_slug": event_slug,
             "p1_placement": MatchHistory.event_placement(event_slug, p1),
