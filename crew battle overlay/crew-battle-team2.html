@@ -48,7 +48,7 @@
       // Top number: remaining count. To match the Japanese style (show the
       // current player's index instead), swap the next line for:
       //   document.getElementById('cb-remaining').textContent = Math.min(current+1, players.length);
-      document.getElementById('cb-remaining').textContent = remaining + ' left';
+      document.getElementById('cb-remaining').textContent = remaining + ' ' + (t.remainingLabel || 'left');
 
       // Auto-scale: fit pageSize rows into the 1080-tall overlay. The header
       // takes a fixed slice; the rest is divided evenly among the page's rows.
@@ -77,7 +77,19 @@
         else if(i === current) cls += ' current';
         var role = (i === capIdx && players.length > 0) ? (t.captainLabel || '')
                  : (i === viceIdx && players.length > 1) ? (t.viceLabel || '') : '';
-        html += '<li class="' + cls + '">'
+        var style = '';
+        if (p.characterFile) {
+          // Character art bleeds in as a fading gradient across the nameplate.
+          // Served by the app server; overlays are file:// so use an absolute URL.
+          var art = 'http://' + serverIp + '/' + p.characterFile;
+          style = ' style="background-image:'
+            + 'linear-gradient(to left, rgba(0,0,0,0) 0%, var(--cb-plate) 62%),'
+            + 'url(\'' + art + '\');'
+            + 'background-size:auto 150%, auto 150%;'
+            + 'background-position:right center, right center;'
+            + 'background-repeat:no-repeat, no-repeat;"';
+        }
+        html += '<li class="' + cls + '"' + style + '>'
           + '<span class="cb-pos">' + (i+1) + '</span>'
           + '<span class="cb-pname">'
             + (role ? '<span class="cb-role">' + esc(role) + '</span> ' : '')

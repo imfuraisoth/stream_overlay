@@ -94,6 +94,9 @@
     var root = document.getElementById('nav-root');
     if (!root) return;
     root.innerHTML = build();
+    // The nav container is rebuilt from scratch here, which wipes anything
+    // else injected into it (e.g. the theme button). Let listeners re-add.
+    if (typeof window.onNavRendered === 'function') window.onNavRendered();
   }
 
   // Reserve the navbar's height up front so the page doesn't shift when the

@@ -9,6 +9,8 @@
   <script>
     (function(){var s=localStorage.getItem('sc_theme');if(!s)return;try{var v=JSON.parse(s);Object.keys(v).forEach(function(k){document.documentElement.style.setProperty(k,v[k])});}catch(e){}})();
   </script>
+  <script src="../lang/en.js"></script>
+  <script src="../i18n.js"></script>
   <link href="../theme/theme.css" rel="stylesheet" type="text/css">
 </head>
 <body>
@@ -17,17 +19,20 @@
 <div id="nav-root" style="min-height:45px"></div>
 <div class="cb-wrap">
   <div class="cb-bar">
-    <span id="cbStatus" class="cb-status">Loading…</span>
-    <label class="cb-pagesize">Page size
+    <span id="cbStatus" class="cb-status" data-i18n="cb_status_loading">Loading…</span>
+    <label class="cb-pagesize"><span data-i18n="cb_game">Game</span>
+      <select id="gameSelect" onchange="setGame(this.value)"></select>
+    </label>
+    <label class="cb-pagesize"><span data-i18n="cb_pagesize">Page size</span>
       <input type="number" id="pageSizeInput" min="1" value="12" onchange="setPageSize(this.value)">
     </label>
     <span style="flex:1"></span>
-    <button class="btn" id="cbReset" onclick="resetBattle()">Reset Battle</button>
+    <button class="btn" id="cbReset" onclick="resetBattle()" data-i18n="cb_reset">Reset Battle</button>
   </div>
 
   <div class="cb-teams" id="cbTeams"></div>
   <datalist id="playerList"></datalist>
-  <p class="cb-hint">
+  <p class="cb-hint" data-i18n="cb_hint">
     The <b>current player</b> (highlighted) is who's up. Players above are defeated (dimmed on stream),
     players below are waiting. Use <b>Advance ▼</b> when the current player loses, or <b>Back ▲</b> to undo.
     The last two players show the <b>Captain</b> / <b>Vice</b> role labels (editable per team) prefixed on stream.
@@ -38,6 +43,10 @@
 <script>
   var state = null;
   var viewPage = { 1: null, 2: null };   // operator-only manual page override; null = follow current
+  var charPacks = [];    // pack names for the selected game
+  var charMap = {};      // { pack: { character: [ {palette, file}, ... ] } }
+  var gamesList = [];
+  var pickerFor = null;  // {n, idx} the player whose picker popover is open
 
   function escHtml(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
   function setStatus(t){ document.getElementById('cbStatus').textContent = t; }
@@ -55,6 +64,49 @@
     } catch(e){ console.log('loadPlayers error:', e); }
   }
 
+  async function loadGames(){
+    try {
+      var r = await fetch('/getGames');
+      var games = await r.json();
+      // /getGames returns an OBJECT {gameName: slots}, not an array.
+      gamesList = Object.keys(games || {}).sort(function(a,b){
+        return a.toLowerCase().localeCompare(b.toLowerCase());
+      });
+    } catch(e){ console.log('loadGames error:', e); gamesList = []; }
+    var sel = document.getElementById('gameSelect');
+    var cur = (state && state.game) || '';
+    sel.innerHTML = '<option value="">' + escHtml(window.t('cb_game_pick')) + '</option>'
+      + gamesList.map(function(g){ return '<option value="'+escHtml(g)+'">'+escHtml(g)+'</option>'; }).join('');
+    sel.value = cur;
+  }
+
+  // Load all packs + characters + palettes for the selected game into charMap.
+  async function loadCharRoster(game){
+    charPacks = []; charMap = {};
+    if(!game) return;
+    try {
+      var pr = await fetch('/getCharacterPacks?game=' + encodeURIComponent(game));
+      charPacks = await pr.json() || [];
+      for (var i=0; i<charPacks.length; i++){
+        var pack = charPacks[i];
+        var cr = await fetch('/getCharacterList?game=' + encodeURIComponent(game) + '&pack=' + encodeURIComponent(pack));
+        var chars = await cr.json() || {};
+        charMap[pack] = {};
+        Object.keys(chars).forEach(function(name){
+          // each entry: [{palette, file}, ...] sorted by palette
+          var pals = (chars[name] || []).slice().sort(function(a,b){ return (a.palette||0)-(b.palette||0); });
+          charMap[pack][name] = pals;
+        });
+      }
+    } catch(e){ console.log('loadCharRoster error:', e); }
+  }
+
+  async function setGame(game){
+    state.game = game;
+    await loadCharRoster(game);
+    commit();
+  }
+
   async function loadBattle(){
     try {
       var r = await fetch('/getCrewBattle');
@@ -66,10 +118,14 @@
         if(t.viceLabel == null) t.viceLabel = 'Vice';
       });
       if(state.pageSize == null) state.pageSize = 12;
+      if(state.game == null) state.game = '';
       document.getElementById('pageSizeInput').value = state.pageSize;
-      render();
-      setStatus('Loaded.');
-    } catch(e){ console.log('loadBattle error:', e); setStatus('Could not load.'); }
+      render();   // render teams immediately; game/char data enriches after
+      setStatus(window.t('cb_status_loaded'));
+      await loadGames();
+      await loadCharRoster(state.game);
+      render();   // re-render now that the character dropdowns can populate
+    } catch(e){ console.log('loadBattle error:', e); setStatus(window.t('cb_status_loadfail')); }
   }
 
   async function commit(){
@@ -79,8 +135,8 @@
         method:'POST', headers:{'Content-Type':'application/json'},
         body: JSON.stringify(state)
       });
-      setStatus(r.ok ? 'Saved.' : 'Save failed.');
-    } catch(e){ console.log('commit error:', e); setStatus('Save failed.'); }
+      setStatus(r.ok ? window.t('cb_status_saved') : window.t('cb_status_savefail'));
+    } catch(e){ console.log('commit error:', e); setStatus(window.t('cb_status_savefail')); }
   }
 
   function pageSizeVal(){ return (state.pageSize && state.pageSize>0) ? state.pageSize : 12; }
@@ -112,6 +168,7 @@
   function setName(n, val){ teamObj(n).name = val.trim() || ('Team '+n); commit(); }
   function setCaptainLabel(n, val){ teamObj(n).captainLabel = val; commit(); }
   function setViceLabel(n, val){ teamObj(n).viceLabel = val; commit(); }
+  function setRemainingLabel(n, val){ teamObj(n).remainingLabel = val; commit(); }
 
   function addPlayer(n){
     var input = document.getElementById('team'+n+'Add');
@@ -150,6 +207,179 @@
     commit();
   }
 
+  // Compact character cell on a player row: a button showing the current pick
+  // (thumbnail + name) or "+". Clicking opens the picker popover. Hidden until
+  // a game is selected.
+  function charSelectHtml(n, idx, p){
+    if(!state.game){
+      return '<span class="cb-charcell cb-charcell-nogame" title="Pick a game first"></span>';
+    }
+    var inner;
+    if(p.character && p.characterFile){
+      inner = '<img class="cb-charbtn-thumb char-preview-target" src="/'+escHtml(p.characterFile)+'" '
+            + 'data-label="'+escHtml(p.character)+' ('+(p.palette||0)+')" onerror="this.style.display=\'none\'">'
+            + '<span class="cb-charbtn-name">'+escHtml(p.character)+'</span>';
+    } else {
+      inner = '<span class="cb-charbtn-empty">+ '+escHtml(window.t('cb_character'))+'</span>';
+    }
+    return '<span class="cb-charcell">'
+      + '<button type="button" class="cb-charbtn" onclick="openCharPicker(event,'+n+','+idx+')">'+inner+'</button>'
+      + '</span>';
+  }
+
+  // ── CHARACTER PICKER POPOVER ──────────────────────────────────
+  function closeCharPicker(){
+    var pop = document.getElementById('cbCharPicker');
+    if(pop) pop.style.display = 'none';
+    pickerFor = null;
+    hideCharPreview();
+  }
+
+  function openCharPicker(ev, n, idx){
+    ev.stopPropagation();
+    if(!state.game) return;
+    pickerFor = { n:n, idx:idx };
+    var pop = ensureCharPicker();
+    var p = teamObj(n).players[idx];
+    // default the pack/character selects to the player's current pick if any
+    buildCharPicker(p);
+    // position the popover near the button
+    var r = ev.currentTarget.getBoundingClientRect();
+    pop.style.display = 'block';
+    var top = r.bottom + window.scrollY + 4;
+    var left = r.left + window.scrollX;
+    // keep on screen
+    if(left + 320 > window.innerWidth) left = window.innerWidth - 330;
+    pop.style.top = top + 'px';
+    pop.style.left = left + 'px';
+  }
+
+  function ensureCharPicker(){
+    var pop = document.getElementById('cbCharPicker');
+    if(pop) return pop;
+    pop = document.createElement('div');
+    pop.id = 'cbCharPicker';
+    pop.className = 'cb-charpicker';
+    pop.onclick = function(e){ e.stopPropagation(); };
+    pop.innerHTML =
+      '<div class="cb-cp-row">'
+        + '<label data-i18n="cb_pack">Pack</label>'
+        + '<select id="cbCpPack" onchange="onCpPack()"></select>'
+      + '</div>'
+      + '<div class="cb-cp-row">'
+        + '<label data-i18n="cb_character">Character</label>'
+        + '<select id="cbCpChar" onchange="onCpChar()"></select>'
+      + '</div>'
+      + '<div class="cb-cp-palettes" id="cbCpPalettes"></div>'
+      + '<div class="cb-cp-foot">'
+        + '<button type="button" class="cb-mini cb-del" onclick="clearPlayerChar()" data-i18n="cb_char_none">-- none --</button>'
+      + '</div>';
+    document.body.appendChild(pop);
+    if(window.applyTranslations) window.applyTranslations(pop);
+    return pop;
+  }
+
+  function buildCharPicker(p){
+    var packSel = document.getElementById('cbCpPack');
+    packSel.innerHTML = charPacks.map(function(pk){
+      return '<option value="'+escHtml(pk)+'"'+(pk===(p&&p.pack)?' selected':'')+'>'+escHtml(pk)+'</option>';
+    }).join('');
+    // pick current pack (or first)
+    if(p && p.pack && charPacks.indexOf(p.pack)>=0) packSel.value = p.pack;
+    onCpPack(p && p.character);
+  }
+
+  function onCpPack(presetChar){
+    var pack = document.getElementById('cbCpPack').value;
+    var chars = Object.keys(charMap[pack] || {}).sort(function(a,b){ return a.localeCompare(b); });
+    var sel = document.getElementById('cbCpChar');
+    sel.innerHTML = chars.map(function(c){
+      return '<option value="'+escHtml(c)+'"'+(c===presetChar?' selected':'')+'>'+escHtml(c)+'</option>';
+    }).join('');
+    if(presetChar && chars.indexOf(presetChar)>=0) sel.value = presetChar;
+    onCpChar();
+  }
+
+  function onCpChar(){
+    var pack = document.getElementById('cbCpPack').value;
+    var char = document.getElementById('cbCpChar').value;
+    var pals = (charMap[pack] && charMap[pack][char]) || [];
+    var cur = pickerFor ? teamObj(pickerFor.n).players[pickerFor.idx] : null;
+    var html = '';
+    pals.forEach(function(pl){
+      var selected = (cur && cur.pack===pack && cur.character===char && (cur.palette||0)===pl.palette) ? ' selected' : '';
+      html += '<img class="cb-cp-thumb char-preview-target'+selected+'" src="/'+escHtml(pl.file)+'" '
+        + 'title="Palette '+pl.palette+'" data-label="'+escHtml(char)+' ('+pl.palette+')" '
+        + 'onerror="this.style.display=\'none\'" '
+        + 'onclick="pickPalette(\''+encodeURIComponent(pack)+'\',\''+encodeURIComponent(char)+'\','+pl.palette+',\''+encodeURIComponent(pl.file)+'\')">';
+    });
+    document.getElementById('cbCpPalettes').innerHTML = html || '<span class="cb-cp-nopal">—</span>';
+  }
+
+  function pickPalette(packEnc, charEnc, palette, fileEnc){
+    if(!pickerFor) return;
+    var p = teamObj(pickerFor.n).players[pickerFor.idx];
+    p.pack = decodeURIComponent(packEnc);
+    p.character = decodeURIComponent(charEnc);
+    p.palette = palette;
+    p.characterFile = decodeURIComponent(fileEnc);
+    closeCharPicker();
+    commit();
+  }
+
+  function clearPlayerChar(){
+    if(!pickerFor) return;
+    var p = teamObj(pickerFor.n).players[pickerFor.idx];
+    delete p.pack; delete p.character; delete p.palette; delete p.characterFile;
+    closeCharPicker();
+    commit();
+  }
+
+  // ── HOVER PREVIEW (larger image following cursor) ─────────────
+  var _cbPreview = null;
+  function cbPreviewEl(){
+    if(!_cbPreview){
+      _cbPreview = document.createElement('div');
+      _cbPreview.id = 'cb-char-preview';
+      _cbPreview.innerHTML = '<img id="cb-char-preview-img"><div id="cb-char-preview-label"></div>';
+      document.body.appendChild(_cbPreview);
+    }
+    return _cbPreview;
+  }
+  function showCharPreview(e, src, label){
+    var pv = cbPreviewEl();
+    document.getElementById('cb-char-preview-img').src = src;
+    document.getElementById('cb-char-preview-label').textContent = label || '';
+    pv.style.display = 'block';
+    moveCharPreview(e);
+  }
+  function moveCharPreview(e){
+    var pv = cbPreviewEl();
+    if(pv.style.display==='none') return;
+    var x = e.clientX + 16, y = e.clientY + 16;
+    if(x + 180 > window.innerWidth) x = e.clientX - 188;
+    if(y + 200 > window.innerHeight) y = e.clientY - 200;
+    pv.style.left = x + 'px'; pv.style.top = y + 'px';
+  }
+  function hideCharPreview(){ if(_cbPreview) _cbPreview.style.display='none'; }
+
+  // Event delegation for any .char-preview-target (row thumbs + palette thumbs)
+  document.addEventListener('mouseover', function(e){
+    var t = e.target.closest && e.target.closest('.char-preview-target');
+    if(t && t.src){ showCharPreview(e, t.src, t.getAttribute('data-label')||''); }
+  });
+  document.addEventListener('mousemove', function(e){
+    if(_cbPreview && _cbPreview.style.display!=='none') moveCharPreview(e);
+  });
+  document.addEventListener('mouseout', function(e){
+    var t = e.target.closest && e.target.closest('.char-preview-target');
+    if(t && !(e.relatedTarget && e.relatedTarget.closest && e.relatedTarget.closest('.char-preview-target'))){
+      hideCharPreview();
+    }
+  });
+  // Close the picker when clicking elsewhere
+  document.addEventListener('click', function(){ if(pickerFor) closeCharPicker(); });
+
   function render(){
     var wrap = document.getElementById('cbTeams');
     wrap.innerHTML = '';
@@ -179,6 +409,7 @@
           + '<span class="cb-name" onclick="jumpTo('+n+','+idx+')" title="Set as current">'
             + (role ? '<span class="cb-role">'+escHtml(role)+'</span> ' : '')
             + escHtml(p.name) + '</span>'
+          + charSelectHtml(n, idx, p)
           + '<span class="cb-actions">'
             + '<button class="cb-mini" onclick="move('+n+','+idx+',-1)" title="Move up">&#9650;</button>'
             + '<button class="cb-mini" onclick="move('+n+','+idx+',1)" title="Move down">&#9660;</button>'
@@ -188,28 +419,30 @@
       var np = Math.max(1, Math.ceil(t.players.length / ps));
 
       col.innerHTML =
-        '<input type="text" class="cb-teamname" value="'+escHtml(t.name)+'" placeholder="Team '+n+' name" '
+        '<input type="text" class="cb-teamname" value="'+escHtml(t.name)+'" placeholder="Team '+n+'" '
           + 'onchange="setName('+n+', this.value)">'
-        + '<div class="cb-remaining">'+escHtml(t.name)+': '+remaining+' remaining</div>'
+        + '<div class="cb-remaining">'+escHtml(t.name)+': '+remaining+' '+escHtml(t.remainingLabel||'left')+'</div>'
         + '<div class="cb-roles">'
-          + '<label>Captain label <input type="text" class="cb-rolein" value="'+escHtml(t.captainLabel)+'" '
+          + '<label>'+escHtml(window.t('cb_captain_label'))+' <input type="text" class="cb-rolein" value="'+escHtml(t.captainLabel)+'" '
             + 'onchange="setCaptainLabel('+n+', this.value)"></label>'
-          + '<label>Vice label <input type="text" class="cb-rolein" value="'+escHtml(t.viceLabel)+'" '
+          + '<label>'+escHtml(window.t('cb_vice_label'))+' <input type="text" class="cb-rolein" value="'+escHtml(t.viceLabel)+'" '
             + 'onchange="setViceLabel('+n+', this.value)"></label>'
+          + '<label>'+escHtml(window.t('cb_remaining_label'))+' <input type="text" class="cb-rolein" value="'+escHtml(t.remainingLabel||'left')+'" '
+            + 'onchange="setRemainingLabel('+n+', this.value)"></label>'
         + '</div>'
         + '<div class="cb-advrow">'
-          + '<button class="btn" onclick="advance('+n+',-1)">▲ Back</button>'
-          + '<button class="btn cb-adv" onclick="advance('+n+',1)">Advance ▼</button>'
+          + '<button class="btn" onclick="advance('+n+',-1)">'+escHtml(window.t('cb_back'))+'</button>'
+          + '<button class="btn cb-adv" onclick="advance('+n+',1)">'+escHtml(window.t('cb_advance'))+'</button>'
         + '</div>'
         + '<div class="cb-pagerow">'
           + '<button class="cb-mini" onclick="pageNav('+n+',-1)" title="Previous page">&#9664;</button>'
-          + '<span class="cb-pagelabel">Page '+(shown+1)+'/'+np+(viewPage[n]!=null?' (manual)':'')+'</span>'
+          + '<span class="cb-pagelabel">'+escHtml(window.t('cb_page'))+' '+(shown+1)+'/'+np+(viewPage[n]!=null?' '+escHtml(window.t('cb_manual')):'')+'</span>'
           + '<button class="cb-mini" onclick="pageNav('+n+',1)" title="Next page">&#9654;</button>'
           + (viewPage[n]!=null ? '<button class="cb-mini" onclick="followCurrent('+n+')" title="Follow current player">&#8635;</button>' : '')
         + '</div>'
         + '<div class="cb-addrow">'
-          + '<input type="text" class="cb-addinput" id="team'+n+'Add" list="playerList" placeholder="Add player…">'
-          + '<button class="btn cb-addbtn" onclick="addPlayer('+n+')">Add</button>'
+          + '<input type="text" class="cb-addinput" id="team'+n+'Add" list="playerList" placeholder="'+escHtml(window.t('cb_add_player'))+'">'
+          + '<button class="btn cb-addbtn" onclick="addPlayer('+n+')">'+escHtml(window.t('cb_add'))+'</button>'
         + '</div>'
         + '<ul class="cb-list">'+rows+'</ul>';
       wrap.appendChild(col);
@@ -221,13 +454,24 @@
   }
 
   function resetBattle(){
-    if(!confirm('Reset the whole crew battle? This clears both rosters.')) return;
+    if(!confirm(window.t('cb_reset_confirm'))) return;
+    var keepGame = state ? (state.game || '') : '';
     state = {
-      team1:{name:'East',players:[],current:0,captainLabel:'Captain',viceLabel:'Vice'},
-      team2:{name:'West',players:[],current:0,captainLabel:'Captain',viceLabel:'Vice'}
+      team1:{name:window.t('cb_team1_default'),players:[],current:0,
+             captainLabel:window.t('cb_captain_default'),viceLabel:window.t('cb_vice_default'),
+             remainingLabel:window.t('cb_ov_left')},
+      team2:{name:window.t('cb_team2_default'),players:[],current:0,
+             captainLabel:window.t('cb_captain_default'),viceLabel:window.t('cb_vice_default'),
+             remainingLabel:window.t('cb_ov_left')},
+      pageSize: pageSizeVal(),
+      game: keepGame
     };
     commit();
   }
+
+  // Re-render the dynamically-built UI when the language changes (the
+  // operator picks a new language in the theme panel). i18n.js calls this.
+  window.onLangChange = function(){ if(state) render(); };
 
   (async function init(){
     await loadPlayers();

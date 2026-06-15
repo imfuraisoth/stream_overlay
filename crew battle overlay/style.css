@@ -13,6 +13,9 @@ html, body { margin: 0; padding: 0; background: transparent; }
 #cb-root {
   --cb-row-h: 40px;          /* default until JS sets it from pageSize */
   --cb-font: 24px;
+  /* Base color the character art fades INTO across the nameplate. Semi-opaque
+     so art is visible at the right edge but the name stays readable at left. */
+  --cb-plate: rgba(13, 24, 40, 0.82);
   font-family: Impact, "RigidSquareExtraBold";
   color: #FFFFFF;
   width: 360px;              /* strip width; resize the OBS source to taste */

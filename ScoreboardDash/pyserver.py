@@ -255,13 +255,31 @@ def get_local_players():
 
 def _default_team(name):
     return {"name": name, "players": [], "current": 0,
-            "captainLabel": "Captain", "viceLabel": "Vice"}
+            "captainLabel": "Captain", "viceLabel": "Vice",
+            "remainingLabel": "left"}
+
+
+def _norm_player(p):
+    """Normalize a player entry, preserving optional character pick."""
+    p = p or {}
+    out = {"name": p.get("name", "")}
+    # Optional pre-picked character (from the selected game's roster).
+    # Stored: pack, character name, palette, and the art file for the overlay.
+    if p.get("character") or p.get("characterFile") or p.get("pack"):
+        out["pack"] = p.get("pack", "")
+        out["character"] = p.get("character", "")
+        try:
+            out["palette"] = int(p.get("palette", 0))
+        except (TypeError, ValueError):
+            out["palette"] = 0
+        out["characterFile"] = p.get("characterFile", "")
+    return out
 
 
 def _norm_team(t, fallback_name):
     """Normalize an incoming team object, filling defaults."""
     t = t or {}
-    players = t.get("players", []) or []
+    players = [_norm_player(p) for p in (t.get("players", []) or [])]
     try:
         current = int(t.get("current", 0))
     except (TypeError, ValueError):
@@ -277,6 +295,7 @@ def _norm_team(t, fallback_name):
         "current": current,
         "captainLabel": t.get("captainLabel", "Captain"),
         "viceLabel": t.get("viceLabel", "Vice"),
+        "remainingLabel": t.get("remainingLabel", "left"),
     }
 
 
@@ -285,7 +304,8 @@ def get_crew_battle():
     """Return the current East-vs-West crew battle state."""
     data = FileUtils.read_file(crewbattle_data_file)
     if not data:
-        data = {"team1": _default_team("East"), "team2": _default_team("West"), "pageSize": 12}
+        data = {"team1": _default_team("East"), "team2": _default_team("West"),
+                "pageSize": 12, "game": ""}
     return json.dumps(data, ensure_ascii=False), 200
 
 
@@ -308,6 +328,7 @@ def save_crew_battle():
         "team1": _norm_team(body.get("team1"), "Team 1"),
         "team2": _norm_team(body.get("team2"), "Team 2"),
         "pageSize": page_size,
+        "game": (body.get("game") or "").strip(),
     }
     try:
         with open(crewbattle_data_file, "w", encoding="utf-8") as f:
