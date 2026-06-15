@@ -43,7 +43,11 @@ html, body { margin: 0; padding: 0; background: transparent; }
   overflow: hidden;
   transition: opacity .25s ease, background .25s ease;
 }
-.cb-pos { font-size: calc(var(--cb-font) * 0.55); opacity: .5; width: 1.4em; text-align: right; flex: 0 0 auto; }
+/* Position number (1, 2, 3...) before each name. Hidden by default.
+   To show it, change 'display: none' to 'display: block' (or delete this
+   rule and uncomment the styled one below). */
+.cb-pos { display: none; }
+/* .cb-pos { font-size: calc(var(--cb-font) * 0.55); opacity: .5; width: 1.4em; text-align: right; flex: 0 0 auto; } */
 .cb-pname { flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .cb-role { color: #40D0B0; font-size: calc(var(--cb-font) * 0.68); -webkit-text-stroke: 0; }
 
