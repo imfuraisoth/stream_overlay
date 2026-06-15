@@ -277,12 +277,21 @@ async function loadStreamQueue() {
         }
       }`, { slug: tournSlug });
 
-    const queues = (data?.tournament?.streamQueue || []).slice().sort(function (a, b) {
-      // Stable, natural-alphabetical order by stream name so columns don't
-      // shuffle between refreshes ("Station 2" before "Station 10").
-      var an = (a.stream && a.stream.streamName) || '';
-      var bn = (b.stream && b.stream.streamName) || '';
-      return an.localeCompare(bn, undefined, { numeric: true, sensitivity: 'base' });
+    const queues = (data?.tournament?.streamQueue || []).slice();
+    // Resolve a queue's visible label the same way rename/display do: the
+    // custom name may be stored under either the raw streamName or its
+    // escaped form, so check both before falling back to the raw name.
+    function sqLabel(q) {
+      var raw = (q.stream && q.stream.streamName) || 'Stream';
+      if (sqCustomNames[raw] != null) return sqCustomNames[raw];
+      var esc = escHtml(raw);
+      if (sqCustomNames[esc] != null) return sqCustomNames[esc];
+      return raw;
+    }
+    queues.sort(function (a, b) {
+      // Natural/numeric so "Station 2" precedes "Station 10"; sorts on the
+      // visible label so renaming a column controls its position.
+      return sqLabel(a).localeCompare(sqLabel(b), undefined, { numeric: true, sensitivity: 'base' });
     });
     if (!queues.length) {
       el.innerHTML = '<div class="empty-state"><strong>No stream queue</strong><div class="hint">The TO may not have a stream queue configured on Start.gg.</div></div>';
