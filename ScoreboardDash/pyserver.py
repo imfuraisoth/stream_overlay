@@ -1,21 +1,36 @@
 import json
 import threading
 from io import open
-from flask import Flask, send_from_directory, jsonify
+from flask import Flask, send_from_directory, jsonify, Response
 from flask import request
 from flask_cors import CORS
 import time
-from scripts import AutoScoreUpdaterSt
-from scripts import AutoScoreUpdaterCvs2
+try:
+    from scripts import AutoScoreUpdaterSt
+except Exception as e:
+    print(f"AutoScoreUpdaterSt disabled: {e}")
+    AutoScoreUpdaterSt = None
+try:
+    from scripts import AutoScoreUpdaterCvs2
+except Exception as e:
+    print(f"AutoScoreUpdaterCvs2 disabled: {e}")
+    AutoScoreUpdaterCvs2 = None
 from scripts import Top8
-from scripts import AutoScoreUpdaterCPS1
+try:
+    from scripts import AutoScoreUpdaterCPS1
+except Exception as e:
+    print(f"AutoScoreUpdaterCPS1 disabled: {e}")
+    AutoScoreUpdaterCPS1 = None
 from scripts import startgg_client
+from scripts import MatchHistory
 import argparse
 import socket
 import os
 import webbrowser
 import shutil
 import copy
+import requests
+import re
 from datetime import datetime
 from scripts import PlayerStats
 from scripts import TTLCache
@@ -33,16 +48,16 @@ today_date = datetime.today().strftime('%Y-%m-%d')
 replay_prefix = "Replay_"
 replays_folder = "recordings/replays"
 saved_replays_folder = "../../clips"
-scoreboard_data_file = "../data/scoreboard.json"
-commentators_file = "../data/commentators.json"
-player_1 = "../data/player1.txt"
-player_2 = "../data/player2.txt"
-next_player_1 = "../data/nextplayer1.txt"
-next_player_2 = "../data/nextplayer2.txt"
-result1 = "../data/result1.txt"
-result2 = "../data/result2.txt"
-result_name_1 = "../data/resultname1.txt"
-result_name_2 = "../data/resultname2.txt"
+scoreboard_data_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), "../data/scoreboard.json")
+commentators_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), "../data/commentators.json")
+player_1 = os.path.join(os.path.dirname(os.path.abspath(__file__)), "../data/player1.txt")
+player_2 = os.path.join(os.path.dirname(os.path.abspath(__file__)), "../data/player2.txt")
+next_player_1 = os.path.join(os.path.dirname(os.path.abspath(__file__)), "../data/nextplayer1.txt")
+next_player_2 = os.path.join(os.path.dirname(os.path.abspath(__file__)), "../data/nextplayer2.txt")
+result1 = os.path.join(os.path.dirname(os.path.abspath(__file__)), "../data/result1.txt")
+result2 = os.path.join(os.path.dirname(os.path.abspath(__file__)), "../data/result2.txt")
+result_name_1 = os.path.join(os.path.dirname(os.path.abspath(__file__)), "../data/resultname1.txt")
+result_name_2 = os.path.join(os.path.dirname(os.path.abspath(__file__)), "../data/resultname2.txt")
 players_list_map = {}
 players_db = PlayerStatsDB
 countdown = Countdown
@@ -82,6 +97,72 @@ def serve_static(filename):
     return send_from_directory(os.path.dirname(__file__), filename)
 
 
+
+# ════════════════════════════════════════════════════════════════
+# LIVE SYNC (server-sent events)
+# Pages subscribe to /events; the server publishes a channel name
+# whenever data changes. Channels: scoreboard, top8, players,
+# commentators. Publishing is driven by write hooks in FileUtils and
+# PlayerStatsDB, so every mutation path is covered automatically.
+# ════════════════════════════════════════════════════════════════
+import queue as _queue
+
+_sse_clients = []
+_sse_lock = threading.Lock()
+
+_SSE_FILE_CHANNELS = {
+    "scoreboard.json": "scoreboard",
+    "current_next.json": "top8",
+    "top8_players.json": "top8",
+    "commentators.json": "commentators",
+}
+
+
+def _sse_publish(channel):
+    with _sse_lock:
+        clients = list(_sse_clients)
+    for q in clients:
+        try:
+            q.put_nowait(channel)
+        except _queue.Full:
+            pass
+
+
+def _sse_on_file_write(file_path):
+    channel = _SSE_FILE_CHANNELS.get(os.path.basename(str(file_path)))
+    if channel:
+        _sse_publish(channel)
+
+
+FileUtils.on_write = _sse_on_file_write
+players_db.on_change = lambda: _sse_publish("players")
+
+
+@api.route('/events')
+def sse_events():
+    def stream():
+        q = _queue.Queue(maxsize=100)
+        with _sse_lock:
+            _sse_clients.append(q)
+        try:
+            yield "retry: 2000\n\n"
+            while True:
+                try:
+                    channel = q.get(timeout=25)
+                    yield "data: " + channel + "\n\n"
+                except _queue.Empty:
+                    yield ": keepalive\n\n"
+        finally:
+            with _sse_lock:
+                try:
+                    _sse_clients.remove(q)
+                except ValueError:
+                    pass
+    return Response(stream(), mimetype='text/event-stream',
+                    headers={'Cache-Control': 'no-cache',
+                             'X-Accel-Buffering': 'no'})
+
+
 @api.route('/getdata', methods=['GET'])
 def get_data():
     return json.dumps(FileUtils.read_file(scoreboard_data_file), ensure_ascii=False), 200
@@ -97,33 +178,574 @@ def get_top8_current_next_data():
     return top8.get_current_next_data(), 200
 
 
+@api.route('/resetBracket', methods=['POST'])
+def reset_bracket():
+    """Reset the top 8 run but keep the eight seeded players."""
+    Top8.reset_bracket()
+    return "200"
+
+
 @api.route('/resetTop8', methods=['POST'])
 def reset_top8_data():
     top8.reset()
     return "200"
 
 
+@api.route('/undoNextRound', methods=['POST'])
+def undo_next_round():
+    result = top8.restore_snapshot()
+    if result is None:
+        return "No snapshot available", 400
+    return json.dumps(result, ensure_ascii=False), 200
+
+
+@api.route('/getStartggToken', methods=['GET'])
+def get_startgg_token():
+    try:
+        token = startgg_client.get_token().strip()
+        return json.dumps({"token": token}), 200
+    except Exception:
+        return json.dumps({"token": ""}), 200
+
+
+def _next_player_id(players):
+    """Return next sequential ID like 000001, 000002, etc."""
+    existing_ids = []
+    for k in players:
+        if k.startswith('p_'):
+            try:
+                existing_ids.append(int(k[2:]))
+            except ValueError:
+                pass
+    next_num = (max(existing_ids) + 1) if existing_ids else 1
+    return f"p_{next_num:06d}"
+
+def _read_local_players():
+    """Returns dict of {id: {id, name, team, country, social_handle, social_platform}}"""
+    try:
+        return players_db.get_local_players()
+    except Exception as e:
+        print(f"_read_local_players error: {e}")
+        return {}
+
+def _find_player_by_name(players, name):
+    """Resolve by display name or alias, case-insensitive."""
+    if not name:
+        return None, None
+    n = name.strip().lower()
+    for pid, p in players.items():
+        if p.get("name", "").strip().lower() == n:
+            return pid, p
+    for pid, p in players.items():
+        for alias in (p.get("aliases") or []):
+            if alias.strip().lower() == n:
+                return pid, p
+    return None, None
+
+@api.route('/getLocalPlayers', methods=['GET'])
+def get_local_players():
+    try:
+        players = _read_local_players()
+        result = sorted(players.values(), key=lambda p: p.get("name", "").lower())
+        return json.dumps(result, ensure_ascii=False), 200
+    except Exception:
+        return json.dumps([]), 200
+
+@api.route('/saveLocalPlayer', methods=['POST'])
+def save_local_player():
+    body = request.get_json() or {}
+    name = body.get("name", "").strip()
+    if not name:
+        return "400", 400
+    try:
+        players = _read_local_players()
+        pid, existing = _find_player_by_name(players, name)
+        if pid is None:
+            # New player — assign next ID
+            pid = _next_player_id(players)
+            existing = {"id": pid, "name": name, "team": "", "country": "", "social_handle": "", "social_platform": "", "is_commentator": False, "characters": {}, "roster": {}, "aliases": []}
+        # Only overwrite fields that are explicitly provided and non-empty
+        if body.get("team"):            existing["team"]            = body["team"]
+        if body.get("country"):         existing["country"]         = body["country"]
+        if "social_handle"   in body:              existing["social_handle"]   = body["social_handle"]
+        if "social_platform" in body:              existing["social_platform"] = body["social_platform"]
+        if "is_commentator" in body:        existing["is_commentator"]  = bool(body["is_commentator"])
+        if "characters" in body:
+            if not isinstance(existing.get("characters"), dict):
+                existing["characters"] = {}
+            # Per-game merge: each provided game replaces that game's
+            # pick list wholesale; unmentioned games are untouched.
+            for g, picks in (body["characters"] or {}).items():
+                if isinstance(picks, dict):
+                    picks = [picks]
+                existing["characters"][g] = picks
+        if "roster" in body:
+            if not isinstance(existing.get("roster"), dict):
+                existing["roster"] = {}
+            # Same per-game merge: each provided game replaces that
+            # game's roster list wholesale
+            for g, entries in (body["roster"] or {}).items():
+                if isinstance(entries, dict):
+                    entries = [entries]
+                existing["roster"][g] = entries
+        if "aliases" in body and isinstance(body["aliases"], list):
+            existing["aliases"] = body["aliases"]
+        existing["name"] = name
+        players[pid] = existing
+        players_db.save_local_players(players)
+    except Exception as e:
+        print(f"saveLocalPlayer error: {e}")
+    return "200"
+
+@api.route('/updateLocalPlayer', methods=['POST'])
+def update_local_player():
+    body = request.get_json() or {}
+    pid             = body.get("id", "").strip()
+    name            = body.get("name", "").strip()
+    team            = body.get("team", "")
+    country         = body.get("country", "")
+    social_handle   = body.get("social_handle", "")
+    social_platform = body.get("social_platform", "")
+    is_commentator  = bool(body.get("is_commentator", False))
+    if not pid or not name:
+        return "400", 400
+    try:
+        players = _read_local_players()
+        if pid not in players:
+            return "404", 404
+        # Preserve existing characters/roster unless new ones are provided
+        existing_chars = players[pid].get("characters", {})
+        new_chars = body.get("characters")
+        characters = new_chars if new_chars is not None else existing_chars
+        existing_roster = players[pid].get("roster", {})
+        new_roster = body.get("roster")
+        roster = new_roster if new_roster is not None else existing_roster
+        existing_aliases = players[pid].get("aliases", [])
+        new_aliases = body.get("aliases")
+        aliases = new_aliases if new_aliases is not None else existing_aliases
+        players[pid] = {"id": pid, "name": name, "team": team, "country": country,
+                        "social_handle": social_handle, "social_platform": social_platform,
+                        "is_commentator": is_commentator, "characters": characters,
+                        "roster": roster, "aliases": aliases}
+        players_db.save_local_players(players)
+    except Exception as e:
+        print(f"updateLocalPlayer error: {e}")
+    return "200"
+
+@api.route('/mergePlayers', methods=['POST'])
+def merge_players():
+    """Merge one player record into another.
+
+    Body: { "primary_id": "p_000001", "duplicate_id": "p_000005" }
+    The duplicate's name and aliases become aliases of the primary."""
+    body = request.get_json() or {}
+    primary_id = body.get("primary_id", "")
+    duplicate_id = body.get("duplicate_id", "")
+    if not primary_id or not duplicate_id:
+        return jsonify({"ok": False, "message": "Both players required"}), 400
+    try:
+        ok, message = players_db.merge_players(primary_id, duplicate_id)
+        return jsonify({"ok": ok, "message": message}), (200 if ok else 400)
+    except Exception as e:
+        print(f"mergePlayers error: {e}")
+        return jsonify({"ok": False, "message": str(e)}), 500
+
+
+# ════════════════════════════════════════════════════════════════
+# MATCH HISTORY IMPORT (start.gg -> per-event JSON + all-time rollup)
+# ════════════════════════════════════════════════════════════════
+def _parse_event_slug(raw):
+    """Accept a full start.gg URL or a tournament/.../event/... slug
+    and return (tournament_name, event_name) for the client."""
+    s = (raw or "").strip()
+    # Strip protocol/host and any /overview or trailing bits
+    m = re.search(r"tournament/([^/]+)/event/([^/?#]+)", s)
+    if m:
+        return m.group(1), m.group(2)
+    return None, None
+
+
+def _alias_map_for_rollup():
+    """Identity map is 1:1 today (merge already rewrites ids in the DB),
+    so the rollup needs no remap. Kept as a seam for future use."""
+    return {}
+
+
+def _build_assignments(players):
+    """Map start.gg keys -> local player id for auto-matching.
+
+    Keys: 'u:<user_id>' (from a stored alias like 'sgg:12345') and the
+    raw tag (resolved by name/alias). Tag match is case-insensitive via
+    the player maps."""
+    assignments = {}
+    by_name = {}
+    for pid, p in players.items():
+        by_name[p["name"].strip().lower()] = pid
+        for a in (p.get("aliases") or []):
+            a = a.strip()
+            by_name[a.lower()] = pid
+            # Aliases of the form 'sgg:<userid>' tie a start.gg account
+            if a.lower().startswith("sgg:"):
+                assignments["u:" + a.split(":", 1)[1]] = pid
+    return assignments, by_name
+
+
+@api.route('/importStartggEvent', methods=['POST'])
+def import_startgg_event():
+    """Fetch an event's completed sets and write the per-event file.
+
+    Body: { "slug": "<url or slug>" }
+    Auto-matches entrants to local players by start.gg user id (via
+    'sgg:<id>' aliases) and by tag/alias name. Returns the import
+    summary plus the list of entrants still needing reconciliation."""
+    body = request.get_json() or {}
+    tournament, event = _parse_event_slug(body.get("slug", ""))
+    series = (body.get("series") or "").strip()
+    game = (body.get("game") or "").strip()
+    if not tournament or not event:
+        return jsonify({"ok": False, "message": "Could not parse an event slug from that input"}), 400
+    try:
+        sets = startgg_client.get_completed_sets(tournament, event)
+    except Exception as e:
+        print("importStartggEvent fetch error: " + str(e))
+        return jsonify({"ok": False, "message": "start.gg fetch failed: " + str(e)}), 502
+    try:
+        standings = startgg_client.get_event_standings(tournament, event)
+    except Exception as e:
+        print("importStartggEvent standings warning: " + str(e))
+        standings = None
+    if not sets:
+        return jsonify({"ok": False, "message": "No completed sets found for that event"}), 404
+
+    players = players_db.get_local_players()
+    assignments, by_name = _build_assignments(players)
+    # Also resolve by tag name where user-id didn't match
+    for s in sets:
+        for side in ("p1", "p2"):
+            ent = s[side]
+            uid_key = ("u:" + str(ent["user_id"])) if ent.get("user_id") else None
+            if uid_key and uid_key in assignments:
+                continue
+            pid = by_name.get((ent.get("tag") or "").strip().lower())
+            if pid:
+                assignments[ent.get("tag")] = pid
+
+    event_slug = "tournament/" + tournament + "/event/" + event
+    event_name = sets[0].get("event_name") or event
+    tourn_name = sets[0].get("tournament_name") or tournament
+    count = MatchHistory.save_event_import(
+        event_slug, event_name, tourn_name, sets,
+        datetime.now().isoformat(timespec="seconds"), assignments, standings,
+        series if series else None, game if game else None)
+    MatchHistory.rebuild_alltime(_alias_map_for_rollup())
+    unassigned = MatchHistory.collect_unassigned(event_slug)
+    print("Imported %d sets from '%s' (%s) -- %d player(s) need reconciling"
+          % (count, event_name, event_slug, len(unassigned)))
+    return jsonify({"ok": True, "event_slug": event_slug, "event_name": event_name,
+                    "tournament_name": tourn_name, "set_count": count,
+                    "unassigned": unassigned}), 200
+
+
+@api.route('/listImportedEvents', methods=['GET'])
+def list_imported_events():
+    return jsonify(MatchHistory.list_events()), 200
+
+
+@api.route('/reconcileImport', methods=['POST'])
+def reconcile_import():
+    """Attach an unmatched start.gg entrant to a local player.
+
+    Body: { "event_slug", "tag", "user_id" (optional),
+             "action": "existing"|"new", "player_id" (for existing) }
+    For 'existing': records the tag (and 'sgg:<user_id>' if present) as
+    aliases of the chosen player, so future imports auto-match. For
+    'new': creates a player from the tag with those same aliases.
+    Then re-stamps the event file and rebuilds the rollup."""
+    body = request.get_json() or {}
+    event_slug = body.get("event_slug", "")
+    tag = (body.get("tag") or "").strip()
+    user_id = body.get("user_id")
+    action = body.get("action")
+    if not event_slug or not tag or action not in ("existing", "new"):
+        return jsonify({"ok": False, "message": "Missing event_slug, tag, or action"}), 400
+
+    players = players_db.get_local_players()
+    new_aliases = [tag]
+    if user_id:
+        new_aliases.append("sgg:" + str(user_id))
+
+    if action == "existing":
+        pid = body.get("player_id", "")
+        if pid not in players:
+            return jsonify({"ok": False, "message": "Unknown player_id"}), 400
+        existing = set(a.lower() for a in players[pid].get("aliases", []))
+        for a in new_aliases:
+            if a.lower() != players[pid]["name"].lower() and a.lower() not in existing:
+                players[pid].setdefault("aliases", []).append(a)
+                existing.add(a.lower())
+    else:  # new
+        pid = _next_player_id(players)
+        players[pid] = {"id": pid, "name": tag, "team": "", "country": "",
+                        "social_handle": "", "social_platform": "",
+                        "is_commentator": False, "characters": {}, "roster": {},
+                        "aliases": [a for a in new_aliases if a.lower() != tag.lower()]}
+    players_db.save_local_players(players)
+
+    # Re-stamp this event with refreshed assignments, then rebuild rollup
+    players = players_db.get_local_players()
+    assignments, by_name = _build_assignments(players)
+    data = MatchHistory.load_event(event_slug)
+    if data:
+        raw_sets = []
+        for s in data.get("sets", {}).values():
+            raw_sets.append({
+                "set_id": s["set_id"], "full_round_text": s.get("round_name", ""),
+                "round": s.get("round"), "completed_at": s.get("completed_at"),
+                "event_name": data.get("event_name"), "tournament_name": data.get("tournament_name"),
+                "p1": {"tag": s["p1"]["tag"], "team": s["p1"].get("team", ""),
+                       "user_id": s["p1"].get("user_id"), "entrant_id": s["p1"].get("entrant_id"), "country": "US"},
+                "p2": {"tag": s["p2"]["tag"], "team": s["p2"].get("team", ""),
+                       "user_id": s["p2"].get("user_id"), "entrant_id": s["p2"].get("entrant_id"), "country": "US"},
+                "p1_score": s.get("p1_score"), "p2_score": s.get("p2_score"),
+                "winner_entrant_id": s.get("winner_entrant_id"), "winner_user_id": s.get("winner_user_id"),
+            })
+        # name-tag resolution pass
+        for s in raw_sets:
+            for side in ("p1", "p2"):
+                ent = s[side]
+                uid_key = ("u:" + str(ent["user_id"])) if ent.get("user_id") else None
+                if uid_key and uid_key in assignments:
+                    continue
+                p = by_name.get((ent.get("tag") or "").strip().lower())
+                if p:
+                    assignments[ent.get("tag")] = p
+        MatchHistory.save_event_import(event_slug, data.get("event_name"),
+                                       data.get("tournament_name"), raw_sets,
+                                       data.get("imported_at"), assignments)
+    MatchHistory.rebuild_alltime(_alias_map_for_rollup())
+    unassigned = MatchHistory.collect_unassigned(event_slug)
+    return jsonify({"ok": True, "player_id": pid, "unassigned": unassigned}), 200
+
+
+@api.route('/deleteImportedEvent', methods=['POST'])
+def delete_imported_event():
+    """Remove an imported event's data and rebuild the rollup.
+
+    Body: { "event_slug": "..." }. Players/aliases are left intact."""
+    body = request.get_json() or {}
+    event_slug = body.get("event_slug", "")
+    if not event_slug:
+        return jsonify({"ok": False, "message": "event_slug required"}), 400
+    removed = MatchHistory.delete_event(event_slug)
+    MatchHistory.rebuild_alltime(_alias_map_for_rollup())
+    if removed:
+        print("Removed imported event '%s'" % event_slug)
+    return jsonify({"ok": True, "removed": removed}), 200
+
+
+@api.route('/listSeries', methods=['GET'])
+def list_series():
+    return jsonify(MatchHistory.list_series()), 200
+
+
+@api.route('/setEventGame', methods=['POST'])
+def set_event_game():
+    """Assign/clear an event's game tag.
+
+    Body: { "event_slug": "...", "game": "ssf2x" }"""
+    body = request.get_json() or {}
+    event_slug = body.get("event_slug", "")
+    if not event_slug:
+        return jsonify({"ok": False, "message": "event_slug required"}), 400
+    ok = MatchHistory.set_event_game(event_slug, body.get("game", ""))
+    MatchHistory.rebuild_alltime(_alias_map_for_rollup())
+    return jsonify({"ok": ok}), (200 if ok else 404)
+
+
+@api.route('/setEventDisplayName', methods=['POST'])
+def set_event_display_name():
+    """Set/clear an event's custom display name.
+
+    Body: { "event_slug": "...", "display_name": "Texas Showdown 2026" }"""
+    body = request.get_json() or {}
+    event_slug = body.get("event_slug", "")
+    if not event_slug:
+        return jsonify({"ok": False, "message": "event_slug required"}), 400
+    ok = MatchHistory.set_event_display_name(event_slug, body.get("display_name", ""))
+    return jsonify({"ok": ok}), (200 if ok else 404)
+
+
+@api.route('/setEventSeries', methods=['POST'])
+def set_event_series():
+    """Assign/clear an event's series tag.
+
+    Body: { "event_slug": "...", "series": "STunday" }"""
+    body = request.get_json() or {}
+    event_slug = body.get("event_slug", "")
+    if not event_slug:
+        return jsonify({"ok": False, "message": "event_slug required"}), 400
+    ok = MatchHistory.set_event_series(event_slug, body.get("series", ""))
+    return jsonify({"ok": ok}), (200 if ok else 404)
+
+
+@api.route('/getMatchupHistory', methods=['GET'])
+def get_matchup_history():
+    """H2H record between two players.
+
+    Query: ?p1=<id>&p2=<id>&event=<slug optional>
+    Returns all-time record always, plus event record when event given."""
+    p1 = request.args.get("p1", "")
+    p2 = request.args.get("p2", "")
+    if not p1 or not p2:
+        return jsonify({"ok": False, "message": "p1 and p2 required"}), 400
+    game = request.args.get("game", "")  # filter all records to this game
+    aw, al = MatchHistory.alltime_record(p1, p2, game)
+    out = {"ok": True, "alltime": {"wins": aw, "losses": al}}
+    series = request.args.get("series")
+    if series:
+        sw, sl = MatchHistory.series_record(series, p1, p2, game=game)
+        out["series"] = {"wins": sw, "losses": sl, "name": series}
+    event_slug = request.args.get("event")
+    if event_slug:
+        ew, el = MatchHistory.event_record(event_slug, p1, p2, game=game)
+        out["event"] = {
+            "wins": ew, "losses": el, "event_slug": event_slug,
+            "p1_placement": MatchHistory.event_placement(event_slug, p1),
+            "p2_placement": MatchHistory.event_placement(event_slug, p2),
+        }
+    return jsonify(out), 200
+
+
+@api.route('/deleteLocalPlayer', methods=['POST'])
+def delete_local_player():
+    body = request.get_json() or {}
+    pid  = body.get("id", "").strip()
+    name = body.get("name", "").strip()
+    if not pid and not name:
+        return "400", 400
+    try:
+        players = _read_local_players()
+        if pid and pid in players:
+            del players[pid]
+        elif name:
+            found_pid, _ = _find_player_by_name(players, name)
+            if found_pid:
+                del players[found_pid]
+        players_db.save_local_players(players)
+    except Exception as e:
+        print(f"deleteLocalPlayer error: {e}")
+    return "200"
+
+
+
+@api.route('/getCharacterPacks', methods=['GET'])
+def get_character_packs():
+    """List all packs available for a game (subfolders of images/games/<game>/)."""
+    game = request.args.get("game", "").strip()
+    if not game:
+        return jsonify([]), 200
+    try:
+        base = os.path.join(os.path.dirname(os.path.abspath(__file__)), "images/games", game)
+        if not os.path.isdir(base):
+            return jsonify([]), 200
+        packs = sorted([p for p in os.listdir(base)
+                        if os.path.isdir(os.path.join(base, p))])
+        return jsonify(packs), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@api.route('/getCharacterList', methods=['GET'])
+def get_character_list():
+    """Return character names + palette paths for a game/pack."""
+    game = request.args.get("game", "").strip()
+    pack = request.args.get("pack", "").strip()
+    if not game or not pack:
+        return jsonify({}), 200
+    try:
+        pack_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                                "images/games", game, pack)
+        if not os.path.isdir(pack_dir):
+            return jsonify({}), 200
+
+        image_exts = {".png", ".jpg", ".jpeg", ".gif", ".webp"}
+        char_map = {}  # { characterName: [ {palette: N, path: "..."}, ... ] }
+
+        for fname in sorted(os.listdir(pack_dir)):
+            stem, ext = os.path.splitext(fname)
+            if ext.lower() not in image_exts:
+                continue
+            if "_" not in stem:
+                continue
+            char, palette = stem.rsplit("_", 1)
+            if not palette.isdigit():
+                continue
+            # Strip game code prefix (e.g. "ssf2x-ryu" -> "ryu")
+            if "-" in char:
+                char = char.split("-", 1)[1]
+            if char not in char_map:
+                char_map[char] = []
+            # Path served relative to ScoreboardDash root via Flask static handler
+            char_map[char].append({
+                "palette": int(palette),
+                "file": f"images/games/{game}/{pack}/{fname}"
+            })
+
+        # Sort palettes within each character
+        for char in char_map:
+            char_map[char].sort(key=lambda x: x["palette"])
+
+        return jsonify(char_map), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
 @api.route('/getCommentators', methods=['GET'])
 def get_commentators():
-    return json.dumps(FileUtils.read_file(commentators_file), ensure_ascii=False), 200
+    """Players flagged as commentators in their profile."""
+    players = _read_local_players()
+    result = {p["name"]: {"name": p["name"], "soc": p.get("social_handle", "")}
+              for p in players.values() if p.get("is_commentator")}
+    return json.dumps(result, ensure_ascii=False), 200
+
+
+@api.route('/getCommentatorPlayers', methods=['GET'])
+def get_commentator_players():
+    players = _read_local_players()
+    result = sorted(
+        [p for p in players.values() if p.get("is_commentator")],
+        key=lambda p: p.get("name", "").lower()
+    )
+    return json.dumps(result, ensure_ascii=False), 200
 
 
 @api.route('/addCommentator', methods=['POST'])
 def add_commentator():
-    commentator_data = request.get_json()
-    commentators = FileUtils.read_file(commentators_file)
-    commentators[commentator_data.get("name")] = commentator_data
-    FileUtils.write_file(commentators_file, commentators)
+    data = request.get_json() or {}
+    name = data.get("name", "").strip()
+    if not name:
+        return "400", 400
+    players = _read_local_players()
+    pid, existing = _find_player_by_name(players, name)
+    if pid is None:
+        pid = _next_player_id(players)
+        existing = {"id": pid, "name": name, "team": "", "country": "", "social_handle": "", "social_platform": "", "is_commentator": False}
+    if data.get("soc"):
+        existing["social_handle"] = data["soc"]
+    players[pid] = existing
+    players_db.save_local_players(players)
     return "200"
 
 
 @api.route('/deleteCommentators', methods=['POST'])
 def delete_commentator():
-    commentator_names = request.get_json()
-    commentators = FileUtils.read_file(commentators_file)
-    for name in commentator_names:
-        del commentators[name]
-    FileUtils.write_file(commentators_file, commentators)
+    names = request.get_json() or []
+    players = _read_local_players()
+    for name in names:
+        pid, _ = _find_player_by_name(players, name)
+        if pid:
+            del players[pid]
+    players_db.save_local_players(players)
     return "200"
 
 
@@ -243,51 +865,196 @@ def get_all_events():
     return jsonify(list(players_list_map.keys())), 200
 
 
+@api.route('/getGames', methods=['GET'])
+def get_games():
+    """All registered games with their character slot counts.
+
+    Folder-scanned games are auto-registered at 1 slot so the result
+    always covers everything under images/games/."""
+    try:
+        players_db.ensure_games(character_image_loader.list_games())
+        return jsonify(players_db.get_games()), 200
+    except Exception as e:
+        print(f"getGames error: {e}")
+        return jsonify({}), 200
+
+
+@api.route('/setGameSlots', methods=['POST'])
+def set_game_slots():
+    body = request.get_json() or {}
+    name = body.get("game", "").strip()
+    try:
+        slots = int(body.get("char_slots", 1))
+    except (TypeError, ValueError):
+        return "400", 400
+    if not name:
+        return "400", 400
+    players_db.set_game_slots(name, slots)
+    return "200"
+
+
 @api.route('/getAllGameImageDir', methods=['GET'])
 def get_all_game_image_dir():
     global character_image_loader, full_data
     current_game = full_data.get("current_game")
     if not current_game:
         current_game = ""
+    games = character_image_loader.list_games()
+    players_db.ensure_games(games)
     result = {
         "current_game": current_game,
-        "game_list": character_image_loader.list_games()
+        "game_list": games
     }
     return jsonify(result), 200
 
 
-@api.route('/getCharacterImages', methods=['GET'])
-def get_character_images():
-    global character_image_loader
-    game = request.args.get("game")
-    return jsonify(character_image_loader.get_character_images(game)), 200
+GITHUB_API  = "https://api.github.com/repos/joaorb64/StreamHelperAssets/contents/games"
+GITHUB_RAW  = "https://raw.githubusercontent.com/joaorb64/StreamHelperAssets/main/games"
+IMAGES_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "images/games")
 
 
-@api.route('/savePlayerCharacterData', methods=['POST'])
-def save_player_character_data():
-    global players_db
-    data = request.get_json()
-    players_db.save_player_characters(data)
-    return "200"
+@api.route('/streamhelper/games', methods=['GET'])
+def streamhelper_list_games():
+    """List all games available in StreamHelperAssets."""
+    try:
+        resp = requests.get(GITHUB_API, timeout=10,
+                            headers={"Accept": "application/vnd.github.v3+json"})
+        if not resp.ok:
+            return jsonify({"error": f"GitHub API error {resp.status_code}"}), 500
+        games = [item["name"] for item in resp.json() if item["type"] == "dir"]
+        games.sort()
+        return jsonify(games), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 
-@api.route('/getPlayerCharacterData', methods=['GET'])
-def get_player_character_data():
-    global players_db
-    player = request.args.get("player")
-    game = request.args.get("game")
-    if not player:
-        return jsonify(players_db.get_last_access_player_info()), 200
-    return jsonify(players_db.get_player_characters(player, game)), 200
+@api.route('/streamhelper/packs', methods=['GET'])
+def streamhelper_list_packs():
+    """List icon packs available for a game (all dirs except base_files)."""
+    game = request.args.get("game", "")
+    if not game:
+        return jsonify({"error": "game required"}), 400
+    try:
+        # Packs live at game root level, excluding base_files
+        url = f"{GITHUB_API}/{game}"
+        resp = requests.get(url, timeout=10,
+                            headers={"Accept": "application/vnd.github.v3+json"})
+        if not resp.ok:
+            return jsonify({"error": f"GitHub API error {resp.status_code}"}), 500
+        packs = [item["name"] for item in resp.json()
+                 if item["type"] == "dir"]
+        packs.sort()
+        return jsonify(packs), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 
-@api.route('/deletePlayerCharacterData', methods=['POST'])
-def delete_player_character_data():
-    global players_db
-    data = request.get_json()
-    player = data["player"]
-    players_db.remove_player(player)
-    return "200"
+@api.route('/streamhelper/download', methods=['POST'])
+def streamhelper_download():
+    """Download a full icon pack for a game from StreamHelperAssets."""
+    body     = request.get_json() or {}
+    game     = body.get("game", "").strip()
+    pack     = body.get("pack", "").strip()
+    if not game or not pack:
+        return jsonify({"error": "game and pack required"}), 400
+
+    try:
+        # 1. Fetch config.json to get character codenames
+        config_url = f"{GITHUB_RAW}/{game}/base_files/config.json"
+        config_resp = requests.get(config_url, timeout=10)
+        if not config_resp.ok:
+            return jsonify({"error": f"Could not fetch config.json: {config_resp.status_code}"}), 500
+        config = config_resp.json()
+
+        # character_to_codename maps name → {codename, ...}
+        char_map = config.get("character_to_codename", {})
+        # Build list of codenames
+        codenames = list({v.get("codename", k) if isinstance(v, dict) else v
+                          for k, v in char_map.items()})
+        if not codenames:
+            # Fallback: list files in the pack directory via API
+            pack_url = f"{GITHUB_API}/{game}/base_files/{pack}"
+            pack_resp = requests.get(pack_url, timeout=10,
+                                     headers={"Accept": "application/vnd.github.v3+json"})
+            if pack_resp.ok:
+                codenames = [item["name"].rsplit(".", 1)[0]
+                             for item in pack_resp.json()
+                             if item["type"] == "file" and
+                             item["name"].lower().endswith((".png",".jpg",".jpeg",".webp",".gif"))]
+
+        # 2. Ensure output directory exists
+        out_dir = os.path.join(IMAGES_PATH, game, pack)
+        os.makedirs(out_dir, exist_ok=True)
+
+        # 3. Fetch each icon and save with _skin suffix
+        downloaded = []
+        failed = []
+        # Each codename may have multiple skins (named codename_0.png, codename_1.png...)
+        # First try to list the pack to get actual filenames
+        pack_api_url = f"{GITHUB_API}/{game}/{pack}"
+        pack_api_resp = requests.get(pack_api_url, timeout=10,
+                                     headers={"Accept": "application/vnd.github.v3+json"})
+        # For base_files, recursively collect files from subfolders
+        if pack_api_resp.ok:
+            items = pack_api_resp.json()
+            subdirs = [item["name"] for item in items if item["type"] == "dir"]
+            files = [item["name"] for item in items
+                     if item["type"] == "file" and
+                     item["name"].lower().endswith((".png",".jpg",".jpeg",".webp",".gif"))]
+            # If pack has subdirs (like base_files/icon/), collect from each
+            for subdir in subdirs:
+                sub_url = f"{GITHUB_API}/{game}/{pack}/{subdir}"
+                sub_resp = requests.get(sub_url, timeout=10,
+                                        headers={"Accept": "application/vnd.github.v3+json"})
+                if sub_resp.ok:
+                    for item in sub_resp.json():
+                        if item["type"] == "file" and                            item["name"].lower().endswith((".png",".jpg",".jpeg",".webp")):
+                            files.append(subdir + "/" + item["name"])
+        else:
+            files = [f"{c}_0.png" for c in codenames]
+
+        for fname in files:
+            # Strip subdir prefix if present (e.g. "icon/ryu_0.png" -> "ryu_0.png")
+            flat_fname = fname.split("/")[-1]
+            stem = flat_fname.rsplit(".", 1)[0]  # e.g. ryu_0
+            if "_" not in stem or not stem.rsplit("_", 1)[1].isdigit():
+                dest_name = stem + "_0.png"
+            else:
+                dest_name = flat_fname
+            # Route logo files to a Logos subfolder
+            is_logo = stem.lower().startswith("logo")
+            if is_logo:
+                logo_dir = os.path.join(IMAGES_PATH, game, "game_logo")
+                os.makedirs(logo_dir, exist_ok=True)
+                file_dest_dir = logo_dir
+            else:
+                file_dest_dir = out_dir
+
+            raw_url = f"{GITHUB_RAW}/{game}/{pack}/{fname}"
+            img_resp = requests.get(raw_url, timeout=15)
+            if img_resp.ok:
+                # Preserve original extension
+                orig_ext = os.path.splitext(fname.split("/")[-1])[1]
+                dest_name_ext = os.path.splitext(dest_name)[0] + orig_ext
+                dest = os.path.join(file_dest_dir, dest_name_ext)
+                with open(dest, "wb") as f:
+                    f.write(img_resp.content)
+                downloaded.append(dest_name)
+            else:
+                failed.append(fname)
+
+        return jsonify({
+            "downloaded": len(downloaded),
+            "failed":     len(failed),
+            "failed_files": failed[:10],
+            "game":       game,
+            "pack":       pack,
+            "out_dir":    out_dir
+        }), 200
+
+    except Exception as e:
+        import traceback
+        return jsonify({"error": str(e), "trace": traceback.format_exc()}), 500
 
 
 @api.route('/clearPlayersList', methods=['POST'])
@@ -378,14 +1145,9 @@ def update_comm_data():
     global full_data
     with full_data_lock:
         temp = copy.deepcopy(full_data)
-        if "com1" in json_data:
-            temp["com1"] = json_data.get("com1", "")
-        if "com2" in json_data:
-            temp["com2"] = json_data.get("com2", "")
-        if "soc1" in json_data:
-            temp["soc1"] = json_data.get("soc1", "")
-        if "soc2" in json_data:
-            temp["soc2"] = json_data.get("soc2", "")
+        for key in ["com1", "com2", "soc1", "soc2", "com1Plat", "com2Plat"]:
+            if key in json_data:
+                temp[key] = json_data[key]
         full_data = temp
     FileUtils.write_file(scoreboard_data_file, full_data)
     return "200"
@@ -420,6 +1182,35 @@ def update_data_no_scores():
         temp["nextRound"] = json_data.get("nextRound", temp["round"])
         temp["p1Seed"] = json_data.get("p1Seed", "")
         temp["p2Seed"] = json_data.get("p2Seed", "")
+        temp["p1SocialHandle"]    = json_data.get("p1SocialHandle",    "")
+        temp["p1SocialPlatform"]  = json_data.get("p1SocialPlatform",  "")
+        temp["p2SocialHandle"]    = json_data.get("p2SocialHandle",    "")
+        temp["p2SocialPlatform"]  = json_data.get("p2SocialPlatform",  "")
+        temp["nextSocial1Handle"]   = json_data.get("nextSocial1Handle",   "")
+        temp["nextSocial1Platform"] = json_data.get("nextSocial1Platform", "")
+        temp["nextSocial2Handle"]   = json_data.get("nextSocial2Handle",   "")
+        temp["nextSocial2Platform"] = json_data.get("nextSocial2Platform", "")
+        temp["p1Character"]     = json_data.get("p1Character",     "")
+        temp["p1CharacterPack"] = json_data.get("p1CharacterPack", "")
+        temp["p1Palette"]       = json_data.get("p1Palette",       0)
+        temp["p1CharacterFile"] = json_data.get("p1CharacterFile", "")
+        temp["p2Character"]     = json_data.get("p2Character",     "")
+        temp["p2CharacterPack"] = json_data.get("p2CharacterPack", "")
+        temp["p2Palette"]       = json_data.get("p2Palette",       0)
+        temp["p2CharacterFile"] = json_data.get("p2CharacterFile", "")
+        # Head-to-head fields (drive the H2H overlays)
+        temp["h2hVisible"]            = json_data.get("h2hVisible", False)
+        temp["h2hScope"]              = json_data.get("h2hScope", "alltime")
+        temp["h2hEventName"]          = json_data.get("h2hEventName", "")
+        temp["h2hSeriesName"]         = json_data.get("h2hSeriesName", "")
+        temp["p1MatchupWins"]         = json_data.get("p1MatchupWins", "")
+        temp["p1MatchupLosses"]       = json_data.get("p1MatchupLosses", "")
+        temp["p2MatchupWins"]         = json_data.get("p2MatchupWins", "")
+        temp["p2MatchupLosses"]       = json_data.get("p2MatchupLosses", "")
+        temp["p1EventPlacement"]      = json_data.get("p1EventPlacement", "")
+        temp["p2EventPlacement"]      = json_data.get("p2EventPlacement", "")
+        temp["p1EventPlacementText"]  = json_data.get("p1EventPlacementText", "")
+        temp["p2EventPlacementText"]  = json_data.get("p2EventPlacementText", "")
         full_data = temp
     FileUtils.write_file(scoreboard_data_file, full_data)
     return "200"
@@ -481,6 +1272,37 @@ def update_current_players():
         full_data = temp
     FileUtils.write_file(scoreboard_data_file, full_data)
     top8.update_current_players_info(full_data)
+    return "200"
+
+
+@api.route('/updatePlayerCharacters', methods=['POST'])
+def update_player_characters():
+    """Write one player's character picks into scoreboard.json.
+
+    Used by pages other than the event dashboard (e.g. Top 8) so they
+    can update character data without owning the full scoreboard JSON.
+    Body: { "player": "1"|"2", "characters": [ {slot, pack, character,
+    palette, file}, ... ] }"""
+    global full_data
+    body = request.get_json() or {}
+    player = str(body.get("player", "")).strip()
+    if player not in ("1", "2", "1Next", "2Next"):
+        return "400", 400
+    chars = body.get("characters") or []
+    if isinstance(chars, dict):
+        chars = [chars]
+    if not isinstance(chars, list):
+        return "400", 400
+    first = next((c for c in chars if isinstance(c, dict) and c.get("file")), None)
+    with full_data_lock:
+        temp = copy.deepcopy(full_data)
+        temp["p" + player + "Characters"]    = chars
+        temp["p" + player + "Character"]     = (first or {}).get("character", "")
+        temp["p" + player + "CharacterPack"] = (first or {}).get("pack", "")
+        temp["p" + player + "Palette"]       = (first or {}).get("palette", 0)
+        temp["p" + player + "CharacterFile"] = (first or {}).get("file", "")
+        full_data = temp
+    FileUtils.write_file(scoreboard_data_file, full_data)
     return "200"
 
 
@@ -773,6 +1595,8 @@ def get_server_info():
 
 
 if __name__ == "__main__":
+    # Set working directory to ScoreboardDash/ so all relative paths resolve correctly
+    os.chdir(os.path.dirname(os.path.abspath(__file__)))
     try:
         print("Now we talk'n, server started ...")
         parser = argparse.ArgumentParser(description = 'Scoreboard server')
@@ -805,11 +1629,11 @@ if __name__ == "__main__":
         if args.windows:
             open_browser("http://" + server_info, 'C:/Program Files (x86)/Google/Chrome/Application/chrome.exe %s')
         elif args.mac:
-            open_browser("http://" + server_info, 'open -a /Applications/Google\ Chrome.app %s')
+            open_browser("http://" + server_info, 'open -a /Applications/Google\\ Chrome.app %s')
         elif args.linux:
             open_browser("http://" + server_info, '/usr/bin/google-chrome %s')
 
         players_db.init_db()
-        api.run(host=server_ip, port=server_port)
+        api.run(host=server_ip, port=server_port, threaded=True)
     except KeyboardInterrupt:
         pass

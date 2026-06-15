@@ -1,0 +1,52 @@
+/* H2H Banner -- center-bottom popup. Matches the scoreboard overlay's
+   Rigid Square font treatment. Tweak freely. */
+
+@font-face {
+    src: url('../../resources/Fonts/Rigid Square - ExtraBold.ttf');
+    font-family: "RigidSquareExtraBold";
+}
+
+html, body {
+    width: 1920px;
+    height: 1080px;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+    background: transparent;
+}
+
+/* Container pinned to center-bottom of the 1920x1080 canvas.
+   Hidden state parks it fully below the bottom edge (translateY 200px
+   clears the box height + its 40px offset), so it slides up into view
+   on show and slides back down off-screen on hide. The ease-in-out
+   cubic-bezier gives a smooth settle in both directions. */
+#h2h-banner {
+    position: absolute;
+    left: 50%;
+    bottom: 40px;
+    transform: translateX(-50%) translateY(200px);
+    opacity: 0;
+    transition: transform .5s cubic-bezier(.22,.61,.36,1), opacity .5s ease;
+
+    /* Box treatment */
+    background: rgba(13, 24, 40, 0.92);
+    border-top: 3px solid #E8A050;
+    padding: 14px 40px;
+    border-radius: 4px;
+    box-shadow: 0 4px 24px rgba(0,0,0,.55);
+    max-width: 1400px;
+    white-space: nowrap;
+}
+#h2h-banner.show {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+}
+
+#h2h-line {
+    font-family: Impact, "RigidSquareExtraBold";
+    font-size: 40px;
+    color: #FFFFFF;
+    text-transform: uppercase;
+    letter-spacing: .02em;
+    -webkit-text-stroke: 1px black;
+}

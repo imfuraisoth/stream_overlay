@@ -4,7 +4,11 @@ import json, os
 from filelock import FileLock
 
 
+# Optional observer: set FileUtils.on_write = fn(file_path) to be
+# notified after every successful write (used for live page sync)
 class FileUtils:
+
+    on_write = None
 
     def __init__(self):
         raise Exception("Utility class")
@@ -34,6 +38,11 @@ class FileUtils:
                 f.write(data_to_write)
 
             os.replace(temp_file, file_path)
+            if FileUtils.on_write:
+                try:
+                    FileUtils.on_write(file_path)
+                except Exception:
+                    pass
 
     @staticmethod
     def list_files(directory):

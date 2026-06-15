@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Top 8 Bracket</title>
+  <script src="../sync.js"></script>
+<script>
+    (function(){
+      var s = localStorage.getItem('sc_theme_popout');
+      if (!s) return;
+      try {
+        var v = JSON.parse(s);
+        Object.keys(v).forEach(function(k){ document.documentElement.style.setProperty(k,v[k]); });
+      } catch(e) {}
+    })();
+  </script>
+  <link href="style.css" rel="stylesheet" type="text/css">
+  <link href="../theme/theme.css" rel="stylesheet" type="text/css">
+  <style>
+    /* ── POPOUT OVERRIDES ── */
+    body { overflow: auto; }
+
+    /* Hide interactive controls but NOT theme buttons */
+    .set-next-btn,
+    .score-field,
+    .name-picker,
+    .bracket-player-label,
+    select:not(.name-picker) { display: none !important; }
+
+    button:not(.theme-nav-btn):not(.theme-preset-btn):not(.theme-panel-close):not(.theme-reset-btn) {
+      display: none !important;
+    }
+
+    /* Make name inputs look like plain text */
+    .bracket-player input[type="text"] {
+      pointer-events: none;
+      border: none !important;
+      background: transparent !important;
+      box-shadow: none !important;
+      outline: none !important;
+      cursor: default;
+      padding: 0 !important;
+    }
+    .name-input-wrap { flex: 1; }
+
+    /* Team tag */
+    .bracket-team-tag {
+      font-size: 11px;
+      color: var(--accent);
+      font-family: var(--font-d);
+      font-weight: 700;
+      letter-spacing: .06em;
+      margin-right: 5px;
+      flex-shrink: 0;
+    }
+
+    /* Score display */
+    .bracket-score-display {
+      font-size: 18px;
+      color: var(--fg);
+      font-family: var(--font-d);
+      font-weight: 700;
+      min-width: 24px;
+      text-align: right;
+      flex-shrink: 0;
+    }
+
+    .bracket-player {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    #refresh-indicator {
+      position: fixed;
+      bottom: 8px;
+      right: 12px;
+      font-size: 10px;
+      color: var(--fg2);
+      font-family: var(--font-d);
+      letter-spacing: .08em;
+      opacity: .4;
+    }
+  </style>
+</head>
+<body>
+<div id="refresh-indicator">AUTO-REFRESH 3s</div>
+<div>
+  <nav class="top-navbar-container">
+    <span style="font-family:var(--font-d);font-size:13px;font-weight:700;letter-spacing:.1em;color:var(--accent);">TOP 8 BRACKET</span>
+  </nav>
+  <div class="page-content">
+
+    <!-- WINNERS BRACKET -->
+    <div class="section-panel">
+      <div class="section-header">Winners Bracket</div>
+      <div class="bracket-flow-row">
+
+        <div class="bracket-col">
+          <div class="bracket-match" id="winner1">
+            <div class="bracket-match-header"><span class="bracket-match-title">W Semis — Match 1</span></div>
+            <div class="bracket-player">
+              <span class="bracket-team-tag" id="po-team-w1"></span>
+              <div class="name-input-wrap"><input id="po-name-w1" type="text" readonly placeholder="—"></div>
+              <span class="bracket-score-display" id="po-score-w1"></span>
+            </div>
+            <div class="bracket-player" style="margin-top:5px;">
+              <span class="bracket-team-tag" id="po-team-w2"></span>
+              <div class="name-input-wrap"><input id="po-name-w2" type="text" readonly placeholder="—"></div>
+              <span class="bracket-score-display" id="po-score-w2"></span>
+            </div>
+          </div>
+          <div class="bracket-connector-gap"></div>
+          <div class="bracket-match" id="winner2">
+            <div class="bracket-match-header"><span class="bracket-match-title">W Semis — Match 2</span></div>
+            <div class="bracket-player">
+              <span class="bracket-team-tag" id="po-team-w3"></span>
+              <div class="name-input-wrap"><input id="po-name-w3" type="text" readonly placeholder="—"></div>
+              <span class="bracket-score-display" id="po-score-w3"></span>
+            </div>
+            <div class="bracket-player" style="margin-top:5px;">
+              <span class="bracket-team-tag" id="po-team-w4"></span>
+              <div class="name-input-wrap"><input id="po-name-w4" type="text" readonly placeholder="—"></div>
+              <span class="bracket-score-display" id="po-score-w4"></span>
+            </div>
+          </div>
+        </div>
+
+        <div class="flow-connector flow-merge"><span class="flow-arrow-tip"></span></div>
+
+        <div class="bracket-col bracket-col-center">
+          <div class="bracket-match" id="winners_semis">
+            <div class="bracket-match-header"><span class="bracket-match-title">Winners Finals</span></div>
+            <div class="bracket-player">
+              <span class="bracket-team-tag" id="po-team-w1-wf"></span>
+              <div class="name-input-wrap"><input id="po-name-w1-wf" type="text" readonly placeholder="—"></div>
+              <span class="bracket-score-display" id="po-score-w1-wf"></span>
+            </div>
+            <div class="bracket-player" style="margin-top:5px;">
+              <span class="bracket-team-tag" id="po-team-w2-wf"></span>
+              <div class="name-input-wrap"><input id="po-name-w2-wf" type="text" readonly placeholder="—"></div>
+              <span class="bracket-score-display" id="po-score-w2-wf"></span>
+            </div>
+          </div>
+        </div>
+
+        <div class="flow-connector flow-arrow"><span class="flow-arrow-tip"></span></div>
+
+        <div class="bracket-col bracket-col-center">
+          <div class="bracket-match" id="winners_finals">
+            <div class="bracket-match-header"><span class="bracket-match-title">Grand Finals</span> <span class="gf-reset-badge" id="gf_reset_badge" style="display:none;">Bracket Reset</span></div>
+            <div class="bracket-player">
+              <span class="bracket-team-tag" id="po-team-w1-gf"></span>
+              <div class="name-input-wrap"><input id="po-name-w1-gf" type="text" readonly placeholder="—"></div>
+              <span class="bracket-score-display" id="po-score-w1-gf"></span>
+              <span class="bracket-score-display gf2-score" id="po-score2-w1-gf" style="display:none;" title="Reset set score"></span>
+            </div>
+            <div class="bracket-player" style="margin-top:5px;">
+              <span class="bracket-team-tag" id="po-team-w2-gf"></span>
+              <div class="name-input-wrap"><input id="po-name-w2-gf" type="text" readonly placeholder="—"></div>
+              <span class="bracket-score-display" id="po-score-w2-gf"></span>
+              <span class="bracket-score-display gf2-score" id="po-score2-w2-gf" style="display:none;" title="Reset set score"></span>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- LOSERS BRACKET -->
+    <div class="section-panel">
+      <div class="section-header">Losers Bracket</div>
+      <div class="bracket-flow-row">
+
+        <div class="bracket-col bracket-parallel-col">
+          <div class="bracket-parallel-row">
+            <div class="bracket-match" id="loser1" style="flex:1;">
+              <div class="bracket-match-header"><span class="bracket-match-title">L Quarters — M1</span></div>
+              <div class="bracket-player">
+                <span class="bracket-team-tag" id="po-team-l1"></span>
+                <div class="name-input-wrap"><input id="po-name-l1" type="text" readonly placeholder="—"></div>
+                <span class="bracket-score-display" id="po-score-l1"></span>
+              </div>
+              <div class="bracket-player" style="margin-top:5px;">
+                <span class="bracket-team-tag" id="po-team-l2"></span>
+                <div class="name-input-wrap"><input id="po-name-l2" type="text" readonly placeholder="—"></div>
+                <span class="bracket-score-display" id="po-score-l2"></span>
+              </div>
+            </div>
+            <div class="flow-connector flow-arrow flow-arrow-inline"><span class="flow-arrow-tip"></span></div>
+            <div class="bracket-match" id="losers_quarters_1" style="flex:1;">
+              <div class="bracket-match-header"><span class="bracket-match-title">L Quarters — M3</span></div>
+              <div class="bracket-player">
+                <span class="bracket-team-tag" id="po-team-l1-lq"></span>
+                <div class="name-input-wrap"><input id="po-name-l1-lq" type="text" readonly placeholder="—"></div>
+                <span class="bracket-score-display" id="po-score-l1-lq"></span>
+              </div>
+              <div class="bracket-player" style="margin-top:5px;">
+                <span class="bracket-team-tag" id="po-team-l2-lq"></span>
+                <div class="name-input-wrap"><input id="po-name-l2-lq" type="text" readonly placeholder="—"></div>
+                <span class="bracket-score-display" id="po-score-l2-lq"></span>
+              </div>
+            </div>
+          </div>
+
+          <div class="bracket-connector-gap"></div>
+
+          <div class="bracket-parallel-row">
+            <div class="bracket-match" id="loser2" style="flex:1;">
+              <div class="bracket-match-header"><span class="bracket-match-title">L Quarters — M2</span></div>
+              <div class="bracket-player">
+                <span class="bracket-team-tag" id="po-team-l3"></span>
+                <div class="name-input-wrap"><input id="po-name-l3" type="text" readonly placeholder="—"></div>
+                <span class="bracket-score-display" id="po-score-l3"></span>
+              </div>
+              <div class="bracket-player" style="margin-top:5px;">
+                <span class="bracket-team-tag" id="po-team-l4"></span>
+                <div class="name-input-wrap"><input id="po-name-l4" type="text" readonly placeholder="—"></div>
+                <span class="bracket-score-display" id="po-score-l4"></span>
+              </div>
+            </div>
+            <div class="flow-connector flow-arrow flow-arrow-inline"><span class="flow-arrow-tip"></span></div>
+            <div class="bracket-match" id="losers_quarters_2" style="flex:1;">
+              <div class="bracket-match-header"><span class="bracket-match-title">L Quarters — M4</span></div>
+              <div class="bracket-player">
+                <span class="bracket-team-tag" id="po-team-l3-lq"></span>
+                <div class="name-input-wrap"><input id="po-name-l3-lq" type="text" readonly placeholder="—"></div>
+                <span class="bracket-score-display" id="po-score-l3-lq"></span>
+              </div>
+              <div class="bracket-player" style="margin-top:5px;">
+                <span class="bracket-team-tag" id="po-team-l4-lq"></span>
+                <div class="name-input-wrap"><input id="po-name-l4-lq" type="text" readonly placeholder="—"></div>
+                <span class="bracket-score-display" id="po-score-l4-lq"></span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="flow-connector flow-merge"><span class="flow-arrow-tip"></span></div>
+
+        <div class="bracket-col bracket-col-center">
+          <div class="bracket-match" id="losers_semis">
+            <div class="bracket-match-header"><span class="bracket-match-title">Losers Semis</span></div>
+            <div class="bracket-player">
+              <span class="bracket-team-tag" id="po-team-l1-ls"></span>
+              <div class="name-input-wrap"><input id="po-name-l1-ls" type="text" readonly placeholder="—"></div>
+              <span class="bracket-score-display" id="po-score-l1-ls"></span>
+            </div>
+            <div class="bracket-player" style="margin-top:5px;">
+              <span class="bracket-team-tag" id="po-team-l2-ls"></span>
+              <div class="name-input-wrap"><input id="po-name-l2-ls" type="text" readonly placeholder="—"></div>
+              <span class="bracket-score-display" id="po-score-l2-ls"></span>
+            </div>
+          </div>
+        </div>
+
+        <div class="flow-connector flow-arrow"><span class="flow-arrow-tip"></span></div>
+
+        <div class="bracket-col bracket-col-center">
+          <div class="bracket-match" id="losers_finals">
+            <div class="bracket-match-header"><span class="bracket-match-title">Losers Finals</span></div>
+            <div class="bracket-player">
+              <span class="bracket-team-tag" id="po-team-l1-lf"></span>
+              <div class="name-input-wrap"><input id="po-name-l1-lf" type="text" readonly placeholder="—"></div>
+              <span class="bracket-score-display" id="po-score-l1-lf"></span>
+            </div>
+            <div class="bracket-player" style="margin-top:5px;">
+              <span class="bracket-team-tag" id="po-team-l2-lf"></span>
+              <div class="name-input-wrap"><input id="po-name-l2-lf" type="text" readonly placeholder="—"></div>
+              <span class="bracket-score-display" id="po-score-l2-lf"></span>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+var SLOTS = [
+  { id: 'w1',    r: 'r1',  p: 'p1' }, { id: 'w2',    r: 'r1',  p: 'p2' },
+  { id: 'w3',    r: 'r2',  p: 'p1' }, { id: 'w4',    r: 'r2',  p: 'p2' },
+  { id: 'w1-wf', r: 'r5',  p: 'p1' }, { id: 'w2-wf', r: 'r5',  p: 'p2' },
+  { id: 'w1-gf', r: 'r10', p: 'p1' }, { id: 'w2-gf', r: 'r10', p: 'p2' },
+  { id: 'l1',    r: 'r3',  p: 'p1' }, { id: 'l2',    r: 'r3',  p: 'p2' },
+  { id: 'l3',    r: 'r4',  p: 'p1' }, { id: 'l4',    r: 'r4',  p: 'p2' },
+  { id: 'l1-lq', r: 'r6',  p: 'p1' }, { id: 'l2-lq', r: 'r6',  p: 'p2' },
+  { id: 'l3-lq', r: 'r7',  p: 'p1' }, { id: 'l4-lq', r: 'r7',  p: 'p2' },
+  { id: 'l1-ls', r: 'r8',  p: 'p1' }, { id: 'l2-ls', r: 'r8',  p: 'p2' },
+  { id: 'l1-lf', r: 'r9',  p: 'p1' }, { id: 'l2-lf', r: 'r9',  p: 'p2' },
+];
+
+function set(id, val) {
+  var el = document.getElementById(id);
+  if (el) {
+    if (el.tagName === 'INPUT') el.value = val || '';
+    else el.textContent = val || '';
+  }
+}
+
+function update(data) {
+  if (!data) return;
+  SLOTS.forEach(function(s) {
+    var p = (data[s.r] && data[s.r][s.p]) ? data[s.r][s.p] : {};
+    set('po-name-'  + s.id, p.name  || '');
+    set('po-team-'  + s.id, p.team  || '');
+    set('po-score-' + s.id, (p.score !== undefined && p.score !== '') ? p.score : '');
+  });
+  // Grand Finals reset-set scores (r10 score2)
+  var gf = data.r10 || {};
+  var s2a = (gf.p1 && gf.p1.score2 !== undefined) ? gf.p1.score2 : '';
+  var s2b = (gf.p2 && gf.p2.score2 !== undefined) ? gf.p2.score2 : '';
+  var hasS2 = (s2a !== '' || s2b !== '');
+  _gfHasScore2 = hasS2;
+  set('po-score2-w1-gf', s2a);
+  set('po-score2-w2-gf', s2b);
+  updateGf2Visibility();
+}
+
+var _gfResetLive = false;
+var _gfHasScore2 = false;
+function updateGf2Visibility() {
+  var show = _gfResetLive || _gfHasScore2;
+  ['po-score2-w1-gf', 'po-score2-w2-gf'].forEach(function(id) {
+    var el = document.getElementById(id);
+    if (el) el.style.display = show ? '' : 'none';
+  });
+}
+
+function load() {
+  fetch('/getTop8PlayerData')
+    .then(function(r) { return r.json(); })
+    .then(update)
+    .catch(function(e) { console.log('popout error:', e); });
+  fetch('/getTop8CurrentNextData')
+    .then(function(r) { return r.json(); })
+    .then(function(cn) {
+      var badge = document.getElementById('gf_reset_badge');
+      _gfResetLive = !!(cn && parseInt(cn.currentRound, 10) === 11);
+      if (badge) badge.style.display = _gfResetLive ? '' : 'none';
+      updateGf2Visibility();
+    })
+    .catch(function(e) { console.log('popout state error:', e); });
+}
+
+load();
+if (window.liveSync) {
+  liveSync.on('top8', load);
+  setInterval(load, 30000);   // slow fallback if the stream drops
+} else {
+  setInterval(load, 3000);    // no SSE support: original polling
+}
+</script>
+
+<script src="../theme/theme.js" defer></script>
+<script>
+// Override theme storage key to be independent from main dashboard
+// Must run after theme.js loads
+window.addEventListener('load', function() {
+  // Patch saveTheme and resetTheme to use popout key
+  var _origSave = window.saveTheme;
+  window.saveTheme = function(vars) {
+    var style = getComputedStyle(document.documentElement);
+    var full = {};
+    ['--bg','--bg2','--bg3','--bg4','--fg','--fg2','--accent','--accent2',
+     '--green','--blue','--purple','--p1-color','--p2-color','--border'].forEach(function(k) {
+      full[k] = style.getPropertyValue(k).trim();
+    });
+    Object.assign(full, vars);
+    localStorage.setItem('sc_theme_popout', JSON.stringify(full));
+  };
+  window.resetTheme = function() {
+    localStorage.removeItem('sc_theme_popout');
+    applyPreset('HitConfirm Dark');
+  };
+  // Load popout theme
+  var saved = localStorage.getItem('sc_theme_popout');
+  if (saved) {
+    try {
+      var v = JSON.parse(saved);
+      Object.keys(v).forEach(function(k){ document.documentElement.style.setProperty(k,v[k]); });
+    } catch(e) {}
+  }
+});
+</script>
+</body>
+</html>

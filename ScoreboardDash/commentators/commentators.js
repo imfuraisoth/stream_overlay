@@ -1,272 +1,339 @@
-// Creating a XHR object
-var xhr = new XMLHttpRequest();
+const PLATFORM_ICONS = {
+    twitter:   '../resources/twitter.png',
+    bluesky:   '../resources/bsky.png',
+    instagram: '../resources/instagram.png',
+    facebook:  '../resources/facebook.png',
+    twitch:    '../resources/twitch.png',
+};
+const PLATFORM_COLORS = { twitter: '#1d9bf0', bluesky: '#0085ff', instagram: '#e1306c', facebook: '#1877f2', twitch: '#9146ff' };
 
-var jsonData;
+// ── NAME PICKERS ──────────────────────────────────────────────────
+function populateComPickers(names) {
+    // Populate select pickers
+    document.querySelectorAll('select.name-picker').forEach(function(sel) {
+        var existing = new Set(Array.from(sel.options).map(function(o) { return o.value; }).filter(Boolean));
+        names.forEach(function(name) {
+            if (name && !existing.has(name)) {
+                var opt = document.createElement('option');
+                opt.value = name; opt.textContent = name;
+                sel.appendChild(opt);
+            }
+        });
+    });
+    // Also populate datalist for typing autocomplete
+    var dl = document.getElementById('com_name_suggestions');
+    if (dl) {
+        var existing = new Set(Array.from(dl.options).map(function(o) { return o.value; }));
+        names.forEach(function(name) {
+            if (name && !existing.has(name)) {
+                var opt = document.createElement('option');
+                opt.value = name; dl.appendChild(opt);
+            }
+        });
+    }
+}
 
-fetch('/getdata')
-	.then(function (response) {
-	jsonData = response.json();
-  return jsonData;
-})
-.then(function (data) {
-	populateData(data);
-  })
-.catch(function (err) {
-  console.log('error: ' + err);
-});
-function populateData(data) {
-    console.log(data);
-	updateElement("form_name_1", data.com1);
-	updateElement("form_name_2", data.com2);
-	updateElement("form_social_1", data.soc1);
-	updateElement("form_social_2", data.soc2);
-	jsonData = data;
+function pickName(inputId, sel, updateFn) {
+    if (!sel.value) return;
+    var input = document.getElementById(inputId);
+    if (input) input.value = sel.value;
+    sel.selectedIndex = 0;
+    if (updateFn) updateFn();
+}
+
+// ── LOCAL PLAYER DB ───────────────────────────────────────────────
+function _nameKeyedMap() {
+    var m = new Map();
+    function norm(k) { return String(k).trim().toLowerCase(); }
+    return {
+        get: function(k) { return k ? m.get(norm(k)) : undefined; },
+        set: function(k, v) { if (k) m.set(norm(k), v); return this; },
+        has: function(k) { return k ? m.has(norm(k)) : false; },
+        clear: function() { m.clear(); },
+        forEach: function(cb) { m.forEach(cb); },
+        get size() { return m.size; }
+    };
+}
+
+var _localPlayersMap = _nameKeyedMap(); // normalized name/alias -> player record
+var jsonData = {};
+
+function setPlatformSelect(selId, platform) {
+    var sel = document.getElementById(selId);
+    if (sel) sel.value = platform || '';
+    // Update adjacent icon img if present
+    var wrap = sel ? sel.closest('.social-preview-row') : null;
+    var icon = wrap ? wrap.querySelector('.platform-icon-img') : null;
+    if (icon) {
+        if (platform && PLATFORM_ICONS[platform]) {
+            icon.src = PLATFORM_ICONS[platform];
+            icon.style.display = 'inline';
+        } else {
+            icon.style.display = 'none';
+        }
+    }
+}
+
+function loadLocalPlayers() {
+    fetch('/getCommentatorPlayers')
+        .then(function(r) { return r.json(); })
+        .then(function(players) {
+            if (!players || !players.length) return;
+            players.forEach(function(p) {
+                if (p && p.name) {
+                    _localPlayersMap.set(p.name, p);
+                    (p.aliases || []).forEach(function(a) { _localPlayersMap.set(a, p); });
+                }
+            });
+            populateComPickers(players.map(function(p) { return p.name; }));
+        })
+        .catch(function(e) { console.log('loadLocalPlayers error:', e); });
+}
+
+// ── DATA LOAD ─────────────────────────────────────────────────────
+function getDataFromServer() {
+    fetch('/getdata')
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+            jsonData = data;
+            if (!jsonData.com1Plat) jsonData.com1Plat = '';
+            if (!jsonData.com2Plat) jsonData.com2Plat = '';
+            updateElement('form_name_1',   data.com1);
+            updateElement('form_name_2',   data.com2);
+            updateElement('form_social_1', data.soc1);
+            updateElement('form_social_2', data.soc2);
+            // Restore platform badges from local DB
+            var p1 = _localPlayersMap.get(data.com1);
+            var p2 = _localPlayersMap.get(data.com2);
+            setPlatformSelect('soc1_platform_sel', p1 ? (p1.social_platform || '') : '');
+            setPlatformSelect('soc2_platform_sel', p2 ? (p2.social_platform || '') : '');
+        })
+        .catch(function(e) { console.log('getDataFromServer error:', e); });
 }
 
 function updateElement(id, value) {
-	if (value != null && value.length > 0) {
-		document.getElementById(id).value = value;
-	}
+    var el = document.getElementById(id);
+    if (el && value !== undefined) el.value = value;
 }
 
+// ── SEND ──────────────────────────────────────────────────────────
+function sendJSON() {
+    fetch('/updatecommdata', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(jsonData)
+    }).catch(function(e) { console.log('sendJSON error:', e); });
+}
+
+function sendJsonDataToEndpoint(data, endpoint) {
+    fetch('/' + endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+    }).catch(function(e) { console.log('sendJsonDataToEndpoint error:', e); });
+}
+
+// ── UPDATE FUNCTIONS ──────────────────────────────────────────────
+
 function updateCom1() {
-	jsonData.com1 = document.getElementById("form_name_1").value;
-	sendJSON();
+    jsonData.com1 = document.getElementById('form_name_1').value;
+    var p = _localPlayersMap.get(jsonData.com1);
+    if (p) {
+        jsonData.soc1 = p.social_handle || '';
+        document.getElementById('form_social_1').value = p.social_handle || '';
+        setPlatformSelect('soc1_platform_sel', p.social_platform || '');
+        jsonData.com1Plat = p.social_platform || '';
+    } else {
+        jsonData.soc1 = '';
+        document.getElementById('form_social_1').value = '';
+        setPlatformSelect('soc1_platform_sel', '');
+        jsonData.com1Plat = '';
+    }
+    updateComHint(1);
+    sendJSON();
 }
 
 function updateCom2() {
-	jsonData.com2 = document.getElementById("form_name_2").value;
-	sendJSON();
+    jsonData.com2 = document.getElementById('form_name_2').value;
+    var p = _localPlayersMap.get(jsonData.com2);
+    if (p) {
+        jsonData.soc2 = p.social_handle || '';
+        document.getElementById('form_social_2').value = p.social_handle || '';
+        setPlatformSelect('soc2_platform_sel', p.social_platform || '');
+        jsonData.com2Plat = p.social_platform || '';
+    } else {
+        jsonData.soc2 = '';
+        document.getElementById('form_social_2').value = '';
+        setPlatformSelect('soc2_platform_sel', '');
+        jsonData.com2Plat = '';
+    }
+    updateComHint(2);
+    sendJSON();
 }
 
 function updateSoc1() {
-	jsonData.soc1 = document.getElementById("form_social_1").value;
-	sendJSON();
+    jsonData.soc1 = document.getElementById('form_social_1').value;
+    updateComHint(1);
+    sendJSON();
 }
 
 function updateSoc2() {
-	jsonData.soc2 = document.getElementById("form_social_2").value;
-	sendJSON();
+    jsonData.soc2 = document.getElementById('form_social_2').value;
+    updateComHint(2);
+    sendJSON();
+}
+
+function updatePlatform1() {
+    var platform = document.getElementById('soc1_platform_sel').value;
+    var existing = _localPlayersMap.get(jsonData.com1) || {};
+    existing.social_platform = platform;
+    if (jsonData.com1) _localPlayersMap.set(jsonData.com1, existing);
+    jsonData.com1Plat = platform;
+    updateComHint(1);
+    sendJSON();
+}
+
+function updatePlatform2() {
+    var platform = document.getElementById('soc2_platform_sel').value;
+    var existing = _localPlayersMap.get(jsonData.com2) || {};
+    existing.social_platform = platform;
+    if (jsonData.com2) _localPlayersMap.set(jsonData.com2, existing);
+    jsonData.com2Plat = platform;
+    updateComHint(2);
+    sendJSON();
+}
+
+function clearCom1() {
+    document.getElementById('form_name_1').value   = '';
+    document.getElementById('form_social_1').value = '';
+    setPlatformSelect('soc1_platform_sel', '');
+    jsonData.com1 = ''; jsonData.soc1 = ''; jsonData.com1Plat = '';
+    sendJSON();
+}
+
+function clearCom2() {
+    document.getElementById('form_name_2').value   = '';
+    document.getElementById('form_social_2').value = '';
+    setPlatformSelect('soc2_platform_sel', '');
+    jsonData.com2 = ''; jsonData.soc2 = ''; jsonData.com2Plat = '';
+    sendJSON();
 }
 
 function reverseCommentatorNames() {
-	var c1 = document.getElementById("form_name_1").value;
-	var c2 = document.getElementById("form_name_2").value;
-	var s1 = document.getElementById("form_social_1").value;
-	var s2 = document.getElementById("form_social_2").value;
-	document.getElementById("form_name_1").value = c2;
-	document.getElementById("form_name_2").value = c1;
-	document.getElementById("form_social_1").value = s2;
-	document.getElementById("form_social_2").value = s1;
-	jsonData.com1 = c2;
-	jsonData.com2 = c1;
-	jsonData.soc1 = s2;
-	jsonData.soc2 = s1;
-	sendJSON();
+    var c1 = document.getElementById('form_name_1').value;
+    var c2 = document.getElementById('form_name_2').value;
+    var s1 = document.getElementById('form_social_1').value;
+    var s2 = document.getElementById('form_social_2').value;
+    var p1 = document.getElementById('soc1_platform_sel').value;
+    var p2 = document.getElementById('soc2_platform_sel').value;
+    document.getElementById('form_name_1').value   = c2;
+    document.getElementById('form_name_2').value   = c1;
+    document.getElementById('form_social_1').value = s2;
+    document.getElementById('form_social_2').value = s1;
+    setPlatformSelect('soc1_platform_sel', p2);
+    setPlatformSelect('soc2_platform_sel', p1);
+    jsonData.com1 = c2; jsonData.com2 = c1;
+    jsonData.soc1 = s2; jsonData.soc2 = s1;
+    sendJSON();
 }
 
-function addCommentator() {
-    var name_value = document.getElementById("commentator_name").value;
-    var social_value = document.getElementById("commentator_social").value;
-    const commentator_data = {
-      name: name_value,
-      soc: social_value
-    };
-    document.getElementById('popupAdd').style.display = 'none';
-    sendJsonDataToEndpoint(commentator_data, "addCommentator", populateCommentatorDropdown);
-}
-
-function deleteCommentator() {
-    const checkboxes = document.querySelectorAll("#commentatorsList input[type='checkbox']");
-    const selectedNames = Array.from(checkboxes)
-        .filter(checkbox => checkbox.checked)
-        .map(checkbox => {
-            const label = document.querySelector(`label[for="${checkbox.id}"]`);
-            return label ? label.textContent.trim() : "";  // trim spaces
-        })
-        .filter(name => name !== ""); // remove empty strings
-
-    document.getElementById('popupDelete').style.display = 'none';
-    sendJsonDataToEndpoint(selectedNames, "deleteCommentators", populateCommentatorDropdown);
-}
-
-function createCommentatorList() {
-    fetch('/getCommentators')
-        .then(function (response) {
-        jsonData = response.json();
-      return jsonData;
-    })
-    .then(function (data) {
-        const commentatorsList = document.getElementById('commentatorsList');
-        // Clear all existing items
-        commentatorsList.innerHTML = '';
-        Object.keys(data).forEach(key => {
-            const li = document.createElement('li');
-
-            const checkbox = document.createElement('input');
-            checkbox.type = 'checkbox';
-            checkbox.id = key;
-            const label = document.createElement('label');
-            label.htmlFor = checkbox.id;
-            label.textContent = key;
-
-            li.appendChild(checkbox);
-            li.appendChild(label);
-            commentatorsList.appendChild(li);
-        });
-        document.getElementById('popupDelete').style.display = 'block';
-      })
-    .catch(function (err) {
-      console.log('error: ' + err);
-    });
-}
-
-function sendJsonDataToEndpoint(data, endpoint, callback) {
-// open a connection
-	xhr.open("POST", "../" + endpoint, true);
-
-	// Set the request header i.e. which type of content you are sending
-	xhr.setRequestHeader("Content-Type", "application/json");
-
-    // Handle the response
-    xhr.onreadystatechange = function() {
-        if (xhr.readyState === 4) {  // 4 means request is done
-            if (xhr.status === 200 && message != null && message.trim() != "") {  // 200 means OK
-                callback();
-            } else if (xhr.status === 400) {
-                console.log("Bad request. Please check your data.");
-            } else if (xhr.status === 500) {
-                console.log("Server error. Please try again later.");
-            } else {
-                console.log("Something went wrong. Status:", xhr.status);
+// ── INIT ──────────────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', function() {
+    // Load all players into _localPlayersMap for social lookups,
+    // then load commentator-flagged players into the pickers/datalist,
+    // then fetch current scoreboard data.
+    fetch('/getLocalPlayers')
+        .then(function(r) { return r.json(); })
+        .then(function(players) {
+            if (players && players.length) {
+                players.forEach(function(p) {
+                if (p && p.name) {
+                    _localPlayersMap.set(p.name, p);
+                    (p.aliases || []).forEach(function(a) { _localPlayersMap.set(a, p); });
+                }
+            });
             }
-        }
-    };
+            // Now load only commentator-flagged players into the pickers
+            return fetch('/getCommentatorPlayers');
+        })
+        .then(function(r) { return r.json(); })
+        .then(function(comPlayers) {
+            if (comPlayers && comPlayers.length) {
+                var names = comPlayers.map(function(p) { return p.name; });
+                populateComPickers(names);
+            }
+            // Now fetch scoreboard — _localPlayersMap is ready
+            return fetch('/getdata');
+        })
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+            jsonData = data;
+            if (!jsonData.com1Plat) jsonData.com1Plat = '';
+            if (!jsonData.com2Plat) jsonData.com2Plat = '';
+            updateElement('form_name_1',   data.com1);
+            updateElement('form_name_2',   data.com2);
+            updateElement('form_social_1', data.soc1);
+            updateElement('form_social_2', data.soc2);
+            var p1 = _localPlayersMap.get(data.com1);
+            var p2 = _localPlayersMap.get(data.com2);
+            setPlatformSelect('soc1_platform_sel', p1 ? (p1.social_platform || '') : '');
+            setPlatformSelect('soc2_platform_sel', p2 ? (p2.social_platform || '') : '');
+        })
+        .catch(function(e) { console.log('init error:', e); });
+});
 
-    // Handle network errors
-    xhr.onerror = function() {
-        console.log("Request failed due to network error.");
-    };
-
-	// Converting JSON data to string
-	var dataToSend = JSON.stringify(data);
-	// Sending data with the request
-	xhr.send(dataToSend);
-}
-
-function sendJSON() {
-	// open a connection
-	xhr.open("POST", '/updatecommdata', true);
-
-	// Set the request header i.e. which type of content you are sending
-	xhr.setRequestHeader("Content-Type", "application/json");
-
-	// Create a state change callback
-	xhr.onreadystatechange = function () {
-		if (xhr.readyState === 4 && xhr.status === 200) {
-			// console.log("Server Okay");
-		}
-	};
-
-	// Set timestamp
-	jsonData.timestamp = Date.now();
-
-	// Converting JSON data to string
-	var data = JSON.stringify(jsonData);
-	// Sending data with the request
-	xhr.send(data);
-}
-
-window.onload = function() {
-    populateCommentatorDropdown();
-};
-
-function populateCommentatorDropdown() {
-    fetch('/getCommentators')
-        .then(function (response) {
-        jsonData = response.json();
-      return jsonData;
-    })
-    .then(function (data) {
-        generateDropdown("soc1_dropdown", "select1", data, updateFromDropdown1);
-        generateDropdown("soc2_dropdown", "select2", data, updateFromDropdown2);
-      })
-    .catch(function (err) {
-      console.log('error: ' + err);
+// ── LIVE SYNC ────────────────────────────────────────────────────
+if (window.liveSync) {
+    liveSync.on('players', function() {
+        loadLocalPlayers();
     });
 }
 
-function generateDropdown(elementId, selectId, data, callback) {
-    var dropdownContainer = document.getElementById(elementId);
 
-    // Create a select element
-    var select = document.createElement("select");
-    select.setAttribute("id", selectId);
-
-    // Create a default placeholder option
-    var defaultOption = document.createElement("option");
-    defaultOption.textContent = "Select a commentator"; // Placeholder text
-    defaultOption.value = ""; // Placeholder value
-    defaultOption.disabled = true; // Disable the placeholder option
-    defaultOption.selected = true; // Select the placeholder option by default
-    select.appendChild(defaultOption);
-
-    var names = Object.keys(data);
-    names.forEach(function(name) {
-        // Create options
-        var option = document.createElement("option");
-        option.text = name;
-        option.value = JSON.stringify(data[name]);
-        select.appendChild(option);
-    });
-    // Attach onchange event listener
-    select.addEventListener("change", function() {
-        callback(this.value);
-    });
-    // Append select to container
-    dropdownContainer.appendChild(select);
-}
-
-function updateFromDropdown1(value) {
-    var person = JSON.parse(value);
-    jsonData.com1 = person.name;
-    jsonData.soc1 = person.soc;
-    document.getElementById("form_name_1").value = jsonData.com1;
-    document.getElementById("form_social_1").value = jsonData.soc1;
-    jsonData.com2 = document.getElementById("form_name_2").value;
-    jsonData.soc2 = document.getElementById("form_social_2").value;
-    sendJSON();
-}
-
-function updateFromDropdown2(value) {
-    var person = JSON.parse(value);
-    jsonData.com2 = person.name;
-    jsonData.soc2 = person.soc;
-    document.getElementById("form_name_2").value = jsonData.com2;
-    document.getElementById("form_social_2").value = jsonData.soc2;
-    jsonData.com1 = document.getElementById("form_name_1").value;
-    jsonData.soc1 = document.getElementById("form_social_1").value;
-    sendJSON();
-}
-
-// For pop up dialogue
-document.getElementById('rectangle_button_add_commentator').addEventListener('click', function() {
-    document.getElementById('popupAdd').style.display = 'block';
-});
-document.getElementById('rectangle_button_delete_commentator').addEventListener('click', function() {
-    createCommentatorList();
-});
-
-document.getElementById('closeAddBtn').addEventListener('click', function() {
-    document.getElementById('popupAdd').style.display = 'none';
-});
-
-document.getElementById('closeDelBtn').addEventListener('click', function() {
-    document.getElementById('popupDelete').style.display = 'none';
-});
-
-window.addEventListener('click', function(event) {
-    if (event.target == document.getElementById('popup')) {
-        document.getElementById('popup').style.display = 'none';
+// ════════════════════════════════════════════════════════════════
+// EXPLICIT COMMENTATOR SAVE
+// ════════════════════════════════════════════════════════════════
+function updateComHint(n) {
+    var el = document.getElementById('com' + n + 'MatchHint');
+    if (!el) return;
+    var name = (jsonData['com' + n] || '').trim();
+    if (!name) { el.textContent = ''; el.className = 'player-match-hint'; return; }
+    var rec = _localPlayersMap.get(name);
+    if (rec && rec.id) {
+        el.textContent = '\u2192 ' + rec.name + (rec.is_commentator ? '' : ' (not flagged commentator yet)');
+        el.className = 'player-match-hint matched';
+    } else {
+        el.textContent = 'not in player DB';
+        el.className = 'player-match-hint unmatched';
     }
-});
+}
+
+function saveCommentatorCard(n) {
+    var name = (jsonData['com' + n] || '').trim();
+    if (!name) return;
+    var body = {
+        name: name,
+        social_handle: jsonData['soc' + n] || '',
+        social_platform: document.getElementById('soc' + n + '_platform_sel').value || '',
+        is_commentator: true
+    };
+    var btn = document.getElementById('com' + n + 'SaveBtn');
+    fetch('/saveLocalPlayer', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body)
+    }).then(function(r) {
+        if (!r.ok) throw new Error(r.status);
+        if (btn) {
+            btn.textContent = '\u2713 Saved';
+            setTimeout(function() { btn.textContent = 'Save Commentator'; }, 1600);
+        }
+        updateComHint(n);
+    }).catch(function(e) {
+        console.log('saveCommentatorCard error:', e);
+        if (btn) {
+            btn.textContent = 'Save failed';
+            setTimeout(function() { btn.textContent = 'Save Commentator'; }, 2000);
+        }
+    });
+}

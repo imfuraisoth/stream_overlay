@@ -1,136 +1,115 @@
 <!DOCTYPE html>
 <html>
-  <head>
-    <meta charset="utf-8">
-    <link rel="stylesheet" href="https://use.typekit.net/ogo7pba.css">
-    <title>Commentators Dashboard</title>
-    <link href="style.css" rel="stylesheet" type="text/css" />
-	<link href="popup.css" rel="stylesheet" type="text/css" />
-	<link rel="icon" type="image/png" href="../images/V.png">
-    <script src="https://kit.fontawesome.com/2c93766a80.js" crossorigin="anonymous"></script>
-	<script class="u-script" type="text/javascript" src="commentators.js" defer=""></script>
-  </head>
-  <body>
-	<div class="container">
-		<div id="commentators">
-			<svg class="background" viewBox="0 0 1920 1080">
-				<path id="background" d="M 0 0 L 33.9565544128418 0 C 33.9565544128418 0 665.8049926757812 0 1078.125 0 C 1558.125 0 1920 0 1920 0 L 1920 1080 L 0 1080 L 0 0 Z">
-				</path>
-			</svg>
-			<svg class="grid_bottom_bar">
-				<rect id="grid_bottom_bar" rx="0" ry="0" x="0" y="0" width="1920" height="61">
-				</rect>
-			</svg>
-			<svg class="grid_top_bar">
-				<rect id="grid_top_bar" rx="0" ry="0" x="0" y="0" width="1920" height="61">
-				</rect>
-			</svg>
-			<div id="Commentators_j">
-				<a href="commentators.html" style="text-decoration: none">Commentators</a>
-			</div>
-			<div id="Top_8">
-				<a href="../top8/top8.html" style="text-decoration: none">Top 8</a>
-			</div>
-			<div id="Event_Dashboard">
-				<a href="../index.html" style="text-decoration: none">Event Dashboard</a>
-			</div>
-			<div id="ABOUT">
-				<a href="https://www.theshilluminati.com/" style="text-decoration: none" target="_blank">ABOUT</a>
-			</div>
-			<svg class="grid_background">
-				<rect id="grid_background" rx="0" ry="0" x="0" y="0" width="660" height="958">
-				</rect>
-			</svg>
-			<svg class="line_commentators" viewBox="0 0 132 2">
-				<path id="line_commentators" d="M 0 0 L 132 0">
-				</path>
-			</svg>
-			<svg class="line_event_dashboard" viewBox="0 0 153 2">
-				<path id="line_event_dashboard" d="M 0 0 L 153 0">
-				</path>
-			</svg>
-			<svg class="line_top8" viewBox="0 0 45 2">
-				<path id="line_top8" d="M 0 0 L 45 0">
-				</path>
-			</svg>
-			<svg class="line_about" viewBox="0 0 42 2">
-				<path id="line_about" d="M 0 0 L 42 0">
-				</path>
-			</svg>
-			<svg class="grid_commentators">
-				<rect id="grid_commentators" rx="0" ry="0" x="0" y="0" width="660" height="241">
-				</rect>
-			</svg>
-			
-			<!-- Text fields -->
-			
-			<div id="text_secondary">
-				<span>Secondary</span>
-			</div>
-			<div id="text_primary">
-				<span>Primary</span>
-			</div>
-			<div id="text_commentators">
-				<span>Commentators</span>
-			</div>
-			<div id="text_name">
-				<span>Name</span>
-			</div>
-			<div id="text_social">
-				<span>Social</span>
-			</div>
-			
-			<!-- Buttons -->
-			<div id="button_reverse_names">
-				<button class="rectangle_button" id="rectangle_button" onclick='reverseCommentatorNames();'>
-					<text x="0" y="19" id="button_text"><-Reverse Names-></text>
-				</button>
-			</div>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Commentators Dashboard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;900&family=Barlow:wght@400;500&display=swap" rel="stylesheet">
+  <link href="style.css" rel="stylesheet" type="text/css" />
+  <link rel="icon" type="image/png" href="../images/V.png">
+  <script src="https://kit.fontawesome.com/2c93766a80.js" crossorigin="anonymous"></script>
+  <script type="text/javascript" src="../sync.js" defer=""></script>
+  <script class="u-script" type="text/javascript" src="commentators.js" defer=""></script>
+  <script>
+    // Apply saved theme before paint to prevent flash
+    (function(){var s=localStorage.getItem('sc_theme');if(!s)return;try{var v=JSON.parse(s);Object.keys(v).forEach(function(k){document.documentElement.style.setProperty(k,v[k])});}catch(e){}})();
+  </script>
+  <link href="../theme/theme.css" rel="stylesheet" type="text/css">
+</head>
+<body>
 
-			<button class="rectangle_button" id="rectangle_button_add_commentator">
-				<text x="18" y="19" id="button_text">Add Commentator</text>
-			</button>
-			<div id="popupAdd" class="popup">
-				<div class="popup-content">
-					<span id="closeAddBtn" class="close">&times;</span>
-					<form id="AddCommentator">
-						<h3>Name:</h3>
-						<input type="text" id="commentator_name" name="commentator_name" required>
-						<h3>Social: </h3>
-						<input type="text" id="commentator_social" name="commentator_social" required>
-						<div class="horizontal-button-container">
-							<button type="submit" id="submitButton" onclick="addCommentator();">Submit</button>
-						</div>
-					</form>
-				</div>
-			</div>
+  <div class="top-navbar-container">
+    <div class="header-item active"><a href="commentators.html">Commentators</a></div>
+    <span class="header-sep">|</span>
+    <div class="header-item"><a href="../index.html">Event Dashboard</a></div>
+    <span class="header-sep">|</span>
+    <div class="header-item"><a href="../top8/top8.html">Top 8</a></div>
+    <span class="header-sep">|</span>
+    <div class="header-item"><a href="../playerinfo/characterselect.html">Games &amp; Assets</a></div>
+    <span class="header-sep">|</span>
+    <div class="header-item"><a href="../stations/stations.html">Stations</a></div>
+    <span class="header-sep">|</span>
+    <div class="header-item"><a href="../players/players.html">Players</a></div>
+  <span class="header-sep">|</span>
+  <div class="header-item"><a href="../imports/imports.html">Match Imports</a></div>
+  </div>
 
-			<button class="rectangle_button" id="rectangle_button_delete_commentator">
-				<text x="18" y="19" id="button_text">Delete Commentator</text>
-			</button>
-			<div id="popupDelete" class="popup">
-				<div class="popup-content">
-					<span id="closeDelBtn" class="close">&times;</span>
-					<ul id="commentatorsList"></ul>
-					<div class="horizontal-button-container">
-						<button type="submit" id="submitDeleteButton" onclick="deleteCommentator();">Submit</button>
-					</div>
-				</div>
-			</div>
-			
-			<!-- Forms -->
-			<div id="com_primary">
-				<input class="form_name_1" type="text" id="form_name_1" value="" placeholder="Name" onchange="updateCom1();">
-				<input class="form_social_1" type="text" id="form_social_1" value="" placeholder="Social" onchange="updateSoc1();">
-				<div id="soc1_dropdown"></div>
-			</div>
-			<div id="com_secondary">
-				<input class="form_name_2" type="text" id="form_name_2" value="" placeholder="Name" onchange="updateCom2();">
-				<input class="form_social_2" type="text" id="form_social_2" value="" placeholder="Social" onchange="updateSoc2();">
-				<div id="soc2_dropdown"></div>
-			</div>	
-		</div>
-	</div>
-	
-  </body>
+  <div class="page-content">
+
+    <div class="page-header">
+      <h2>Commentators</h2>
+      <div class="header-actions">
+        <button class="rectangle_button" onclick="reverseCommentatorNames();">⇄ Swap Names</button>
+      </div>
+    </div>
+
+    <div class="com-grid">
+
+      <!-- Primary -->
+      <div class="com-card">
+        <div class="com-card-header">Primary</div>
+        <div id="com_primary" class="com-fields">
+          <div class="field-group">
+            <label>Name</label>
+            <div class="name-input-wrap"><input class="form_name_1" type="text" id="form_name_1" placeholder="Name" list="com_name_suggestions" onchange="updateCom1();"><select class="name-picker" id="pick_com_1" onchange="pickName('form_name_1',this,updateCom1)"><option value="">▾</option></select></div>
+          </div>
+          <div class="field-group">
+            <label>Social</label>
+            <div class="social-preview-row">
+              <img class="platform-icon-img" style="width:18px;height:18px;object-fit:contain;display:none;flex-shrink:0;">
+              <select id="soc1_platform_sel" onchange="updatePlatform1();">
+                <option value="">— Platform —</option>
+                <option value="twitter">Twitter</option>
+                <option value="bluesky">Bluesky</option>
+                <option value="instagram">Instagram</option>
+                <option value="facebook">Facebook</option>
+                <option value="twitch">Twitch</option>
+              </select>
+              <input class="form_social_1" type="text" id="form_social_1" placeholder="@handle" onchange="updateSoc1();">
+            </div>
+          </div>
+        </div>
+        <div class="player-save-row"><span class="player-match-hint" id="com1MatchHint"></span><button class="player-save-btn" id="com1SaveBtn" onclick="saveCommentatorCard(1)">Save Commentator</button></div>
+        <button class="rectangle_button btn-sec btn-clear" onclick="clearCom1();">✕ Clear</button>
+      </div>
+
+      <!-- Secondary -->
+      <div class="com-card">
+        <div class="com-card-header">Secondary</div>
+        <div id="com_secondary" class="com-fields">
+          <div class="field-group">
+            <label>Name</label>
+            <div class="name-input-wrap"><input class="form_name_2" type="text" id="form_name_2" placeholder="Name" list="com_name_suggestions" onchange="updateCom2();"><select class="name-picker" id="pick_com_2" onchange="pickName('form_name_2',this,updateCom2)"><option value="">▾</option></select></div>
+          </div>
+          <div class="field-group">
+            <label>Social</label>
+            <div class="social-preview-row">
+              <img class="platform-icon-img" style="width:18px;height:18px;object-fit:contain;display:none;flex-shrink:0;">
+              <select id="soc2_platform_sel" onchange="updatePlatform2();">
+                <option value="">— Platform —</option>
+                <option value="twitter">Twitter</option>
+                <option value="bluesky">Bluesky</option>
+                <option value="instagram">Instagram</option>
+                <option value="facebook">Facebook</option>
+                <option value="twitch">Twitch</option>
+              </select>
+              <input class="form_social_2" type="text" id="form_social_2" placeholder="@handle" onchange="updateSoc2();">
+            </div>
+          </div>
+        </div>
+        <div class="player-save-row"><span class="player-match-hint" id="com2MatchHint"></span><button class="player-save-btn" id="com2SaveBtn" onclick="saveCommentatorCard(2)">Save Commentator</button></div>
+        <button class="rectangle_button btn-sec btn-clear" onclick="clearCom2();">✕ Clear</button>
+      </div>
+
+    </div>
+
+    <p class="com-hint">Manage commentator profiles on the <a href="../players/players.html">Players</a> page.</p>
+
+  </div>
+
+    <datalist id="com_name_suggestions"></datalist>
+  <script src="../theme/theme.js" defer></script>
+</body>
 </html>

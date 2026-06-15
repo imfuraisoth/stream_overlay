@@ -1,0 +1,750 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Players &amp; Commentators — Stream Overlay</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;900&family=Barlow:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="icon" type="image/png" href="../images/V.png">
+  <link href="style.css" rel="stylesheet" type="text/css">
+  <script>
+    // Apply saved theme before paint to prevent flash
+    (function(){var s=localStorage.getItem('sc_theme');if(!s)return;try{var v=JSON.parse(s);Object.keys(v).forEach(function(k){document.documentElement.style.setProperty(k,v[k])});}catch(e){}})();
+  </script>
+  <link href="../theme/theme.css" rel="stylesheet" type="text/css">
+</head>
+<body>
+
+<!-- NAV -->
+<div class="top-navbar-container">
+  <div class="header-item"><a href="../commentators/commentators.html">Commentators</a></div>
+  <span class="header-sep">|</span>
+  <div class="header-item"><a href="../index.html">Event Dashboard</a></div>
+  <span class="header-sep">|</span>
+  <div class="header-item"><a href="../top8/top8.html">Top 8</a></div>
+  <span class="header-sep">|</span>
+  <div class="header-item"><a href="../playerinfo/characterselect.html">Games &amp; Assets</a></div>
+  <span class="header-sep">|</span>
+  <div class="header-item"><a href="../stations/stations.html">Stations</a></div>
+  <span class="header-sep">|</span>
+  <div class="header-item active">Players</div>
+  <span class="header-sep">|</span>
+  <div class="header-item"><a href="../imports/imports.html">Match Imports</a></div>
+</div>
+
+<!-- TOOLBAR -->
+<div class="toolbar">
+  <div class="toolbar-left">
+    <input type="text" id="searchInput" placeholder="Search players…" oninput="renderTable()">
+    <button class="btn" onclick="openAddModal()">+ Add Player</button>
+    <button class="btn sec" onclick="openMergeModal()">⇄ Merge</button>
+  </div>
+  <div class="toolbar-right">
+    <span class="player-count" id="playerCount"></span>
+    <button class="btn sec sm" onclick="loadPlayers()">↺ Refresh</button>
+  </div>
+</div>
+
+<!-- TABLE -->
+<div class="content">
+  <div id="tableWrap">
+    <div class="empty-state"><span class="spinner"></span> Loading…</div>
+  </div>
+</div>
+
+<!-- ADD / EDIT MODAL -->
+<div class="modal-backdrop" id="modal" onclick="onBackdropClick(event)">
+  <div class="modal-content">
+    <div class="modal-header">
+      <span class="modal-title" id="modalTitle">Add Player</span>
+      <button class="modal-close" onclick="closeModal()">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="field-group">
+        <label for="mName">Name</label>
+        <input type="text" id="mName" placeholder="Gamer tag">
+      </div>
+      <div class="field-group">
+        <label for="mTeam">Team</label>
+        <input type="text" id="mTeam" placeholder="Team name or abbreviation">
+      </div>
+      <div class="field-group">
+        <label for="mCountry">Country</label>
+        <select id="mCountry"></select>
+      </div>
+      <div class="field-group">
+        <label>Social Media</label>
+        <div class="social-row">
+          <select id="mSocialPlatform">
+            <option value="">— Platform —</option>
+            <option value="twitter">Twitter</option>
+            <option value="bluesky">Bluesky</option>
+            <option value="instagram">Instagram</option>
+            <option value="facebook">Facebook</option>
+            <option value="twitch">Twitch</option>
+          </select>
+          <input type="text" id="mSocialHandle" placeholder="@handle" style="flex:1;">
+        </div>
+      </div>
+      <div class="field-group">
+        <label>Aliases</label>
+        <div id="mAliasChips" style="display:flex;flex-wrap:wrap;gap:4px;"></div>
+        <div style="display:flex;gap:6px;">
+          <input type="text" id="mAliasInput" placeholder="Add alias…" style="flex:1;" onkeydown="if(event.key==='Enter'){event.preventDefault();mAddAlias();}">
+          <button class="btn sec sm" onclick="mAddAlias()">Add</button>
+        </div>
+      </div>
+      <div class="field-group" style="flex-direction:row;align-items:center;gap:8px;">
+        <input type="checkbox" id="mIsCommentator" style="width:14px;height:14px;accent-color:var(--accent);flex-shrink:0;">
+        <label for="mIsCommentator" style="font-family:var(--font-d);font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--fg2);cursor:pointer;">Commentator</label>
+      </div>
+      <div class="field-group" id="mCharactersSection">
+        <label>Characters</label>
+        <div style="display:flex;gap:6px;align-items:center;">
+          <select id="mCharGameSelect" onchange="mCharGameChanged()" style="flex:1;">
+            <option value="">— Select game —</option>
+          </select>
+          <button class="btn sec" onclick="mCharDeleteGame()" style="padding:4px 8px;font-size:10px;" title="Remove this game's roster and picks">✕</button>
+        </div>
+        <div id="mRosterArea" style="display:none;flex-direction:column;gap:6px;margin-top:6px;">
+          <div style="font-family:var(--font-d);font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--fg2);">Roster</div>
+          <div id="mRosterChips" style="display:flex;flex-wrap:wrap;gap:4px;"></div>
+          <button class="btn sec" id="mAddCharBtn" onclick="mToggleCharPicker()" style="align-self:flex-start;padding:4px 10px;font-size:10px;">+ Add character</button>
+          <div id="mCharPicker" style="display:none;flex-direction:column;gap:6px;padding:8px;background:var(--bg3);border-radius:4px;max-height:260px;overflow-y:auto;">
+            <select id="mPickerPack" onchange="mPickerLoadChars()"><option value="">-- Pack --</option></select>
+            <div id="mPickerList"></div>
+          </div>
+          <div style="font-family:var(--font-d);font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--fg2);margin-top:4px;">Current picks</div>
+          <div id="mSlotsArea" style="display:flex;flex-direction:column;gap:4px;"></div>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn sec" onclick="closeModal()">Cancel</button>
+      <button class="btn" id="modalSaveBtn" onclick="saveModal()">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- DELETE CONFIRM -->
+<div class="modal-backdrop" id="mergeModal" onclick="if(event.target.id==='mergeModal')closeMergeModal()">
+  <div class="modal-content modal-sm">
+    <h3 style="margin-top:0;">Merge Players</h3>
+    <div class="field-group">
+      <label>Keep (primary)</label>
+      <select id="mergePrimary" onchange="mergeSelectionChanged()"></select>
+    </div>
+    <div class="field-group">
+      <label>Merge into primary (will be removed)</label>
+      <select id="mergeDuplicate" onchange="mergeSelectionChanged()"></select>
+    </div>
+    <div id="mergeSummary" style="font-family:var(--font-d);font-size:11px;color:var(--fg2);min-height:34px;margin:6px 0;"></div>
+    <div class="modal-actions">
+      <button class="btn sec" onclick="closeMergeModal()">Cancel</button>
+      <button class="btn" id="mergeConfirmBtn" onclick="doMerge()" disabled>Merge</button>
+    </div>
+  </div>
+</div>
+<div class="modal-backdrop" id="deleteModal" onclick="onDeleteBackdropClick(event)">
+  <div class="modal-content modal-sm">
+    <div class="modal-header">
+      <span class="modal-title">Delete Player</span>
+      <button class="modal-close" onclick="closeDeleteModal()">×</button>
+    </div>
+    <div class="modal-body">
+      <p style="color:var(--fg);font-size:14px;">Delete <strong id="deletePlayerName" style="color:var(--accent2);"></strong>?</p>
+      <p style="color:var(--fg2);font-size:12px;margin-top:6px;">This cannot be undone.</p>
+    </div>
+    <div class="modal-footer">
+      <button class="btn sec" onclick="closeDeleteModal()">Cancel</button>
+      <button class="btn danger" onclick="confirmDelete()">Delete</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const countries = [
+  '','AF','AL','DZ','AR','AU','AT','AZ','BE','BO','BR','CA','CL','CN','CO',
+  'HR','CZ','DK','EC','EG','EE','FI','FR','DE','GH','GR','GT','HN','HK',
+  'HU','IN','ID','IE','IL','IT','JP','KZ','KE','KR','KW','LV','LT','MY',
+  'MX','MA','NL','NZ','NG','NO','PK','PE','PH','PL','PT','PR','QA','RO',
+  'RU','SA','RS','SG','SK','ZA','ES','SE','CH','TW','TH','TR','UA','GB',
+  'US','UY','VE','VN'
+];
+
+let _players = [];
+let _editingOrigName = null;
+
+// Populate country selects
+function populateCountrySelect(sel, selected) {
+  sel.innerHTML = countries.map(c =>
+    `<option value="${c}"${c === selected ? ' selected' : ''}>${c || '— None —'}</option>`
+  ).join('');
+}
+populateCountrySelect(document.getElementById('mCountry'), '');
+
+// ── LOAD ──────────────────────────────────────────────────────────
+async function loadPlayers() {
+  try {
+    const res = await fetch('/getLocalPlayers');
+    _players = await res.json();
+    renderTable();
+  } catch(e) {
+    document.getElementById('tableWrap').innerHTML =
+      '<div class="empty-state"><strong>Could not load players</strong><div class="hint">Make sure the server is running.</div></div>';
+  }
+}
+
+// ── RENDER TABLE ──────────────────────────────────────────────────
+function renderTable() {
+  const q = document.getElementById('searchInput').value.trim().toLowerCase();
+  const filtered = q
+    ? _players.filter(p => (p.name||'').toLowerCase().includes(q) ||
+                           (p.team||'').toLowerCase().includes(q) ||
+                           (p.country||'').toLowerCase().includes(q))
+    : _players;
+
+  document.getElementById('playerCount').textContent =
+    filtered.length + ' of ' + _players.length + ' player' + (_players.length !== 1 ? 's' : '');
+
+  if (!filtered.length) {
+    document.getElementById('tableWrap').innerHTML = q
+      ? '<div class="empty-state"><strong>No results</strong><div class="hint">Try a different search term.</div></div>'
+      : '<div class="empty-state"><strong>No players saved yet</strong><div class="hint">Player names are saved automatically when you enter them on the Event Dashboard or Top 8.</div></div>';
+    return;
+  }
+
+  let html = `<table class="player-table">
+    <thead><tr>
+      <th class="col-id">ID</th>
+      <th onclick="sortBy('name')" class="sortable">Name <span class="sort-icon">⇅</span></th>
+      <th onclick="sortBy('team')" class="sortable">Team <span class="sort-icon">⇅</span></th>
+      <th onclick="sortBy('country')" class="sortable">Country <span class="sort-icon">⇅</span></th>
+      <th onclick="sortBy('social_handle')" class="sortable">Social <span class="sort-icon">⇅</span></th>
+      <th class="col-com">Com</th>
+      <th class="col-actions">Actions</th>
+    </tr></thead><tbody>`;
+
+  filtered.forEach(function(p) {
+    const name    = escHtml(p.name    || '');
+    const team    = escHtml(p.team    || '');
+    const country = escHtml(p.country || '');
+    html += `<tr>
+      <td class="col-id">${escHtml(p.id || '')}</td>
+      <td class="col-name">${name}${(p.aliases && p.aliases.length)
+        ? `<div style="font-size:10px;color:var(--fg2);font-weight:400;">aka ${escHtml(p.aliases.join(', '))}</div>` : ''}</td>
+      <td class="col-team">${team ? `<span class="team-badge">${team}</span>` : '<span class="cell-empty">—</span>'}</td>
+      <td class="col-country">${country || '<span class="cell-empty">—</span>'}</td>
+      <td class="col-socials">${p.social_handle
+        ? `<span class="platform-badge platform-${escHtml(p.social_platform||'')}">${platformIcon(p.social_platform)}${escHtml(p.social_handle)}</span>`
+        : '<span class="cell-empty">—</span>'}</td>
+      <td class="col-com">${p.is_commentator ? '<span style="color:var(--accent);">✓</span>' : ''}</td>
+      <td class="col-actions">
+        <button class="action-btn edit-btn" onclick="openEditModal('${escAttr(p.id || p.name)}')">✎ Edit</button>
+        <button class="action-btn del-btn"  onclick="openDeleteModal('${escAttr(p.id || p.name)}', '${escAttr(p.name)}')">✕</button>
+      </td>
+    </tr>`;
+  });
+
+  html += '</tbody></table>';
+  document.getElementById('tableWrap').innerHTML = html;
+}
+
+let _sortKey = 'name', _sortAsc = true;
+function sortBy(key) {
+  if (_sortKey === key) { _sortAsc = !_sortAsc; }
+  else { _sortKey = key; _sortAsc = true; }
+  _players.sort(function(a, b) {
+    const av = (a[key] || '').toLowerCase();
+    const bv = (b[key] || '').toLowerCase();
+    return _sortAsc ? av.localeCompare(bv) : bv.localeCompare(av);
+  });
+  renderTable();
+}
+
+// ── ADD/EDIT MODAL ─────────────────────────────────────────
+let _gamesRegistry = {};   // game -> char_slots
+
+async function loadGamesRegistry() {
+  try {
+    const res = await fetch('/getGames');
+    _gamesRegistry = await res.json() || {};
+  } catch(e) { _gamesRegistry = {}; }
+}
+
+function mPopulateGameSelect(selected) {
+  var sel = document.getElementById('mCharGameSelect');
+  sel.innerHTML = '<option value="">\u2014 Select game \u2014</option>';
+  Object.keys(_gamesRegistry).sort().forEach(function(g) {
+    var opt = document.createElement('option');
+    opt.value = g; opt.textContent = g + ' (' + (_gamesRegistry[g] || 1) + ' pick' + ((_gamesRegistry[g] || 1) > 1 ? 's' : '') + ')';
+    sel.appendChild(opt);
+  });
+  sel.value = selected || '';
+}
+
+function mNormalizeGameData(obj) {
+  // legacy single dicts -> arrays
+  var out = {};
+  Object.keys(obj || {}).forEach(function(g) {
+    var v = obj[g];
+    if (v && !Array.isArray(v)) v = [v];
+    out[g] = (v || []).filter(function(p) { return p && p.file; });
+  });
+  return out;
+}
+
+function openAddModal() {
+  _editingOrigName = null;
+  document.getElementById('modalTitle').textContent = 'Add Player';
+  window._editingCharacters = {};
+  window._editingRoster = {};
+  window._editingAliases = [];
+  mRenderAliases();
+  document.getElementById('mName').value    = '';
+  document.getElementById('mTeam').value    = '';
+  document.getElementById('mIsCommentator').checked = false;
+  document.getElementById('mSocialHandle').value = '';
+  document.getElementById('mSocialPlatform').value = '';
+  populateCountrySelect(document.getElementById('mCountry'), '');
+  mPopulateGameSelect('');
+  mCharGameChanged();
+  document.getElementById('modal').classList.add('open');
+  document.getElementById('mName').focus();
+}
+
+function openEditModal(id) {
+  const p = _players.find(function(x) { return (x.id || x.name) === id; });
+  if (!p) return;
+  _editingOrigName = p.id || p.name;
+  document.getElementById('modalTitle').textContent = 'Edit Player';
+  document.getElementById('mName').value    = p.name || '';
+  document.getElementById('mTeam').value    = p.team || '';
+  document.getElementById('mIsCommentator').checked = !!p.is_commentator;
+  document.getElementById('mSocialHandle').value = p.social_handle || '';
+  document.getElementById('mSocialPlatform').value = p.social_platform || '';
+  populateCountrySelect(document.getElementById('mCountry'), p.country || '');
+  window._editingCharacters = mNormalizeGameData(JSON.parse(JSON.stringify(p.characters || {})));
+  window._editingRoster     = mNormalizeGameData(JSON.parse(JSON.stringify(p.roster || {})));
+  window._editingAliases = (p.aliases || []).slice();
+  mRenderAliases();
+  // Default to the first game this player has data for
+  var withData = Object.keys(window._editingRoster).filter(function(g) { return window._editingRoster[g].length; })
+    .concat(Object.keys(window._editingCharacters).filter(function(g) { return window._editingCharacters[g].length; }));
+  mPopulateGameSelect(withData.length ? withData[0] : '');
+  mCharGameChanged();
+  document.getElementById('modal').classList.add('open');
+}
+
+function mCharGameChanged() {
+  var game = document.getElementById('mCharGameSelect').value;
+  var area = document.getElementById('mRosterArea');
+  document.getElementById('mCharPicker').style.display = 'none';
+  if (!game) { area.style.display = 'none'; return; }
+  area.style.display = 'flex';
+  mRenderRoster();
+  mRenderSlots();
+}
+
+function mRenderRoster() {
+  var game = document.getElementById('mCharGameSelect').value;
+  var chips = document.getElementById('mRosterChips');
+  chips.innerHTML = '';
+  var roster = (window._editingRoster[game] || []);
+  if (!roster.length) {
+    chips.innerHTML = '<span style="font-family:var(--font-d);font-size:11px;color:var(--fg2);">No characters yet \u2014 add some below.</span>';
+    return;
+  }
+  roster.forEach(function(entry) {
+    var chip = document.createElement('span');
+    chip.className = 'roster-chip';
+    var img = document.createElement('img');
+    img.src = '/' + entry.file;
+    img.className = 'char-preview-target';
+    img.dataset.char = entry.character;
+    img.dataset.palette = entry.palette;
+    img.onerror = function() { this.style.display = 'none'; };
+    chip.appendChild(img);
+    var txt = document.createElement('span');
+    txt.textContent = entry.character + ' (' + entry.palette + ')';
+    chip.appendChild(txt);
+    var x = document.createElement('span');
+    x.className = 'roster-chip-x';
+    x.textContent = '\u2715';
+    x.title = 'Remove from roster';
+    x.onclick = function() { mRemoveRosterEntry(entry.character); };
+    chip.appendChild(x);
+    chips.appendChild(chip);
+  });
+}
+
+function mRemoveRosterEntry(character) {
+  var game = document.getElementById('mCharGameSelect').value;
+  window._editingRoster[game] = (window._editingRoster[game] || []).filter(function(e) {
+    return e.character !== character;
+  });
+  // Drop any slot picks that referenced the removed character
+  if (window._editingCharacters[game]) {
+    window._editingCharacters[game] = window._editingCharacters[game].filter(function(p) {
+      return p.character !== character;
+    });
+  }
+  mRenderRoster();
+  mRenderSlots();
+}
+
+function mToggleCharPicker() {
+  var picker = document.getElementById('mCharPicker');
+  var open = picker.style.display !== 'none';
+  picker.style.display = open ? 'none' : 'flex';
+  if (!open) mPickerLoadPacks();
+}
+
+async function mPickerLoadPacks() {
+  var game = document.getElementById('mCharGameSelect').value;
+  var sel = document.getElementById('mPickerPack');
+  sel.innerHTML = '<option value="">-- Pack --</option>';
+  document.getElementById('mPickerList').innerHTML = '';
+  if (!game) return;
+  try {
+    var res = await fetch('/getCharacterPacks?game=' + encodeURIComponent(game));
+    var packs = await res.json();
+    (packs || []).forEach(function(p) {
+      var opt = document.createElement('option');
+      opt.value = p; opt.textContent = p;
+      sel.appendChild(opt);
+    });
+    if (packs && packs.length === 1) { sel.value = packs[0]; mPickerLoadChars(); }
+  } catch(e) { console.error('mPickerLoadPacks:', e); }
+}
+
+async function mPickerLoadChars() {
+  var game = document.getElementById('mCharGameSelect').value;
+  var pack = document.getElementById('mPickerPack').value;
+  var listEl = document.getElementById('mPickerList');
+  listEl.innerHTML = '';
+  if (!game || !pack) return;
+  try {
+    var res = await fetch('/getCharacterList?game=' + encodeURIComponent(game) + '&pack=' + encodeURIComponent(pack));
+    var charMap = await res.json();
+    Object.keys(charMap).sort().forEach(function(char) {
+      var row = document.createElement('div');
+      row.className = 'mpicker-row';
+      var name = document.createElement('span');
+      name.className = 'mpicker-name';
+      name.textContent = char;
+      row.appendChild(name);
+      var strip = document.createElement('span');
+      strip.className = 'mpicker-strip';
+      charMap[char].forEach(function(p) {
+        var img = document.createElement('img');
+        img.src = '/' + p.file;
+        img.className = 'char-preview-target';
+        img.dataset.char = char;
+        img.dataset.palette = p.palette;
+        img.title = char + ' palette ' + p.palette;
+        img.onerror = function() { this.style.display = 'none'; };
+        img.onclick = function() { mAddRosterEntry(char, pack, p.palette, p.file); };
+        strip.appendChild(img);
+      });
+      row.appendChild(strip);
+      listEl.appendChild(row);
+    });
+  } catch(e) { console.error('mPickerLoadChars:', e); }
+}
+
+function mAddRosterEntry(character, pack, palette, file) {
+  var game = document.getElementById('mCharGameSelect').value;
+  if (!window._editingRoster[game]) window._editingRoster[game] = [];
+  var roster = window._editingRoster[game];
+  var found = roster.find(function(e) { return e.character === character; });
+  if (found) { found.pack = pack; found.palette = palette; found.file = file; }
+  else roster.push({ character: character, pack: pack, palette: palette, file: file });
+  mRenderRoster();
+  mRenderSlots();
+}
+
+function mRenderSlots() {
+  var game = document.getElementById('mCharGameSelect').value;
+  var area = document.getElementById('mSlotsArea');
+  area.innerHTML = '';
+  var slots = _gamesRegistry[game] || 1;
+  var roster = window._editingRoster[game] || [];
+  var picks = window._editingCharacters[game] || [];
+  for (var s = 0; s < slots; s++) (function(s) {
+    var row = document.createElement('div');
+    row.style.cssText = 'display:flex;align-items:center;gap:6px;';
+    if (slots > 1) {
+      var lbl = document.createElement('span');
+      lbl.style.cssText = 'font-family:var(--font-d);font-size:10px;color:var(--fg2);width:38px;flex-shrink:0;';
+      lbl.textContent = 'Slot ' + (s + 1);
+      row.appendChild(lbl);
+    }
+    var sel = document.createElement('select');
+    sel.style.cssText = 'flex:1;';
+    var none = document.createElement('option');
+    none.value = ''; none.textContent = '(empty)';
+    sel.appendChild(none);
+    roster.forEach(function(e) {
+      var opt = document.createElement('option');
+      opt.value = e.character;
+      opt.textContent = e.character + ' (' + e.palette + ')';
+      sel.appendChild(opt);
+    });
+    var current = picks.find(function(p) { return (p.slot !== undefined ? p.slot : picks.indexOf(p)) === s; });
+    if (current) sel.value = current.character;
+    sel.onchange = function() { mSlotsChanged(); };
+    sel.dataset.slot = s;
+    row.appendChild(sel);
+    area.appendChild(row);
+  })(s);
+}
+
+function mSlotsChanged() {
+  var game = document.getElementById('mCharGameSelect').value;
+  var roster = window._editingRoster[game] || [];
+  var picks = [];
+  document.querySelectorAll('#mSlotsArea select').forEach(function(sel) {
+    var character = sel.value;
+    if (!character) return;
+    var entry = roster.find(function(e) { return e.character === character; });
+    if (!entry) return;
+    picks.push({ slot: parseInt(sel.dataset.slot, 10), pack: entry.pack,
+                 character: entry.character, palette: entry.palette, file: entry.file });
+  });
+  window._editingCharacters[game] = picks;
+}
+
+function mCharDeleteGame() {
+  var game = document.getElementById('mCharGameSelect').value;
+  if (!game) return;
+  if (!confirm('Remove ' + game + ' roster and picks for this player?')) return;
+  delete window._editingRoster[game];
+  delete window._editingCharacters[game];
+  mRenderRoster();
+  mRenderSlots();
+}
+
+function closeModal() { document.getElementById('modal').classList.remove('open'); }
+function onBackdropClick(e) { if (e.target.id === 'modal') closeModal(); }
+
+async function saveModal() {
+  const name    = document.getElementById('mName').value.trim();
+  const team    = document.getElementById('mTeam').value.trim();
+  const country = document.getElementById('mCountry').value;
+  const social_handle     = document.getElementById('mSocialHandle').value.trim();
+  const is_commentator    = document.getElementById('mIsCommentator').checked;
+  const social_platform = document.getElementById('mSocialPlatform').value;
+  if (!name) { document.getElementById('mName').focus(); return; }
+
+  const endpoint = _editingOrigName ? '/updateLocalPlayer' : '/saveLocalPlayer';
+  const body = _editingOrigName
+    ? { id: _editingOrigName, name, team, country, social_handle, social_platform, is_commentator,
+        characters: window._editingCharacters, roster: window._editingRoster, aliases: window._editingAliases }
+    : { name, team, country, social_handle, social_platform, is_commentator,
+        characters: window._editingCharacters, roster: window._editingRoster, aliases: window._editingAliases };
+
+  try {
+    await fetch(endpoint, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body)
+    });
+    closeModal();
+    await loadPlayers();
+  } catch(e) { console.error('Save error:', e); }
+}
+
+// ── DELETE MODAL ──────────────────────────────────────────────────
+let _deletingName = null;
+let _deletingDisplayName = null;
+function openDeleteModal(id, name) {
+  _deletingName = id || name;
+  _deletingDisplayName = name || id;
+  document.getElementById('deletePlayerName').textContent = _deletingDisplayName || _deletingName;
+  document.getElementById('deleteModal').classList.add('open');
+}
+function closeDeleteModal() { document.getElementById('deleteModal').classList.remove('open'); }
+function onDeleteBackdropClick(e) { if (e.target.id === 'deleteModal') closeDeleteModal(); }
+
+async function confirmDelete() {
+  if (!_deletingName) return;
+  try {
+    await fetch('/deleteLocalPlayer', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: _deletingName })
+    });
+    closeDeleteModal();
+    await loadPlayers();
+  } catch(e) { console.error('Delete error:', e); }
+}
+
+// ── UTILS ─────────────────────────────────────────────────────────
+const PLATFORM_ICONS = {
+    twitter:   '../resources/twitter.png',
+    bluesky:   '../resources/bsky.png',
+    instagram: '../resources/instagram.png',
+    facebook:  '../resources/facebook.png',
+    twitch:    '../resources/twitch.png',
+};
+function platformIcon(p) {
+    return PLATFORM_ICONS[p]
+        ? '<img src="' + PLATFORM_ICONS[p] + '" style="width:16px;height:16px;vertical-align:middle;margin-right:4px;object-fit:contain;">'
+        : '';
+}
+
+function escHtml(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+function escAttr(s) {
+  return String(s).replace(/'/g,'&apos;').replace(/"/g,'&quot;');
+}
+
+// Enter key in player modal
+document.getElementById('mName').addEventListener('keydown', function(e) { if (e.key === 'Enter') saveModal(); });
+document.getElementById('mTeam').addEventListener('keydown', function(e) { if (e.key === 'Enter') saveModal(); });
+
+// Load on start
+loadGamesRegistry().then(loadPlayers);
+</script>
+
+  <script src="../theme/theme.js" defer></script>
+<div id="char-preview"><img id="char-preview-img" src=""><div id="char-preview-label"></div></div>
+<script>
+function mRenderAliases() {
+  var wrap = document.getElementById('mAliasChips');
+  if (!wrap) return;
+  wrap.innerHTML = '';
+  (window._editingAliases || []).forEach(function(a) {
+    var chip = document.createElement('span');
+    chip.className = 'roster-chip';
+    var txt = document.createElement('span');
+    txt.textContent = a;
+    txt.style.textTransform = 'none';
+    chip.appendChild(txt);
+    var x = document.createElement('span');
+    x.className = 'roster-chip-x';
+    x.textContent = '\u2715';
+    x.onclick = function() {
+      window._editingAliases = window._editingAliases.filter(function(v) { return v !== a; });
+      mRenderAliases();
+    };
+    chip.appendChild(x);
+    wrap.appendChild(chip);
+  });
+}
+
+function mAddAlias() {
+  var input = document.getElementById('mAliasInput');
+  var v = (input.value || '').trim();
+  if (!v) return;
+  var lower = v.toLowerCase();
+  if (!window._editingAliases) window._editingAliases = [];
+  var exists = window._editingAliases.some(function(a) { return a.toLowerCase() === lower; });
+  var isOwnName = (document.getElementById('mName').value || '').trim().toLowerCase() === lower;
+  if (!exists && !isOwnName) window._editingAliases.push(v);
+  input.value = '';
+  mRenderAliases();
+}
+
+function openMergeModal() {
+  var opts = _players.slice().sort(function(a, b) {
+    return (a.name || '').toLowerCase().localeCompare((b.name || '').toLowerCase());
+  });
+  ['mergePrimary', 'mergeDuplicate'].forEach(function(id) {
+    var sel = document.getElementById(id);
+    sel.innerHTML = '<option value="">\u2014 Select player \u2014</option>';
+    opts.forEach(function(p) {
+      var o = document.createElement('option');
+      o.value = p.id;
+      o.textContent = p.name + (p.team ? ' (' + p.team + ')' : '');
+      sel.appendChild(o);
+    });
+  });
+  document.getElementById('mergeSummary').textContent = '';
+  document.getElementById('mergeConfirmBtn').disabled = true;
+  document.getElementById('mergeModal').classList.add('open');
+}
+
+function closeMergeModal() {
+  document.getElementById('mergeModal').classList.remove('open');
+}
+
+function mergeSelectionChanged() {
+  var pid = document.getElementById('mergePrimary').value;
+  var did = document.getElementById('mergeDuplicate').value;
+  var btn = document.getElementById('mergeConfirmBtn');
+  var sum = document.getElementById('mergeSummary');
+  if (!pid || !did || pid === did) {
+    btn.disabled = true;
+    sum.textContent = (pid && did && pid === did) ? 'Pick two different players.' : '';
+    return;
+  }
+  var p = _players.find(function(x) { return x.id === pid; });
+  var d = _players.find(function(x) { return x.id === did; });
+  sum.textContent = '"' + d.name + '" will be removed. Their characters and roster move to "'
+    + p.name + '" (existing data wins), and "' + d.name + '" becomes an alias of "' + p.name + '".';
+  btn.disabled = false;
+}
+
+async function doMerge() {
+  var pid = document.getElementById('mergePrimary').value;
+  var did = document.getElementById('mergeDuplicate').value;
+  if (!pid || !did || pid === did) return;
+  try {
+    var res = await fetch('/mergePlayers', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ primary_id: pid, duplicate_id: did })
+    });
+    var data = await res.json();
+    if (!data.ok) { alert('Merge failed: ' + (data.message || res.status)); return; }
+    closeMergeModal();
+    await loadPlayers();
+  } catch (e) { console.error('merge error:', e); alert('Merge failed: ' + e); }
+}
+
+// ── CHARACTER HOVER PREVIEW ───────────────────────────────
+(function() {
+  var p = document.getElementById('char-preview');
+  var img = document.getElementById('char-preview-img');
+  var lbl = document.getElementById('char-preview-label');
+  function move(e) {
+    if (p.style.display === 'none') return;
+    var x = e.clientX + 16, y = e.clientY + 16;
+    if (x + 140 > window.innerWidth)  x = e.clientX - 148;
+    if (y + 155 > window.innerHeight) y = e.clientY - 158;
+    p.style.left = x + 'px'; p.style.top = y + 'px';
+  }
+  document.addEventListener('mouseover', function(e) {
+    var t = e.target.closest('.char-preview-target');
+    if (!t) { p.style.display = 'none'; return; }
+    img.src = t.src;
+    lbl.textContent = (t.dataset.char || '') +
+      (t.dataset.palette !== undefined ? ' \u00b7 ' + t.dataset.palette : '');
+    p.style.display = 'block';
+    move(e);
+  });
+  document.addEventListener('mousemove', move);
+  document.addEventListener('mouseout', function(e) {
+    var t = e.target.closest('.char-preview-target');
+    if (t && !(e.relatedTarget && e.relatedTarget.closest('.char-preview-target'))) {
+      p.style.display = 'none';
+    }
+  });
+})();
+</script>
+<script src="../sync.js"></script>
+<script>
+if (window.liveSync) {
+  liveSync.on('players', function() {
+    // Skip while a modal is open so an in-progress edit isn't disturbed
+    if (!document.querySelector('.modal-backdrop.open')) loadPlayers();
+  });
+}
+</script>
+</body>
+</html>
