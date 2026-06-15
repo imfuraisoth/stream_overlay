@@ -724,6 +724,24 @@ def get_matchup_history():
     return jsonify(out), 200
 
 
+@api.route('/purgeAllPlayers', methods=['POST'])
+def purge_all_players():
+    """Delete the ENTIRE local player database (players, characters,
+    rosters, aliases). Match history event files are left intact.
+
+    Guarded: the body must contain {"confirm": "DELETE"} exactly, so it
+    cannot fire by accident. Returns how many players were removed."""
+    body = request.get_json() or {}
+    if body.get("confirm") != "DELETE":
+        return jsonify({"ok": False, "message": "Confirmation required."}), 400
+    try:
+        removed = players_db.purge_all_players()
+    except Exception as e:
+        print(f"purgeAllPlayers error: {e}")
+        return jsonify({"ok": False, "message": str(e)}), 500
+    return jsonify({"ok": True, "removed": removed}), 200
+
+
 @api.route('/deleteLocalPlayer', methods=['POST'])
 def delete_local_player():
     body = request.get_json() or {}
@@ -1306,6 +1324,13 @@ def update_data_no_scores():
         temp["p2CharacterPack"] = json_data.get("p2CharacterPack", "")
         temp["p2Palette"]       = json_data.get("p2Palette",       0)
         temp["p2CharacterFile"] = json_data.get("p2CharacterFile", "")
+        # Multi-slot character arrays (the current char system). These MUST be
+        # persisted here too, or clearing them on a player swap never reaches
+        # the overlay and the previous player's characters linger.
+        temp["p1Characters"]     = json_data.get("p1Characters",     [])
+        temp["p2Characters"]     = json_data.get("p2Characters",     [])
+        temp["p1NextCharacters"] = json_data.get("p1NextCharacters", [])
+        temp["p2NextCharacters"] = json_data.get("p2NextCharacters", [])
         # Head-to-head fields (drive the H2H overlays)
         temp["h2hVisible"]            = json_data.get("h2hVisible", False)
         temp["h2hScope"]              = json_data.get("h2hScope", "alltime")

@@ -14,24 +14,7 @@
 <body>
 
 <!-- NAV -->
-<div class="top-navbar-container">
-  <div class="header-item"><a href="../commentators/commentators.html">Commentators</a></div>
-  <span class="header-sep">|</span>
-  <div class="header-item"><a href="../index.html">Event Dashboard</a></div>
-  <span class="header-sep">|</span>
-  <div class="header-item"><a href="../top8/top8.html">Top 8</a></div>
-  <span class="header-sep">|</span>
-  <div class="header-item"><a href="../playerinfo/characterselect.html">Games &amp; Assets</a></div>
-  <span class="header-sep">|</span>
-  <div class="header-item"><a href="../stations/stations.html">Stations</a></div>
-  <span class="header-sep">|</span>
-  <div class="header-item active">Crew Battle</div>
-  <span class="header-sep">|</span>
-  <div class="header-item"><a href="../players/players.html">Players</a></div>
-  <span class="header-sep">|</span>
-  <div class="header-item"><a href="../imports/imports.html">Match Imports</a></div>
-</div>
-
+<div id="nav-root" style="min-height:45px"></div>
 <div class="cb-wrap">
   <div class="cb-bar">
     <span id="cbStatus" class="cb-status">Loading…</span>
@@ -134,7 +117,12 @@
     var input = document.getElementById('team'+n+'Add');
     var name = (input.value||'').trim();
     if(!name) return;
-    teamObj(n).players.push({ name:name });
+    var t = teamObj(n);
+    // Add to the TOP so anchors (captain/vice) can be picked first and the
+    // rest of the crew stacks above them. Everyone shifts down one index, so
+    // nudge the current pointer to keep it on the same actual player.
+    t.players.unshift({ name:name });
+    if(t.current > 0) t.current += 1;
     input.value = '';
     commit();
   }
@@ -246,5 +234,7 @@
     await loadBattle();
   })();
 </script>
+  <script src="../nav.js"></script>
+  <script src="../theme/theme.js" defer></script>
 </body>
 </html>

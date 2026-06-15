@@ -451,7 +451,7 @@ button,
   gap: 5px;
   line-height: 1;
 }
-button:hover, .rectangle_button:hover, .rectangle_button_popup:hover { background: #f0b030; }
+button:hover, .rectangle_button:hover, .rectangle_button_popup:hover { background: var(--accent); filter: brightness(1.12); }
 button:active, .rectangle_button:active { transform: translateY(1px); }
 
 /* Reset All / Reset Names — secondary style */
@@ -485,7 +485,7 @@ button:active, .rectangle_button:active { transform: translateY(1px); }
   color: #0e0d0b !important;
   border: none !important;
 }
-#rectangle_button_6:hover { background: #f0b030 !important; }
+#rectangle_button_6:hover { background: var(--accent) !important; filter: brightness(1.12) !important; }
 
 /* Start.gg / Stats popup trigger — purple */
 #openStartggBtn, #openStatsBtn {
@@ -602,7 +602,7 @@ datalist { max-height: 150px; overflow-y: auto; }
   background: var(--accent); color: #0e0d0b;
   border-color: var(--accent) !important;
 }
-.toggle-btn.active:hover { background: #f0b030; }
+.toggle-btn.active:hover { background: var(--accent); filter: brightness(1.12); }
 
 .additionalsContainer {
   padding: 14px;

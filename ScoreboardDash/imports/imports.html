@@ -48,24 +48,7 @@
 <body>
 
 <!-- NAV -->
-<div class="top-navbar-container">
-  <div class="header-item"><a href="../commentators/commentators.html">Commentators</a></div>
-  <span class="header-sep">|</span>
-  <div class="header-item"><a href="../index.html">Event Dashboard</a></div>
-  <span class="header-sep">|</span>
-  <div class="header-item"><a href="../top8/top8.html">Top 8</a></div>
-  <span class="header-sep">|</span>
-  <div class="header-item"><a href="../playerinfo/characterselect.html">Games &amp; Assets</a></div>
-  <span class="header-sep">|</span>
-  <div class="header-item"><a href="../stations/stations.html">Stations</a></div>
-  <span class="header-sep">|</span>
-  <div class="header-item"><a href="../crewbattle/crewbattle.html">Crew Battle</a></div>
-  <span class="header-sep">|</span>
-  <div class="header-item"><a href="../players/players.html">Players</a></div>
-  <span class="header-sep">|</span>
-  <div class="header-item active">Match Imports</div>
-</div>
-
+<div id="nav-root" style="min-height:45px"></div>
 <div class="imports-wrap">
   <h2 style="margin-bottom:4px;">Match History Imports</h2>
   <div class="hint">Paste a start.gg event URL or slug, import its completed sets, then assign any unmatched players. Re-importing an event refreshes its data without creating duplicates.</div>
@@ -364,5 +347,7 @@ function createNew(idx) { _reconcile(idx, 'new', null); }
   await loadEvents();
 })();
 </script>
+  <script src="../nav.js"></script>
+  <script src="../theme/theme.js" defer></script>
 </body>
 </html>

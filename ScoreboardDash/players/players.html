@@ -18,24 +18,7 @@
 <body>
 
 <!-- NAV -->
-<div class="top-navbar-container">
-  <div class="header-item"><a href="../commentators/commentators.html">Commentators</a></div>
-  <span class="header-sep">|</span>
-  <div class="header-item"><a href="../index.html">Event Dashboard</a></div>
-  <span class="header-sep">|</span>
-  <div class="header-item"><a href="../top8/top8.html">Top 8</a></div>
-  <span class="header-sep">|</span>
-  <div class="header-item"><a href="../playerinfo/characterselect.html">Games &amp; Assets</a></div>
-  <span class="header-sep">|</span>
-  <div class="header-item"><a href="../stations/stations.html">Stations</a></div>
-  <span class="header-sep">|</span>
-  <div class="header-item"><a href="../crewbattle/crewbattle.html">Crew Battle</a></div>
-  <span class="header-sep">|</span>
-  <div class="header-item active">Players</div>
-  <span class="header-sep">|</span>
-  <div class="header-item"><a href="../imports/imports.html">Match Imports</a></div>
-</div>
-
+<div id="nav-root" style="min-height:45px"></div>
 <!-- TOOLBAR -->
 <div class="toolbar">
   <div class="toolbar-left">
@@ -46,6 +29,7 @@
   <div class="toolbar-right">
     <span class="player-count" id="playerCount"></span>
     <button class="btn sec sm" onclick="loadPlayers()">↺ Refresh</button>
+    <button class="btn danger sm" onclick="openPurgeModal()" title="Delete the entire player database">Purge All</button>
   </div>
 </div>
 
@@ -162,6 +146,27 @@
     <div class="modal-footer">
       <button class="btn sec" onclick="closeDeleteModal()">Cancel</button>
       <button class="btn danger" onclick="confirmDelete()">Delete</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-backdrop" id="purgeModal" onclick="onPurgeBackdropClick(event)">
+  <div class="modal-content modal-sm">
+    <div class="modal-header">
+      <span class="modal-title">Purge Player Database</span>
+      <button class="modal-close" onclick="closePurgeModal()">×</button>
+    </div>
+    <div class="modal-body">
+      <p style="color:var(--fg);font-size:14px;">This deletes <strong style="color:var(--accent2);">every player</strong> -- names, teams, character profiles, and aliases.</p>
+      <p style="color:var(--fg2);font-size:12px;margin-top:6px;">Imported match history is kept, but its players will be unlinked until you re-import or reconcile. This cannot be undone.</p>
+      <p style="color:var(--fg);font-size:12px;margin-top:12px;">Type <strong style="color:var(--accent2);">DELETE</strong> to confirm:</p>
+      <input type="text" id="purgeConfirmInput" placeholder="DELETE" autocomplete="off"
+             oninput="onPurgeInput()" onkeydown="if(event.key==='Enter')confirmPurge()"
+             style="margin-top:4px;width:100%;">
+    </div>
+    <div class="modal-footer">
+      <button class="btn sec" onclick="closePurgeModal()">Cancel</button>
+      <button class="btn danger" id="purgeConfirmBtn" onclick="confirmPurge()" disabled>Purge Everything</button>
     </div>
   </div>
 </div>
@@ -584,6 +589,44 @@ async function confirmDelete() {
   } catch(e) { console.error('Delete error:', e); }
 }
 
+// ── PURGE ALL ─────────────────────────────────────────────────────
+function openPurgeModal() {
+  var inp = document.getElementById('purgeConfirmInput');
+  inp.value = '';
+  document.getElementById('purgeConfirmBtn').disabled = true;
+  document.getElementById('purgeModal').classList.add('open');
+  setTimeout(function(){ inp.focus(); }, 50);
+}
+function closePurgeModal() { document.getElementById('purgeModal').classList.remove('open'); }
+function onPurgeBackdropClick(e) { if (e.target.id === 'purgeModal') closePurgeModal(); }
+function onPurgeInput() {
+  // Enable only on the exact word DELETE (case-sensitive, matches server guard)
+  var v = document.getElementById('purgeConfirmInput').value;
+  document.getElementById('purgeConfirmBtn').disabled = (v !== 'DELETE');
+}
+async function confirmPurge() {
+  if (document.getElementById('purgeConfirmInput').value !== 'DELETE') return;
+  var btn = document.getElementById('purgeConfirmBtn');
+  btn.disabled = true;
+  try {
+    var r = await fetch('/purgeAllPlayers', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ confirm: 'DELETE' })
+    });
+    var data = await r.json();
+    closePurgeModal();
+    if (data && data.ok) {
+      await loadPlayers();
+    } else {
+      alert('Purge failed: ' + ((data && data.message) || 'unknown error'));
+    }
+  } catch(e) {
+    console.error('Purge error:', e);
+    alert('Purge failed: ' + e);
+  }
+}
+
 // ── UTILS ─────────────────────────────────────────────────────────
 const PLATFORM_ICONS = {
     twitter:   '../resources/twitter.png',
@@ -612,6 +655,7 @@ document.getElementById('mTeam').addEventListener('keydown', function(e) { if (e
 // Load on start
 loadGamesRegistry().then(loadPlayers);
 </script>
+  <script src="../nav.js"></script>
 
   <script src="../theme/theme.js" defer></script>
 <div id="char-preview"><img id="char-preview-img" src=""><div id="char-preview-label"></div></div>
