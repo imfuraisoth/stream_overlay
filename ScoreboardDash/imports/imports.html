@@ -59,6 +59,8 @@
   <span class="header-sep">|</span>
   <div class="header-item"><a href="../stations/stations.html">Stations</a></div>
   <span class="header-sep">|</span>
+  <div class="header-item"><a href="../crewbattle/crewbattle.html">Crew Battle</a></div>
+  <span class="header-sep">|</span>
   <div class="header-item"><a href="../players/players.html">Players</a></div>
   <span class="header-sep">|</span>
   <div class="header-item active">Match Imports</div>
@@ -69,6 +71,10 @@
   <div class="hint">Paste a start.gg event URL or slug, import its completed sets, then assign any unmatched players. Re-importing an event refreshes its data without creating duplicates.</div>
 
   <div class="import-bar">
+    <select id="sourceInput" style="max-width:120px;flex:0 0 auto;" onchange="onSourceChange()">
+      <option value="startgg">start.gg</option>
+      <option value="parry">parry.gg</option>
+    </select>
     <input type="text" id="slugInput" placeholder="https://www.start.gg/tournament/.../event/...  or  tournament/.../event/...">
     <select id="gameInput" style="max-width:180px;flex:0 0 auto;"><option value="">Game...</option></select>
     <input type="text" id="seriesInput" list="seriesList" placeholder="Series (optional, e.g. STunday)" style="max-width:220px;flex:0 0 auto;">
@@ -247,15 +253,30 @@ function escHtml(s) {
     .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 }
 
+var _currentSource = 'startgg';
+function onSourceChange() {
+  var source = document.getElementById('sourceInput').value || 'startgg';
+  var slugIn = document.getElementById('slugInput');
+  if (source === 'parry') {
+    slugIn.placeholder = 'tournament-slug/event-slug  (or a parry.gg event URL)';
+  } else {
+    slugIn.placeholder = 'https://www.start.gg/tournament/.../event/...  or  tournament/.../event/...';
+  }
+}
 async function doImport() {
   var slug = document.getElementById('slugInput').value.trim();
   if (!slug) { setStatus('Enter an event URL or slug first.', 'err'); return; }
+  var game = (document.getElementById('gameInput').value || '').trim();
+  if (!game) { setStatus('Select a game before importing -- every event must be tied to a game.', 'err'); return; }
+  var source = document.getElementById('sourceInput').value || 'startgg';
+  _currentSource = source;
   var btn = document.getElementById('importBtn');
-  btn.disabled = true; setStatus('Fetching completed sets from start.gg…');
+  btn.disabled = true;
+  setStatus('Fetching completed ' + (source === 'parry' ? 'matches from parry.gg' : 'sets from start.gg') + '\u2026');
   try {
     var r = await fetch('/importStartggEvent', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ slug: slug, series: (document.getElementById('seriesInput').value || '').trim(), game: (document.getElementById('gameInput').value || '').trim() })
+      body: JSON.stringify({ slug: slug, source: source, series: (document.getElementById('seriesInput').value || '').trim(), game: game })
     });
     var data = await r.json();
     if (!data.ok) { setStatus(data.message || ('Import failed (' + r.status + ')'), 'err'); btn.disabled = false; return; }
@@ -315,7 +336,7 @@ async function _reconcile(idx, action, playerId) {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         event_slug: _currentEventSlug, tag: u.tag, user_id: u.user_id,
-        action: action, player_id: playerId
+        action: action, player_id: playerId, source: _currentSource
       })
     });
     var data = await r.json();

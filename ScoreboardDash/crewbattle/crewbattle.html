@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Crew Battle — Stream Overlay</title>
+  <link rel="icon" type="image/png" href="../images/V.png">
+  <link href="style.css" rel="stylesheet" type="text/css">
+  <script>
+    (function(){var s=localStorage.getItem('sc_theme');if(!s)return;try{var v=JSON.parse(s);Object.keys(v).forEach(function(k){document.documentElement.style.setProperty(k,v[k])});}catch(e){}})();
+  </script>
+  <link href="../theme/theme.css" rel="stylesheet" type="text/css">
+</head>
+<body>
+
+<!-- NAV -->
+<div class="top-navbar-container">
+  <div class="header-item"><a href="../commentators/commentators.html">Commentators</a></div>
+  <span class="header-sep">|</span>
+  <div class="header-item"><a href="../index.html">Event Dashboard</a></div>
+  <span class="header-sep">|</span>
+  <div class="header-item"><a href="../top8/top8.html">Top 8</a></div>
+  <span class="header-sep">|</span>
+  <div class="header-item"><a href="../playerinfo/characterselect.html">Games &amp; Assets</a></div>
+  <span class="header-sep">|</span>
+  <div class="header-item"><a href="../stations/stations.html">Stations</a></div>
+  <span class="header-sep">|</span>
+  <div class="header-item active">Crew Battle</div>
+  <span class="header-sep">|</span>
+  <div class="header-item"><a href="../players/players.html">Players</a></div>
+  <span class="header-sep">|</span>
+  <div class="header-item"><a href="../imports/imports.html">Match Imports</a></div>
+</div>
+
+<div class="cb-wrap">
+  <div class="cb-bar">
+    <span id="cbStatus" class="cb-status">Loading…</span>
+    <label class="cb-pagesize">Page size
+      <input type="number" id="pageSizeInput" min="1" value="12" onchange="setPageSize(this.value)">
+    </label>
+    <span style="flex:1"></span>
+    <button class="btn" id="cbReset" onclick="resetBattle()">Reset Battle</button>
+  </div>
+
+  <div class="cb-teams" id="cbTeams"></div>
+  <datalist id="playerList"></datalist>
+  <p class="cb-hint">
+    The <b>current player</b> (highlighted) is who's up. Players above are defeated (dimmed on stream),
+    players below are waiting. Use <b>Advance ▼</b> when the current player loses, or <b>Back ▲</b> to undo.
+    The last two players show the <b>Captain</b> / <b>Vice</b> role labels (editable per team) prefixed on stream.
+    Reorder with the row ▲▼; click a name to jump the current pointer to it. Changes save automatically.
+  </p>
+</div>
+
+<script>
+  var state = null;
+  var viewPage = { 1: null, 2: null };   // operator-only manual page override; null = follow current
+
+  function escHtml(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+  function setStatus(t){ document.getElementById('cbStatus').textContent = t; }
+  function teamObj(n){ return n===1 ? state.team1 : state.team2; }
+
+  async function loadPlayers(){
+    try {
+      var r = await fetch('/getLocalPlayers');
+      var players = await r.json();
+      var dl = document.getElementById('playerList');
+      dl.innerHTML = '';
+      (players||[]).forEach(function(p){
+        var o=document.createElement('option'); o.value = p.name || ''; dl.appendChild(o);
+      });
+    } catch(e){ console.log('loadPlayers error:', e); }
+  }
+
+  async function loadBattle(){
+    try {
+      var r = await fetch('/getCrewBattle');
+      state = await r.json();
+      [1,2].forEach(function(n){
+        var t = teamObj(n);
+        if(t.current == null) t.current = 0;
+        if(t.captainLabel == null) t.captainLabel = 'Captain';
+        if(t.viceLabel == null) t.viceLabel = 'Vice';
+      });
+      if(state.pageSize == null) state.pageSize = 12;
+      document.getElementById('pageSizeInput').value = state.pageSize;
+      render();
+      setStatus('Loaded.');
+    } catch(e){ console.log('loadBattle error:', e); setStatus('Could not load.'); }
+  }
+
+  async function commit(){
+    render();
+    try {
+      var r = await fetch('/saveCrewBattle', {
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify(state)
+      });
+      setStatus(r.ok ? 'Saved.' : 'Save failed.');
+    } catch(e){ console.log('commit error:', e); setStatus('Save failed.'); }
+  }
+
+  function pageSizeVal(){ return (state.pageSize && state.pageSize>0) ? state.pageSize : 12; }
+  function setPageSize(v){
+    var p = parseInt(v,10); if(isNaN(p)||p<1) p=1;
+    state.pageSize = p;
+    viewPage = {1:null, 2:null};   // reset manual overrides when page size changes
+    commit();
+  }
+  function numPages(n){
+    var len = teamObj(n).players.length;
+    return Math.max(1, Math.ceil(len / pageSizeVal()));
+  }
+  function currentPageOf(n){
+    var t = teamObj(n);
+    var ptr = Math.min(t.current, Math.max(0, t.players.length-1));
+    return Math.floor(ptr / pageSizeVal());
+  }
+  function shownPage(n){
+    return (viewPage[n] == null) ? currentPageOf(n) : viewPage[n];
+  }
+  function pageNav(n, delta){
+    var np = numPages(n);
+    var next = Math.max(0, Math.min(np-1, shownPage(n) + delta));
+    viewPage[n] = next;
+    render();
+  }
+  function followCurrent(n){ viewPage[n] = null; render(); }
+  function setName(n, val){ teamObj(n).name = val.trim() || ('Team '+n); commit(); }
+  function setCaptainLabel(n, val){ teamObj(n).captainLabel = val; commit(); }
+  function setViceLabel(n, val){ teamObj(n).viceLabel = val; commit(); }
+
+  function addPlayer(n){
+    var input = document.getElementById('team'+n+'Add');
+    var name = (input.value||'').trim();
+    if(!name) return;
+    teamObj(n).players.push({ name:name });
+    input.value = '';
+    commit();
+  }
+  function removePlayer(n, idx){
+    var t = teamObj(n);
+    t.players.splice(idx,1);
+    if(t.current > t.players.length) t.current = t.players.length;
+    commit();
+  }
+  function move(n, idx, dir){
+    var arr = teamObj(n).players;
+    var j = idx + dir;
+    if(j<0 || j>=arr.length) return;
+    var tmp = arr[idx]; arr[idx]=arr[j]; arr[j]=tmp;
+    commit();
+  }
+  function advance(n, delta){
+    var t = teamObj(n);
+    t.current = Math.max(0, Math.min(t.players.length, t.current + delta));
+    viewPage[n] = null;   // resume following the current player
+    commit();
+  }
+  function jumpTo(n, idx){
+    teamObj(n).current = idx;
+    commit();
+  }
+
+  function render(){
+    var wrap = document.getElementById('cbTeams');
+    wrap.innerHTML = '';
+    [1,2].forEach(function(n){
+      var t = teamObj(n);
+      var remaining = Math.max(0, t.players.length - t.current);
+      var capIdx = t.players.length - 1;
+      var viceIdx = t.players.length - 2;
+
+      var col = document.createElement('div');
+      col.className = 'cb-team';
+      var ps = pageSizeVal();
+      var shown = shownPage(n);
+      var rows = '';
+      t.players.forEach(function(p, idx){
+        var role = (idx===capIdx && t.players.length>0) ? (t.captainLabel||'')
+                 : (idx===viceIdx && t.players.length>1) ? (t.viceLabel||'') : '';
+        var cls = 'cb-item';
+        if(idx < t.current) cls += ' cb-defeated';
+        else if(idx === t.current) cls += ' cb-current';
+        var pageOf = Math.floor(idx / ps);
+        if(pageOf === shown) cls += ' cb-onpage';
+        if(idx > 0 && (idx % ps) === 0) cls += ' cb-pagebreak';
+        rows +=
+          '<li class="'+cls+'">'
+          + '<span class="cb-order">'+(idx+1)+'</span>'
+          + '<span class="cb-name" onclick="jumpTo('+n+','+idx+')" title="Set as current">'
+            + (role ? '<span class="cb-role">'+escHtml(role)+'</span> ' : '')
+            + escHtml(p.name) + '</span>'
+          + '<span class="cb-actions">'
+            + '<button class="cb-mini" onclick="move('+n+','+idx+',-1)" title="Move up">&#9650;</button>'
+            + '<button class="cb-mini" onclick="move('+n+','+idx+',1)" title="Move down">&#9660;</button>'
+            + '<button class="cb-mini cb-del" onclick="removePlayer('+n+','+idx+')" title="Remove">&times;</button>'
+          + '</span></li>';
+      });
+      var np = Math.max(1, Math.ceil(t.players.length / ps));
+
+      col.innerHTML =
+        '<input type="text" class="cb-teamname" value="'+escHtml(t.name)+'" placeholder="Team '+n+' name" '
+          + 'onchange="setName('+n+', this.value)">'
+        + '<div class="cb-remaining">'+escHtml(t.name)+': '+remaining+' remaining</div>'
+        + '<div class="cb-roles">'
+          + '<label>Captain label <input type="text" class="cb-rolein" value="'+escHtml(t.captainLabel)+'" '
+            + 'onchange="setCaptainLabel('+n+', this.value)"></label>'
+          + '<label>Vice label <input type="text" class="cb-rolein" value="'+escHtml(t.viceLabel)+'" '
+            + 'onchange="setViceLabel('+n+', this.value)"></label>'
+        + '</div>'
+        + '<div class="cb-advrow">'
+          + '<button class="btn" onclick="advance('+n+',-1)">▲ Back</button>'
+          + '<button class="btn cb-adv" onclick="advance('+n+',1)">Advance ▼</button>'
+        + '</div>'
+        + '<div class="cb-pagerow">'
+          + '<button class="cb-mini" onclick="pageNav('+n+',-1)" title="Previous page">&#9664;</button>'
+          + '<span class="cb-pagelabel">Page '+(shown+1)+'/'+np+(viewPage[n]!=null?' (manual)':'')+'</span>'
+          + '<button class="cb-mini" onclick="pageNav('+n+',1)" title="Next page">&#9654;</button>'
+          + (viewPage[n]!=null ? '<button class="cb-mini" onclick="followCurrent('+n+')" title="Follow current player">&#8635;</button>' : '')
+        + '</div>'
+        + '<div class="cb-addrow">'
+          + '<input type="text" class="cb-addinput" id="team'+n+'Add" list="playerList" placeholder="Add player…">'
+          + '<button class="btn cb-addbtn" onclick="addPlayer('+n+')">Add</button>'
+        + '</div>'
+        + '<ul class="cb-list">'+rows+'</ul>';
+      wrap.appendChild(col);
+      (function(team){
+        var inp = document.getElementById('team'+team+'Add');
+        if(inp) inp.addEventListener('keydown', function(e){ if(e.key==='Enter') addPlayer(team); });
+      })(n);
+    });
+  }
+
+  function resetBattle(){
+    if(!confirm('Reset the whole crew battle? This clears both rosters.')) return;
+    state = {
+      team1:{name:'East',players:[],current:0,captainLabel:'Captain',viceLabel:'Vice'},
+      team2:{name:'West',players:[],current:0,captainLabel:'Captain',viceLabel:'Vice'}
+    };
+    commit();
+  }
+
+  (async function init(){
+    await loadPlayers();
+    await loadBattle();
+  })();
+</script>
+</body>
+</html>

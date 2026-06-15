@@ -1,0 +1,57 @@
+/* Crew Battle operator page */
+.cb-wrap { max-width: 1100px; margin: 16px auto; padding: 0 16px; }
+.cb-bar { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; }
+.cb-status { color: var(--fg2); font-size: 13px; }
+
+.cb-teams { display: flex; gap: 20px; align-items: flex-start; }
+.cb-team {
+  flex: 1; background: var(--bg2); border: 1px solid var(--border);
+  border-radius: 8px; padding: 14px;
+}
+.cb-teamname {
+  width: 100%; box-sizing: border-box; font-size: 22px; font-weight: 700;
+  background: transparent; border: none; border-bottom: 2px solid var(--border);
+  color: var(--fg); padding: 4px 2px; margin-bottom: 6px;
+}
+.cb-teamname:focus { outline: none; border-bottom-color: var(--accent); }
+.cb-remaining { color: var(--accent); font-size: 13px; font-weight: 600; margin-bottom: 10px; }
+
+.cb-addrow { display: flex; gap: 6px; margin-bottom: 12px; }
+.cb-addinput {
+  flex: 1; padding: 7px 9px; background: var(--bg2); border: 1px solid var(--border);
+  color: var(--fg); border-radius: 5px;
+}
+.cb-addbtn { flex: 0 0 auto; }
+
+.cb-list { list-style: none; margin: 0; padding: 0; }
+.cb-item {
+  display: flex; align-items: center; gap: 8px; padding: 8px 6px;
+  border-bottom: 1px solid var(--border);
+}
+.cb-order { color: var(--fg2); font-size: 12px; width: 18px; text-align: right; flex: 0 0 auto; }
+.cb-name { flex: 1; cursor: pointer; user-select: none; }
+.cb-name:hover { color: var(--accent); }
+.cb-badge { color: var(--accent); font-weight: 700; font-size: 12px; }
+.cb-item.cb-defeated .cb-name { opacity: 0.4; }
+.cb-item.cb-captain { background: rgba(255,255,255,0.03); }
+
+.cb-actions { display: flex; gap: 4px; flex: 0 0 auto; }
+.cb-mini {
+  background: var(--bg2); border: 1px solid var(--border); color: var(--fg);
+  border-radius: 4px; padding: 2px 7px; cursor: pointer; font-size: 12px; line-height: 1.4;
+}
+.cb-mini:hover { border-color: var(--accent); }
+.cb-del:hover { border-color: var(--accent2); color: var(--accent2); }
+
+.cb-hint { color: var(--fg2); font-size: 12px; margin-top: 14px; }
+
+/* Pagination controls (operator page) */
+.cb-pagesize { color: var(--fg2); font-size: 13px; display: flex; align-items: center; gap: 6px; }
+.cb-pagesize input { width: 56px; padding: 4px 6px; background: var(--bg2); border: 1px solid var(--border); color: var(--fg); border-radius: 4px; }
+.cb-pagerow { display: flex; align-items: center; justify-content: center; gap: 8px; margin-bottom: 10px; }
+.cb-pagelabel { color: var(--fg2); font-size: 12px; min-width: 90px; text-align: center; }
+/* Rows on the currently-shown page are emphasized; others fade slightly so
+   you can see which page is live on the overlay. */
+.cb-item:not(.cb-onpage) { opacity: 0.5; }
+.cb-item.cb-defeated:not(.cb-onpage) { opacity: 0.25; }
+.cb-item.cb-pagebreak { border-top: 2px dashed var(--border); }

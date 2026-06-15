@@ -1,0 +1,60 @@
+/* Crew Battle overlay -- shared by crew-battle-team1.html and -team2.html.
+   Full-height vertical strip, designed for a 1920x1080 overlay. Moving-highlight
+   model: players above the current one are dimmed (defeated), the current player
+   is highlighted, players below are bright (waiting). Last two players get the
+   Captain / Vice role labels prefixed.
+
+   AUTO-SCALE: the overlay fits `pageSize` rows into the 1080 height. Row height
+   and font are set at runtime via --cb-row-h / --cb-font (computed in the page),
+   so a larger page size shrinks every row to keep them all on screen. Tune the
+   look via the multipliers in the JS (rowH * 0.62 for font) or the rules below. */
+html, body { margin: 0; padding: 0; background: transparent; }
+
+#cb-root {
+  --cb-row-h: 40px;          /* default until JS sets it from pageSize */
+  --cb-font: 24px;
+  font-family: Impact, "RigidSquareExtraBold";
+  color: #FFFFFF;
+  width: 360px;              /* strip width; resize the OBS source to taste */
+  box-sizing: border-box;
+  padding: 6px 10px;
+}
+
+#cb-header {
+  display: flex; align-items: baseline; gap: 10px;
+  height: 52px; box-sizing: border-box;
+  padding-bottom: 6px; margin-bottom: 6px;
+  border-bottom: 2px solid #E8A050;
+}
+#cb-teamname { font-size: 28px; text-transform: uppercase; -webkit-text-stroke: 1px black; }
+#cb-remaining { margin-left: auto; font-size: 22px; color: #E8A050; }
+
+#cb-list { list-style: none; margin: 0; padding: 0; }
+
+.cb-row {
+  display: flex; align-items: center; gap: 8px;
+  height: var(--cb-row-h);
+  box-sizing: border-box;
+  font-size: var(--cb-font);
+  line-height: 1;
+  padding: 0 6px;
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+  -webkit-text-stroke: 0.5px black;
+  overflow: hidden;
+  transition: opacity .25s ease, background .25s ease;
+}
+.cb-pos { font-size: calc(var(--cb-font) * 0.55); opacity: .5; width: 1.4em; text-align: right; flex: 0 0 auto; }
+.cb-pname { flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.cb-role { color: #40D0B0; font-size: calc(var(--cb-font) * 0.68); -webkit-text-stroke: 0; }
+
+/* Waiting players (after current): full brightness -- default. */
+
+/* Current player: highlighted band. */
+.cb-row.current {
+  background: rgba(64, 208, 176, 0.22);
+  border-left: 4px solid #40D0B0;
+  padding-left: 4px;
+}
+
+/* Defeated players (before current): dimmed only, no strikethrough. */
+.cb-row.defeated { opacity: 0.35; }

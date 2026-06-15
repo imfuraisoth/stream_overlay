@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Crew Battle - Team 2</title>
+  <link rel="stylesheet" href="https://use.typekit.net/vsy6ybb.css">
+  <link href="style.css" rel="stylesheet" type="text/css" />
+</head>
+<body>
+  <!-- Crew battle roster for TEAM 2. Hardcoded to team 2 so it can be added
+       in OBS as a plain local file (no ?team= parameter). Other team file:
+       crew-battle-team1.html. Shared styling in style.css.
+       Full-height vertical strip. The 'current' player is highlighted; players
+       above are defeated (dimmed); players below are waiting (bright). The last
+       two players are prefixed with the team's Captain / Vice role labels. -->
+  <div id="cb-root">
+    <div id="cb-header">
+      <span id="cb-teamname"></span>
+      <span id="cb-remaining"></span>
+    </div>
+    <ul id="cb-list"></ul>
+  </div>
+
+  <script>
+    var TEAM = 2;           // hardcoded -- this file is team 2
+    var serverIp = "localhost:8080";
+
+    function esc(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+    function render(state){
+      var t = (TEAM === 1) ? state.team1 : state.team2;
+      if(!t){ return; }
+      var players = t.players || [];
+      var current = (t.current == null) ? 0 : t.current;
+      var remaining = Math.max(0, players.length - current);
+      var capIdx = players.length - 1;
+      var viceIdx = players.length - 2;
+
+      // Pagination: show one fixed page at a time; the page auto-follows the
+      // current player (page = floor(current / pageSize)). Flips silently.
+      var pageSize = (state.pageSize && state.pageSize > 0) ? state.pageSize : 12;
+      var ptr = Math.min(current, Math.max(0, players.length - 1));
+      var page = Math.floor(ptr / pageSize);
+      var startI = page * pageSize;
+      var endI = Math.min(players.length, startI + pageSize);
+
+      document.getElementById('cb-teamname').textContent = t.name || ('Team ' + TEAM);
+      // Top number: remaining count. To match the Japanese style (show the
+      // current player's index instead), swap the next line for:
+      //   document.getElementById('cb-remaining').textContent = Math.min(current+1, players.length);
+      document.getElementById('cb-remaining').textContent = remaining + ' left';
+
+      // Auto-scale: fit pageSize rows into the 1080-tall overlay. The header
+      // takes a fixed slice; the rest is divided evenly among the page's rows.
+      // Everything (text, padding, highlight) is sized off --cb-row-h so it
+      // scales together. Bigger pageSize -> smaller rows, all still visible.
+      var OVERLAY_H = 1080;
+      var headerH = 64;                       // header strip allowance
+      var avail = OVERLAY_H - headerH;
+      var rowsThisView = Math.max(1, Math.min(pageSize, endI - startI));
+      // Use the full pageSize (not just rows on this page) so row size stays
+      // consistent across pages -- the last short page won't suddenly enlarge.
+      // Scale rows DOWN to fit large pages, but cap the size so a small crew
+      // (e.g. 5) doesn't balloon into giant text -- keeps a consistent look.
+      var MAX_ROW_H = 56;
+      var rowH = Math.min(MAX_ROW_H, Math.floor(avail / pageSize));
+      var root = document.getElementById('cb-root');
+      root.style.setProperty('--cb-row-h', rowH + 'px');
+      root.style.setProperty('--cb-font', Math.max(10, Math.floor(rowH * 0.62)) + 'px');
+
+      var ul = document.getElementById('cb-list');
+      var html = '';
+      for (var i = startI; i < endI; i++) {
+        var p = players[i];
+        var cls = 'cb-row';
+        if(i < current) cls += ' defeated';
+        else if(i === current) cls += ' current';
+        var role = (i === capIdx && players.length > 0) ? (t.captainLabel || '')
+                 : (i === viceIdx && players.length > 1) ? (t.viceLabel || '') : '';
+        html += '<li class="' + cls + '">'
+          + '<span class="cb-pos">' + (i+1) + '</span>'
+          + '<span class="cb-pname">'
+            + (role ? '<span class="cb-role">' + esc(role) + '</span> ' : '')
+            + esc(p.name) + '</span>'
+          + '</li>';
+      }
+      ul.innerHTML = html;
+    }
+
+    function load(){
+      fetch('http://' + serverIp + '/getCrewBattle')
+        .then(function(r){ return r.json(); })
+        .then(render)
+        .catch(function(e){ console.log('crew battle overlay error:', e); });
+    }
+    load();
+    window.setInterval(load, 2000);
+  </script>
+</body>
+</html>
