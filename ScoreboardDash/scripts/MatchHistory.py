@@ -163,20 +163,6 @@ def save_event_import(event_slug, event_name, tournament_name, sets, imported_at
     existing = load_event(event_slug)
     if standings is None and existing:
         placement_map = existing.get("placements", {})
-        # Back-fill resolved local player_ids onto preserved placements.
-        # On the original import the players often don't exist locally yet, so
-        # placements get written with player_id=None and keyed by 'u:<user_id>'.
-        # A later reconcile re-resolves the sets but would otherwise leave these
-        # placements unresolved -- so re-resolve them here too, and re-key by the
-        # local id once known (mirrors how set player_ids are re-resolved).
-        rekeyed = {}
-        for key, row in placement_map.items():
-            ent = {"tag": row.get("tag", ""), "user_id": row.get("user_id")}
-            local = _resolve(ent) or row.get("player_id")
-            new_row = dict(row)
-            new_row["player_id"] = local
-            rekeyed[local or key] = new_row
-        placement_map = rekeyed
 
     # Preserve an existing series tag across re-import unless one is
     # explicitly provided.
@@ -336,21 +322,6 @@ def event_placement(event_slug, pid, alias_map=None):
     for row in placements.values():
         rp = row.get("player_id")
         if rp and alias_map.get(rp, rp) == canon:
-            return row.get("placement")
-    # Fall back via user_id: placements may be keyed 'u:<user_id>' with a null
-    # player_id (e.g. imported before the player existed locally, then never
-    # back-filled). Resolve this player's user_id(s) from the event's sets and
-    # match the 'u:' key directly.
-    user_ids = set()
-    for s in data.get("sets", {}).values():
-        for side in ("p1", "p2"):
-            ent = s.get(side, {})
-            ep = ent.get("player_id")
-            if ep and (ep == pid or alias_map.get(ep, ep) == canon) and ent.get("user_id"):
-                user_ids.add(str(ent["user_id"]))
-    for uid in user_ids:
-        row = placements.get("u:" + uid)
-        if row:
             return row.get("placement")
     return None
 
