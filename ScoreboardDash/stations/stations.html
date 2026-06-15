@@ -277,7 +277,13 @@ async function loadStreamQueue() {
         }
       }`, { slug: tournSlug });
 
-    const queues = data?.tournament?.streamQueue || [];
+    const queues = (data?.tournament?.streamQueue || []).slice().sort(function (a, b) {
+      // Stable, natural-alphabetical order by stream name so columns don't
+      // shuffle between refreshes ("Station 2" before "Station 10").
+      var an = (a.stream && a.stream.streamName) || '';
+      var bn = (b.stream && b.stream.streamName) || '';
+      return an.localeCompare(bn, undefined, { numeric: true, sensitivity: 'base' });
+    });
     if (!queues.length) {
       el.innerHTML = '<div class="empty-state"><strong>No stream queue</strong><div class="hint">The TO may not have a stream queue configured on Start.gg.</div></div>';
       setStatus('No stream queue found', null);
