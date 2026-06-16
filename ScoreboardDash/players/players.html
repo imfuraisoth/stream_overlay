@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Players &amp; Commentators — Stream Overlay</title>
+  <title data-i18n="pl_title">Players &amp; Commentators — Stream Overlay</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;900&family=Barlow:wght@400;500&display=swap" rel="stylesheet">
@@ -22,14 +22,14 @@
 <!-- TOOLBAR -->
 <div class="toolbar">
   <div class="toolbar-left">
-    <input type="text" id="searchInput" placeholder="Search players…" oninput="renderTable()">
-    <button class="btn" onclick="openAddModal()">+ Add Player</button>
-    <button class="btn sec" onclick="openMergeModal()">⇄ Merge</button>
+    <input type="text" id="searchInput" placeholder="Search players…" data-i18n-attr="placeholder:pl_search" oninput="renderTable()">
+    <button class="btn" onclick="openAddModal()" data-i18n="pl_add">+ Add Player</button>
+    <button class="btn sec" onclick="openMergeModal()" data-i18n="pl_merge">⇄ Merge</button>
   </div>
   <div class="toolbar-right">
     <span class="player-count" id="playerCount"></span>
-    <button class="btn sec sm" onclick="loadPlayers()">↺ Refresh</button>
-    <button class="btn danger sm" onclick="openPurgeModal()" title="Delete the entire player database">Purge All</button>
+    <button class="btn sec sm" onclick="loadPlayers()" data-i18n="pl_refresh">↺ Refresh</button>
+    <button class="btn danger sm" onclick="openPurgeModal()" title="Delete the entire player database" data-i18n="pl_purge" data-i18n-attr="title:pl_purge_tip">Purge All</button>
   </div>
 </div>
 
@@ -44,62 +44,62 @@
 <div class="modal-backdrop" id="modal" onclick="onBackdropClick(event)">
   <div class="modal-content">
     <div class="modal-header">
-      <span class="modal-title" id="modalTitle">Add Player</span>
+      <span class="modal-title" id="modalTitle" data-i18n="pl_add_title">Add Player</span>
       <button class="modal-close" onclick="closeModal()">×</button>
     </div>
     <div class="modal-body">
       <div class="field-group">
-        <label for="mName">Name</label>
-        <input type="text" id="mName" placeholder="Gamer tag">
+        <label for="mName" data-i18n="pl_name">Name</label>
+        <input type="text" id="mName" placeholder="Gamer tag" data-i18n-attr="placeholder:pl_name_ph">
       </div>
       <div class="field-group">
-        <label for="mTeam">Team</label>
-        <input type="text" id="mTeam" placeholder="Team name or abbreviation">
+        <label for="mTeam" data-i18n="pl_team">Team</label>
+        <input type="text" id="mTeam" placeholder="Team name or abbreviation" data-i18n-attr="placeholder:pl_team_ph">
       </div>
       <div class="field-group">
-        <label for="mCountry">Country</label>
+        <label for="mCountry" data-i18n="pl_country">Country</label>
         <select id="mCountry"></select>
       </div>
       <div class="field-group">
-        <label>Social Media</label>
+        <label data-i18n="pl_social">Social Media</label>
         <div class="social-row">
           <select id="mSocialPlatform">
-            <option value="">— Platform —</option>
+            <option value="" data-i18n="pl_platform">— Platform —</option>
             <option value="twitter">Twitter</option>
             <option value="bluesky">Bluesky</option>
             <option value="instagram">Instagram</option>
             <option value="facebook">Facebook</option>
             <option value="twitch">Twitch</option>
           </select>
-          <input type="text" id="mSocialHandle" placeholder="@handle" style="flex:1;">
+          <input type="text" id="mSocialHandle" placeholder="@handle" data-i18n-attr="placeholder:pl_handle" style="flex:1;">
         </div>
       </div>
       <div class="field-group">
-        <label>Aliases</label>
+        <label data-i18n="pl_aliases">Aliases</label>
         <div id="mAliasChips" style="display:flex;flex-wrap:wrap;gap:4px;"></div>
         <div style="display:flex;gap:6px;">
-          <input type="text" id="mAliasInput" placeholder="Add alias…" style="flex:1;" onkeydown="if(event.key==='Enter'){event.preventDefault();mAddAlias();}">
-          <button class="btn sec sm" onclick="mAddAlias()">Add</button>
+          <input type="text" id="mAliasInput" placeholder="Add alias…" data-i18n-attr="placeholder:pl_alias_ph" style="flex:1;" onkeydown="if(event.key==='Enter'){event.preventDefault();mAddAlias();}">
+          <button class="btn sec sm" onclick="mAddAlias()" data-i18n="pl_add_btn">Add</button>
         </div>
       </div>
       <div class="field-group" style="flex-direction:row;align-items:center;gap:8px;">
         <input type="checkbox" id="mIsCommentator" style="width:14px;height:14px;accent-color:var(--accent);flex-shrink:0;">
-        <label for="mIsCommentator" style="font-family:var(--font-d);font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--fg2);cursor:pointer;">Commentator</label>
+        <label for="mIsCommentator" style="font-family:var(--font-d);font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--fg2);cursor:pointer;" data-i18n="pl_commentator">Commentator</label>
       </div>
       <div class="field-group" id="mCharactersSection">
-        <label>Characters</label>
+        <label data-i18n="pl_characters">Characters</label>
         <div style="display:flex;gap:6px;align-items:center;">
           <select id="mCharGameSelect" onchange="mCharGameChanged()" style="flex:1;">
-            <option value="">— Select game —</option>
+            <option value="" data-i18n="pl_select_game">— Select game —</option>
           </select>
-          <button class="btn sec" onclick="mCharDeleteGame()" style="padding:4px 8px;font-size:10px;" title="Remove this game's roster and picks">✕</button>
+          <button class="btn sec" onclick="mCharDeleteGame()" style="padding:4px 8px;font-size:10px;" title="Remove this game's roster and picks" data-i18n-attr="title:pl_remove_roster">✕</button>
         </div>
         <div id="mRosterArea" style="display:none;flex-direction:column;gap:6px;margin-top:6px;">
           <div style="font-family:var(--font-d);font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--fg2);">Roster</div>
           <div id="mRosterChips" style="display:flex;flex-wrap:wrap;gap:4px;"></div>
-          <button class="btn sec" id="mAddCharBtn" onclick="mToggleCharPicker()" style="align-self:flex-start;padding:4px 10px;font-size:10px;">+ Add character</button>
+          <button class="btn sec" id="mAddCharBtn" onclick="mToggleCharPicker()" style="align-self:flex-start;padding:4px 10px;font-size:10px;" data-i18n="pl_add_character">+ Add character</button>
           <div id="mCharPicker" style="display:none;flex-direction:column;gap:6px;padding:8px;background:var(--bg3);border-radius:4px;max-height:260px;overflow-y:auto;">
-            <select id="mPickerPack" onchange="mPickerLoadChars()"><option value="">-- Pack --</option></select>
+            <select id="mPickerPack" onchange="mPickerLoadChars()"><option value="" data-i18n="pl_pack">-- Pack --</option></select>
             <div id="mPickerList"></div>
           </div>
           <div style="font-family:var(--font-d);font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--fg2);margin-top:4px;">Current picks</div>
@@ -108,8 +108,8 @@
       </div>
     </div>
     <div class="modal-footer">
-      <button class="btn sec" onclick="closeModal()">Cancel</button>
-      <button class="btn" id="modalSaveBtn" onclick="saveModal()">Save</button>
+      <button class="btn sec" onclick="closeModal()" data-i18n="pl_cancel">Cancel</button>
+      <button class="btn" id="modalSaveBtn" onclick="saveModal()" data-i18n="pl_save">Save</button>
     </div>
   </div>
 </div>
@@ -117,26 +117,26 @@
 <!-- DELETE CONFIRM -->
 <div class="modal-backdrop" id="mergeModal" onclick="if(event.target.id==='mergeModal')closeMergeModal()">
   <div class="modal-content modal-sm">
-    <h3 style="margin-top:0;">Merge Players</h3>
+    <h3 style="margin-top:0;" data-i18n="pl_merge_title">Merge Players</h3>
     <div class="field-group">
-      <label>Keep (primary)</label>
+      <label data-i18n="pl_keep_primary">Keep (primary)</label>
       <select id="mergePrimary" onchange="mergeSelectionChanged()"></select>
     </div>
     <div class="field-group">
-      <label>Merge into primary (will be removed)</label>
+      <label data-i18n="pl_merge_into">Merge into primary (will be removed)</label>
       <select id="mergeDuplicate" onchange="mergeSelectionChanged()"></select>
     </div>
     <div id="mergeSummary" style="font-family:var(--font-d);font-size:11px;color:var(--fg2);min-height:34px;margin:6px 0;"></div>
     <div class="modal-actions">
-      <button class="btn sec" onclick="closeMergeModal()">Cancel</button>
-      <button class="btn" id="mergeConfirmBtn" onclick="doMerge()" disabled>Merge</button>
+      <button class="btn sec" onclick="closeMergeModal()" data-i18n="pl_cancel">Cancel</button>
+      <button class="btn" id="mergeConfirmBtn" onclick="doMerge()" disabled data-i18n="pl_merge">Merge</button>
     </div>
   </div>
 </div>
 <div class="modal-backdrop" id="deleteModal" onclick="onDeleteBackdropClick(event)">
   <div class="modal-content modal-sm">
     <div class="modal-header">
-      <span class="modal-title">Delete Player</span>
+      <span class="modal-title" data-i18n="pl_delete_title">Delete Player</span>
       <button class="modal-close" onclick="closeDeleteModal()">×</button>
     </div>
     <div class="modal-body">
@@ -144,8 +144,8 @@
       <p style="color:var(--fg2);font-size:12px;margin-top:6px;">This cannot be undone.</p>
     </div>
     <div class="modal-footer">
-      <button class="btn sec" onclick="closeDeleteModal()">Cancel</button>
-      <button class="btn danger" onclick="confirmDelete()">Delete</button>
+      <button class="btn sec" onclick="closeDeleteModal()" data-i18n="pl_cancel">Cancel</button>
+      <button class="btn danger" onclick="confirmDelete()" data-i18n="pl_delete">Delete</button>
     </div>
   </div>
 </div>
@@ -153,7 +153,7 @@
 <div class="modal-backdrop" id="purgeModal" onclick="onPurgeBackdropClick(event)">
   <div class="modal-content modal-sm">
     <div class="modal-header">
-      <span class="modal-title">Purge Player Database</span>
+      <span class="modal-title" data-i18n="pl_purge_title">Purge Player Database</span>
       <button class="modal-close" onclick="closePurgeModal()">×</button>
     </div>
     <div class="modal-body">
@@ -165,8 +165,8 @@
              style="margin-top:4px;width:100%;">
     </div>
     <div class="modal-footer">
-      <button class="btn sec" onclick="closePurgeModal()">Cancel</button>
-      <button class="btn danger" id="purgeConfirmBtn" onclick="confirmPurge()" disabled>Purge Everything</button>
+      <button class="btn sec" onclick="closePurgeModal()" data-i18n="pl_cancel">Cancel</button>
+      <button class="btn danger" id="purgeConfirmBtn" onclick="confirmPurge()" disabled data-i18n="pl_purge_confirm_btn">Purge Everything</button>
     </div>
   </div>
 </div>
@@ -305,7 +305,7 @@ function mNormalizeGameData(obj) {
 
 function openAddModal() {
   _editingOrigName = null;
-  document.getElementById('modalTitle').textContent = 'Add Player';
+  document.getElementById('modalTitle').textContent = window.t('pl_add_title');
   window._editingCharacters = {};
   window._editingRoster = {};
   window._editingAliases = [];
@@ -326,7 +326,7 @@ function openEditModal(id) {
   const p = _players.find(function(x) { return (x.id || x.name) === id; });
   if (!p) return;
   _editingOrigName = p.id || p.name;
-  document.getElementById('modalTitle').textContent = 'Edit Player';
+  document.getElementById('modalTitle').textContent = window.t('pl_edit_title');
   document.getElementById('mName').value    = p.name || '';
   document.getElementById('mTeam').value    = p.team || '';
   document.getElementById('mIsCommentator').checked = !!p.is_commentator;
@@ -361,7 +361,7 @@ function mRenderRoster() {
   chips.innerHTML = '';
   var roster = (window._editingRoster[game] || []);
   if (!roster.length) {
-    chips.innerHTML = '<span style="font-family:var(--font-d);font-size:11px;color:var(--fg2);">No characters yet \u2014 add some below.</span>';
+    chips.innerHTML = '<span style="font-family:var(--font-d);font-size:11px;color:var(--fg2);">' + window.t('pl_no_characters') + '</span>';
     return;
   }
   roster.forEach(function(entry) {
@@ -654,6 +654,12 @@ document.getElementById('mTeam').addEventListener('keydown', function(e) { if (e
 
 // Load on start
 loadGamesRegistry().then(loadPlayers);
+
+// Re-translate static UI + re-render the table when language changes.
+window.onLangChange = function(){
+  if (window.applyTranslations) window.applyTranslations(document);
+  if (typeof renderTable === 'function') renderTable();
+};
 </script>
   <script src="../lang/en.js"></script>
   <script src="../i18n.js"></script>

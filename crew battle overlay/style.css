@@ -65,3 +65,24 @@ html, body { margin: 0; padding: 0; background: transparent; }
 
 /* Defeated players (before current): dimmed only, no strikethrough. */
 .cb-row.defeated { opacity: 0.35; }
+
+/* ── Team 2 MIRROR layout (.cb-mirror on #cb-root) ────────────────────
+   Team 2 flanks the RIGHT side of the screen as a mirror image of team 1:
+   the team name/remaining and player names sit outboard (right), the
+   character art bleeds in from the inboard side (left), and the current-
+   player accent is on the right. The gradient direction itself is set
+   inline in the team-2 HTML (fades to the right). */
+.cb-mirror #cb-header { flex-direction: row-reverse; }
+.cb-mirror #cb-teamname { /* sits on the right now via row-reverse */ }
+.cb-mirror #cb-remaining { margin-left: 0; margin-right: auto; }
+
+.cb-mirror .cb-row { flex-direction: row-reverse; }
+.cb-mirror .cb-pname { text-align: right; }
+
+/* Current-player accent flips to the right edge. */
+.cb-mirror .cb-row.current {
+  border-left: none;
+  border-right: 4px solid #40D0B0;
+  padding-left: 6px;
+  padding-right: 4px;
+}

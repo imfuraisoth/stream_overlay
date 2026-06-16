@@ -67,6 +67,13 @@
       var root = document.getElementById('cb-root');
       root.style.setProperty('--cb-row-h', rowH + 'px');
       root.style.setProperty('--cb-font', Math.max(10, Math.floor(rowH * 0.62)) + 'px');
+      // Per-team gradient/plate color (editable on the operator page). Falls
+      // back to the CSS default (brand navy) when unset.
+      if (t.plateColor && String(t.plateColor).trim()) {
+        root.style.setProperty('--cb-plate', String(t.plateColor).trim());
+      } else {
+        root.style.removeProperty('--cb-plate');
+      }
 
       var ul = document.getElementById('cb-list');
       var html = '';

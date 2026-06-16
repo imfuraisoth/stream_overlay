@@ -13,7 +13,7 @@
        Full-height vertical strip. The 'current' player is highlighted; players
        above are defeated (dimmed); players below are waiting (bright). The last
        two players are prefixed with the team's Captain / Vice role labels. -->
-  <div id="cb-root">
+  <div id="cb-root" class="cb-mirror">
     <div id="cb-header">
       <span id="cb-teamname"></span>
       <span id="cb-remaining"></span>
@@ -67,6 +67,13 @@
       var root = document.getElementById('cb-root');
       root.style.setProperty('--cb-row-h', rowH + 'px');
       root.style.setProperty('--cb-font', Math.max(10, Math.floor(rowH * 0.62)) + 'px');
+      // Per-team gradient/plate color (editable on the operator page). Falls
+      // back to the CSS default (brand navy) when unset.
+      if (t.plateColor && String(t.plateColor).trim()) {
+        root.style.setProperty('--cb-plate', String(t.plateColor).trim());
+      } else {
+        root.style.removeProperty('--cb-plate');
+      }
 
       var ul = document.getElementById('cb-list');
       var html = '';
@@ -80,13 +87,15 @@
         var style = '';
         if (p.characterFile) {
           // Character art bleeds in as a fading gradient across the nameplate.
-          // Served by the app server; overlays are file:// so use an absolute URL.
+          // Team 2 is the MIRROR of team 1: art sits on the LEFT (inboard,
+          // toward screen center) and the gradient fades to the right, so the
+          // two strips are visual mirror images flanking the screen.
           var art = 'http://' + serverIp + '/' + p.characterFile;
           style = ' style="background-image:'
-            + 'linear-gradient(to left, rgba(0,0,0,0) 0%, var(--cb-plate) 62%),'
+            + 'linear-gradient(to right, rgba(0,0,0,0) 0%, var(--cb-plate) 62%),'
             + 'url(\'' + art + '\');'
             + 'background-size:auto 150%, auto 150%;'
-            + 'background-position:right center, right center;'
+            + 'background-position:left center, left center;'
             + 'background-repeat:no-repeat, no-repeat;"';
         }
         html += '<li class="' + cls + '"' + style + '>'

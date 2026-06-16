@@ -226,3 +226,10 @@ select option { background: var(--bg3); }
 }
 #cb-char-preview-img { width: 160px; height: 160px; object-fit: contain; display: block; }
 #cb-char-preview-label { text-align: center; font-size: 12px; color: var(--fg); margin-top: 4px; }
+
+/* Per-team gradient/plate color picker */
+.cb-colorlabel { display: flex; align-items: center; gap: 6px; }
+.cb-colorwrap { display: inline-flex; align-items: center; gap: 4px; }
+.cb-colorswatch { width: 28px; height: 24px; padding: 0; border: 1px solid var(--border); border-radius: 4px; background: none; cursor: pointer; flex: 0 0 auto; }
+.cb-colorhex { width: 78px; background: var(--bg2); border: 1px solid var(--border); color: var(--fg); border-radius: 4px; padding: 2px 4px; font-size: 11px; font-family: monospace; }
+.cb-colorhex:focus { outline: none; border-color: var(--accent); }

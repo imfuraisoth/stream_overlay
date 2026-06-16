@@ -170,6 +170,25 @@
   function setViceLabel(n, val){ teamObj(n).viceLabel = val; commit(); }
   function setRemainingLabel(n, val){ teamObj(n).remainingLabel = val; commit(); }
 
+  // Per-team gradient/plate color. Stored as whatever the user typed (hex like
+  // #1a2b3c, or empty = use the overlay default). The <input type=color> swatch
+  // needs a 6-digit hex, so plateHex() coerces for the swatch only.
+  var CB_PLATE_DEFAULT = '#0D1828';   // brand navy; matches overlay fallback
+  function plateHex(t){
+    var v = (t.plateColor || '').trim();
+    return /^#[0-9a-fA-F]{6}$/.test(v) ? v : CB_PLATE_DEFAULT;
+  }
+  function setPlateColor(n, val){
+    val = (val || '').trim();
+    teamObj(n).plateColor = val;
+    // keep swatch + hex field in sync without a full re-render
+    var sw = document.getElementById('cbColorSwatch'+n);
+    var hx = document.getElementById('cbColorHex'+n);
+    if(hx) hx.value = val;
+    if(sw && /^#[0-9a-fA-F]{6}$/.test(val)) sw.value = val;
+    commit();
+  }
+
   function addPlayer(n){
     var input = document.getElementById('team'+n+'Add');
     var name = (input.value||'').trim();
@@ -429,6 +448,14 @@
             + 'onchange="setViceLabel('+n+', this.value)"></label>'
           + '<label>'+escHtml(window.t('cb_remaining_label'))+' <input type="text" class="cb-rolein" value="'+escHtml(t.remainingLabel||'left')+'" '
             + 'onchange="setRemainingLabel('+n+', this.value)"></label>'
+          + '<label class="cb-colorlabel">'+escHtml(window.t('cb_plate_color'))+' '
+            + '<span class="cb-colorwrap">'
+              + '<input type="color" class="cb-colorswatch" id="cbColorSwatch'+n+'" value="'+escHtml(plateHex(t))+'" '
+                + 'oninput="setPlateColor('+n+', this.value)">'
+              + '<input type="text" class="cb-colorhex" id="cbColorHex'+n+'" value="'+escHtml(t.plateColor||'')+'" '
+                + 'placeholder="'+escHtml(CB_PLATE_DEFAULT)+'" '
+                + 'onchange="setPlateColor('+n+', this.value)">'
+            + '</span></label>'
         + '</div>'
         + '<div class="cb-advrow">'
           + '<button class="btn" onclick="advance('+n+',-1)">'+escHtml(window.t('cb_back'))+'</button>'

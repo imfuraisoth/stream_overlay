@@ -256,7 +256,7 @@ def get_local_players():
 def _default_team(name):
     return {"name": name, "players": [], "current": 0,
             "captainLabel": "Captain", "viceLabel": "Vice",
-            "remainingLabel": "left"}
+            "remainingLabel": "left", "plateColor": ""}
 
 
 def _norm_player(p):
@@ -296,6 +296,7 @@ def _norm_team(t, fallback_name):
         "captainLabel": t.get("captainLabel", "Captain"),
         "viceLabel": t.get("viceLabel", "Vice"),
         "remainingLabel": t.get("remainingLabel", "left"),
+        "plateColor": (t.get("plateColor") or "").strip(),
     }
 
 

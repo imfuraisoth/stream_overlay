@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Stations — Stream Overlay</title>
+  <title data-i18n="st_title">Stations — Stream Overlay</title>
   <link rel="icon" type="image/png" href="../images/V.png">
   <link href="style.css" rel="stylesheet" type="text/css">
   <script>
@@ -20,16 +20,16 @@
 <div class="config-bar">
   <span class="config-label">Start.gg</span>
   <div class="config-field">
-    <label for="tourneySlug">Tournament Slug</label>
+    <label for="tourneySlug" data-i18n="st_tourney_slug">Tournament Slug</label>
     <input type="text" id="tourneySlug" placeholder="my-tournament-2025">
   </div>
   <div class="config-field">
-    <label for="eventSlug">Event Slug</label>
+    <label for="eventSlug" data-i18n="st_event_slug">Event Slug</label>
     <input type="text" id="eventSlug" placeholder="street-fighter-6-singles">
   </div>
   <select id="eventSel" style="display:none; min-width:180px;" onchange="onEventChange(this.value)"></select>
-  <button class="btn" onclick="loadTournament()">↺ Load</button>
-  <button class="btn sec sm" onclick="saveSettings()" style="margin-left:auto;">💾 Save</button>
+  <button class="btn" onclick="loadTournament()" data-i18n="st_load">↺ Load</button>
+  <button class="btn sec sm" onclick="saveSettings()" style="margin-left:auto;" data-i18n="st_save">💾 Save</button>
 </div>
 
 <!-- STATUS BAR -->
@@ -43,7 +43,7 @@
   <div class="toolbar-left">
     <div class="auto-row">
       <input type="checkbox" id="autoRefresh" onchange="toggleAuto()">
-      <label for="autoRefresh">Auto-refresh</label>
+      <label for="autoRefresh" data-i18n="st_autorefresh">Auto-refresh</label>
       <select id="autoInterval" style="width:68px;" onchange="resetAuto()">
         <option value="15">15s</option>
         <option value="30" selected>30s</option>
@@ -59,8 +59,8 @@
       <span class="st-zoom-label" id="zoomLabel">100%</span>
       <button class="st-zoom-btn" onclick="doZoom(0.1)">+</button>
     </div>
-    <button class="btn sec sm" onclick="clearQueue()">✕ Clear</button>
-    <button class="btn sec sm" onclick="loadStreamQueue()">Refresh</button>
+    <button class="btn sec sm" onclick="clearQueue()" data-i18n="st_clear">✕ Clear</button>
+    <button class="btn sec sm" onclick="loadStreamQueue()" data-i18n="st_refresh">Refresh</button>
   </div>
 </div>
 
@@ -94,7 +94,7 @@ function saveSqFeatured() { localStorage.setItem('sq_featured_stream', sqFeature
 function saveSettings() {
   localStorage.setItem('sq_tourney_slug', document.getElementById('tourneySlug').value.trim());
   localStorage.setItem('sq_event_slug',   document.getElementById('eventSlug').value.trim());
-  setStatus('Settings saved', true);
+  setStatus(window.t('st_settings_saved'), true);
 }
 
 async function restoreSettings() {
@@ -163,8 +163,8 @@ async function loadTournament() {
   tournSlug = raw.replace(/^https?:\/\/[^/]+\//, '')
                  .replace(/\/events.*$/, '')
                  .replace(/\/$/, '');
-  if (!tournSlug) { setStatus('Enter a tournament slug first', false); return; }
-  setStatus('Loading…');
+  if (!tournSlug) { setStatus(window.t('st_enter_slug'), false); return; }
+  setStatus(window.t('st_loading'));
   try {
     const data = await gql(`
       query($slug: String!) {
@@ -179,14 +179,14 @@ async function loadTournament() {
     selectedEventId = events[0]?.id || null;
     document.getElementById('tournMeta').textContent =
       [t.name, t.city, t.numAttendees ? t.numAttendees + ' entrants' : ''].filter(Boolean).join(' · ');
-    setStatus('Connected: ' + t.name, true);
+    setStatus(window.t('st_connected') + ': ' + t.name, true);
     const sel = document.getElementById('eventSel');
     sel.innerHTML = events.map(e =>
       `<option value="${e.id}">${escHtml(e.name)}${e.videogame ? ' (' + escHtml(e.videogame.name) + ')' : ''}</option>`
     ).join('');
     sel.style.display = events.length > 1 ? 'inline-block' : 'none';
     await loadStreamQueue();
-  } catch (e) { setStatus('Error: ' + e.message, false); }
+  } catch (e) { setStatus(window.t('st_error') + ': ' + e.message, false); }
 }
 
 function onEventChange(id) {
@@ -215,7 +215,7 @@ function setSqFeatured(snSafe) {
   document.querySelectorAll('.sq-featured-btn').forEach(b => {
     const isFeat = b.dataset.raw === sqFeaturedStream;
     b.textContent = isFeat ? '★' : '☆';
-    b.title = isFeat ? 'Unmark as featured' : 'Mark as featured';
+    b.title = isFeat ? window.t('st_unmark_featured') : window.t('st_mark_featured');
   });
   document.querySelectorAll('.sq-col-hdr').forEach(h => {
     h.classList.toggle('sq-col-featured', h.id === 'sqhdr-' + sqFeaturedStream);
@@ -228,10 +228,10 @@ function setSqFeatured(snSafe) {
     if (badge) {
       if (isOnStream && isLive) {
         row.classList.remove('now-playing'); row.classList.add('on-stream');
-        badge.className = 'sq-badge on-stream'; badge.textContent = 'On Stream';
+        badge.className = 'sq-badge on-stream'; badge.textContent = window.t('st_on_stream');
       } else if (isLive) {
         row.classList.remove('on-stream'); row.classList.add('now-playing');
-        badge.className = 'sq-badge now-playing'; badge.textContent = 'Now Playing';
+        badge.className = 'sq-badge now-playing'; badge.textContent = window.t('st_now_playing');
       }
     }
   });
@@ -280,7 +280,7 @@ async function loadStreamQueue() {
     });
     if (!queues.length) {
       el.innerHTML = '<div class="empty-state"><strong>No stream queue</strong><div class="hint">The TO may not have a stream queue configured on Start.gg.</div></div>';
-      setStatus('No stream queue found', null);
+      setStatus(window.t('st_no_queue'), null);
       return;
     }
 
@@ -294,9 +294,9 @@ async function loadStreamQueue() {
 
       html += `<div class="sq-col">`;
       html += `<div class="sq-col-hdr${isFeatured ? ' sq-col-featured' : ''}" id="sqhdr-${snSafe}">`;
-      html += `<button class="sq-featured-btn" data-raw="${snSafe}" onclick="setSqFeatured('${snSafe}')" title="${isFeatured ? 'Unmark as featured' : 'Mark as featured'}">${isFeatured ? '★' : '☆'}</button>`;
+      html += `<button class="sq-featured-btn" data-raw="${snSafe}" onclick="setSqFeatured('${snSafe}')" title="${isFeatured ? window.t('st_unmark_featured') : window.t('st_mark_featured')}">${isFeatured ? '★' : '☆'}</button>`;
       html += `<span class="sq-col-name">📡 ${escHtml(customName)}</span>`;
-      html += `<button class="sq-rename-btn" data-raw="${snSafe}" onclick="renameSqCol(this)" title="Rename station">✎</button>`;
+      html += `<button class="sq-rename-btn" data-raw="${snSafe}" onclick="renameSqCol(this)" title="${window.t('st_rename')}">✎</button>`;
       html += `</div>`;
       html += `<div class="sq-list">`;
 
@@ -339,11 +339,11 @@ async function loadStreamQueue() {
 
     html += `</div>`;
     el.innerHTML = html;
-    setStatus('Stream queue loaded', true);
+    setStatus(window.t('st_queue_loaded'), true);
 
   } catch (e) {
     renderError(el, e.message);
-    setStatus('Error: ' + e.message, false);
+    setStatus(window.t('st_error') + ': ' + e.message, false);
   }
 }
 
@@ -398,8 +398,14 @@ function stopAuto() {
   document.getElementById('timerBadge').textContent = '';
 }
 function updateTimerBadge() {
-  document.getElementById('timerBadge').textContent = 'next in ' + autoCountdown + 's';
+  document.getElementById('timerBadge').textContent = window.t('st_next_in') + ' ' + autoCountdown + 's';
 }
+
+// Re-translate static labels + re-render the queue when language changes.
+window.onLangChange = function(){
+  if (window.applyTranslations) window.applyTranslations(document);
+  if (typeof loadStreamQueue === 'function') loadStreamQueue();
+};
 
 // ── KEYBOARD SHORTCUTS ────────────────────────────────────────────
 document.getElementById('tourneySlug').addEventListener('keydown', e => { if (e.key === 'Enter') loadTournament(); });

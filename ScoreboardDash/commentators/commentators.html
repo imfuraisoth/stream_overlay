@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Commentators Dashboard</title>
+  <title data-i18n="com_title">Commentators Dashboard</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;900&family=Barlow:wght@400;500&display=swap" rel="stylesheet">
@@ -23,9 +23,9 @@
 <div class="page-content">
 
     <div class="page-header">
-      <h2>Commentators</h2>
+      <h2 data-i18n="com_heading">Commentators</h2>
       <div class="header-actions">
-        <button class="rectangle_button" onclick="reverseCommentatorNames();">⇄ Swap Names</button>
+        <button class="rectangle_button" onclick="reverseCommentatorNames();" data-i18n="com_swap">⇄ Swap Names</button>
       </div>
     </div>
 
@@ -36,27 +36,27 @@
         <div class="com-card-header">Primary</div>
         <div id="com_primary" class="com-fields">
           <div class="field-group">
-            <label>Name</label>
-            <div class="name-input-wrap"><input class="form_name_1" type="text" id="form_name_1" placeholder="Name" list="com_name_suggestions" onchange="updateCom1();"><select class="name-picker" id="pick_com_1" onchange="pickName('form_name_1',this,updateCom1)"><option value="">▾</option></select></div>
+            <label data-i18n="com_name">Name</label>
+            <div class="name-input-wrap"><input class="form_name_1" type="text" id="form_name_1" placeholder="Name" data-i18n-attr="placeholder:com_name" list="com_name_suggestions" onchange="updateCom1();"><select class="name-picker" id="pick_com_1" onchange="pickName('form_name_1',this,updateCom1)"><option value="">▾</option></select></div>
           </div>
           <div class="field-group">
-            <label>Social</label>
+            <label data-i18n="com_social">Social</label>
             <div class="social-preview-row">
               <img class="platform-icon-img" style="width:18px;height:18px;object-fit:contain;display:none;flex-shrink:0;">
               <select id="soc1_platform_sel" onchange="updatePlatform1();">
-                <option value="">— Platform —</option>
+                <option value="" data-i18n="com_platform">— Platform —</option>
                 <option value="twitter">Twitter</option>
                 <option value="bluesky">Bluesky</option>
                 <option value="instagram">Instagram</option>
                 <option value="facebook">Facebook</option>
                 <option value="twitch">Twitch</option>
               </select>
-              <input class="form_social_1" type="text" id="form_social_1" placeholder="@handle" onchange="updateSoc1();">
+              <input class="form_social_1" type="text" id="form_social_1" placeholder="@handle" data-i18n-attr="placeholder:com_handle" onchange="updateSoc1();">
             </div>
           </div>
         </div>
-        <div class="player-save-row"><span class="player-match-hint" id="com1MatchHint"></span><button class="player-save-btn" id="com1SaveBtn" onclick="saveCommentatorCard(1)">Save Commentator</button></div>
-        <button class="rectangle_button btn-sec btn-clear" onclick="clearCom1();">✕ Clear</button>
+        <div class="player-save-row"><span class="player-match-hint" id="com1MatchHint"></span><button class="player-save-btn" id="com1SaveBtn" onclick="saveCommentatorCard(1)" data-i18n="com_save">Save Commentator</button></div>
+        <button class="rectangle_button btn-sec btn-clear" onclick="clearCom1();" data-i18n="com_clear">✕ Clear</button>
       </div>
 
       <!-- Secondary -->
@@ -64,27 +64,27 @@
         <div class="com-card-header">Secondary</div>
         <div id="com_secondary" class="com-fields">
           <div class="field-group">
-            <label>Name</label>
-            <div class="name-input-wrap"><input class="form_name_2" type="text" id="form_name_2" placeholder="Name" list="com_name_suggestions" onchange="updateCom2();"><select class="name-picker" id="pick_com_2" onchange="pickName('form_name_2',this,updateCom2)"><option value="">▾</option></select></div>
+            <label data-i18n="com_name">Name</label>
+            <div class="name-input-wrap"><input class="form_name_2" type="text" id="form_name_2" placeholder="Name" data-i18n-attr="placeholder:com_name" list="com_name_suggestions" onchange="updateCom2();"><select class="name-picker" id="pick_com_2" onchange="pickName('form_name_2',this,updateCom2)"><option value="">▾</option></select></div>
           </div>
           <div class="field-group">
-            <label>Social</label>
+            <label data-i18n="com_social">Social</label>
             <div class="social-preview-row">
               <img class="platform-icon-img" style="width:18px;height:18px;object-fit:contain;display:none;flex-shrink:0;">
               <select id="soc2_platform_sel" onchange="updatePlatform2();">
-                <option value="">— Platform —</option>
+                <option value="" data-i18n="com_platform">— Platform —</option>
                 <option value="twitter">Twitter</option>
                 <option value="bluesky">Bluesky</option>
                 <option value="instagram">Instagram</option>
                 <option value="facebook">Facebook</option>
                 <option value="twitch">Twitch</option>
               </select>
-              <input class="form_social_2" type="text" id="form_social_2" placeholder="@handle" onchange="updateSoc2();">
+              <input class="form_social_2" type="text" id="form_social_2" placeholder="@handle" data-i18n-attr="placeholder:com_handle" onchange="updateSoc2();">
             </div>
           </div>
         </div>
-        <div class="player-save-row"><span class="player-match-hint" id="com2MatchHint"></span><button class="player-save-btn" id="com2SaveBtn" onclick="saveCommentatorCard(2)">Save Commentator</button></div>
-        <button class="rectangle_button btn-sec btn-clear" onclick="clearCom2();">✕ Clear</button>
+        <div class="player-save-row"><span class="player-match-hint" id="com2MatchHint"></span><button class="player-save-btn" id="com2SaveBtn" onclick="saveCommentatorCard(2)" data-i18n="com_save">Save Commentator</button></div>
+        <button class="rectangle_button btn-sec btn-clear" onclick="clearCom2();" data-i18n="com_clear">✕ Clear</button>
       </div>
 
     </div>
