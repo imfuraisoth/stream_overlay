@@ -31,21 +31,29 @@
         var pl1 = d.p1EventPlacementText, pl2 = d.p2EventPlacementText;
         // Need at least one placement to be worth showing
         if (!ordinalKnown(pl1) && !ordinalKnown(pl2)) return null;
-        var parts = [];
-        if (p1) parts.push(p1 + ': ' + (ordinalKnown(pl1) ? pl1 : '--'));
-        if (p2) parts.push(p2 + ': ' + (ordinalKnown(pl2) ? pl2 : '--'));
-        var sentence = evName + ' \u2014 ' + parts.join(', ');
 
-        // If they actually played each other in this event, append the
-        // head-to-head as a "Met" clause, winner of the set shown first.
-        // In event scope the dashboard writes the in-event record into
-        // the MatchupWins/Losses fields, so p1w-p1l IS this event's H2H.
+        // If they actually played each other in this event, we show the
+        // head-to-head as a "Met" clause with the winner first. When the
+        // winner is P2 we must flip EVERYTHING -- names, placements AND the
+        // score together -- so the listed order matches the score order.
+        // (Earlier this only flipped the score, leaving the names/placements
+        // in P1/P2 order, so the score read backwards relative to the names.)
         var ew = Number(d.p1MatchupWins), el = Number(d.p1MatchupLosses);
         var hasMet = (d.p1MatchupWins !== '' && d.p1MatchupLosses !== '') && (ew + el) > 0;
+
+        // Decide display order. Default keeps P1 first; if they met and P2
+        // won the set, swap so the winner leads.
+        var aName = p1, bName = p2, aPl = pl1, bPl = pl2, hi = ew, lo = el;
+        if (hasMet && el > ew) {
+          aName = p2; bName = p1; aPl = pl2; bPl = pl1; hi = el; lo = ew;
+        }
+
+        var parts = [];
+        if (aName) parts.push(aName + ': ' + (ordinalKnown(aPl) ? aPl : '--'));
+        if (bName) parts.push(bName + ': ' + (ordinalKnown(bPl) ? bPl : '--'));
+        var sentence = evName + ' \u2014 ' + parts.join(', ');
+
         if (hasMet) {
-          var hi, lo;
-          if (ew >= el) { hi = ew; lo = el; }  // P1 won or tied set -- P1 first
-          else          { hi = el; lo = ew; }  // P2 won -- bigger number first
           sentence += ' \u00b7 Met ' + hi + '-' + lo;
         }
         return sentence;
