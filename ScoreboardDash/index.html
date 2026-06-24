@@ -4,7 +4,7 @@
 	<base href="/">
 	<meta charset="utf-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
-	<title>Scoreboard Dashboard</title>
+	<title data-i18n="dash_title">Scoreboard Dashboard</title>
 	<link rel="preconnect" href="https://fonts.googleapis.com">
 	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 	<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;900&family=Barlow:wght@400;500&display=swap" rel="stylesheet">
@@ -25,23 +25,8 @@
 		<div id="event_page">
 
 			<!-- TOP NAV -->
-  <div class="top-navbar-container">
-    <div class="header-item"><a href="commentators/commentators.html">Commentators</a></div>
-    <span class="header-sep">|</span>
-    <div class="header-item active"><a href="index.html">Event Dashboard</a></div>
-    <span class="header-sep">|</span>
-    <div class="header-item"><a href="top8/top8.html">Top 8</a></div>
-    <span class="header-sep">|</span>
-    <div class="header-item"><a href="playerinfo/characterselect.html">Games &amp; Assets</a></div>
-    <span class="header-sep">|</span>
-    <div class="header-item"><a href="stations/stations.html">Stations</a></div>
-    <span class="header-sep">|</span>
-    <div class="header-item"><a href="players/players.html">Players</a></div>
-  <span class="header-sep">|</span>
-  <div class="header-item"><a href="imports/imports.html">Match Imports</a></div>
-  </div>
-
-			<!-- EVENT DASHBOARD CONTENT -->
+<div id="nav-root" style="min-height:45px"></div>
+<!-- EVENT DASHBOARD CONTENT -->
 			<div class="event-dashboard-content">
 
 				<!-- HEADER -->
@@ -52,7 +37,7 @@
 						</button>
 					</div>
 					<div class="contents-item">
-						<h2 id="eventDashText">Event Dashboard</h2>
+						<h2 id="eventDashText" data-i18n="dash_heading">Event Dashboard</h2>
 					</div>
 					<div class="contents-item">
 						<button class="rectangle_button" id="rectangle_button_1" onclick="resetNamesAndScore();">
@@ -71,11 +56,11 @@
 							<div class="current1p">
 								<div class="playerCardItem">
 									<span>Name</span>
-									<div class="name-input-wrap"><div class="name-scroll-wrap" id="wrap_name_1p"><input class="form_name_1p" type="text" id="form_name_1p" value="" placeholder="P1 Name" list="next_player_suggestions" onchange="updatePlayer1();"></div><select class="name-picker" id="pick_name_1p" onchange="pickName('form_name_1p',this,updatePlayer1)"><option value="">▾</option></select></div>
+									<div class="name-input-wrap"><div class="name-scroll-wrap" id="wrap_name_1p"><input class="form_name_1p" type="text" id="form_name_1p" value="" placeholder="P1 Name" data-i18n-attr="placeholder:dash_p1_name" list="next_player_suggestions" onchange="updatePlayer1();"></div><select class="name-picker" id="pick_name_1p" onchange="pickName('form_name_1p',this,updatePlayer1)"><option value="">▾</option></select></div>
 								</div>
 								<div class="playerCardItem">
 									<span>Team</span>
-									<input class="form_team_1p" type="text" id="form_team_1p" value="" placeholder="P1 Team" onchange="updateTeam1();">
+									<input class="form_team_1p" type="text" id="form_team_1p" value="" placeholder="P1 Team" data-i18n-attr="placeholder:dash_p1_team" onchange="updateTeam1();">
 								</div>
 								<div class="playerCardItem social-display-row" id="p1SocialDisplay" style="display:none;">
 									<span>Social</span>
@@ -84,7 +69,7 @@
 								<div class="playerCardItem char-select-row">
 									<span>Character</span>
 									<div class="char-picker-inline">
-										<select class="char-select-pack" id="p1CharPack" onchange="charLoadChars(1)"><option value="">-- Pack --</option></select>
+										<select class="char-select-pack" id="p1CharPack" onchange="charLoadChars(1)"><option value="" data-i18n="dash_pack">-- Pack --</option></select>
 										<div class="char-slot-tabs" id="p1CharSlots" style="display:none;"></div>
 										<div class="char-picker-btn" id="p1CharPickerBtn" onclick="charTogglePicker(1)" title="Select character">
 											<img id="p1CharThumb" class="char-selected-thumb" src="" style="display:none;">
@@ -94,7 +79,7 @@
 									</div>
 								</div>
 								<div class="char-picker-popover" id="p1CharPopover" style="display:none;"></div>
-									<div class="player-save-row"><span class="player-match-hint" id="p1MatchHint"></span><button class="player-save-btn" id="p1SaveBtn" onclick="savePlayerCard(1)">Save Player</button></div>
+									<div class="player-save-row"><span class="player-match-hint" id="p1MatchHint"></span><button class="player-save-btn" id="p1SaveBtn" onclick="savePlayerCard(1)" data-i18n="dash_save_player">Save Player</button></div>
 							</div>
 						</div>
 						<div class="playerCardItem">
@@ -144,7 +129,7 @@
 							</select>
 						</div>
 						<div id="button_reverse_names">
-							<button class="rectangle_button" id="rectangle_button_7" onclick="reversePlayerNames();">⇄ Swap Names</button>
+							<button class="rectangle_button" id="rectangle_button_7" onclick="reversePlayerNames();" data-i18n="dash_swap_names">⇄ Swap Names</button>
 						</div>
 						<div class="matchInfoCenterDisplay">
 							<div class="playerInfoDisplay">
@@ -154,15 +139,15 @@
 						</div>
 						<div class="h2h-panel">
 							<div class="h2h-label">Head-to-Head</div>
-							<button class="rectangle_button h2h-stream-btn" id="h2hVisibleBtn" onclick="toggleH2HVisible()">Show on Stream</button>
+							<button class="rectangle_button h2h-stream-btn" id="h2hVisibleBtn" onclick="toggleH2HVisible()" data-i18n="dash_show_stream">Show on Stream</button>
 							<select id="h2hScope" class="h2h-scope-select" onchange="onH2HScopeChange()"><option value="alltime">All-time</option></select>
 							<div class="h2h-result muted" id="h2hResult"></div>
 						</div>
 						<div id="button_reverse_scores">
-							<button class="rectangle_button" id="rectangle_button_2" onclick="reverseScores();">⇄ Swap Scores</button>
+							<button class="rectangle_button" id="rectangle_button_2" onclick="reverseScores();" data-i18n="dash_swap_scores">⇄ Swap Scores</button>
 						</div>
 						<div id="button_reset_scores">
-							<button class="rectangle_button" id="rectangle_button_3" onclick="resetScores();">Reset Scores</button>
+							<button class="rectangle_button" id="rectangle_button_3" onclick="resetScores();" data-i18n="dash_reset_scores">Reset Scores</button>
 						</div>
 					</div>
 
@@ -172,11 +157,11 @@
 							<div id="text_2p"><span class="text-shadow">PLAYER 2</span></div>
 							<div class="playerCardItem">
 								<span>Name</span>
-								<div class="name-input-wrap"><div class="name-scroll-wrap" id="wrap_name_2p"><input class="form_name_2p" type="text" id="form_name_2p" value="" placeholder="P2 Name" list="next_player_suggestions" onchange="updatePlayer2();"></div><select class="name-picker" id="pick_name_2p" onchange="pickName('form_name_2p',this,updatePlayer2)"><option value="">▾</option></select></div>
+								<div class="name-input-wrap"><div class="name-scroll-wrap" id="wrap_name_2p"><input class="form_name_2p" type="text" id="form_name_2p" value="" placeholder="P2 Name" data-i18n-attr="placeholder:dash_p2_name" list="next_player_suggestions" onchange="updatePlayer2();"></div><select class="name-picker" id="pick_name_2p" onchange="pickName('form_name_2p',this,updatePlayer2)"><option value="">▾</option></select></div>
 							</div>
 							<div class="playerCardItem">
 								<span>Team</span>
-								<input class="form_team_2p" type="text" id="form_team_2p" value="" placeholder="P2 Team" onchange="updateTeam2();">
+								<input class="form_team_2p" type="text" id="form_team_2p" value="" placeholder="P2 Team" data-i18n-attr="placeholder:dash_p2_team" onchange="updateTeam2();">
 							</div>
 							<div class="playerCardItem social-display-row" id="p2SocialDisplay" style="display:none;">
 								<span>Social</span>
@@ -185,7 +170,7 @@
 							<div class="playerCardItem char-select-row">
 								<span>Character</span>
 								<div class="char-picker-inline">
-									<select class="char-select-pack" id="p2CharPack" onchange="charLoadChars(2)"><option value="">-- Pack --</option></select>
+									<select class="char-select-pack" id="p2CharPack" onchange="charLoadChars(2)"><option value="" data-i18n="dash_pack">-- Pack --</option></select>
 									<div class="char-slot-tabs" id="p2CharSlots" style="display:none;"></div>
 										<div class="char-picker-btn" id="p2CharPickerBtn" onclick="charTogglePicker(2)" title="Select character">
 										<img id="p2CharThumb" class="char-selected-thumb" src="" style="display:none;">
@@ -195,7 +180,7 @@
 								</div>
 							</div>
 							<div class="char-picker-popover" id="p2CharPopover" style="display:none;"></div>
-									<div class="player-save-row"><span class="player-match-hint" id="p2MatchHint"></span><button class="player-save-btn" id="p2SaveBtn" onclick="savePlayerCard(2)">Save Player</button></div>
+									<div class="player-save-row"><span class="player-match-hint" id="p2MatchHint"></span><button class="player-save-btn" id="p2SaveBtn" onclick="savePlayerCard(2)" data-i18n="dash_save_player">Save Player</button></div>
 						</div>
 						<div class="cardCountry">
 							<div class="playerCardItem">
@@ -239,35 +224,35 @@
 
 						<div class="fetchContainer">
 							<div id="text_startgg">Start.gg</div>
-							<button class="rectangle_button" id="openStartggBtn" onclick="getStartggInfo();">Start.gg Controls</button>
+							<button class="rectangle_button" id="openStartggBtn" onclick="getStartggInfo();" data-i18n="dash_startgg_controls">Start.gg Controls</button>
 							<div class="player-source-toggle">
 								<span class="player-source-label">Player suggestions</span>
 								<div class="toggle-group">
-									<button class="toggle-btn active" id="srcBtnBoth"    onclick="setPlayerSource('both')">Both</button>
-									<button class="toggle-btn"        id="srcBtnStartgg" onclick="setPlayerSource('startgg')">Start.gg</button>
-									<button class="toggle-btn"        id="srcBtnLocal"   onclick="setPlayerSource('local')">Local</button>
+									<button class="toggle-btn active" id="srcBtnBoth"    onclick="setPlayerSource('both')" data-i18n="dash_src_both">Both</button>
+									<button class="toggle-btn"        id="srcBtnStartgg" onclick="setPlayerSource('startgg')" data-i18n="dash_src_startgg">Start.gg</button>
+									<button class="toggle-btn"        id="srcBtnLocal"   onclick="setPlayerSource('local')" data-i18n="dash_src_local">Local</button>
 								</div>
 							</div>
 							<div id="startggPopup" class="popup">
 								<div class="popup-content">
 									<span id="closeStartggBtn" class="close">&times;</span>
 									<form id="tournament">
-										<h3>Tournament Name:</h3>
+										<h3 data-i18n="dash_tournament_name">Tournament Name:</h3>
 										<input type="text" id="tournamentName" name="tournamentName" required>
-										<h3>Event Name:</h3>
+										<h3 data-i18n="dash_event_name">Event Name:</h3>
 										<input type="text" id="currentEventName" name="currentEventName" required>
-										<h3>Stream Name:</h3>
+										<h3 data-i18n="dash_stream_name">Stream Name:</h3>
 										<input type="text" id="streamName" name="streamName" required>
 										<div class="fetch-sections">
 											<div class="fetch-column">
-												<h3>Players Fetch</h3>
-												<button class="rectangle_button_popup" id="rectangle_button_startgg_fetch_all_players" onclick="getAllPlayersForTournament(event);">Fetch All Players</button>
-												<button class="rectangle_button_popup" id="rectangle_button_clear_next_player" onclick="clearNextPlayers(event);">Clear Next Players</button>
+												<h3 data-i18n="dash_players_fetch">Players Fetch</h3>
+												<button class="rectangle_button_popup" id="rectangle_button_startgg_fetch_all_players" onclick="getAllPlayersForTournament(event);" data-i18n="dash_fetch_all_players">Fetch All Players</button>
+												<button class="rectangle_button_popup" id="rectangle_button_clear_next_player" onclick="clearNextPlayers(event);" data-i18n="dash_clear_next">Clear Next Players</button>
 											</div>
 											<div class="fetch-column">
-												<h3>Queue Fetch</h3>
-												<button class="rectangle_button_popup" id="rectangle_button_startgg_stream_queue" onclick="getNextPlayersFromStartgg(event);">Fetch From Stream Queue</button>
-												<button class="rectangle_button_popup" id="rectangle_button_remove_next_player" onclick="removeNextPlayers(event);">Remove From Queue</button>
+												<h3 data-i18n="dash_queue_fetch">Queue Fetch</h3>
+												<button class="rectangle_button_popup" id="rectangle_button_startgg_stream_queue" onclick="getNextPlayersFromStartgg(event);" data-i18n="dash_fetch_queue">Fetch From Stream Queue</button>
+												<button class="rectangle_button_popup" id="rectangle_button_remove_next_player" onclick="removeNextPlayers(event);" data-i18n="dash_remove_queue">Remove From Queue</button>
 											</div>
 										</div>
 									</form>
@@ -277,64 +262,64 @@
 
 						<div class="statsContainer">
 							<div id="text_stats_container">Player Stats</div>
-							<button class="rectangle_button" id="openStatsBtn" onclick="loadStatsInfo();">Stats Controls</button>
+							<button class="rectangle_button" id="openStatsBtn" onclick="loadStatsInfo();" data-i18n="dash_stats_controls">Stats Controls</button>
 							<div id="statsPopup" class="popup">
 								<div class="popup-content">
 									<span id="closeStatsBtn" class="close">&times;</span>
 									<div class="top-row">
 										<div id="fetchTop8div">
-											<h3>Fetch Top 8 Results</h3>
-											<button class="rectangle_button" id="openPopupTop8Btn">Fetch Top 8 Results</button>
+											<h3 data-i18n="dash_fetch_top8">Fetch Top 8 Results</h3>
+											<button class="rectangle_button" id="openPopupTop8Btn" data-i18n="dash_fetch_top8">Fetch Top 8 Results</button>
 											<div id="popupTop8" class="popup">
 												<div class="popup-content">
 													<span id="closePopupTop8Btn" class="close">&times;</span>
 													<form id="FetchTop8">
-														<h3>Tournament Name:</h3>
+														<h3 data-i18n="dash_tournament_name">Tournament Name:</h3>
 														<input type="text" id="tournamentNameTop8" name="tournamentNameTop8" required>
-														<h3>Event Name:</h3>
+														<h3 data-i18n="dash_event_name">Event Name:</h3>
 														<input type="text" id="eventNameTop8" name="eventNameTop8" required>
 														<div class="horizontal-button-container">
-															<button type="submit" onclick="fetchStartggTop8Info();">Get Single Event</button>
-															<button onclick="addStartggTop8Info();">Add Event</button>
+															<button type="submit" onclick="fetchStartggTop8Info();" data-i18n="dash_get_single">Get Single Event</button>
+															<button onclick="addStartggTop8Info();" data-i18n="dash_add_event">Add Event</button>
 														</div>
 													</form>
 												</div>
 											</div>
 										</div>
 										<div id="addPlayerStatDiv">
-											<h3>Add Player Stat</h3>
-											<button class="rectangle_button" id="openAddPlayerStatBtn">Add Player Stat</button>
+											<h3 data-i18n="dash_add_stat">Add Player Stat</h3>
+											<button class="rectangle_button" id="openAddPlayerStatBtn" data-i18n="dash_add_stat">Add Player Stat</button>
 											<div id="addPlayerStat" class="popup">
 												<div class="popup-content">
 													<span id="closeAddPlayerStatBtn" class="close">&times;</span>
 													<form id="PlayerStat">
-														<h3>Gamer Tag:</h3>
+														<h3 data-i18n="dash_gamer_tag">Gamer Tag:</h3>
 														<input type="text" id="playerName" name="playerName" required>
-														<h3>Event Name:</h3>
+														<h3 data-i18n="dash_event_name">Event Name:</h3>
 														<input type="text" id="eventName" name="eventName" required>
 														<div class="horizontal-button-container">
-															<h3>Placement:</h3>
+															<h3 data-i18n="dash_placement">Placement:</h3>
 															<input type="text" class="form-center-align" id="placement" name="placement" required>
-															<h3>Wins:</h3>
+															<h3 data-i18n="dash_wins">Wins:</h3>
 															<input type="text" class="form-center-align" id="wins" name="wins" value="0">
-															<h3>Losses:</h3>
+															<h3 data-i18n="dash_losses">Losses:</h3>
 															<input type="text" class="form-center-align" id="losses" name="losses" value="0">
 														</div>
-														<button onclick="addPlayStats();">Submit</button>
+														<button onclick="addPlayStats();" data-i18n="dash_submit">Submit</button>
 													</form>
 												</div>
 											</div>
 										</div>
 									</div>
 									<div id="eventStatsContainer" align="left">
-										<h3>Select Event For Stats</h3>
+										<h3 data-i18n="dash_select_event_stats">Select Event For Stats</h3>
 										<select id="eventStatsSelect" onchange="setEventForStats()"></select>
-										<button class="rectangle_button" id="clearTop8DataBtn" onclick="deletePlayerStats();">Clear Event Stats</button>
+										<button class="rectangle_button" id="clearTop8DataBtn" onclick="deletePlayerStats();" data-i18n="dash_clear_event_stats">Clear Event Stats</button>
 									</div>
 									<div id="leagueStatsDiv">
-										<h3>Select League for Stats</h3>
+										<h3 data-i18n="dash_select_league_stats">Select League for Stats</h3>
 										<select id="league_suggestions" onchange="loadLeagueStats();"></select>
-										<button class="rectangle_button" id="clearLeagueStatBtn" onclick="clearLeagueStats();">Clear League Stats</button>
+										<button class="rectangle_button" id="clearLeagueStatBtn" onclick="clearLeagueStats();" data-i18n="dash_clear_league_stats">Clear League Stats</button>
 									</div>
 								</div>
 							</div>
@@ -344,9 +329,9 @@
 						<div id="text_custom_message">Custom Message</div>
 						<div class="field-group">
 							<span>Camera Scene</span>
-							<input type="text" id="cameraSceneMessage" placeholder="Enter message">
+							<input type="text" id="cameraSceneMessage" placeholder="Enter message" data-i18n-attr="placeholder:dash_enter_message">
 						</div>
-						<button class="rectangle_button" onclick="submitCustomMessageData();">Submit</button>
+						<button class="rectangle_button" onclick="submitCustomMessageData();" data-i18n="dash_submit">Submit</button>
 					</div>
 
 				</div><!-- /leftSectionContainer -->
@@ -354,7 +339,7 @@
 					<!-- Center: Next Round -->
 					<div class="nextRoundContainer">
 						<div>
-							<h3 class="finalSectionHeaderText text-shadow">NEXT ROUND</h3>
+							<h3 class="finalSectionHeaderText text-shadow" data-i18n="dash_next_round">NEXT ROUND</h3>
 							<div id="next_round">
 								<select id="dropdown_next_round" class="dropdown_round" onchange="updateNextRound();">
 									<option>Casuals</option>
@@ -390,16 +375,16 @@
 								<div id="text_next_round_1p"><span class="text-shadow">Player 1</span></div>
 								<div class="nextRoundItem" id="text_next_round_name_1p">
 									<span>Name</span>
-									<div class="name-input-wrap"><input class="form_next_round_name_1p" type="text" id="form_next_round_name_1p" value="" placeholder="Next P1 Name" list="next_player_suggestions" onchange="updateNextPlayer1();"><select class="name-picker" id="pick_next_name_1p" onchange="pickName('form_next_round_name_1p',this,updateNextPlayer1)"><option value="">▾</option></select></div>
+									<div class="name-input-wrap"><input class="form_next_round_name_1p" type="text" id="form_next_round_name_1p" value="" placeholder="Next P1 Name" data-i18n-attr="placeholder:dash_next_p1_name" list="next_player_suggestions" onchange="updateNextPlayer1();"><select class="name-picker" id="pick_next_name_1p" onchange="pickName('form_next_round_name_1p',this,updateNextPlayer1)"><option value="">▾</option></select></div>
 								</div>
 								<div class="nextRoundItem" id="text_next_round_team_1p">
 									<span>Team</span>
-									<input class="form_next_round_team_1p" type="text" id="form_next_round_team_1p" value="" placeholder="Next P1 Team" onchange="updateNextTeam1();">
+									<input class="form_next_round_team_1p" type="text" id="form_next_round_team_1p" value="" placeholder="Next P1 Team" data-i18n-attr="placeholder:dash_next_p1_team" onchange="updateNextTeam1();">
 								</div>
 								<div class="nextRoundItem char-select-row">
 									<span>Character</span>
 									<div class="char-picker-inline">
-										<select class="char-select-pack" id="p1NextCharPack" onchange="charLoadChars('1Next')"><option value="">-- Pack --</option></select>
+										<select class="char-select-pack" id="p1NextCharPack" onchange="charLoadChars('1Next')"><option value="" data-i18n="dash_pack">-- Pack --</option></select>
 										<div class="char-slot-tabs" id="p1NextCharSlots" style="display:none;"></div>
 										<div class="char-picker-btn" id="p1NextCharPickerBtn" onclick="charTogglePicker('1Next')" title="Select character">
 											<img id="p1NextCharThumb" class="char-selected-thumb" src="" style="display:none;">
@@ -408,7 +393,7 @@
 										</div>
 									</div>
 									<div class="char-picker-popover" id="p1NextCharPopover" style="display:none;"></div>
-									<div class="player-save-row"><span class="player-match-hint" id="p1NextMatchHint"></span><button class="player-save-btn" id="p1NextSaveBtn" onclick="savePlayerCard('1Next')">Save Player</button></div>
+									<div class="player-save-row"><span class="player-match-hint" id="p1NextMatchHint"></span><button class="player-save-btn" id="p1NextSaveBtn" onclick="savePlayerCard('1Next')" data-i18n="dash_save_player">Save Player</button></div>
 								</div>
 								<div class="nextRoundItem social-display-row" id="next1SocialDisplay" style="display:none;">
 									<span>Social</span>
@@ -425,16 +410,16 @@
 								<div id="text_next_round_2p"><span class="text-shadow">Player 2</span></div>
 								<div class="nextRoundItem" id="text_next_round_name_2p">
 									<span>Name</span>
-									<div class="name-input-wrap"><input class="form_next_round_name_2p" type="text" id="form_next_round_name_2p" value="" placeholder="Next P2 Name" list="next_player_suggestions" onchange="updateNextPlayer2();"><select class="name-picker" id="pick_next_name_2p" onchange="pickName('form_next_round_name_2p',this,updateNextPlayer2)"><option value="">▾</option></select></div>
+									<div class="name-input-wrap"><input class="form_next_round_name_2p" type="text" id="form_next_round_name_2p" value="" placeholder="Next P2 Name" data-i18n-attr="placeholder:dash_next_p2_name" list="next_player_suggestions" onchange="updateNextPlayer2();"><select class="name-picker" id="pick_next_name_2p" onchange="pickName('form_next_round_name_2p',this,updateNextPlayer2)"><option value="">▾</option></select></div>
 								</div>
 								<div class="nextRoundItem" id="text_next_round_team_2p">
 									<span>Team</span>
-									<input class="form_next_round_team_2p" type="text" id="form_next_round_team_2p" value="" placeholder="Next P2 Team" onchange="updateNextTeam2();">
+									<input class="form_next_round_team_2p" type="text" id="form_next_round_team_2p" value="" placeholder="Next P2 Team" data-i18n-attr="placeholder:dash_next_p2_team" onchange="updateNextTeam2();">
 								</div>
 								<div class="nextRoundItem char-select-row">
 									<span>Character</span>
 									<div class="char-picker-inline">
-										<select class="char-select-pack" id="p2NextCharPack" onchange="charLoadChars('2Next')"><option value="">-- Pack --</option></select>
+										<select class="char-select-pack" id="p2NextCharPack" onchange="charLoadChars('2Next')"><option value="" data-i18n="dash_pack">-- Pack --</option></select>
 										<div class="char-slot-tabs" id="p2NextCharSlots" style="display:none;"></div>
 										<div class="char-picker-btn" id="p2NextCharPickerBtn" onclick="charTogglePicker('2Next')" title="Select character">
 											<img id="p2NextCharThumb" class="char-selected-thumb" src="" style="display:none;">
@@ -443,7 +428,7 @@
 										</div>
 									</div>
 									<div class="char-picker-popover" id="p2NextCharPopover" style="display:none;"></div>
-									<div class="player-save-row"><span class="player-match-hint" id="p2NextMatchHint"></span><button class="player-save-btn" id="p2NextSaveBtn" onclick="savePlayerCard('2Next')">Save Player</button></div>
+									<div class="player-save-row"><span class="player-match-hint" id="p2NextMatchHint"></span><button class="player-save-btn" id="p2NextSaveBtn" onclick="savePlayerCard('2Next')" data-i18n="dash_save_player">Save Player</button></div>
 								</div>
 								<div class="nextRoundItem social-display-row" id="next2SocialDisplay" style="display:none;">
 									<span>Social</span>
@@ -466,15 +451,15 @@
 					<!-- Right: Results + Additionals -->
 					<div class="rightContainer" id="rightContainer">
 						<div class="resultsContainer">
-							<h2 class="text-shadow">Results</h2>
+							<h2 class="text-shadow" data-i18n="dash_results">Results</h2>
 							<div id="text_results_1p"><span>P1</span></div>
 							<div id="result1p">
-								<input placeholder="P1 Name" class="form_results_name_1p" type="text" id="form_results_name_1p" value="" onchange="updateResults();">
+								<input placeholder="P1 Name" data-i18n-attr="placeholder:dash_p1_name" class="form_results_name_1p" type="text" id="form_results_name_1p" value="" onchange="updateResults();">
 								<input placeholder="0" class="form_results_score_1p" type="text" id="form_results_score_1p" value="" onchange="updateResults();">
 							</div>
 							<div id="text_results_2p"><span>P2</span></div>
 							<div id="result2p">
-								<input placeholder="P2 Name" class="form_results_name_2p" type="text" id="form_results_name_2p" value="" onchange="updateResults();">
+								<input placeholder="P2 Name" data-i18n-attr="placeholder:dash_p2_name" class="form_results_name_2p" type="text" id="form_results_name_2p" value="" onchange="updateResults();">
 								<input placeholder="0" class="form_results_score_2p" type="text" id="form_results_score_2p" value="" onchange="updateResults();">
 							</div>
 						</div>
@@ -487,13 +472,13 @@
 							</div>
 							<div class="field-group">
 								<span>Message</span>
-								<input type="text" id="countdownMessage" placeholder="Enter message">
+								<input type="text" id="countdownMessage" placeholder="Enter message" data-i18n-attr="placeholder:dash_enter_message">
 							</div>
 							<div class="field-group">
 								<span>Timer (HH:MM:SS)</span>
 								<input type="text" id="countdownTimer" placeholder="00:00:00" value="00:10:00">
 							</div>
-							<button class="rectangle_button" onclick="submitCountdownData();">Start Countdown</button>
+							<button class="rectangle_button" onclick="submitCountdownData();" data-i18n="dash_start_countdown">Start Countdown</button>
 						</div>
 
 					</div>
@@ -621,6 +606,9 @@
 	document.addEventListener('DOMContentLoaded', loadCountdownOptions);
 	</script>
 	<datalist id="next_player_suggestions"></datalist>
+  <script src="lang/en.js"></script>
+  <script src="i18n.js"></script>
+  <script src="nav.js"></script>
   <script src="theme/theme.js" defer></script>
 <div id="char-preview"><img id="char-preview-img" src=""><div id="char-preview-label"></div></div>
 </body>

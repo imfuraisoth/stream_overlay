@@ -83,7 +83,7 @@ button, .rectangle_button {
   white-space: nowrap; transition: background .15s; display: inline-flex;
   align-items: center; justify-content: center; gap: 5px; line-height: 1;
 }
-button:hover, .rectangle_button:hover { background: #f0b030; }
+button:hover, .rectangle_button:hover { background: var(--accent); filter: brightness(1.12); }
 .btn-sec {
   background: var(--bg3) !important; border: 1px solid var(--border) !important; color: var(--fg2) !important;
 }

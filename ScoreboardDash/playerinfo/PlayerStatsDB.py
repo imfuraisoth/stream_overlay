@@ -409,7 +409,33 @@ def save_local_players(players):
             pass
 
 
-def resolve_player_id(name):
+def purge_all_players():
+    """Delete EVERY local player and all their associated data
+    (characters, roster, aliases). Match history event files are NOT
+    touched -- they keep each set's tag/user_id, so a re-import or
+    reconcile can recreate and re-link players afterward.
+
+    Returns the number of players that were removed."""
+    conn = _connect()
+    cur = conn.cursor()
+    try:
+        cur.execute("SELECT COUNT(*) FROM local_players")
+        count = cur.fetchone()[0]
+        # Truncate every player-scoped table. 'games' is config, not
+        # player data, so it is intentionally left alone.
+        cur.execute("DELETE FROM local_player_characters")
+        cur.execute("DELETE FROM local_player_roster")
+        cur.execute("DELETE FROM player_aliases")
+        cur.execute("DELETE FROM local_players")
+        conn.commit()
+    finally:
+        conn.close()
+    if on_change:
+        try:
+            on_change()
+        except Exception:
+            pass
+    return count
     """Resolve a display name OR alias to a player id, case-insensitive.
 
     Returns the player id string, or None if nothing matches."""

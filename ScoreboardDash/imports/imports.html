@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Match Imports — Stream Overlay</title>
+  <title data-i18n="imp_title">Match Imports — Stream Overlay</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;900&family=Barlow:wght@400;500&display=swap" rel="stylesheet">
@@ -48,45 +48,34 @@
 <body>
 
 <!-- NAV -->
-<div class="top-navbar-container">
-  <div class="header-item"><a href="../commentators/commentators.html">Commentators</a></div>
-  <span class="header-sep">|</span>
-  <div class="header-item"><a href="../index.html">Event Dashboard</a></div>
-  <span class="header-sep">|</span>
-  <div class="header-item"><a href="../top8/top8.html">Top 8</a></div>
-  <span class="header-sep">|</span>
-  <div class="header-item"><a href="../playerinfo/characterselect.html">Games &amp; Assets</a></div>
-  <span class="header-sep">|</span>
-  <div class="header-item"><a href="../stations/stations.html">Stations</a></div>
-  <span class="header-sep">|</span>
-  <div class="header-item"><a href="../players/players.html">Players</a></div>
-  <span class="header-sep">|</span>
-  <div class="header-item active">Match Imports</div>
-</div>
-
+<div id="nav-root" style="min-height:45px"></div>
 <div class="imports-wrap">
-  <h2 style="margin-bottom:4px;">Match History Imports</h2>
-  <div class="hint">Paste a start.gg event URL or slug, import its completed sets, then assign any unmatched players. Re-importing an event refreshes its data without creating duplicates.</div>
+  <h2 style="margin-bottom:4px;" data-i18n="imp_heading">Match History Imports</h2>
+  <div class="hint" data-i18n="imp_hint">Paste a start.gg event URL or slug, import its completed sets, then assign any unmatched players. Re-importing an event refreshes its data without creating duplicates.</div>
 
   <div class="import-bar">
-    <input type="text" id="slugInput" placeholder="https://www.start.gg/tournament/.../event/...  or  tournament/.../event/...">
-    <select id="gameInput" style="max-width:180px;flex:0 0 auto;"><option value="">Game...</option></select>
-    <input type="text" id="seriesInput" list="seriesList" placeholder="Series (optional, e.g. STunday)" style="max-width:220px;flex:0 0 auto;">
-    <button class="btn" id="importBtn" onclick="doImport()">Import</button>
+    <select id="sourceInput" style="max-width:120px;flex:0 0 auto;" onchange="onSourceChange()">
+      <option value="startgg">start.gg</option>
+      <option value="parry">parry.gg</option>
+    </select>
+    <input type="text" id="slugInput" placeholder="https://www.start.gg/tournament/.../event/...  or  tournament/.../event/..." data-i18n-attr="placeholder:imp_slug_ph">
+    <select id="gameInput" style="max-width:180px;flex:0 0 auto;"><option value="" data-i18n="imp_game_ph">Game...</option></select>
+    <input type="text" id="seriesInput" list="seriesList" placeholder="Series (optional, e.g. STunday)" data-i18n-attr="placeholder:imp_series_ph" style="max-width:220px;flex:0 0 auto;">
+    <button class="btn" id="importBtn" onclick="doImport()" data-i18n="imp_import">Import</button>
   </div>
   <datalist id="seriesList"></datalist>
   <div class="status-line" id="importStatus"></div>
 
   <div id="reconcileSection" style="display:none;">
-    <div class="section-title">Unmatched players — assign to continue</div>
+    <div class="section-title" data-i18n="imp_reconcile_title">Unmatched players — assign to continue</div>
     <table class="imp"><thead>
-      <tr><th>start.gg Player</th><th>Action</th></tr>
+      <tr><th data-i18n="imp_col_player">start.gg Player</th><th data-i18n="imp_col_action">Action</th></tr>
     </thead><tbody id="reconcileBody"></tbody></table>
   </div>
 
-  <div class="section-title">Imported events</div>
+  <div class="section-title" data-i18n="imp_events_title">Imported events</div>
   <table class="imp events-list"><thead>
-    <tr><th>Event</th><th>Display Name</th><th>Game</th><th>Series</th><th>Sets</th><th>Imported</th><th></th></tr>
+    <tr><th data-i18n="imp_col_event">Event</th><th data-i18n="imp_col_display">Display Name</th><th data-i18n="imp_col_game">Game</th><th data-i18n="imp_col_series">Series</th><th data-i18n="imp_col_sets">Sets</th><th data-i18n="imp_col_imported">Imported</th><th></th></tr>
   </thead><tbody id="eventsBody"><tr><td colspan="7" style="color:var(--fg2);">Loading…</td></tr></tbody></table>
 </div>
 
@@ -117,7 +106,7 @@ async function loadGames() {
     _allGames = Object.keys(games || {}).sort(function(a,b){ return a.toLowerCase().localeCompare(b.toLowerCase()); });
     var sel = document.getElementById('gameInput');
     var prev = sel.value || '';
-    sel.innerHTML = '<option value="">Game...</option>';
+    sel.innerHTML = '<option value="">' + window.t('imp_game_ph') + '</option>';
     _allGames.forEach(function(g) {
       var o = document.createElement('option'); o.value = g; o.textContent = g;
       sel.appendChild(o);
@@ -170,8 +159,8 @@ async function loadEvents() {
           + escHtml(ev.series || '') + '" placeholder="\u2014"></td>'
         + '<td>' + ev.set_count + '</td>'
         + '<td class="evmeta">' + escHtml((ev.imported_at || '').replace('T', ' ')) + '</td>'
-        + '<td><button class="btn sec reimport-btn">Re-import</button> '
-          + '<button class="btn sec delete-btn">Delete</button></td>';
+        + '<td><button class="btn sec reimport-btn">' + window.t('imp_reimport') + '</button> '
+          + '<button class="btn sec delete-btn">' + window.t('imp_delete') + '</button></td>';
       var dnameCell = tr.querySelector('.dname-cell');
       var _dorig = ev.display_name || '';
       function commitDName() {
@@ -236,10 +225,10 @@ async function deleteEvent(ev) {
       body: JSON.stringify({ event_slug: ev.event_slug })
     });
     var data = await r.json();
-    if (!data.ok) { setStatus(data.message || 'Delete failed', 'err'); return; }
-    setStatus('Removed "' + label + '".', 'ok');
+    if (!data.ok) { setStatus(data.message || window.t('imp_delete_failed'), 'err'); return; }
+    setStatus(window.t('imp_removed') + ' "' + label + '".', 'ok');
     await loadEvents();
-  } catch (e) { setStatus('Delete error: ' + e, 'err'); }
+  } catch (e) { setStatus(window.t('imp_delete_error') + ': ' + e, 'err'); }
 }
 
 function escHtml(s) {
@@ -247,32 +236,47 @@ function escHtml(s) {
     .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 }
 
+var _currentSource = 'startgg';
+function onSourceChange() {
+  var source = document.getElementById('sourceInput').value || 'startgg';
+  var slugIn = document.getElementById('slugInput');
+  if (source === 'parry') {
+    slugIn.placeholder = 'tournament-slug/event-slug  (or a parry.gg event URL)';
+  } else {
+    slugIn.placeholder = 'https://www.start.gg/tournament/.../event/...  or  tournament/.../event/...';
+  }
+}
 async function doImport() {
   var slug = document.getElementById('slugInput').value.trim();
-  if (!slug) { setStatus('Enter an event URL or slug first.', 'err'); return; }
+  if (!slug) { setStatus(window.t('imp_enter_slug'), 'err'); return; }
+  var game = (document.getElementById('gameInput').value || '').trim();
+  if (!game) { setStatus(window.t('imp_select_game'), 'err'); return; }
+  var source = document.getElementById('sourceInput').value || 'startgg';
+  _currentSource = source;
   var btn = document.getElementById('importBtn');
-  btn.disabled = true; setStatus('Fetching completed sets from start.gg…');
+  btn.disabled = true;
+  setStatus(source === 'parry' ? window.t('imp_fetching_parry') : window.t('imp_fetching_startgg'));
   try {
     var r = await fetch('/importStartggEvent', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ slug: slug, series: (document.getElementById('seriesInput').value || '').trim(), game: (document.getElementById('gameInput').value || '').trim() })
+      body: JSON.stringify({ slug: slug, source: source, series: (document.getElementById('seriesInput').value || '').trim(), game: game })
     });
     var data = await r.json();
-    if (!data.ok) { setStatus(data.message || ('Import failed (' + r.status + ')'), 'err'); btn.disabled = false; return; }
+    if (!data.ok) { setStatus(data.message || (window.t('imp_import_failed') + ' (' + r.status + ')'), 'err'); btn.disabled = false; return; }
     _currentEventSlug = data.event_slug;
     var unmatched = (data.unassigned || []).length;
-    setStatus('Imported ' + data.set_count + ' sets from "' + data.event_name + '". '
-      + (unmatched ? (unmatched + ' player(s) need assigning below.') : 'All players matched.'), 'ok');
+    setStatus(window.t('imp_imported_n') + ' ' + data.set_count + ' ' + window.t('imp_sets_from') + ' "' + data.event_name + '". '
+      + (unmatched ? (unmatched + ' ' + window.t('imp_need_assign')) : window.t('imp_all_matched')), 'ok');
     renderReconcile(data.unassigned || []);
     await loadEvents();
   } catch (e) {
-    setStatus('Import error: ' + e, 'err');
+    setStatus(window.t('imp_import_error') + ': ' + e, 'err');
   }
   btn.disabled = false;
 }
 
 function playerOptions(selectedId) {
-  var opts = '<option value="">— Select player —</option>';
+  var opts = '<option value="">' + window.t('imp_select_player') + '</option>';
   _players.forEach(function(p) {
     opts += '<option value="' + p.id + '"' + (p.id === selectedId ? ' selected' : '') + '>'
       + escHtml(p.name) + (p.team ? ' (' + escHtml(p.team) + ')' : '') + '</option>';
@@ -296,7 +300,7 @@ function renderReconcile(unassigned) {
         + '<select id="reconSel' + i + '">' + playerOptions() + '</select>'
         + '<button class="btn sec" onclick="assignExisting(' + i + ')">Assign</button>'
         + '<span class="pill">or</span>'
-        + '<button class="btn sec" onclick="createNew(' + i + ')">Create &quot;' + escHtml(u.tag) + '&quot;</button>'
+        + '<button class="btn sec" onclick="createNew(' + i + ')">' + window.t('imp_create') + ' &quot;' + escHtml(u.tag) + '&quot;</button>'
         + '<span class="recon-result" id="reconRes' + i + '"></span>'
         + '</div></td>';
     tr._data = u;
@@ -309,13 +313,13 @@ async function _reconcile(idx, action, playerId) {
   var tr = rows[idx];
   var u = tr._data;
   var res = document.getElementById('reconRes' + idx);
-  res.textContent = 'Saving…';
+  res.textContent = window.t('imp_saving');
   try {
     var r = await fetch('/reconcileImport', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         event_slug: _currentEventSlug, tag: u.tag, user_id: u.user_id,
-        action: action, player_id: playerId
+        action: action, player_id: playerId, source: _currentSource
       })
     });
     var data = await r.json();
@@ -342,6 +346,16 @@ function createNew(idx) { _reconcile(idx, 'new', null); }
   await loadSeries();
   await loadEvents();
 })();
+
+// Re-translate + re-render the events table when language changes.
+window.onLangChange = function(){
+  if (window.applyTranslations) window.applyTranslations(document);
+  if (typeof loadEvents === 'function') loadEvents();
+};
 </script>
+  <script src="../lang/en.js"></script>
+  <script src="../i18n.js"></script>
+  <script src="../nav.js"></script>
+  <script src="../theme/theme.js" defer></script>
 </body>
 </html>

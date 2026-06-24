@@ -1,0 +1,526 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Crew Battle — Stream Overlay</title>
+  <link rel="icon" type="image/png" href="../images/V.png">
+  <link href="style.css" rel="stylesheet" type="text/css">
+  <script>
+    (function(){var s=localStorage.getItem('sc_theme');if(!s)return;try{var v=JSON.parse(s);Object.keys(v).forEach(function(k){document.documentElement.style.setProperty(k,v[k])});}catch(e){}})();
+  </script>
+  <script src="../lang/en.js"></script>
+  <script src="../i18n.js"></script>
+  <link href="../theme/theme.css" rel="stylesheet" type="text/css">
+</head>
+<body>
+
+<!-- NAV -->
+<div id="nav-root" style="min-height:45px"></div>
+<div class="cb-wrap">
+  <div class="cb-bar">
+    <span id="cbStatus" class="cb-status" data-i18n="cb_status_loading">Loading…</span>
+    <label class="cb-pagesize"><span data-i18n="cb_game">Game</span>
+      <select id="gameSelect" onchange="setGame(this.value)"></select>
+    </label>
+    <label class="cb-pagesize"><span data-i18n="cb_pagesize">Page size</span>
+      <input type="number" id="pageSizeInput" min="1" value="12" onchange="setPageSize(this.value)">
+    </label>
+    <span style="flex:1"></span>
+    <button class="btn sec" id="cbSwap" onclick="swapTeams()" data-i18n="cb_swap_teams">⇄ Swap Teams</button>
+    <button class="btn" id="cbReset" onclick="resetBattle()" data-i18n="cb_reset">Reset Battle</button>
+  </div>
+
+  <div class="cb-teams" id="cbTeams"></div>
+  <datalist id="playerList"></datalist>
+  <p class="cb-hint" data-i18n="cb_hint">
+    The <b>current player</b> (highlighted) is who's up. Players above are defeated (dimmed on stream),
+    players below are waiting. Use <b>Advance ▼</b> when the current player loses, or <b>Back ▲</b> to undo.
+    The last two players show the <b>Captain</b> / <b>Vice</b> role labels (editable per team) prefixed on stream.
+    Reorder with the row ▲▼; click a name to jump the current pointer to it. Changes save automatically.
+  </p>
+</div>
+
+<script>
+  var state = null;
+  var viewPage = { 1: null, 2: null };   // operator-only manual page override; null = follow current
+  var charPacks = [];    // pack names for the selected game
+  var charMap = {};      // { pack: { character: [ {palette, file}, ... ] } }
+  var gamesList = [];
+  var pickerFor = null;  // {n, idx} the player whose picker popover is open
+
+  function escHtml(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+  function setStatus(t){ document.getElementById('cbStatus').textContent = t; }
+  function teamObj(n){ return n===1 ? state.team1 : state.team2; }
+
+  async function loadPlayers(){
+    try {
+      var r = await fetch('/getLocalPlayers');
+      var players = await r.json();
+      var dl = document.getElementById('playerList');
+      dl.innerHTML = '';
+      (players||[]).forEach(function(p){
+        var o=document.createElement('option'); o.value = p.name || ''; dl.appendChild(o);
+      });
+    } catch(e){ console.log('loadPlayers error:', e); }
+  }
+
+  async function loadGames(){
+    try {
+      var r = await fetch('/getGames');
+      var games = await r.json();
+      // /getGames returns an OBJECT {gameName: slots}, not an array.
+      gamesList = Object.keys(games || {}).sort(function(a,b){
+        return a.toLowerCase().localeCompare(b.toLowerCase());
+      });
+    } catch(e){ console.log('loadGames error:', e); gamesList = []; }
+    var sel = document.getElementById('gameSelect');
+    var cur = (state && state.game) || '';
+    sel.innerHTML = '<option value="">' + escHtml(window.t('cb_game_pick')) + '</option>'
+      + gamesList.map(function(g){ return '<option value="'+escHtml(g)+'">'+escHtml(g)+'</option>'; }).join('');
+    sel.value = cur;
+  }
+
+  // Load all packs + characters + palettes for the selected game into charMap.
+  async function loadCharRoster(game){
+    charPacks = []; charMap = {};
+    if(!game) return;
+    try {
+      var pr = await fetch('/getCharacterPacks?game=' + encodeURIComponent(game));
+      charPacks = await pr.json() || [];
+      for (var i=0; i<charPacks.length; i++){
+        var pack = charPacks[i];
+        var cr = await fetch('/getCharacterList?game=' + encodeURIComponent(game) + '&pack=' + encodeURIComponent(pack));
+        var chars = await cr.json() || {};
+        charMap[pack] = {};
+        Object.keys(chars).forEach(function(name){
+          // each entry: [{palette, file}, ...] sorted by palette
+          var pals = (chars[name] || []).slice().sort(function(a,b){ return (a.palette||0)-(b.palette||0); });
+          charMap[pack][name] = pals;
+        });
+      }
+    } catch(e){ console.log('loadCharRoster error:', e); }
+  }
+
+  async function setGame(game){
+    state.game = game;
+    await loadCharRoster(game);
+    commit();
+  }
+
+  async function loadBattle(){
+    try {
+      var r = await fetch('/getCrewBattle');
+      state = await r.json();
+      [1,2].forEach(function(n){
+        var t = teamObj(n);
+        if(t.current == null) t.current = 0;
+        if(t.captainLabel == null) t.captainLabel = 'Captain';
+        if(t.viceLabel == null) t.viceLabel = 'Vice';
+      });
+      if(state.pageSize == null) state.pageSize = 12;
+      if(state.game == null) state.game = '';
+      document.getElementById('pageSizeInput').value = state.pageSize;
+      render();   // render teams immediately; game/char data enriches after
+      setStatus(window.t('cb_status_loaded'));
+      await loadGames();
+      await loadCharRoster(state.game);
+      render();   // re-render now that the character dropdowns can populate
+    } catch(e){ console.log('loadBattle error:', e); setStatus(window.t('cb_status_loadfail')); }
+  }
+
+  async function commit(){
+    render();
+    try {
+      var r = await fetch('/saveCrewBattle', {
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify(state)
+      });
+      setStatus(r.ok ? window.t('cb_status_saved') : window.t('cb_status_savefail'));
+    } catch(e){ console.log('commit error:', e); setStatus(window.t('cb_status_savefail')); }
+  }
+
+  function pageSizeVal(){ return (state.pageSize && state.pageSize>0) ? state.pageSize : 12; }
+  function setPageSize(v){
+    var p = parseInt(v,10); if(isNaN(p)||p<1) p=1;
+    state.pageSize = p;
+    viewPage = {1:null, 2:null};   // reset manual overrides when page size changes
+    commit();
+  }
+  function numPages(n){
+    var len = teamObj(n).players.length;
+    return Math.max(1, Math.ceil(len / pageSizeVal()));
+  }
+  function currentPageOf(n){
+    var t = teamObj(n);
+    var ptr = Math.min(t.current, Math.max(0, t.players.length-1));
+    return Math.floor(ptr / pageSizeVal());
+  }
+  function shownPage(n){
+    return (viewPage[n] == null) ? currentPageOf(n) : viewPage[n];
+  }
+  function pageNav(n, delta){
+    var np = numPages(n);
+    var next = Math.max(0, Math.min(np-1, shownPage(n) + delta));
+    viewPage[n] = next;
+    render();
+  }
+  function followCurrent(n){ viewPage[n] = null; render(); }
+  function setName(n, val){ teamObj(n).name = val.trim() || ('Team '+n); commit(); }
+  function setCaptainLabel(n, val){ teamObj(n).captainLabel = val; commit(); }
+  function setViceLabel(n, val){ teamObj(n).viceLabel = val; commit(); }
+  function setRemainingLabel(n, val){ teamObj(n).remainingLabel = val; commit(); }
+
+  // Per-team gradient/plate color. Stored as whatever the user typed (hex like
+  // #1a2b3c, or empty = use the overlay default). The <input type=color> swatch
+  // needs a 6-digit hex, so plateHex() coerces for the swatch only.
+  var CB_PLATE_DEFAULT = '#0D1828';   // brand navy; matches overlay fallback
+  function plateHex(t){
+    var v = (t.plateColor || '').trim();
+    return /^#[0-9a-fA-F]{6}$/.test(v) ? v : CB_PLATE_DEFAULT;
+  }
+  function setPlateColor(n, val){
+    val = (val || '').trim();
+    teamObj(n).plateColor = val;
+    // keep swatch + hex field in sync without a full re-render
+    var sw = document.getElementById('cbColorSwatch'+n);
+    var hx = document.getElementById('cbColorHex'+n);
+    if(hx) hx.value = val;
+    if(sw && /^#[0-9a-fA-F]{6}$/.test(val)) sw.value = val;
+    commit();
+  }
+
+  function addPlayer(n){
+    var input = document.getElementById('team'+n+'Add');
+    var name = (input.value||'').trim();
+    if(!name) return;
+    var t = teamObj(n);
+    // Add to the TOP so anchors (captain/vice) can be picked first and the
+    // rest of the crew stacks above them. Everyone shifts down one index, so
+    // nudge the current pointer to keep it on the same actual player.
+    t.players.unshift({ name:name });
+    if(t.current > 0) t.current += 1;
+    input.value = '';
+    commit();
+  }
+  function removePlayer(n, idx){
+    var t = teamObj(n);
+    t.players.splice(idx,1);
+    if(t.current > t.players.length) t.current = t.players.length;
+    commit();
+  }
+  function move(n, idx, dir){
+    var arr = teamObj(n).players;
+    var j = idx + dir;
+    if(j<0 || j>=arr.length) return;
+    var tmp = arr[idx]; arr[idx]=arr[j]; arr[j]=tmp;
+    commit();
+  }
+  function advance(n, delta){
+    var t = teamObj(n);
+    t.current = Math.max(0, Math.min(t.players.length, t.current + delta));
+    viewPage[n] = null;   // resume following the current player
+    commit();
+  }
+  function jumpTo(n, idx){
+    teamObj(n).current = idx;
+    commit();
+  }
+
+  // Compact character cell on a player row: a button showing the current pick
+  // (thumbnail + name) or "+". Clicking opens the picker popover. Hidden until
+  // a game is selected.
+  function charSelectHtml(n, idx, p){
+    if(!state.game){
+      return '<span class="cb-charcell cb-charcell-nogame" title="Pick a game first"></span>';
+    }
+    var inner;
+    if(p.character && p.characterFile){
+      inner = '<img class="cb-charbtn-thumb char-preview-target" src="/'+escHtml(p.characterFile)+'" '
+            + 'data-label="'+escHtml(p.character)+' ('+(p.palette||0)+')" onerror="this.style.display=\'none\'">'
+            + '<span class="cb-charbtn-name">'+escHtml(p.character)+'</span>';
+    } else {
+      inner = '<span class="cb-charbtn-empty">+ '+escHtml(window.t('cb_character'))+'</span>';
+    }
+    return '<span class="cb-charcell">'
+      + '<button type="button" class="cb-charbtn" onclick="openCharPicker(event,'+n+','+idx+')">'+inner+'</button>'
+      + '</span>';
+  }
+
+  // ── CHARACTER PICKER POPOVER ──────────────────────────────────
+  function closeCharPicker(){
+    var pop = document.getElementById('cbCharPicker');
+    if(pop) pop.style.display = 'none';
+    pickerFor = null;
+    hideCharPreview();
+  }
+
+  function openCharPicker(ev, n, idx){
+    ev.stopPropagation();
+    if(!state.game) return;
+    pickerFor = { n:n, idx:idx };
+    var pop = ensureCharPicker();
+    var p = teamObj(n).players[idx];
+    // default the pack/character selects to the player's current pick if any
+    buildCharPicker(p);
+    // position the popover near the button
+    var r = ev.currentTarget.getBoundingClientRect();
+    pop.style.display = 'block';
+    var top = r.bottom + window.scrollY + 4;
+    var left = r.left + window.scrollX;
+    // keep on screen
+    if(left + 320 > window.innerWidth) left = window.innerWidth - 330;
+    pop.style.top = top + 'px';
+    pop.style.left = left + 'px';
+  }
+
+  function ensureCharPicker(){
+    var pop = document.getElementById('cbCharPicker');
+    if(pop) return pop;
+    pop = document.createElement('div');
+    pop.id = 'cbCharPicker';
+    pop.className = 'cb-charpicker';
+    pop.onclick = function(e){ e.stopPropagation(); };
+    pop.innerHTML =
+      '<div class="cb-cp-row">'
+        + '<label data-i18n="cb_pack">Pack</label>'
+        + '<select id="cbCpPack" onchange="onCpPack()"></select>'
+      + '</div>'
+      + '<div class="cb-cp-row">'
+        + '<label data-i18n="cb_character">Character</label>'
+        + '<select id="cbCpChar" onchange="onCpChar()"></select>'
+      + '</div>'
+      + '<div class="cb-cp-palettes" id="cbCpPalettes"></div>'
+      + '<div class="cb-cp-foot">'
+        + '<button type="button" class="cb-mini cb-del" onclick="clearPlayerChar()" data-i18n="cb_char_none">-- none --</button>'
+      + '</div>';
+    document.body.appendChild(pop);
+    if(window.applyTranslations) window.applyTranslations(pop);
+    return pop;
+  }
+
+  function buildCharPicker(p){
+    var packSel = document.getElementById('cbCpPack');
+    packSel.innerHTML = charPacks.map(function(pk){
+      return '<option value="'+escHtml(pk)+'"'+(pk===(p&&p.pack)?' selected':'')+'>'+escHtml(pk)+'</option>';
+    }).join('');
+    // pick current pack (or first)
+    if(p && p.pack && charPacks.indexOf(p.pack)>=0) packSel.value = p.pack;
+    onCpPack(p && p.character);
+  }
+
+  function onCpPack(presetChar){
+    var pack = document.getElementById('cbCpPack').value;
+    var chars = Object.keys(charMap[pack] || {}).sort(function(a,b){ return a.localeCompare(b); });
+    var sel = document.getElementById('cbCpChar');
+    sel.innerHTML = chars.map(function(c){
+      return '<option value="'+escHtml(c)+'"'+(c===presetChar?' selected':'')+'>'+escHtml(c)+'</option>';
+    }).join('');
+    if(presetChar && chars.indexOf(presetChar)>=0) sel.value = presetChar;
+    onCpChar();
+  }
+
+  function onCpChar(){
+    var pack = document.getElementById('cbCpPack').value;
+    var char = document.getElementById('cbCpChar').value;
+    var pals = (charMap[pack] && charMap[pack][char]) || [];
+    var cur = pickerFor ? teamObj(pickerFor.n).players[pickerFor.idx] : null;
+    var html = '';
+    pals.forEach(function(pl){
+      var selected = (cur && cur.pack===pack && cur.character===char && (cur.palette||0)===pl.palette) ? ' selected' : '';
+      html += '<img class="cb-cp-thumb char-preview-target'+selected+'" src="/'+escHtml(pl.file)+'" '
+        + 'title="Palette '+pl.palette+'" data-label="'+escHtml(char)+' ('+pl.palette+')" '
+        + 'onerror="this.style.display=\'none\'" '
+        + 'onclick="pickPalette(\''+encodeURIComponent(pack)+'\',\''+encodeURIComponent(char)+'\','+pl.palette+',\''+encodeURIComponent(pl.file)+'\')">';
+    });
+    document.getElementById('cbCpPalettes').innerHTML = html || '<span class="cb-cp-nopal">—</span>';
+  }
+
+  function pickPalette(packEnc, charEnc, palette, fileEnc){
+    if(!pickerFor) return;
+    var p = teamObj(pickerFor.n).players[pickerFor.idx];
+    p.pack = decodeURIComponent(packEnc);
+    p.character = decodeURIComponent(charEnc);
+    p.palette = palette;
+    p.characterFile = decodeURIComponent(fileEnc);
+    closeCharPicker();
+    commit();
+  }
+
+  function clearPlayerChar(){
+    if(!pickerFor) return;
+    var p = teamObj(pickerFor.n).players[pickerFor.idx];
+    delete p.pack; delete p.character; delete p.palette; delete p.characterFile;
+    closeCharPicker();
+    commit();
+  }
+
+  // ── HOVER PREVIEW (larger image following cursor) ─────────────
+  var _cbPreview = null;
+  function cbPreviewEl(){
+    if(!_cbPreview){
+      _cbPreview = document.createElement('div');
+      _cbPreview.id = 'cb-char-preview';
+      _cbPreview.innerHTML = '<img id="cb-char-preview-img"><div id="cb-char-preview-label"></div>';
+      document.body.appendChild(_cbPreview);
+    }
+    return _cbPreview;
+  }
+  function showCharPreview(e, src, label){
+    var pv = cbPreviewEl();
+    document.getElementById('cb-char-preview-img').src = src;
+    document.getElementById('cb-char-preview-label').textContent = label || '';
+    pv.style.display = 'block';
+    moveCharPreview(e);
+  }
+  function moveCharPreview(e){
+    var pv = cbPreviewEl();
+    if(pv.style.display==='none') return;
+    var x = e.clientX + 16, y = e.clientY + 16;
+    if(x + 180 > window.innerWidth) x = e.clientX - 188;
+    if(y + 200 > window.innerHeight) y = e.clientY - 200;
+    pv.style.left = x + 'px'; pv.style.top = y + 'px';
+  }
+  function hideCharPreview(){ if(_cbPreview) _cbPreview.style.display='none'; }
+
+  // Event delegation for any .char-preview-target (row thumbs + palette thumbs)
+  document.addEventListener('mouseover', function(e){
+    var t = e.target.closest && e.target.closest('.char-preview-target');
+    if(t && t.src){ showCharPreview(e, t.src, t.getAttribute('data-label')||''); }
+  });
+  document.addEventListener('mousemove', function(e){
+    if(_cbPreview && _cbPreview.style.display!=='none') moveCharPreview(e);
+  });
+  document.addEventListener('mouseout', function(e){
+    var t = e.target.closest && e.target.closest('.char-preview-target');
+    if(t && !(e.relatedTarget && e.relatedTarget.closest && e.relatedTarget.closest('.char-preview-target'))){
+      hideCharPreview();
+    }
+  });
+  // Close the picker when clicking elsewhere
+  document.addEventListener('click', function(){ if(pickerFor) closeCharPicker(); });
+
+  function render(){
+    var wrap = document.getElementById('cbTeams');
+    wrap.innerHTML = '';
+    [1,2].forEach(function(n){
+      var t = teamObj(n);
+      var remaining = Math.max(0, t.players.length - t.current);
+      var capIdx = t.players.length - 1;
+      var viceIdx = t.players.length - 2;
+
+      var col = document.createElement('div');
+      col.className = 'cb-team';
+      var ps = pageSizeVal();
+      var shown = shownPage(n);
+      var rows = '';
+      t.players.forEach(function(p, idx){
+        var role = (idx===capIdx && t.players.length>0) ? (t.captainLabel||'')
+                 : (idx===viceIdx && t.players.length>1) ? (t.viceLabel||'') : '';
+        var cls = 'cb-item';
+        if(idx < t.current) cls += ' cb-defeated';
+        else if(idx === t.current) cls += ' cb-current';
+        var pageOf = Math.floor(idx / ps);
+        if(pageOf === shown) cls += ' cb-onpage';
+        if(idx > 0 && (idx % ps) === 0) cls += ' cb-pagebreak';
+        rows +=
+          '<li class="'+cls+'">'
+          + '<span class="cb-order">'+(idx+1)+'</span>'
+          + '<span class="cb-name" onclick="jumpTo('+n+','+idx+')" title="Set as current">'
+            + (role ? '<span class="cb-role">'+escHtml(role)+'</span> ' : '')
+            + escHtml(p.name) + '</span>'
+          + charSelectHtml(n, idx, p)
+          + '<span class="cb-actions">'
+            + '<button class="cb-mini" onclick="move('+n+','+idx+',-1)" title="Move up">&#9650;</button>'
+            + '<button class="cb-mini" onclick="move('+n+','+idx+',1)" title="Move down">&#9660;</button>'
+            + '<button class="cb-mini cb-del" onclick="removePlayer('+n+','+idx+')" title="Remove">&times;</button>'
+          + '</span></li>';
+      });
+      var np = Math.max(1, Math.ceil(t.players.length / ps));
+
+      col.innerHTML =
+        '<input type="text" class="cb-teamname" value="'+escHtml(t.name)+'" placeholder="Team '+n+'" '
+          + 'onchange="setName('+n+', this.value)">'
+        + '<div class="cb-remaining">'+escHtml(t.name)+': '+remaining+' '+escHtml(t.remainingLabel||'left')+'</div>'
+        + '<div class="cb-roles">'
+          + '<label>'+escHtml(window.t('cb_captain_label'))+' <input type="text" class="cb-rolein" value="'+escHtml(t.captainLabel)+'" '
+            + 'onchange="setCaptainLabel('+n+', this.value)"></label>'
+          + '<label>'+escHtml(window.t('cb_vice_label'))+' <input type="text" class="cb-rolein" value="'+escHtml(t.viceLabel)+'" '
+            + 'onchange="setViceLabel('+n+', this.value)"></label>'
+          + '<label>'+escHtml(window.t('cb_remaining_label'))+' <input type="text" class="cb-rolein" value="'+escHtml(t.remainingLabel||'left')+'" '
+            + 'onchange="setRemainingLabel('+n+', this.value)"></label>'
+          + '<label class="cb-colorlabel">'+escHtml(window.t('cb_plate_color'))+' '
+            + '<span class="cb-colorwrap">'
+              + '<input type="color" class="cb-colorswatch" id="cbColorSwatch'+n+'" value="'+escHtml(plateHex(t))+'" '
+                + 'oninput="setPlateColor('+n+', this.value)">'
+              + '<input type="text" class="cb-colorhex" id="cbColorHex'+n+'" value="'+escHtml(t.plateColor||'')+'" '
+                + 'placeholder="'+escHtml(CB_PLATE_DEFAULT)+'" '
+                + 'onchange="setPlateColor('+n+', this.value)">'
+            + '</span></label>'
+        + '</div>'
+        + '<div class="cb-advrow">'
+          + '<button class="btn" onclick="advance('+n+',-1)">'+escHtml(window.t('cb_back'))+'</button>'
+          + '<button class="btn cb-adv" onclick="advance('+n+',1)">'+escHtml(window.t('cb_advance'))+'</button>'
+        + '</div>'
+        + '<div class="cb-pagerow">'
+          + '<button class="cb-mini" onclick="pageNav('+n+',-1)" title="Previous page">&#9664;</button>'
+          + '<span class="cb-pagelabel">'+escHtml(window.t('cb_page'))+' '+(shown+1)+'/'+np+(viewPage[n]!=null?' '+escHtml(window.t('cb_manual')):'')+'</span>'
+          + '<button class="cb-mini" onclick="pageNav('+n+',1)" title="Next page">&#9654;</button>'
+          + (viewPage[n]!=null ? '<button class="cb-mini" onclick="followCurrent('+n+')" title="Follow current player">&#8635;</button>' : '')
+        + '</div>'
+        + '<div class="cb-addrow">'
+          + '<input type="text" class="cb-addinput" id="team'+n+'Add" list="playerList" placeholder="'+escHtml(window.t('cb_add_player'))+'">'
+          + '<button class="btn cb-addbtn" onclick="addPlayer('+n+')">'+escHtml(window.t('cb_add'))+'</button>'
+        + '</div>'
+        + '<ul class="cb-list">'+rows+'</ul>';
+      wrap.appendChild(col);
+      (function(team){
+        var inp = document.getElementById('team'+team+'Add');
+        if(inp) inp.addEventListener('keydown', function(e){ if(e.key==='Enter') addPlayer(team); });
+      })(n);
+    });
+  }
+
+  // Swap the two teams wholesale -- every field travels (players, characters,
+  // current pointers, captain/vice/remaining labels, plate colors), so if the
+  // crews are seated on the wrong sides this fixes it in one click. The
+  // overlays read team1/team2 from the same state, so they update too.
+  function swapTeams(){
+    var tmp = state.team1;
+    state.team1 = state.team2;
+    state.team2 = tmp;
+    // manual page overrides are per-side -- swap them to stay with their team
+    var vp = viewPage[1]; viewPage[1] = viewPage[2]; viewPage[2] = vp;
+    commit();
+    setStatus(window.t('cb_swapped'));
+  }
+
+  function resetBattle(){
+    if(!confirm(window.t('cb_reset_confirm'))) return;
+    var keepGame = state ? (state.game || '') : '';
+    state = {
+      team1:{name:window.t('cb_team1_default'),players:[],current:0,
+             captainLabel:window.t('cb_captain_default'),viceLabel:window.t('cb_vice_default'),
+             remainingLabel:window.t('cb_ov_left')},
+      team2:{name:window.t('cb_team2_default'),players:[],current:0,
+             captainLabel:window.t('cb_captain_default'),viceLabel:window.t('cb_vice_default'),
+             remainingLabel:window.t('cb_ov_left')},
+      pageSize: pageSizeVal(),
+      game: keepGame
+    };
+    commit();
+  }
+
+  // Re-render the dynamically-built UI when the language changes (the
+  // operator picks a new language in the theme panel). i18n.js calls this.
+  window.onLangChange = function(){ if(state) render(); };
+
+  (async function init(){
+    await loadPlayers();
+    await loadBattle();
+  })();
+</script>
+  <script src="../nav.js"></script>
+  <script src="../theme/theme.js" defer></script>
+</body>
+</html>

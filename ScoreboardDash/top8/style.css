@@ -325,7 +325,7 @@ button, .rectangle_button {
   white-space: nowrap; transition: background .15s;
   display: inline-flex; align-items: center; justify-content: center; gap: 4px; line-height: 1;
 }
-button:hover, .rectangle_button:hover { background: #f0b030; }
+button:hover, .rectangle_button:hover { background: var(--accent); filter: brightness(1.12); }
 .btn-sec {
   background: var(--bg3) !important; border: 1px solid var(--border) !important; color: var(--fg2) !important;
 }
@@ -464,7 +464,7 @@ button:hover, .rectangle_button:hover { background: #f0b030; }
 }
 .toggle-btn:hover { border-color: var(--accent) !important; color: var(--accent); }
 .toggle-btn.active { background: var(--accent); color: #0e0d0b; border-color: var(--accent) !important; }
-.toggle-btn.active:hover { background: #f0b030; }
+.toggle-btn.active:hover { background: var(--accent); filter: brightness(1.12); }
 
 /* ── NAME PICKER ── */
 .name-input-wrap {
@@ -793,7 +793,7 @@ select.name-picker option { font-size: 13px; }
 	border: none !important;
 	border-radius: 4px;
 }
-.h2h-stream-btn:hover { background: #f0b030 !important; }
+.h2h-stream-btn:hover { background: var(--accent) !important; filter: brightness(1.12); }
 .h2h-scope-select {
 	display: block;
 	width: 100%;

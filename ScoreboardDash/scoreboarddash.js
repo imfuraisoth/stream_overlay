@@ -785,7 +785,7 @@ function compareScores(data) {
 	document.getElementById("form_score_1p").value = data.p1Score;
 	document.getElementById("form_score_2p").value = data.p2Score;
     if (data.p1Score == data.p2Score) {
-        alert("Player 1 and player 2 scores same value: " + data.p1Score + ". Update scores then try again.");
+        alert(window.t('dash_scores_same') + " " + data.p1Score + ". " + window.t('dash_scores_same_2'));
         return false;
     }
     return true;
@@ -1172,7 +1172,7 @@ function loadPlayerData(fromCache, notify) {
             nextPlaySuggestions = document.getElementById('next_player_suggestions');
             playersMap.clear();
             if (playersData.length === 0 || playersData[startggInfo.event].length === 0) {
-                if (notify) alert("Got no data for tournament: " + startggInfo.tournament + " event: " + startggInfo.event);
+                if (notify) alert(window.t('dash_no_data') + " " + startggInfo.tournament + " " + window.t('dash_event_label') + " " + startggInfo.event);
                 // Clear all options from the datalist
                 nextPlaySuggestions.innerHTML = '';
                 return;
@@ -1200,7 +1200,7 @@ function loadPlayerData(fromCache, notify) {
             if (_playerSource === 'local' || _playerSource === 'both') {
                 loadLocalPlayers();
             }
-            if (notify) alert("Tournament data loaded for tournament: " + startggInfo.tournament + " event: " + startggInfo.event);
+            if (notify) alert(window.t('dash_loaded') + " " + startggInfo.tournament + " " + window.t('dash_event_label') + " " + startggInfo.event);
         })
         .catch(function (err) {
               console.log('error: ' + err);
@@ -1690,7 +1690,7 @@ function charPopoverFooter(player, popover, mode, hasRoster) {
     if (mode === 'roster') {
         var full = document.createElement('button');
         full.className = 'char-popover-footbtn';
-        full.textContent = 'Load full roster \u25B8';
+        full.textContent = window.t('dash_load_full_roster');
         full.onclick = function(e) {
             e.stopPropagation();
             charClosePopover(player);
@@ -1749,7 +1749,7 @@ function charTogglePicker(player) {
         return;
     }
     var game = charGetGame();
-    if (!game) { alert('Set a current game first using the Game dropdown.'); return; }
+    if (!game) { alert(window.t('dash_set_game_first')); return; }
 
     // Roster-first: if this player has a saved roster for the game,
     // offer just their characters (one click = preferred palette)
@@ -1761,7 +1761,7 @@ function charTogglePicker(player) {
     }
 
     var pack = document.getElementById('p' + player + 'CharPack').value;
-    if (!pack) { alert('Select a pack first.'); return; }
+    if (!pack) { alert(window.t('dash_select_pack_first')); return; }
     var key  = game + '/' + pack;
 
     function renderPopover(charMap) {
@@ -2058,15 +2058,15 @@ function savePlayerCard(token) {
     }).then(function(r) {
         if (!r.ok) throw new Error(r.status);
         if (btn) {
-            btn.textContent = '\u2713 Saved';
-            setTimeout(function() { btn.textContent = 'Save Player'; }, 1600);
+            btn.textContent = window.t('dash_saved');
+            setTimeout(function() { btn.textContent = window.t('dash_save_player'); }, 1600);
         }
         // live sync 'players' event refreshes maps + hints everywhere
     }).catch(function(e) {
         console.log('savePlayerCard error:', e);
         if (btn) {
-            btn.textContent = 'Save failed';
-            setTimeout(function() { btn.textContent = 'Save Player'; }, 2000);
+            btn.textContent = window.t('dash_save_failed');
+            setTimeout(function() { btn.textContent = window.t('dash_save_player'); }, 2000);
         }
     });
 }
@@ -2218,13 +2218,20 @@ function _writeH2HFields(opts) {
 function toggleH2HVisible() {
     jsonData.h2hVisible = !jsonData.h2hVisible;
     var btn = document.getElementById('h2hVisibleBtn');
-    if (btn) btn.textContent = jsonData.h2hVisible ? 'Hide on Stream' : 'Show on Stream';
+    if (btn) btn.textContent = jsonData.h2hVisible ? window.t('dash_hide_stream') : window.t('dash_show_stream');
     // Recompute the record/placement fields so turning the overlay on
     // always pushes current data (refreshH2H also calls sendJSON). If
     // refreshH2H is unavailable for any reason, still send the flag.
     if (typeof refreshH2H === 'function') refreshH2H();
     else if (typeof sendJSON === 'function') sendJSON();
 }
+
+// Re-translate static UI + refresh the JS-set H2H toggle when language changes.
+window.onLangChange = function(){
+    if (window.applyTranslations) window.applyTranslations(document);
+    var btn = document.getElementById('h2hVisibleBtn');
+    if (btn) btn.textContent = jsonData.h2hVisible ? window.t('dash_hide_stream') : window.t('dash_show_stream');
+};
 
 function _ordinal(n) {
     if (n == null) return '';

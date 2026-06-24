@@ -1,0 +1,282 @@
+// ── Language: Japanese (ja) -- FGC terms flagged for review ──────────────────────────────────────────────────
+// Self-registering language file. Loaded as a plain <script> so it works
+// on both http:// (operator pages) and file:// (OBS overlays) with no fetch.
+// To add a new language, copy this file, change the code below, and translate
+// the values. Keys missing here fall back to English (lang/en.js).
+window.I18N = window.I18N || {};
+window.I18N.ja = {
+      lang_en: "English",
+      lang_ja: "日本語 (Japanese)",
+
+      // nav  -- FGC/tournament terms: VERIFY with a native speaker.
+      // Several use katakana-ized English as is common in the JP FGC scene.
+      nav_commentators: "実況",            // FLAG: "commentary/commentators"
+      nav_dashboard: "ダッシュボード",
+      nav_top8: "Top 8",                   // FLAG: often left as "Top 8" in JP FGC
+      nav_crewbattle: "団体戦",            // FLAG: "team battle" -- crew battle
+      nav_stations: "台",                  // FLAG: "stations/setups" -- 台 = cabinets
+      nav_players: "プレイヤー",
+      nav_games: "ゲーム・素材",           // FLAG: "games & assets"
+      nav_imports: "大会インポート",       // FLAG: "tournament import"
+
+      // theme panel
+      theme_title: "テーマ",
+      theme_presets: "プリセット",
+      theme_custom: "カスタムカラー",
+      theme_reset: "デフォルトに戻す",
+      lang_section: "言語",
+      lang_ui: "インターフェース",
+      lang_overlay: "オーバーレイ",
+      lang_overlay_follow: "インターフェースと同じ",
+
+      // crew battle operator
+      cb_status_loading: "読み込み中…",
+      cb_status_loaded: "読み込み完了。",
+      cb_status_saved: "保存しました。",
+      cb_status_savefail: "保存に失敗しました。",
+      cb_status_loadfail: "読み込めませんでした。",
+      cb_reset: "リセット",
+      cb_pagesize: "ページサイズ",
+      cb_captain_label: "大将ラベル",      // FLAG: 大将 = captain/general (team battle term)
+      cb_vice_label: "副将ラベル",         // FLAG: 副将 = vice-captain
+      cb_back: "▲ 戻る",
+      cb_advance: "次へ ▼",
+      cb_add_player: "プレイヤーを追加…",
+      cb_add: "追加",
+      cb_page: "ページ",
+      cb_manual: "（手動）",
+      cb_team1_default: "東軍",            // FLAG: "East army" -- common in JP East-vs-West
+      cb_team2_default: "西軍",            // FLAG: "West army"
+      cb_captain_default: "大将",          // FLAG: captain (team-battle honorific)
+      cb_vice_default: "副将",             // FLAG: vice-captain
+      cb_remaining: "残り",
+      cb_remaining_label: "残りラベル",
+      cb_game: "ゲーム",
+      cb_game_pick: "-- ゲームを選択 --",
+      cb_character: "キャラクター",
+      cb_char_none: "-- なし --",
+      cb_pack: "パック",
+      cb_plate_color: "プレート色",
+      cb_swap_teams: "⇄ チームを入れ替え",
+      cb_swapped: "チームを入れ替えました。",
+      cb_reset_confirm: "団体戦をリセットしますか？両チームの登録選手が消去されます。",
+      cb_hint: "ハイライトされている選手が現在の出場者です。上の選手は敗退（配信では薄く表示）、下の選手は待機中です。現在の選手が敗れたら「次へ \u25bc」、取り消すには「戻る \u25b2」を使います。最後の2人には大将・副将のラベル（チームごとに編集可）が配信で表示されます。\u25b2\u25bc で並び替え、名前をクリックすると現在位置がそこに移動します。変更は自動保存されます。",
+
+      cb_ov_left: "残り",
+
+      // commentators page
+      com_title: "解説者ダッシュボード",          // FLAG: 解説者 = commentator
+      com_heading: "解説者",                       // FLAG
+      com_swap: "⇄ 名前を入れ替え",
+      com_name: "名前",
+      com_social: "SNS",
+      com_platform: "— プラットフォーム —",
+      com_handle: "@ハンドル",
+      com_save: "解説者を保存",                     // FLAG
+      com_clear: "✕ クリア",
+
+      // stations page
+      st_title: "台 — ストリームオーバーレイ",      // FLAG: 台 = cabinets/stations
+      st_tourney_slug: "トーナメントスラッグ",
+      st_event_slug: "イベントスラッグ",
+      st_load: "↺ 読み込み",
+      st_save: "💾 保存",
+      st_autorefresh: "自動更新",
+      st_clear: "✕ クリア",
+      st_refresh: "更新",
+      st_settings_saved: "設定を保存しました",
+      st_enter_slug: "先にトーナメントスラッグを入力してください",
+      st_loading: "読み込み中…",
+      st_connected: "接続済み",
+      st_error: "エラー",
+      st_on_stream: "配信中",                       // FLAG: "On Stream"
+      st_now_playing: "対戦中",                     // FLAG: "Now Playing"
+      st_no_queue: "ストリームキューが見つかりません",
+      st_queue_loaded: "ストリームキューを読み込みました",
+      st_mark_featured: "注目に設定",
+      st_unmark_featured: "注目を解除",
+      st_rename: "台の名前を変更",                   // FLAG
+      st_next_in: "次の更新まで",
+
+      // games & assets page
+      ga_title: "ゲーム・素材",
+      ga_heading: "ゲーム・素材",
+      ga_refresh: "↺ 更新",
+      ga_game: "ゲーム",
+      ga_icon_pack: "アイコンパック",
+      ga_load_games: "↺ ゲームを読み込み",
+      ga_download_pack: "⬇ パックをダウンロード",
+      ga_save: "保存",
+      ga_downloading: "ダウンロード中...",
+
+      // match imports page
+      imp_title: "対戦インポート — ストリームオーバーレイ",
+      imp_heading: "対戦履歴インポート",
+      imp_hint: "start.gg のイベントURLまたはスラッグを貼り付け、完了したセットをインポートしてから、未マッチの選手を割り当てます。イベントを再インポートすると、重複を作らずにデータが更新されます。",
+      imp_slug_ph: "https://www.start.gg/tournament/.../event/...  または  tournament/.../event/...",
+      imp_game_ph: "ゲーム...",
+      imp_series_ph: "シリーズ（任意、例：STunday）",
+      imp_import: "インポート",
+      imp_reconcile_title: "未マッチの選手を割り当て",
+      imp_col_player: "start.gg 選手",
+      imp_col_action: "操作",
+      imp_events_title: "インポート済みイベント",
+      imp_col_event: "イベント",
+      imp_col_display: "表示名",
+      imp_col_game: "ゲーム",
+      imp_col_series: "シリーズ",
+      imp_col_sets: "セット",
+      imp_col_imported: "インポート日時",
+      imp_reimport: "再インポート",
+      imp_delete: "削除",
+      imp_assign: "割り当て",
+      imp_create: "作成",
+      imp_select_player: "— 選手を選択 —",
+      imp_saving: "保存中…",
+      imp_delete_failed: "削除に失敗しました",
+      imp_removed: "削除しました",
+      imp_delete_error: "削除エラー",
+      imp_enter_slug: "先にイベントURLまたはスラッグを入力してください。",
+      imp_select_game: "インポートの前にゲームを選択してください -- すべてのイベントはゲームに紐付ける必要があります。",
+      imp_fetching_parry: "parry.gg から完了した対戦を取得中…",
+      imp_fetching_startgg: "start.gg から完了したセットを取得中…",
+      imp_import_failed: "インポートに失敗しました",
+      imp_imported_n: "インポートしました",
+      imp_import_error: "インポートエラー",
+      imp_sets_from: "セット（取得元：",          // FLAG: word order -- "N sets from X" reorders awkwardly in JP
+      imp_need_assign: "人の選手を下で割り当てる必要があります。",
+      imp_all_matched: "すべての選手がマッチしました。",
+
+      // players page
+      pl_title: "選手・解説者 — ストリームオーバーレイ",
+      pl_search: "選手を検索…",
+      pl_add: "+ 選手を追加",
+      pl_merge: "⇄ 統合",                           // FLAG: 統合 = merge
+      pl_refresh: "↺ 更新",
+      pl_purge: "全削除",
+      pl_purge_tip: "選手データベース全体を削除",
+      pl_add_title: "選手を追加",
+      pl_edit_title: "選手を編集",
+      pl_name: "名前",
+      pl_name_ph: "ゲーマータグ",
+      pl_team: "チーム",
+      pl_team_ph: "チーム名または略称",
+      pl_country: "国",
+      pl_social: "SNS",
+      pl_platform: "— プラットフォーム —",
+      pl_handle: "@ハンドル",
+      pl_aliases: "別名",                           // FLAG: 別名 = aliases
+      pl_alias_ph: "別名を追加…",
+      pl_add_btn: "追加",
+      pl_commentator: "解説者",                     // FLAG
+      pl_characters: "キャラクター",
+      pl_select_game: "— ゲームを選択 —",
+      pl_remove_roster: "このゲームのロスターと選択を削除",
+      pl_add_character: "+ キャラクターを追加",
+      pl_pack: "-- パック --",
+      pl_cancel: "キャンセル",
+      pl_save: "保存",
+      pl_merge_title: "選手を統合",                 // FLAG
+      pl_keep_primary: "残す（メイン）",
+      pl_merge_into: "メインに統合（削除されます）",
+      pl_delete_title: "選手を削除",
+      pl_delete: "削除",
+      pl_purge_title: "選手データベースを全削除",
+      pl_purge_confirm_btn: "すべて削除",
+      pl_no_characters: "キャラクターがまだありません — 下で追加してください。",
+
+      // top 8 page
+      t8_title: "Top 8 ダッシュボード",             // FLAG: "Top 8" often kept as-is in JP FGC
+      t8_heading: "Top 8 ダッシュボード",
+      t8_start: "▶ Top 8 を開始",
+      t8_bracket_popout: "⧉ ブラケットを別窓表示",
+      t8_src_both: "両方",
+      t8_src_startgg: "Start.gg",
+      t8_src_local: "ローカル",
+      t8_reset_bracket: "ブラケットをリセット",
+      t8_reset_bracket_tip: "8人のシード選手を残して進行をやり直します",
+      t8_reset_all: "すべてリセット",
+      t8_p1_name: "P1 名前",
+      t8_p2_name: "P2 名前",
+      t8_p1_team: "P1 チーム",
+      t8_p2_team: "P2 チーム",
+      t8_pack: "-- パック --",
+      t8_save_player: "選手を保存",
+      t8_swap_names: "⇄ 名前を入れ替え",
+      t8_swap_scores: "⇄ スコアを入れ替え",
+      t8_reset_scores: "スコアをリセット",
+      t8_next_round: "次のラウンド →",
+      t8_undo_round: "↩ 次のラウンドを取り消し",
+      t8_confirm_refresh: "✓ 確定して更新",
+      t8_show_stream: "配信に表示",
+      t8_hide_stream: "配信から非表示",
+      t8_nothing_undo: "取り消す操作がありません。",
+      t8_scores_same: "プレイヤー1とプレイヤー2のスコアが同じ値です：",
+      t8_scores_same_2: "スコアを更新してから再試行してください。",
+      t8_reset_failed: "ブラケットのリセットに失敗しました",
+      t8_load_full_roster: "全ロスターを読み込み ▸",
+      t8_set_game_first: "先にイベントダッシュボードでゲームを設定してください。",
+      t8_select_pack_first: "先にパックを選択してください。",
+      t8_not_in_db: "選手データベースにありません",
+      t8_save_failed: "保存に失敗しました",
+
+      // event dashboard page
+      dash_title: "スコアボードダッシュボード",
+      dash_heading: "イベントダッシュボード",
+      dash_p1_name: "P1 名前",
+      dash_p2_name: "P2 名前",
+      dash_p1_team: "P1 チーム",
+      dash_p2_team: "P2 チーム",
+      dash_pack: "-- パック --",
+      dash_save_player: "選手を保存",
+      dash_swap_names: "⇄ 名前を入れ替え",
+      dash_swap_scores: "⇄ スコアを入れ替え",
+      dash_reset_scores: "スコアをリセット",
+      dash_show_stream: "配信に表示",
+      dash_hide_stream: "配信から非表示",
+      dash_startgg_controls: "Start.gg 設定",
+      dash_src_both: "両方",
+      dash_src_startgg: "Start.gg",
+      dash_src_local: "ローカル",
+      dash_tournament_name: "トーナメント名：",
+      dash_event_name: "イベント名：",
+      dash_stream_name: "ストリーム名：",
+      dash_players_fetch: "選手の取得",
+      dash_fetch_all_players: "全選手を取得",
+      dash_clear_next: "次の選手をクリア",
+      dash_queue_fetch: "キューの取得",
+      dash_fetch_queue: "ストリームキューから取得",
+      dash_remove_queue: "キューから削除",
+      dash_stats_controls: "スタッツ設定",
+      dash_fetch_top8: "Top 8 結果を取得",
+      dash_get_single: "単一イベントを取得",
+      dash_add_event: "イベントを追加",
+      dash_add_stat: "選手スタッツを追加",
+      dash_gamer_tag: "ゲーマータグ：",
+      dash_placement: "順位：",
+      dash_wins: "勝：",
+      dash_losses: "敗：",
+      dash_submit: "送信",
+      dash_select_event_stats: "スタッツ用イベントを選択",
+      dash_clear_event_stats: "イベントスタッツをクリア",
+      dash_select_league_stats: "スタッツ用リーグを選択",
+      dash_clear_league_stats: "リーグスタッツをクリア",
+      dash_enter_message: "メッセージを入力",
+      dash_next_round: "次のラウンド",
+      dash_next_p1_name: "次の P1 名前",
+      dash_next_p2_name: "次の P2 名前",
+      dash_next_p1_team: "次の P1 チーム",
+      dash_next_p2_team: "次の P2 チーム",
+      dash_results: "結果",
+      dash_start_countdown: "カウントダウン開始",
+      dash_scores_same: "プレイヤー1とプレイヤー2のスコアが同じ値です：",
+      dash_scores_same_2: "スコアを更新してから再試行してください。",
+      dash_no_data: "トーナメントのデータが取得できませんでした：",
+      dash_event_label: "イベント：",
+      dash_loaded: "トーナメントのデータを読み込みました：",
+      dash_load_full_roster: "全ロスターを読み込み ▸",
+      dash_set_game_first: "先にゲームドロップダウンでゲームを設定してください。",
+      dash_select_pack_first: "先にパックを選択してください。",
+      dash_saved: "✓ 保存しました",
+      dash_save_failed: "保存に失敗しました",
+};

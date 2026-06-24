@@ -293,6 +293,14 @@ document.addEventListener('DOMContentLoaded', function() {
     loadLocalPlayersIntoDatalist();
 });
 
+// Re-translate static UI + refresh JS-set labels when language changes.
+window.onLangChange = function(){
+    if (window.applyTranslations) window.applyTranslations(document);
+    // Refresh the H2H toggle button text (it's set in JS based on state).
+    var btn = document.getElementById('h2hVisibleBtn');
+    if (btn) btn.textContent = jsonData.h2hVisible ? window.t('t8_hide_stream') : window.t('t8_show_stream');
+};
+
 function updatePlayer1() {
     jsonData.p1Name = safeEl("form_name_1p").value;
     autoFillFromLocalDB(jsonData.p1Name, 'form_team_1p', 'dropdown_country_current_1');
@@ -679,7 +687,7 @@ function _captureSnapshot() {
 function undoNextRound() {
     fetch('/undoNextRound', { method: 'POST' })
         .then(function(response) {
-            if (!response.ok) { alert('Nothing to undo.'); return null; }
+            if (!response.ok) { alert(window.t('t8_nothing_undo')); return null; }
             return response.json();
         })
         .then(function(data) {
@@ -754,7 +762,7 @@ function compareScores(data) {
 	safeEl("form_score_1p").value = data.p1Score;
 	safeEl("form_score_2p").value = data.p2Score;
     if (data.p1Score == data.p2Score) {
-        alert("Player 1 and player 2 scores same value: " + data.p1Score + ". Update scores then try again.");
+        alert(window.t('t8_scores_same') + " " + data.p1Score + ". " + window.t('t8_scores_same_2'));
         return false;
     }
     return true;
@@ -928,7 +936,7 @@ function resetBracket() {
                 // (bracket, current/next, button state) reflects it
                 location.reload();
             } else {
-                alert('Reset bracket failed (' + response.status + ')');
+                alert(window.t('t8_reset_failed') + ' (' + response.status + ')');
             }
         })
         .catch(function(err) { console.log('resetBracket error: ' + err); });
@@ -1268,7 +1276,7 @@ function charPopoverFooter(player, popover, mode, hasRoster) {
     if (mode === 'roster') {
         var full = document.createElement('button');
         full.className = 'char-popover-footbtn';
-        full.textContent = 'Load full roster \u25B8';
+        full.textContent = window.t('t8_load_full_roster');
         full.onclick = function(e) {
             e.stopPropagation();
             charClosePopover(player);
@@ -1326,7 +1334,7 @@ function charTogglePicker(player) {
     CHAR_PLAYERS.forEach(function(p) { if (p !== player) charClosePopover(p); });
 
     var game = charGetGame();
-    if (!game) { alert('Set a current game on the Event Dashboard first.'); return; }
+    if (!game) { alert(window.t('t8_set_game_first')); return; }
 
     var localPlayer = charGetLocalPlayer(player);
     var roster = (localPlayer && localPlayer.roster && localPlayer.roster[game]) || [];
@@ -1336,7 +1344,7 @@ function charTogglePicker(player) {
     }
 
     var pack = document.getElementById('p' + player + 'CharPack').value;
-    if (!pack) { alert('Select a pack first.'); return; }
+    if (!pack) { alert(window.t('t8_select_pack_first')); return; }
     var key = game + '/' + pack;
 
     function render(charMap) {
@@ -1510,7 +1518,7 @@ function updateMatchHint(token) {
         el.textContent = '\u2192 ' + rec.name;
         el.className = 'player-match-hint matched';
     } else {
-        el.textContent = 'not in player DB';
+        el.textContent = window.t('t8_not_in_db');
         el.className = 'player-match-hint unmatched';
     }
 }
@@ -1545,13 +1553,13 @@ function savePlayerCard(token) {
         if (!r.ok) throw new Error(r.status);
         if (btn) {
             btn.textContent = '\u2713 Saved';
-            setTimeout(function() { btn.textContent = 'Save Player'; }, 1600);
+            setTimeout(function() { btn.textContent = window.t('t8_save_player'); }, 1600);
         }
     }).catch(function(e) {
         console.log('savePlayerCard error:', e);
         if (btn) {
-            btn.textContent = 'Save failed';
-            setTimeout(function() { btn.textContent = 'Save Player'; }, 2000);
+            btn.textContent = window.t('t8_save_failed');
+            setTimeout(function() { btn.textContent = window.t('t8_save_player'); }, 2000);
         }
     });
 }
@@ -1701,7 +1709,7 @@ function _writeH2HFields(opts) {
 function toggleH2HVisible() {
     jsonData.h2hVisible = !jsonData.h2hVisible;
     var btn = document.getElementById('h2hVisibleBtn');
-    if (btn) btn.textContent = jsonData.h2hVisible ? 'Hide on Stream' : 'Show on Stream';
+    if (btn) btn.textContent = jsonData.h2hVisible ? window.t('t8_hide_stream') : window.t('t8_show_stream');
     if (typeof refreshH2H === 'function') refreshH2H();
     else if (typeof sendJSON === 'function') sendJSON();
 }

@@ -96,7 +96,7 @@ select option { background: var(--bg3); }
   white-space: nowrap; transition: background .15s;
   display: inline-flex; align-items: center; gap: 5px; line-height: 1;
 }
-.btn:hover { background: #f0b030; }
+.btn:hover { background: var(--accent); filter: brightness(1.12); }
 .btn.sec { background: var(--bg3); border: 1px solid var(--border) !important; color: var(--fg2); }
 .btn.sec:hover { border-color: var(--accent) !important; color: var(--accent); background: var(--bg3); }
 .btn.sm { font-size: 11px; padding: 5px 11px; }

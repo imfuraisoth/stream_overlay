@@ -147,6 +147,23 @@ function resetTheme() {
     applyPreset('HitConfirm Dark');
 }
 
+// ── LANGUAGE PICKER ───────────────────────────────────────────────
+function populateLangSelects() {
+    if (typeof window.availableLangs !== 'function') return;  // i18n.js not loaded
+    var langs = window.availableLangs();
+    var ui = document.getElementById('lang-ui-select');
+    if (ui) {
+        ui.innerHTML = langs.map(function(c) {
+            return '<option value="' + c + '">' + window.langName(c) + '</option>';
+        }).join('');
+        ui.value = window.getLang();
+    }
+}
+function onUiLangChange(code) {
+    if (typeof window.setLang === 'function') window.setLang(code);
+    populateLangSelects();  // refresh labels (now in the new language)
+}
+
 function toggleThemePanel() {
     var panel = document.getElementById('theme-panel');
     if (!panel) return;
@@ -154,29 +171,42 @@ function toggleThemePanel() {
     if (open) renderPickers();
 }
 
+// Inject the gear button into the nav. Idempotent: safe to call repeatedly
+// (e.g. after nav.js rebuilds the navbar, which would otherwise wipe it).
+function ensureThemeButton() {
+    var nav = document.querySelector('.top-navbar-container');
+    if (!nav) return;
+    if (nav.querySelector('.theme-nav-btn')) return;  // already there
+    var btn = document.createElement('button');
+    btn.className = 'theme-nav-btn';
+    btn.title = 'Customize theme';
+    btn.textContent = 'Theme';
+    btn.onclick = toggleThemePanel;
+    nav.appendChild(btn);
+}
+
+// nav.js calls this after it rebuilds the navbar -- re-add our button.
+window.onNavRendered = ensureThemeButton;
+
 // Build the panel HTML and inject into body
 document.addEventListener('DOMContentLoaded', function() {
-    // Inject gear button into nav
-    var nav = document.querySelector('.top-navbar-container');
-    if (nav) {
-        var btn = document.createElement('button');
-        btn.className = 'theme-nav-btn';
-        btn.title = 'Customize theme';
-        btn.textContent = 'Theme';
-        btn.onclick = toggleThemePanel;
-        nav.appendChild(btn);
-    }
+    ensureThemeButton();
 
     // Build panel
     var panel = document.createElement('div');
     panel.id = 'theme-panel';
     panel.innerHTML =
         '<div class="theme-panel-header">' +
-            '<span class="theme-panel-title">Theme</span>' +
+            '<span class="theme-panel-title" data-i18n="theme_title">Theme</span>' +
             '<button class="theme-panel-close" onclick="toggleThemePanel()">×</button>' +
         '</div>' +
         '<div class="theme-panel-body">' +
-            '<div class="theme-section-label">Presets</div>' +
+            '<div class="theme-section-label" data-i18n="lang_section">Language</div>' +
+            '<div class="theme-lang-row">' +
+                '<label data-i18n="lang_ui">Interface</label>' +
+                '<select id="lang-ui-select" onchange="onUiLangChange(this.value)"></select>' +
+            '</div>' +
+            '<div class="theme-section-label" style="margin-top:14px;" data-i18n="theme_presets">Presets</div>' +
             '<div class="theme-presets">' +
                 Object.keys(THEMES).map(function(name) {
                     var t = THEMES[name];
@@ -187,14 +217,17 @@ document.addEventListener('DOMContentLoaded', function() {
                         name + '</button>';
                 }).join('') +
             '</div>' +
-            '<div class="theme-section-label" style="margin-top:14px;">Custom Colors</div>' +
+            '<div class="theme-section-label" style="margin-top:14px;" data-i18n="theme_custom">Custom Colors</div>' +
             '<div id="theme-pickers"></div>' +
-            '<button class="theme-reset-btn" onclick="resetTheme()">Reset to Default</button>' +
+            '<button class="theme-reset-btn" onclick="resetTheme()" data-i18n="theme_reset">Reset to Default</button>' +
         '</div>';
     document.body.appendChild(panel);
 
     // Mark active preset if any
     renderPickers();
+    // Language picker: fill the selects and translate the panel's own labels.
+    populateLangSelects();
+    if (typeof window.applyTranslations === 'function') window.applyTranslations(panel);
     var saved = localStorage.getItem('sc_theme');
     if (saved) {
         try {

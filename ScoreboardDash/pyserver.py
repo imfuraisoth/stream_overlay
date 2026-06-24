@@ -22,6 +22,7 @@ except Exception as e:
     print(f"AutoScoreUpdaterCPS1 disabled: {e}")
     AutoScoreUpdaterCPS1 = None
 from scripts import startgg_client
+from scripts import parry_client
 from scripts import MatchHistory
 import argparse
 import socket
@@ -49,6 +50,7 @@ replay_prefix = "Replay_"
 replays_folder = "recordings/replays"
 saved_replays_folder = "../../clips"
 scoreboard_data_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), "../data/scoreboard.json")
+crewbattle_data_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), "../data/crewbattle.json")
 commentators_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), "../data/commentators.json")
 player_1 = os.path.join(os.path.dirname(os.path.abspath(__file__)), "../data/player1.txt")
 player_2 = os.path.join(os.path.dirname(os.path.abspath(__file__)), "../data/player2.txt")
@@ -251,6 +253,93 @@ def get_local_players():
     except Exception:
         return json.dumps([]), 200
 
+def _default_team(name):
+    return {"name": name, "players": [], "current": 0,
+            "captainLabel": "Captain", "viceLabel": "Vice",
+            "remainingLabel": "left", "plateColor": ""}
+
+
+def _norm_player(p):
+    """Normalize a player entry, preserving optional character pick."""
+    p = p or {}
+    out = {"name": p.get("name", "")}
+    # Optional pre-picked character (from the selected game's roster).
+    # Stored: pack, character name, palette, and the art file for the overlay.
+    if p.get("character") or p.get("characterFile") or p.get("pack"):
+        out["pack"] = p.get("pack", "")
+        out["character"] = p.get("character", "")
+        try:
+            out["palette"] = int(p.get("palette", 0))
+        except (TypeError, ValueError):
+            out["palette"] = 0
+        out["characterFile"] = p.get("characterFile", "")
+    return out
+
+
+def _norm_team(t, fallback_name):
+    """Normalize an incoming team object, filling defaults."""
+    t = t or {}
+    players = [_norm_player(p) for p in (t.get("players", []) or [])]
+    try:
+        current = int(t.get("current", 0))
+    except (TypeError, ValueError):
+        current = 0
+    # clamp pointer to [0, len] (len == whole team wiped out)
+    if current < 0:
+        current = 0
+    if current > len(players):
+        current = len(players)
+    return {
+        "name": (t.get("name") or fallback_name),
+        "players": players,
+        "current": current,
+        "captainLabel": t.get("captainLabel", "Captain"),
+        "viceLabel": t.get("viceLabel", "Vice"),
+        "remainingLabel": t.get("remainingLabel", "left"),
+        "plateColor": (t.get("plateColor") or "").strip(),
+    }
+
+
+@api.route('/getCrewBattle', methods=['GET'])
+def get_crew_battle():
+    """Return the current East-vs-West crew battle state."""
+    data = FileUtils.read_file(crewbattle_data_file)
+    if not data:
+        data = {"team1": _default_team("East"), "team2": _default_team("West"),
+                "pageSize": 12, "game": ""}
+    return json.dumps(data, ensure_ascii=False), 200
+
+
+@api.route('/saveCrewBattle', methods=['POST'])
+def save_crew_battle():
+    """Persist the crew battle state. Body is the full state object:
+       { team1: {name, players:[{name}], current, captainLabel, viceLabel},
+         team2: {...} }.
+    'current' is the active-player pointer: players before it are defeated,
+    the one at it is up, those after are waiting. The last two players get
+    the captain/vice role labels prefixed on the overlay."""
+    body = request.get_json() or {}
+    try:
+        page_size = int(body.get("pageSize", 12))
+    except (TypeError, ValueError):
+        page_size = 12
+    if page_size < 1:
+        page_size = 1
+    state = {
+        "team1": _norm_team(body.get("team1"), "Team 1"),
+        "team2": _norm_team(body.get("team2"), "Team 2"),
+        "pageSize": page_size,
+        "game": (body.get("game") or "").strip(),
+    }
+    try:
+        with open(crewbattle_data_file, "w", encoding="utf-8") as f:
+            json.dump(state, f, ensure_ascii=False, indent=2)
+        return jsonify({"ok": True}), 200
+    except Exception as e:
+        print("saveCrewBattle error: " + str(e))
+        return jsonify({"ok": False, "message": str(e)}), 500
+
+
 @api.route('/saveLocalPlayer', methods=['POST'])
 def save_local_player():
     body = request.get_json() or {}
@@ -354,11 +443,26 @@ def merge_players():
 # ════════════════════════════════════════════════════════════════
 # MATCH HISTORY IMPORT (start.gg -> per-event JSON + all-time rollup)
 # ════════════════════════════════════════════════════════════════
-def _parse_event_slug(raw):
-    """Accept a full start.gg URL or a tournament/.../event/... slug
-    and return (tournament_name, event_name) for the client."""
+def _parse_event_slug(raw, source="startgg"):
+    """Return (tournament_slug, event_slug) from a URL or slug pair.
+
+    start.gg: full URL or 'tournament/.../event/...'.
+    parry.gg: a parry.gg event URL, or a 'tournamentSlug/eventSlug' pair.
+    parry URLs look like:
+      parry.gg/<tournament-slug>/<event-slug>/<extra...>
+    (e.g. .../super-street-fighter-ii-turbo-arcade/_standings or
+     .../main/bracket), so we take the FIRST two path segments.
+    """
     s = (raw or "").strip()
-    # Strip protocol/host and any /overview or trailing bits
+    if source == "parry":
+        # Strip a parry.gg host if present, plus query/hash.
+        s = re.sub(r"^https?://(www\.)?parry\.gg/", "", s)
+        s = s.split("?")[0].split("#")[0].strip("/")
+        parts = [p for p in re.split(r"[\s/]+", s) if p]
+        if len(parts) >= 2:
+            return parts[0], parts[1]
+        return None, None
+    # start.gg
     m = re.search(r"tournament/([^/]+)/event/([^/?#]+)", s)
     if m:
         return m.group(1), m.group(2)
@@ -387,6 +491,11 @@ def _build_assignments(players):
             # Aliases of the form 'sgg:<userid>' tie a start.gg account
             if a.lower().startswith("sgg:"):
                 assignments["u:" + a.split(":", 1)[1]] = pid
+            # Aliases of the form 'pgg:<uuid>' tie a parry.gg account.
+            # parry user ids are UUIDs, so they share the 'u:' namespace
+            # with start.gg numeric ids without collision.
+            elif a.lower().startswith("pgg:"):
+                assignments["u:" + a.split(":", 1)[1]] = pid
     return assignments, by_name
 
 
@@ -399,21 +508,39 @@ def import_startgg_event():
     'sgg:<id>' aliases) and by tag/alias name. Returns the import
     summary plus the list of entrants still needing reconciliation."""
     body = request.get_json() or {}
-    tournament, event = _parse_event_slug(body.get("slug", ""))
+    source = (body.get("source") or "startgg").strip().lower()
+    tournament, event = _parse_event_slug(body.get("slug", ""), source)
     series = (body.get("series") or "").strip()
     game = (body.get("game") or "").strip()
     if not tournament or not event:
         return jsonify({"ok": False, "message": "Could not parse an event slug from that input"}), 400
-    try:
-        sets = startgg_client.get_completed_sets(tournament, event)
-    except Exception as e:
-        print("importStartggEvent fetch error: " + str(e))
-        return jsonify({"ok": False, "message": "start.gg fetch failed: " + str(e)}), 502
-    try:
-        standings = startgg_client.get_event_standings(tournament, event)
-    except Exception as e:
-        print("importStartggEvent standings warning: " + str(e))
-        standings = None
+    if not game:
+        return jsonify({"ok": False, "message": "A game must be selected for every import."}), 400
+
+    # Fetch from the chosen source. Both clients return the SAME normalized
+    # shape, so everything downstream is source-agnostic.
+    if source == "parry":
+        sets, perr = parry_client.get_completed_matches(tournament, event)
+        if perr:
+            print("import parry fetch error: " + str(perr))
+            return jsonify({"ok": False, "message": "parry.gg fetch failed: " + str(perr)}), 502
+        standings, serr = parry_client.get_event_standings(tournament, event)
+        if serr:
+            print("import parry standings warning: " + str(serr))
+            standings = None
+        uid_prefix = "u:"
+    else:
+        try:
+            sets = startgg_client.get_completed_sets(tournament, event)
+        except Exception as e:
+            print("importStartggEvent fetch error: " + str(e))
+            return jsonify({"ok": False, "message": "start.gg fetch failed: " + str(e)}), 502
+        try:
+            standings = startgg_client.get_event_standings(tournament, event)
+        except Exception as e:
+            print("importStartggEvent standings warning: " + str(e))
+            standings = None
+        uid_prefix = "u:"
     if not sets:
         return jsonify({"ok": False, "message": "No completed sets found for that event"}), 404
 
@@ -423,7 +550,7 @@ def import_startgg_event():
     for s in sets:
         for side in ("p1", "p2"):
             ent = s[side]
-            uid_key = ("u:" + str(ent["user_id"])) if ent.get("user_id") else None
+            uid_key = (uid_prefix + str(ent["user_id"])) if ent.get("user_id") else None
             if uid_key and uid_key in assignments:
                 continue
             pid = by_name.get((ent.get("tag") or "").strip().lower())
@@ -436,7 +563,7 @@ def import_startgg_event():
     count = MatchHistory.save_event_import(
         event_slug, event_name, tourn_name, sets,
         datetime.now().isoformat(timespec="seconds"), assignments, standings,
-        series if series else None, game if game else None)
+        series if series else None, game)
     MatchHistory.rebuild_alltime(_alias_map_for_rollup())
     unassigned = MatchHistory.collect_unassigned(event_slug)
     print("Imported %d sets from '%s' (%s) -- %d player(s) need reconciling"
@@ -466,13 +593,16 @@ def reconcile_import():
     tag = (body.get("tag") or "").strip()
     user_id = body.get("user_id")
     action = body.get("action")
+    source = (body.get("source") or "startgg").strip().lower()
     if not event_slug or not tag or action not in ("existing", "new"):
         return jsonify({"ok": False, "message": "Missing event_slug, tag, or action"}), 400
 
     players = players_db.get_local_players()
     new_aliases = [tag]
     if user_id:
-        new_aliases.append("sgg:" + str(user_id))
+        # Tag the account alias by source so future imports auto-match.
+        prefix = "pgg:" if source == "parry" else "sgg:"
+        new_aliases.append(prefix + str(user_id))
 
     if action == "existing":
         pid = body.get("player_id", "")
@@ -614,6 +744,24 @@ def get_matchup_history():
             "p2_placement": MatchHistory.event_placement(event_slug, p2),
         }
     return jsonify(out), 200
+
+
+@api.route('/purgeAllPlayers', methods=['POST'])
+def purge_all_players():
+    """Delete the ENTIRE local player database (players, characters,
+    rosters, aliases). Match history event files are left intact.
+
+    Guarded: the body must contain {"confirm": "DELETE"} exactly, so it
+    cannot fire by accident. Returns how many players were removed."""
+    body = request.get_json() or {}
+    if body.get("confirm") != "DELETE":
+        return jsonify({"ok": False, "message": "Confirmation required."}), 400
+    try:
+        removed = players_db.purge_all_players()
+    except Exception as e:
+        print(f"purgeAllPlayers error: {e}")
+        return jsonify({"ok": False, "message": str(e)}), 500
+    return jsonify({"ok": True, "removed": removed}), 200
 
 
 @api.route('/deleteLocalPlayer', methods=['POST'])
@@ -1198,6 +1346,13 @@ def update_data_no_scores():
         temp["p2CharacterPack"] = json_data.get("p2CharacterPack", "")
         temp["p2Palette"]       = json_data.get("p2Palette",       0)
         temp["p2CharacterFile"] = json_data.get("p2CharacterFile", "")
+        # Multi-slot character arrays (the current char system). These MUST be
+        # persisted here too, or clearing them on a player swap never reaches
+        # the overlay and the previous player's characters linger.
+        temp["p1Characters"]     = json_data.get("p1Characters",     [])
+        temp["p2Characters"]     = json_data.get("p2Characters",     [])
+        temp["p1NextCharacters"] = json_data.get("p1NextCharacters", [])
+        temp["p2NextCharacters"] = json_data.get("p2NextCharacters", [])
         # Head-to-head fields (drive the H2H overlays)
         temp["h2hVisible"]            = json_data.get("h2hVisible", False)
         temp["h2hScope"]              = json_data.get("h2hScope", "alltime")

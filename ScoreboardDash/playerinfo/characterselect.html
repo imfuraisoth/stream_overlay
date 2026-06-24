@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Games &amp; Assets</title>
+  <title data-i18n="ga_title">Games &amp; Assets</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;900&family=Barlow:wght@400;500&display=swap" rel="stylesheet">
@@ -20,29 +20,14 @@
 <body>
 
   <!-- TOP NAV -->
-  <div class="top-navbar-container">
-    <div class="header-item"><a href="../commentators/commentators.html">Commentators</a></div>
-    <span class="header-sep">|</span>
-    <div class="header-item"><a href="../index.html">Event Dashboard</a></div>
-    <span class="header-sep">|</span>
-    <div class="header-item"><a href="../top8/top8.html">Top 8</a></div>
-    <span class="header-sep">|</span>
-    <div class="header-item active"><a href="characterselect.html">Games &amp; Assets</a></div>
-    <span class="header-sep">|</span>
-    <div class="header-item"><a href="../stations/stations.html">Stations</a></div>
-    <span class="header-sep">|</span>
-    <div class="header-item"><a href="../players/players.html">Players</a></div>
-  <span class="header-sep">|</span>
-  <div class="header-item"><a href="../imports/imports.html">Match Imports</a></div>
-  </div>
-
-  <div class="page-content">
+<div id="nav-root" style="min-height:45px"></div>
+<div class="page-content">
 
     <div class="selector-panel">
       <div class="page-header">
-        <h2>Games &amp; Assets</h2>
+        <h2 data-i18n="ga_heading">Games &amp; Assets</h2>
         <div class="header-actions">
-          <button class="btn-sec" onclick="loadGames()">&#8634; Refresh</button>
+          <button class="btn-sec" onclick="loadGames()" data-i18n="ga_refresh">&#8634; Refresh</button>
         </div>
       </div>
     </div>
@@ -71,6 +56,9 @@
     </div>
 
   </div>
+  <script src="../lang/en.js"></script>
+  <script src="../i18n.js"></script>
+  <script src="../nav.js"></script>
   <script src="../theme/theme.js" defer></script>
 
   <!-- StreamHelper Asset Downloader -->
@@ -80,19 +68,19 @@
 
       <div style="display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap;">
         <div style="display:flex;flex-direction:column;gap:4px;flex:1;min-width:160px;">
-          <label style="font-family:var(--font-d);font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--fg2);">Game</label>
+          <label style="font-family:var(--font-d);font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--fg2);" data-i18n="ga_game">Game</label>
           <select id="sh-game-select" onchange="shLoadPacks()" style="width:100%;">
             <option value="">-- Load games --</option>
           </select>
         </div>
         <div style="display:flex;flex-direction:column;gap:4px;flex:1;min-width:160px;">
-          <label style="font-family:var(--font-d);font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--fg2);">Icon Pack</label>
+          <label style="font-family:var(--font-d);font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--fg2);" data-i18n="ga_icon_pack">Icon Pack</label>
           <select id="sh-pack-select" style="width:100%;">
             <option value="">-- Select game first --</option>
           </select>
         </div>
-        <button class="btn-sec" onclick="shLoadGames()" style="flex-shrink:0;">&#8634; Load Games</button>
-        <button onclick="shDownload()" style="flex-shrink:0;" id="sh-download-btn">&#11015; Download Pack</button>
+        <button class="btn-sec" onclick="shLoadGames()" style="flex-shrink:0;" data-i18n="ga_load_games">&#8634; Load Games</button>
+        <button onclick="shDownload()" style="flex-shrink:0;" id="sh-download-btn" data-i18n="ga_download_pack">&#11015; Download Pack</button>
       </div>
 
       <div id="sh-status" style="font-family:var(--font-d);font-size:11px;color:var(--fg2);min-height:18px;"></div>
@@ -138,7 +126,7 @@
         var tdSave = document.createElement('td');
         tdSave.style.cssText = 'padding:8px;border-bottom:1px solid var(--border);text-align:right;';
         var btn = document.createElement('button');
-        btn.textContent = 'Save';
+        btn.textContent = window.t('ga_save');
         btn.onclick = function() { saveGameSlots(name, input, btn); };
         tdSave.appendChild(btn);
 
@@ -225,7 +213,7 @@
     if (!game || !pack) { shStatus('Please select a game and icon pack.', 'var(--accent2)'); return; }
     var btn = document.getElementById('sh-download-btn');
     btn.disabled = true;
-    btn.textContent = 'Downloading...';
+    btn.textContent = window.t('ga_downloading');
     shStatus('Downloading ' + pack + ' for ' + game + '... this may take a moment.');
     try {
       var res = await fetch('/streamhelper/download', {
@@ -244,7 +232,7 @@
       }
     } catch(e) { shStatus('Error: ' + e, 'var(--accent2)'); }
     btn.disabled = false;
-    btn.textContent = '\u2B07 Download Pack';
+    btn.textContent = window.t('ga_download_pack');
   }
   </script>
 
