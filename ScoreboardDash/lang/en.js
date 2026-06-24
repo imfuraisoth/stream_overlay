@@ -57,6 +57,8 @@ window.I18N.en = {
       cb_char_none: "-- none --",
       cb_pack: "Pack",
       cb_plate_color: "Plate color",
+      cb_swap_teams: "⇄ Swap Teams",
+      cb_swapped: "Teams swapped.",
       cb_reset_confirm: "Reset the whole crew battle? This clears both rosters.",
       cb_hint: "The current player (highlighted) is who's up. Players above are defeated (dimmed on stream), players below are waiting. Use Advance \u25bc when the current player loses, or Back \u25b2 to undo. The last two players show the Captain / Vice role labels (editable per team) prefixed on stream. Reorder with the row \u25b2\u25bc; click a name to jump the current pointer to it. Changes save automatically.",
 

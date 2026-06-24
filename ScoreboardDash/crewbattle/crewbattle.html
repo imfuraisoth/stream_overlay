@@ -27,6 +27,7 @@
       <input type="number" id="pageSizeInput" min="1" value="12" onchange="setPageSize(this.value)">
     </label>
     <span style="flex:1"></span>
+    <button class="btn sec" id="cbSwap" onclick="swapTeams()" data-i18n="cb_swap_teams">⇄ Swap Teams</button>
     <button class="btn" id="cbReset" onclick="resetBattle()" data-i18n="cb_reset">Reset Battle</button>
   </div>
 
@@ -478,6 +479,20 @@
         if(inp) inp.addEventListener('keydown', function(e){ if(e.key==='Enter') addPlayer(team); });
       })(n);
     });
+  }
+
+  // Swap the two teams wholesale -- every field travels (players, characters,
+  // current pointers, captain/vice/remaining labels, plate colors), so if the
+  // crews are seated on the wrong sides this fixes it in one click. The
+  // overlays read team1/team2 from the same state, so they update too.
+  function swapTeams(){
+    var tmp = state.team1;
+    state.team1 = state.team2;
+    state.team2 = tmp;
+    // manual page overrides are per-side -- swap them to stay with their team
+    var vp = viewPage[1]; viewPage[1] = viewPage[2]; viewPage[2] = vp;
+    commit();
+    setStatus(window.t('cb_swapped'));
   }
 
   function resetBattle(){

@@ -107,9 +107,9 @@ select option { background: var(--bg3); }
 .cb-bar { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; }
 .cb-status { color: var(--fg2); font-size: 13px; }
 
-.cb-teams { display: flex; gap: 20px; align-items: flex-start; }
+.cb-teams { display: flex; gap: 20px; align-items: flex-start; flex-wrap: wrap; }
 .cb-team {
-  flex: 1; background: var(--bg2); border: 1px solid var(--border);
+  flex: 1 1 340px; min-width: 0; background: var(--bg2); border: 1px solid var(--border);
   border-radius: 8px; padding: 14px;
 }
 .cb-teamname {
@@ -161,8 +161,8 @@ select option { background: var(--bg3); }
 .cb-item.cb-pagebreak { border-top: 2px dashed var(--border); }
 
 /* Role-label inputs (Captain / Vice) */
-.cb-roles { display: flex; gap: 10px; margin-bottom: 10px; }
-.cb-roles label { display: flex; flex-direction: column; gap: 3px; font-size: 11px; color: var(--fg2); flex: 1; }
+.cb-roles { display: flex; gap: 10px; margin-bottom: 10px; flex-wrap: wrap; }
+.cb-roles label { display: flex; flex-direction: column; gap: 3px; font-size: 11px; color: var(--fg2); flex: 1 1 120px; min-width: 0; }
 .cb-rolein { padding: 5px 7px; background: var(--bg2); border: 1px solid var(--border); color: var(--fg); border-radius: 4px; font-size: 14px; }
 .cb-rolein:focus { outline: none; border-color: var(--accent); }
 
@@ -233,3 +233,12 @@ select option { background: var(--bg3); }
 .cb-colorswatch { width: 28px; height: 24px; padding: 0; border: 1px solid var(--border); border-radius: 4px; background: none; cursor: pointer; flex: 0 0 auto; }
 .cb-colorhex { width: 78px; background: var(--bg2); border: 1px solid var(--border); color: var(--fg); border-radius: 4px; padding: 2px 4px; font-size: 11px; font-family: monospace; }
 .cb-colorhex:focus { outline: none; border-color: var(--accent); }
+
+/* ── Responsive: stack the two teams when the window is too narrow ──── */
+@media (max-width: 760px) {
+  .cb-wrap { padding: 0 10px; }
+  .cb-teams { gap: 12px; }
+  .cb-team { flex: 1 1 100%; }   /* full width -> team 2 drops below team 1 */
+}
+/* Let the top bar reflow rather than overflow on narrow widths */
+.cb-bar { flex-wrap: wrap; }
