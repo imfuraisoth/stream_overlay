@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <!--
+    Crew Battle CENTER SCOREBOARD overlay.
+    Shows the two CURRENT players (each team's `current` pointer) in the same
+    on-screen position as the regular scoreboard's player names, with the
+    chosen character's art as a fading gradient nameplate behind each name.
+    Reads the same crew battle state as the side strips (/getCrewBattle).
+    Add as its own 1920x1080 OBS Browser Source; elements are absolutely
+    positioned, so no manual placement is needed. Transparent background.
+  -->
+  <style>
+    /* Font-size knobs (mirror the regular scoreboard's :root values) */
+    :root {
+      --name-size: 65px;        /* P1/P2 player name */
+      --team-name-size: 25px;   /* team tag next to the name */
+      --cb-plate-default: rgba(13, 24, 40, 0.82);  /* navy, matches strips */
+    }
+
+    @font-face {
+      src: url('../resources/Fonts/Rigid Square - Italics.ttf');
+      font-family: "RigidSquareItalic";
+    }
+    @font-face {
+      src: url('../resources/Fonts/Rigid Square - ExtraBold.ttf');
+      font-family: "RigidSquareExtraBold";
+    }
+
+    html, body {
+      width: 1920px; height: 1080px;
+      margin: 0; padding: 0;
+      overflow: hidden;
+      background: transparent;
+      color: #FFFFFF;
+    }
+
+    /* ── Name wrappers: positions copied from the regular scoreboard CSS ──
+       P1 sits left of centre (anchored 1120px from the right edge), P2 right
+       of centre (anchored 1120px from the left edge), both at bottom:983px. */
+    #p1Wrapper {
+      position: absolute;
+      bottom: 983px;
+      width: 435px;
+      right: 1120px;
+      display: flex;
+      flex-direction: row;
+      align-items: baseline;
+      gap: 10px;
+      text-align: right;
+      justify-content: flex-end;
+      overflow: hidden;
+      white-space: nowrap;
+    }
+    #p2Wrapper {
+      position: absolute;
+      bottom: 983px;
+      width: 435px;
+      left: 1120px;
+      display: flex;
+      flex-direction: row;
+      align-items: baseline;
+      gap: 10px;
+      text-align: left;
+      justify-content: flex-start;
+      overflow: hidden;
+      white-space: nowrap;
+    }
+
+    .names {
+      color: #FFFFFF;
+      font-family: Impact, "RigidSquareItalic";
+      font-size: var(--name-size);
+      white-space: nowrap;
+    }
+    .teams {
+      color: #FFFFFF;
+      font-size: var(--team-name-size);
+      font-family: Impact, "RigidSquareItalic";
+      vertical-align: middle;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+
+    /* ── Character-art gradient nameplate behind each name ───────────────
+       The art bleeds in behind the name and fades toward centre screen, so
+       the two plates mirror each other (P1 fades right-to-left, P2 left-to-
+       right) -- matching how the side strips treat team 1 vs team 2. The
+       plate colour comes from each team's editable plateColor (set on the
+       operator page), falling back to navy. */
+    .cb-plate {
+      position: absolute;
+      bottom: 968px;            /* sit just behind the names (names at 983) */
+      width: 520px;
+      height: 96px;
+      background-repeat: no-repeat, no-repeat;
+      background-size: auto 150%, auto 150%;
+    }
+    /* P1 plate: behind the left name, art on the OUTBOARD (left) side,
+       gradient fades toward centre (to the right). */
+    #p1Plate {
+      right: 1095px;
+      background-position: left center, left center;
+    }
+    /* P2 plate: behind the right name, art on the OUTBOARD (right) side,
+       gradient fades toward centre (to the left). */
+    #p2Plate {
+      left: 1095px;
+      background-position: right center, right center;
+    }
+  </style>
+</head>
+<body>
+  <div id="p1Plate" class="cb-plate"></div>
+  <div id="p2Plate" class="cb-plate"></div>
+
+  <span id="p1Wrapper">
+    <div id="p1Team" class="teams"></div>
+    <div id="p1Name" class="names"></div>
+  </span>
+  <span id="p2Wrapper">
+    <div id="p2Name" class="names"></div>
+    <div id="p2Team" class="teams"></div>
+  </span>
+
+  <script>
+    var serverIp = "localhost:8080";
+    function esc(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+    // Resolve a team's CURRENT player (the one its pointer is on), or null if
+    // the team is fully eliminated / empty.
+    function currentPlayer(team){
+      if(!team) return null;
+      var players = team.players || [];
+      var cur = (team.current == null) ? 0 : team.current;
+      if(cur < 0 || cur >= players.length) return null;  // none up (wiped out)
+      return players[cur];
+    }
+
+    // Build the gradient nameplate background for one side. `dir` is the
+    // direction the plate colour fades toward (the art shows on the far side).
+    // Returns '' when there's no character art, so the plate is just empty.
+    function plateStyle(player, plateColor, dir){
+      if(!player || !player.characterFile) return '';
+      var plate = (plateColor && String(plateColor).trim()) ? String(plateColor).trim()
+                                                            : 'rgba(13,24,40,0.82)';
+      var art = 'http://' + serverIp + '/' + player.characterFile;
+      return 'linear-gradient(to ' + dir + ', rgba(0,0,0,0) 0%, ' + plate + ' 62%),'
+           + 'url(\'' + art + '\')';
+    }
+
+    function render(state){
+      if(!state){ return; }
+      var t1 = state.team1, t2 = state.team2;
+      var p1 = currentPlayer(t1), p2 = currentPlayer(t2);
+
+      // Names (fall back to blank when a side is eliminated/empty)
+      document.getElementById('p1Name').textContent = p1 ? (p1.name || '') : '';
+      document.getElementById('p2Name').textContent = p2 ? (p2.name || '') : '';
+      // Team tags = the team names (East / West etc.)
+      document.getElementById('p1Team').textContent = (t1 && t1.name) ? t1.name : '';
+      document.getElementById('p2Team').textContent = (t2 && t2.name) ? t2.name : '';
+
+      // Gradient nameplates -- P1 fades right (art outboard-left),
+      // P2 fades left (art outboard-right). Mirror images.
+      var p1Plate = document.getElementById('p1Plate');
+      var p2Plate = document.getElementById('p2Plate');
+      var s1 = plateStyle(p1, t1 && t1.plateColor, 'right');
+      var s2 = plateStyle(p2, t2 && t2.plateColor, 'left');
+      p1Plate.style.backgroundImage = s1;
+      p2Plate.style.backgroundImage = s2;
+    }
+
+    function load(){
+      fetch('http://' + serverIp + '/getCrewBattle')
+        .then(function(r){ return r.json(); })
+        .then(render)
+        .catch(function(e){ console.log('crew battle scoreboard error:', e); });
+    }
+    load();
+    window.setInterval(load, 2000);
+  </script>
+</body>
+</html>
