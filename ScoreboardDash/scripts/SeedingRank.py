@@ -57,9 +57,15 @@ def placement_points(placement, curve="standard"):
     return 100.0 / (p ** 0.5)
 
 
+def _event_sort_key(e):
+    """Best available date for ordering: prefer the real event_date, fall back
+    to imported_at so undated events still order sensibly."""
+    return e.get("event_date") or e.get("imported_at") or ""
+
+
 def _event_order(events):
-    """Return events sorted oldest -> newest by imported_at."""
-    return sorted(events, key=lambda e: e.get("imported_at") or "")
+    """Return events sorted oldest -> newest by their best date."""
+    return sorted(events, key=_event_sort_key)
 
 
 def _placement_for(event, player_id):

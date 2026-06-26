@@ -133,6 +133,7 @@ window.I18N.ja = {
       imp_col_series: "シリーズ",
       imp_col_sets: "セット",
       imp_col_imported: "インポート日時",
+      imp_col_date: "開催日",
       imp_reimport: "再インポート",
       imp_delete: "削除",
       imp_assign: "割り当て",

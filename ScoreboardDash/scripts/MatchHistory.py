@@ -73,12 +73,15 @@ def list_events():
                 "game": data.get("game", ""),
                 "series": data.get("series", ""),
                 "imported_at": data.get("imported_at"),
+                "event_date": data.get("event_date", ""),
                 "set_count": len(data.get("sets", {})),
                 "file": fn,
             })
         except Exception as e:
             print("MatchHistory: skipping unreadable %s (%s)" % (fn, e))
-    events.sort(key=lambda e: e.get("imported_at") or "", reverse=True)
+    # Sort newest-first by the best date we have: prefer the real event_date,
+    # fall back to imported_at so undated events still order sensibly.
+    events.sort(key=lambda e: (e.get("event_date") or e.get("imported_at") or ""), reverse=True)
     return events
 
 
@@ -102,8 +105,23 @@ def load_event(event_slug):
         return json.load(f)
 
 
+def set_event_date(event_slug, event_date):
+    """Set (or clear) the real event date on an already-imported event.
+
+    event_date is an ISO date string like '2026-03-14' (or '' to clear).
+    Returns True on success, False if the event isn't found."""
+    data = load_event(event_slug)
+    if not data:
+        return False
+    data["event_date"] = (event_date or "").strip()
+    with open(_slug_to_filename(event_slug), "w", encoding="utf-8") as f:
+        json.dump(data, f, ensure_ascii=False, indent=2)
+    return True
+
+
 def save_event_import(event_slug, event_name, tournament_name, sets, imported_at,
-                      assignments=None, standings=None, series=None, game=None):
+                      assignments=None, standings=None, series=None, game=None,
+                      event_date=None):
     """Write/replace a per-event file from get_completed_sets output.
 
     sets: list of dicts from startgg_client.get_completed_sets.
@@ -186,6 +204,11 @@ def save_event_import(event_slug, event_name, tournament_name, sets, imported_at
     display_name = existing.get("display_name", "") if existing else ""
     if game is None:
         game = existing.get("game", "") if existing else ""
+    # Preserve event_date across re-import unless a new one is supplied. This
+    # is the REAL event date (from start.gg startAt, or set manually), as
+    # opposed to imported_at (when it was pulled into the app).
+    if event_date is None:
+        event_date = existing.get("event_date", "") if existing else ""
     payload = {
         "event_slug": event_slug,
         "event_name": event_name,
@@ -194,6 +217,7 @@ def save_event_import(event_slug, event_name, tournament_name, sets, imported_at
         "game": game or "",
         "series": series or "",
         "imported_at": imported_at,
+        "event_date": event_date or "",
         "sets": set_map,
         "placements": placement_map,
     }

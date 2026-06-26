@@ -75,7 +75,7 @@
 
   <div class="section-title" data-i18n="imp_events_title">Imported events</div>
   <table class="imp events-list"><thead>
-    <tr><th data-i18n="imp_col_event">Event</th><th data-i18n="imp_col_display">Display Name</th><th data-i18n="imp_col_game">Game</th><th data-i18n="imp_col_series">Series</th><th data-i18n="imp_col_sets">Sets</th><th data-i18n="imp_col_imported">Imported</th><th></th></tr>
+    <tr><th data-i18n="imp_col_event">Event</th><th data-i18n="imp_col_display">Display Name</th><th data-i18n="imp_col_game">Game</th><th data-i18n="imp_col_series">Series</th><th data-i18n="imp_col_date">Event Date</th><th data-i18n="imp_col_sets">Sets</th><th data-i18n="imp_col_imported">Imported</th><th></th></tr>
   </thead><tbody id="eventsBody"><tr><td colspan="7" style="color:var(--fg2);">Loading…</td></tr></tbody></table>
 </div>
 
@@ -143,7 +143,7 @@ async function loadEvents() {
     var events = await r.json();
     var body = document.getElementById('eventsBody');
     if (!events.length) {
-      body.innerHTML = '<tr><td colspan="7" style="color:var(--fg2);">No events imported yet.</td></tr>';
+      body.innerHTML = '<tr><td colspan="8" style="color:var(--fg2);">No events imported yet.</td></tr>';
       return;
     }
     body.innerHTML = '';
@@ -157,6 +157,7 @@ async function loadEvents() {
         + '<td><select class="game-cell">' + gameOptions(ev.game || '') + '</select></td>'
         + '<td><input type="text" class="series-cell" list="seriesList" value="'
           + escHtml(ev.series || '') + '" placeholder="\u2014"></td>'
+        + '<td><input type="date" class="date-cell" value="' + escHtml(ev.event_date || '') + '"></td>'
         + '<td>' + ev.set_count + '</td>'
         + '<td class="evmeta">' + escHtml((ev.imported_at || '').replace('T', ' ')) + '</td>'
         + '<td><button class="btn sec reimport-btn">' + window.t('imp_reimport') + '</button> '
@@ -202,6 +203,21 @@ async function loadEvents() {
       }
       seriesCell.onchange = commitSeries;
       seriesCell.onblur = commitSeries;
+
+      var dateCell = tr.querySelector('.date-cell');
+      var _dorigDate = ev.event_date || '';
+      function commitDate() {
+        var val = (dateCell.value || '').trim();
+        if (val === _dorigDate) return;
+        _dorigDate = val;
+        fetch('/setEventDate', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ event_slug: ev.event_slug, event_date: val })
+        }).then(function() { dateCell.classList.add('saved');
+          setTimeout(function(){ dateCell.classList.remove('saved'); }, 800); })
+          .catch(function(e){ console.log('setEventDate error:', e); });
+      }
+      dateCell.onchange = commitDate;
       var btns = tr.querySelectorAll('.reimport-btn, .delete-btn');
       btns[0].onclick = function() {
         document.getElementById('slugInput').value = ev.event_slug;

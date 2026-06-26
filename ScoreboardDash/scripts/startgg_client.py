@@ -116,6 +116,37 @@ def get_events(tournament_name):
     return json.dumps(events_list)
 
 
+def get_event_start_at(tournament_name, event_name):
+    """Return the event's scheduled start as a Unix timestamp (int), or None.
+
+    Falls back to the tournament's startAt if the event has none. Used to stamp
+    imported events with their real date instead of the import time."""
+    token = get_token()
+    query = '''
+            query EventStart($eventSlug:String!) {
+              event(slug: $eventSlug) {
+                startAt
+                tournament { startAt }
+              }
+            }
+        '''
+    variables = {"eventSlug": "tournament/" + tournament_name + "/event/" + event_name}
+    headers = {'Authorization': 'Bearer ' + token}
+    try:
+        response = requests.post(url, json={'query': query, 'variables': variables}, headers=headers)
+        data = get_api_data(response)
+        if not data or not data.get("event"):
+            return None
+        ev = data["event"]
+        if ev.get("startAt"):
+            return ev["startAt"]
+        t = ev.get("tournament") or {}
+        return t.get("startAt")
+    except Exception as e:
+        print("get_event_start_at error: %s" % e)
+        return None
+
+
 def get_num_entrants_for_event(tournament_name, event_name):
     token = get_token()
     query = '''

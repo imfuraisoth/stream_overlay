@@ -558,13 +558,26 @@ def import_startgg_event():
             if pid:
                 assignments[ent.get("tag")] = pid
 
+    # Capture the real event date. start.gg exposes startAt (a Unix timestamp);
+    # convert to a YYYY-MM-DD string. parry has no equivalent here, so it's left
+    # blank for the TO to set manually on the Match Imports page.
+    event_date = ""
+    if source != "parry":
+        try:
+            ts = startgg_client.get_event_start_at(tournament, event)
+            if ts:
+                event_date = datetime.fromtimestamp(ts).strftime("%Y-%m-%d")
+        except Exception as e:
+            print("importStartggEvent startAt warning: " + str(e))
+
     event_slug = "tournament/" + tournament + "/event/" + event
     event_name = sets[0].get("event_name") or event
     tourn_name = sets[0].get("tournament_name") or tournament
     count = MatchHistory.save_event_import(
         event_slug, event_name, tourn_name, sets,
         datetime.now().isoformat(timespec="seconds"), assignments, standings,
-        series if series else None, game)
+        series if series else None, game,
+        event_date if event_date else None)
     MatchHistory.rebuild_alltime(_alias_map_for_rollup())
     unassigned = MatchHistory.collect_unassigned(event_slug)
     print("Imported %d sets from '%s' (%s) -- %d player(s) need reconciling"
@@ -577,6 +590,24 @@ def import_startgg_event():
 @api.route('/listImportedEvents', methods=['GET'])
 def list_imported_events():
     return jsonify(MatchHistory.list_events()), 200
+
+
+@api.route('/setEventDate', methods=['POST'])
+def set_event_date():
+    """Manually set (or correct) an imported event's real date.
+
+    Body: { event_slug, event_date }  -- event_date is 'YYYY-MM-DD' or ''.
+    Used to date parry imports and bulk-imported old events so seeding's
+    recency/absence ordering reflects when the event actually happened."""
+    body = request.get_json() or {}
+    slug = (body.get("event_slug") or "").strip()
+    date = (body.get("event_date") or "").strip()
+    if not slug:
+        return jsonify({"ok": False, "message": "event_slug is required"}), 400
+    ok = MatchHistory.set_event_date(slug, date)
+    if not ok:
+        return jsonify({"ok": False, "message": "Event not found"}), 404
+    return jsonify({"ok": True, "event_slug": slug, "event_date": date}), 200
 
 
 @api.route('/reconcileImport', methods=['POST'])

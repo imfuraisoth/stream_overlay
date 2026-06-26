@@ -134,6 +134,7 @@ window.I18N.en = {
       imp_col_series: "Series",
       imp_col_sets: "Sets",
       imp_col_imported: "Imported",
+      imp_col_date: "Event Date",
       imp_reimport: "Re-import",
       imp_delete: "Delete",
       imp_assign: "Assign",
