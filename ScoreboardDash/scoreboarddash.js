@@ -579,6 +579,17 @@ function resetNamesAndScore() {
 	jsonData.p2Seed = "";
         jsonData.p1Bracket = "";
                    jsonData.p2Bracket = "";
+
+	// Clear character selections (was being missed -- chars lingered after
+	// a names/scores reset). Game selection is intentionally left as-is.
+	clearCharacterSelect(1);
+	clearCharacterSelect(2);
+
+	// Clear the green "→ name" match hints now that names are empty.
+	if (typeof updateMatchHint === 'function') {
+		updateMatchHint(1); updateMatchHint(2);
+	}
+
 	updateCurrentPlayerDisplay();
 	sendJsonToEndpoint("updatealldata");
 }
@@ -730,6 +741,35 @@ function resetAll() {
 	jsonData.round = "Casuals";
 	jsonData.nextRound = "Casuals";
 	jsonData.current_game = "";
+
+	// Reset the main P1/P2 country dropdowns (the next-round ones are reset
+	// above; these were being missed, so "US" lingered on the scoreboard).
+	var c1 = document.getElementById("dropdown_country_1p");
+	var c2 = document.getElementById("dropdown_country_2p");
+	if (c1) c1.value = "US";
+	if (c2) c2.value = "US";
+
+	// Clear both players' character selections (popover + slots + overlay).
+	clearCharacterSelect(1);
+	clearCharacterSelect(2);
+	// Clear the next-round character selections too.
+	if (typeof clearCharacterSelect === 'function') {
+		try { clearCharacterSelect('1Next'); clearCharacterSelect('2Next'); } catch (e) {}
+	}
+
+	// Clear the green "→ name" / "not in player DB" match hints, now that the
+	// name fields are empty.
+	if (typeof updateMatchHint === 'function') {
+		updateMatchHint(1); updateMatchHint(2);
+		try { updateMatchHint('1Next'); updateMatchHint('2Next'); } catch (e) {}
+	}
+
+	// Revert the game dropdown to its "Select Game" placeholder. Setting
+	// current_game empty isn't enough -- the <select> still shows the old
+	// game until we move its selection back to the placeholder (index 0).
+	var gameSel = document.getElementById('gameSelect');
+	if (gameSel && gameSel.options.length) gameSel.selectedIndex = 0;
+
 	updateCurrentPlayerDisplay();
 	sendJsonToEndpoint("updatealldata");
 }

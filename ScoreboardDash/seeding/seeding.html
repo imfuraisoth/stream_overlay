@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title data-i18n="sd_title">Seeding — Stream Overlay</title>
+  <link rel="icon" type="image/png" href="../images/V.png">
+  <link href="../players/style.css" rel="stylesheet" type="text/css">
+  <script>
+    (function(){var s=localStorage.getItem('sc_theme');if(!s)return;try{var v=JSON.parse(s);Object.keys(v).forEach(function(k){document.documentElement.style.setProperty(k,v[k])});}catch(e){}})();
+  </script>
+  <link href="../theme/theme.css" rel="stylesheet" type="text/css">
+  <style>
+    .sd-wrap { max-width: 1150px; margin: 0 auto; padding: 20px; }
+    .sd-hint { font-family: var(--font-d, 'Barlow Condensed'); font-size: 12px; color: var(--fg2); margin: 6px 0 16px; }
+    .sd-bar { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-bottom: 8px; }
+    .sd-bar input[type=text] { flex: 1 1 240px; min-width: 0; }
+    .sd-controls { display: flex; gap: 16px; align-items: flex-end; flex-wrap: wrap;
+      background: var(--bg2); border: 1px solid var(--border); border-radius: 6px;
+      padding: 12px; margin-bottom: 16px; }
+    .sd-ctl { display: flex; flex-direction: column; gap: 4px; font-size: 11px; color: var(--fg2); }
+    .sd-ctl select, .sd-ctl input { background: var(--bg3); border: 1px solid var(--border);
+      color: var(--fg); border-radius: 4px; padding: 4px 6px; font-size: 13px; }
+    .sd-status { font-family: var(--font-d, 'Barlow Condensed'); font-size: 13px; color: var(--fg2); margin: 8px 0; }
+    .sd-warn { color: var(--accent2, #c43030); }
+    .sd-section-title { font-family: var(--font-d, 'Barlow Condensed'); font-weight: 700;
+      text-transform: uppercase; letter-spacing: .04em; font-size: 14px; color: var(--fg);
+      margin: 22px 0 8px; border-bottom: 1px solid var(--border); padding-bottom: 4px; }
+    table.sd { width: 100%; border-collapse: collapse; font-size: 13px; }
+    table.sd th, table.sd td { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--border); }
+    table.sd th { font-family: var(--font-d, 'Barlow Condensed'); text-transform: uppercase;
+      font-size: 11px; color: var(--fg2); }
+    .sd-seed { width: 42px; font-weight: 700; color: var(--accent); }
+    .sd-pts { width: 90px; text-align: right; font-variant-numeric: tabular-nums; }
+    .sd-evt { width: 70px; text-align: right; color: var(--fg2); }
+    .sd-math { color: var(--fg2); font-size: 11px; }
+    .sd-math-toggle { cursor: pointer; color: var(--accent); font-size: 11px; user-select: none; }
+    .sd-detail td { background: var(--bg2); font-size: 11px; color: var(--fg2); }
+    .sd-detail .pill { display: inline-block; margin: 2px 6px 2px 0; padding: 1px 6px;
+      border: 1px solid var(--border); border-radius: 10px; white-space: nowrap; }
+    .sd-recon { display: flex; gap: 6px; align-items: center; }
+    .sd-recon select { background: var(--bg3); border: 1px solid var(--border); color: var(--fg);
+      border-radius: 4px; padding: 3px 5px; font-size: 12px; }
+    .sd-empty { color: var(--fg2); font-style: italic; padding: 8px; }
+    .sd-copybar { margin: 10px 0; }
+  </style>
+</head>
+<body>
+<div id="nav-root" style="min-height:45px"></div>
+<div class="sd-wrap">
+  <h2 style="margin-bottom:4px;" data-i18n="sd_heading">Seeding Suggestion</h2>
+  <div class="sd-hint" data-i18n="sd_hint">
+    Pull a start.gg event's entrants, match them to your imported history, and get a
+    suggested seed order to enter into start.gg manually. This never writes to start.gg.
+  </div>
+
+  <div class="sd-bar">
+    <input type="text" id="slugInput" data-i18n-attr="placeholder:sd_slug_ph"
+           placeholder="https://www.start.gg/tournament/.../event/...  or  tournament/.../event/...">
+    <button class="btn" id="sdFetch" onclick="fetchSeeding(true)" data-i18n="sd_fetch">Fetch Entrants</button>
+  </div>
+
+  <div class="sd-controls">
+    <label class="sd-ctl"><span data-i18n="sd_scope">History scope</span>
+      <select id="scopeSelect" onchange="onScopeChange()"></select>
+    </label>
+    <label class="sd-ctl" id="scopeValueWrap" style="display:none;"><span data-i18n="sd_scope_value">Which</span>
+      <select id="scopeValueSelect" onchange="recompute()"></select>
+    </label>
+    <label class="sd-ctl"><span data-i18n="sd_curve">Placement curve</span>
+      <select id="curveSelect" onchange="recompute()">
+        <option value="standard" data-i18n="sd_curve_standard">Standard</option>
+        <option value="topheavy" data-i18n="sd_curve_topheavy">Top-heavy</option>
+        <option value="linear" data-i18n="sd_curve_linear">Gentle/linear</option>
+      </select>
+    </label>
+    <label class="sd-ctl"><span data-i18n="sd_decay">Decay mode</span>
+      <select id="decaySelect" onchange="onDecayChange()">
+        <option value="none" data-i18n="sd_decay_none">None (cumulative)</option>
+        <option value="absence" data-i18n="sd_decay_absence">By absence</option>
+        <option value="recency" data-i18n="sd_decay_recency">By recency</option>
+      </select>
+    </label>
+    <label class="sd-ctl" id="thresholdWrap" style="display:none;"><span data-i18n="sd_threshold">No-shows before decay</span>
+      <input type="number" id="thresholdInput" min="1" value="2" style="width:70px;" onchange="recompute()">
+    </label>
+    <label class="sd-ctl" id="recencyWrap" style="display:none;"><span data-i18n="sd_recency_factor">Recency factor</span>
+      <input type="number" id="recencyInput" min="0.1" max="1" step="0.05" value="0.85" style="width:80px;" onchange="recompute()">
+    </label>
+  </div>
+
+  <div class="sd-status" id="sdStatus"></div>
+
+  <div id="sdRanked"></div>
+  <div id="sdKnownUnranked"></div>
+  <div id="sdUnmatched"></div>
+</div>
+
+<script>
+  var lastResult = null;     // last compute response
+  var localPlayers = [];     // [{id,name}] for reconcile dropdown
+  var seriesList = [];
+
+  function esc(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+  function setStatus(t, warn){
+    var el = document.getElementById('sdStatus');
+    el.textContent = t || '';
+    el.className = 'sd-status' + (warn ? ' sd-warn' : '');
+  }
+
+  async function loadLocalPlayers(){
+    try {
+      var r = await fetch('/getLocalPlayers');
+      var ps = await r.json();
+      localPlayers = (ps || []).map(function(p){ return {id:p.id, name:p.name}; })
+                               .sort(function(a,b){ return a.name.localeCompare(b.name); });
+    } catch(e){ console.log('loadLocalPlayers error:', e); }
+  }
+
+  async function loadScopes(){
+    var scopeSel = document.getElementById('scopeSelect');
+    scopeSel.innerHTML =
+      '<option value="all">' + esc(window.t ? window.t('sd_scope_all') : 'All imported history') + '</option>'
+      + '<option value="series">' + esc(window.t ? window.t('sd_scope_series') : 'A series') + '</option>'
+      + '<option value="game">' + esc(window.t ? window.t('sd_scope_game') : 'A game') + '</option>';
+    try {
+      var r = await fetch('/listSeries'); seriesList = await r.json() || [];
+    } catch(e){ seriesList = []; }
+  }
+
+  function onScopeChange(){
+    var scope = document.getElementById('scopeSelect').value;
+    var wrap = document.getElementById('scopeValueWrap');
+    var sel = document.getElementById('scopeValueSelect');
+    if (scope === 'series') {
+      wrap.style.display = '';
+      sel.innerHTML = seriesList.map(function(s){ return '<option value="'+esc(s)+'">'+esc(s)+'</option>'; }).join('')
+                      || '<option value="">(no series)</option>';
+    } else if (scope === 'game') {
+      wrap.style.display = '';
+      fetch('/getGames').then(function(r){return r.json();}).then(function(g){
+        var games = Object.keys(g || {}).sort();
+        sel.innerHTML = games.map(function(x){ return '<option value="'+esc(x)+'">'+esc(x)+'</option>'; }).join('')
+                        || '<option value="">(no games)</option>';
+        recompute();
+      });
+      return;
+    } else {
+      wrap.style.display = 'none';
+    }
+    recompute();
+  }
+
+  function onDecayChange(){
+    var mode = document.getElementById('decaySelect').value;
+    document.getElementById('thresholdWrap').style.display = (mode === 'absence') ? '' : 'none';
+    document.getElementById('recencyWrap').style.display = (mode === 'recency') ? '' : 'none';
+    recompute();
+  }
+
+  function settings(){
+    var scope = document.getElementById('scopeSelect').value;
+    return {
+      slug: document.getElementById('slugInput').value.trim(),
+      scope_type: scope,
+      scope_value: (scope === 'all') ? '' : document.getElementById('scopeValueSelect').value,
+      curve: document.getElementById('curveSelect').value,
+      decay_mode: document.getElementById('decaySelect').value,
+      threshold: parseInt(document.getElementById('thresholdInput').value, 10) || 2,
+      recency_factor: parseFloat(document.getElementById('recencyInput').value) || 0.85
+    };
+  }
+
+  // Fetch entrants (refresh=true re-pulls from start.gg); compute ranking.
+  async function fetchSeeding(refresh){
+    var s = settings();
+    if (!s.slug) { setStatus(window.t ? window.t('sd_need_slug') : 'Paste a start.gg event URL or slug.', true); return; }
+    setStatus(window.t ? window.t('sd_fetching') : 'Fetching entrants…');
+    s.refresh = !!refresh;
+    try {
+      var r = await fetch('/seedingCompute', {
+        method: 'POST', headers: {'Content-Type':'application/json'},
+        body: JSON.stringify(s)
+      });
+      var data = await r.json();
+      if (!data.ok) { setStatus((data.message || 'Error'), true); return; }
+      lastResult = data;
+      render(data);
+    } catch(e){ console.log('fetchSeeding error:', e); setStatus('' + e, true); }
+  }
+
+  // Re-rank using already-fetched entrants (no start.gg re-pull).
+  function recompute(){
+    if (!lastResult) return;       // nothing fetched yet
+    fetchSeeding(false);
+  }
+
+  function mathDetail(row){
+    if (!row.placements || !row.placements.length) return '';
+    var pills = row.placements.map(function(d){
+      return '<span class="pill">' + esc(d.label) + ': ' + d.placement
+           + ' (' + d.raw_points + (d.weight !== 1 ? ' ×' + d.weight : '') + ')</span>';
+    }).join('');
+    return pills;
+  }
+
+  function render(data){
+    // ── Ranked ──
+    var html = '<div class="sd-section-title">' + (window.t ? window.t('sd_ranked') : 'Suggested seed order') + '</div>';
+    if (!data.ranked.length) {
+      html += '<div class="sd-empty">' + (window.t ? window.t('sd_none_ranked') : 'No entrants with history in this scope yet.') + '</div>';
+    } else {
+      html += '<table class="sd"><thead><tr>'
+        + '<th class="sd-seed">#</th><th>' + (window.t?window.t('sd_col_player'):'Player') + '</th>'
+        + '<th class="sd-pts">' + (window.t?window.t('sd_col_points'):'Points') + '</th>'
+        + '<th class="sd-evt">' + (window.t?window.t('sd_col_events'):'Events') + '</th>'
+        + '<th></th></tr></thead><tbody>';
+      data.ranked.forEach(function(row, i){
+        html += '<tr>'
+          + '<td class="sd-seed">' + (i+1) + '</td>'
+          + '<td>' + esc(row.name) + (row.tag && row.tag.toLowerCase()!==row.name.toLowerCase() ? ' <span class="sd-math">('+esc(row.tag)+')</span>' : '') + '</td>'
+          + '<td class="sd-pts">' + row.points + '</td>'
+          + '<td class="sd-evt">' + row.events_counted + '</td>'
+          + '<td><span class="sd-math-toggle" onclick="toggleDetail(this)">' + (window.t?window.t('sd_show_math'):'show math') + '</span></td>'
+          + '</tr>'
+          + '<tr class="sd-detail" style="display:none;"><td></td><td colspan="4">' + mathDetail(row) + '</td></tr>';
+      });
+      html += '</tbody></table>';
+      // copy-friendly plain list
+      html += '<div class="sd-copybar"><button class="btn sec sm" onclick="copySeedList()" data-i18n="sd_copy">Copy seed order</button></div>';
+    }
+    document.getElementById('sdRanked').innerHTML = html;
+
+    // ── Known but unranked (matched, no history) ──
+    var ku = data.known_unranked || [];
+    var h2 = '';
+    if (ku.length) {
+      h2 = '<div class="sd-section-title">' + (window.t?window.t('sd_known_unranked'):'Known players, no history in scope') + '</div>'
+         + '<div class="sd-hint">' + (window.t?window.t('sd_known_unranked_hint'):'These entrants are in your player DB but have no results in the chosen scope — place them manually.') + '</div>'
+         + '<table class="sd"><tbody>';
+      ku.forEach(function(row){
+        h2 += '<tr><td>' + esc(row.name) + (row.tag && row.tag.toLowerCase()!==row.name.toLowerCase() ? ' <span class="sd-math">('+esc(row.tag)+')</span>' : '') + '</td></tr>';
+      });
+      h2 += '</tbody></table>';
+    }
+    document.getElementById('sdKnownUnranked').innerHTML = h2;
+
+    // ── Unmatched (reconcile) ──
+    var um = data.unmatched || [];
+    var h3 = '';
+    if (um.length) {
+      h3 = '<div class="sd-section-title">' + (window.t?window.t('sd_unmatched'):'Unmatched entrants') + '</div>'
+         + '<div class="sd-hint">' + (window.t?window.t('sd_unmatched_hint'):'These entrants don\'t match a local player. Assign each to an existing player or create a new one.') + '</div>'
+         + '<table class="sd"><thead><tr><th>' + (window.t?window.t('sd_col_entrant'):'start.gg entrant') + '</th><th>' + (window.t?window.t('sd_col_action'):'Action') + '</th></tr></thead><tbody>';
+      um.forEach(function(ent, i){
+        var opts = '<option value="">' + (window.t?window.t('sd_select_player'):'— select player —') + '</option>'
+          + localPlayers.map(function(p){ return '<option value="'+esc(p.id)+'">'+esc(p.name)+'</option>'; }).join('');
+        h3 += '<tr><td>' + esc(ent.tag) + '</td><td>'
+          + '<span class="sd-recon">'
+            + '<select id="recon'+i+'">' + opts + '</select>'
+            + '<button class="btn sec sm" onclick="reconAssign('+i+')" data-i18n="sd_assign">Assign</button>'
+            + '<button class="btn sec sm" onclick="reconCreate('+i+')" data-i18n="sd_create">Create new</button>'
+          + '</span></td></tr>';
+      });
+      h3 += '</tbody></table>';
+    }
+    document.getElementById('sdUnmatched').innerHTML = h3;
+
+    // status + coverage warning
+    var cov = data.coverage || {};
+    var msg = (window.t?window.t('sd_loaded'):'Loaded') + ' ' + data.entrant_count + ' '
+            + (window.t?window.t('sd_entrants'):'entrants') + ' · ' + cov.events_in_scope + ' '
+            + (window.t?window.t('sd_events_in_scope'):'events in scope');
+    var warn = false;
+    if (document.getElementById('decaySelect').value === 'absence' && cov.events_in_scope < 3) {
+      msg += ' · ' + (window.t?window.t('sd_sparse_warn'):'Few events in scope — by-absence decay needs the series imported fairly completely to be accurate.');
+      warn = true;
+    }
+    setStatus(msg, warn);
+
+    if (window.applyTranslations) window.applyTranslations(document);
+  }
+
+  function toggleDetail(span){
+    var detailRow = span.closest('tr').nextElementSibling;
+    if (!detailRow) return;
+    var shown = detailRow.style.display !== 'none';
+    detailRow.style.display = shown ? 'none' : '';
+    span.textContent = shown ? (window.t?window.t('sd_show_math'):'show math')
+                             : (window.t?window.t('sd_hide_math'):'hide math');
+  }
+
+  function copySeedList(){
+    if (!lastResult || !lastResult.ranked.length) return;
+    var lines = lastResult.ranked.map(function(r, i){ return (i+1) + '. ' + r.name; });
+    var text = lines.join('\n');
+    if (navigator.clipboard) navigator.clipboard.writeText(text);
+    setStatus(window.t ? window.t('sd_copied') : 'Seed order copied.');
+  }
+
+  async function reconAssign(i){
+    var ent = lastResult.unmatched[i];
+    var pid = document.getElementById('recon'+i).value;
+    if (!pid) return;
+    await doReconcile({tag: ent.tag, user_id: ent.user_id, action: 'existing', player_id: pid});
+  }
+  async function reconCreate(i){
+    var ent = lastResult.unmatched[i];
+    await doReconcile({tag: ent.tag, user_id: ent.user_id, action: 'new'});
+  }
+  async function doReconcile(body){
+    try {
+      var r = await fetch('/seedingReconcile', {
+        method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body)
+      });
+      var data = await r.json();
+      if (!data.ok) { setStatus((data.message||'Reconcile failed'), true); return; }
+      await loadLocalPlayers();   // new/updated player available in dropdowns
+      recompute();                // re-resolve & re-rank with the new match
+    } catch(e){ console.log('reconcile error:', e); setStatus(''+e, true); }
+  }
+
+  (async function init(){
+    await loadLocalPlayers();
+    await loadScopes();
+    onScopeChange();
+    onDecayChange();
+  })();
+
+  window.onLangChange = function(){
+    if (window.applyTranslations) window.applyTranslations(document);
+    if (lastResult) render(lastResult);
+  };
+</script>
+  <script src="../lang/en.js"></script>
+  <script src="../i18n.js"></script>
+  <script src="../nav.js"></script>
+  <script src="../theme/theme.js" defer></script>
+</body>
+</html>

@@ -18,6 +18,7 @@ window.I18N.ja = {
       nav_players: "プレイヤー",
       nav_games: "ゲーム・素材",           // FLAG: "games & assets"
       nav_imports: "大会インポート",       // FLAG: "tournament import"
+      nav_seeding: "シード",                // FLAG: "seeding"
 
       // theme panel
       theme_title: "テーマ",
@@ -92,6 +93,11 @@ window.I18N.ja = {
       st_on_stream: "配信中",                       // FLAG: "On Stream"
       st_now_playing: "対戦中",                     // FLAG: "Now Playing"
       st_no_queue: "ストリームキューが見つかりません",
+      st_filter_streams: "表示するストリーム：",
+      st_all: "すべて",
+      st_none: "なし",
+      st_no_streams_selected: "ストリームが選択されていません",
+      st_no_streams_hint: "上のストリームフィルターで表示するストリームを選択してください。",
       st_queue_loaded: "ストリームキューを読み込みました",
       st_mark_featured: "注目に設定",
       st_unmark_featured: "注目を解除",
@@ -279,4 +285,50 @@ window.I18N.ja = {
       dash_select_pack_first: "先にパックを選択してください。",
       dash_saved: "✓ 保存しました",
       dash_save_failed: "保存に失敗しました",
+
+      // seeding page  -- FGC/seeding terms flagged for native review
+      sd_title: "シード — ストリームオーバーレイ",
+      sd_heading: "シード提案",                         // FLAG: "seeding suggestion"
+      sd_hint: "start.gg イベントの参加者を取得し、インポート済みの履歴と照合して、start.gg に手動で入力するためのシード順の提案を作成します。start.gg には書き込みません。",
+      sd_slug_ph: "https://www.start.gg/tournament/.../event/...  または  tournament/.../event/...",
+      sd_fetch: "参加者を取得",
+      sd_scope: "履歴の範囲",
+      sd_scope_value: "対象",
+      sd_scope_all: "全インポート履歴",
+      sd_scope_series: "シリーズ",
+      sd_scope_game: "ゲーム",
+      sd_curve: "順位カーブ",                           // FLAG: "placement curve"
+      sd_curve_standard: "標準",
+      sd_curve_topheavy: "上位重視",                     // FLAG: "top-heavy"
+      sd_curve_linear: "ゆるやか/線形",
+      sd_decay: "減衰モード",                           // FLAG: "decay mode"
+      sd_decay_none: "なし（累積）",
+      sd_decay_absence: "欠場による減衰",               // FLAG: "by absence"
+      sd_decay_recency: "新しさによる減衰",             // FLAG: "by recency"
+      sd_threshold: "減衰までの欠場数",
+      sd_recency_factor: "新しさ係数",
+      sd_ranked: "シード順の提案",
+      sd_none_ranked: "この範囲に履歴のある参加者がまだいません。",
+      sd_col_player: "プレイヤー",
+      sd_col_points: "ポイント",
+      sd_col_events: "イベント数",
+      sd_show_math: "計算を表示",
+      sd_hide_math: "計算を隠す",
+      sd_copy: "シード順をコピー",
+      sd_copied: "シード順をコピーしました。",
+      sd_known_unranked: "既知のプレイヤー（範囲内に履歴なし）",
+      sd_known_unranked_hint: "これらの参加者はプレイヤーDBに登録されていますが、選択した範囲に成績がありません。手動で配置してください。",
+      sd_unmatched: "未照合の参加者",
+      sd_unmatched_hint: "これらの参加者はローカルプレイヤーと一致しません。既存のプレイヤーに割り当てるか、新規作成してください。",
+      sd_col_entrant: "start.gg 参加者",
+      sd_col_action: "操作",
+      sd_select_player: "— プレイヤーを選択 —",
+      sd_assign: "割り当て",
+      sd_create: "新規作成",
+      sd_need_slug: "start.gg のイベントURLまたはスラッグを貼り付けてください。",
+      sd_fetching: "参加者を取得中…",
+      sd_loaded: "読み込みました",
+      sd_entrants: "参加者",
+      sd_events_in_scope: "範囲内のイベント",
+      sd_sparse_warn: "範囲内のイベントが少なめです。欠場による減衰を正確にするには、シリーズをある程度完全にインポートする必要があります。",
 };

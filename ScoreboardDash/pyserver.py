@@ -24,6 +24,7 @@ except Exception as e:
 from scripts import startgg_client
 from scripts import parry_client
 from scripts import MatchHistory
+from scripts import SeedingRank
 import argparse
 import socket
 import os
@@ -676,6 +677,192 @@ def delete_imported_event():
 @api.route('/listSeries', methods=['GET'])
 def list_series():
     return jsonify(MatchHistory.list_series()), 200
+
+
+# ── SEEDING SUGGESTION ────────────────────────────────────────────────
+# Pull a tournament's entrants, match them to local players, and rank the
+# matched-with-history group by placement points (with optional decay) so a
+# TO can read the suggested seed order and enter it into start.gg manually.
+# Read-only: this never writes seeds back to start.gg.
+
+# Cache the last-fetched entrant list per event so changing decay settings
+# doesn't re-hit the start.gg API each time.
+_seeding_entrant_cache = {}
+
+
+def _scoped_events(scope_type, scope_value):
+    """Return event dicts (with placements) in the chosen scope.
+
+    scope_type: 'all' | 'series' | 'game'. scope_value is the series or
+    game name when applicable."""
+    out = []
+    for meta in MatchHistory.list_events():
+        if scope_type == "series" and (meta.get("series") or "") != scope_value:
+            continue
+        if scope_type == "game" and (meta.get("game") or "") != scope_value:
+            continue
+        data = MatchHistory.load_event(meta["event_slug"])
+        if not data:
+            continue
+        data["label"] = meta.get("label") or meta.get("event_slug")
+        out.append(data)
+    return out
+
+
+@api.route('/seedingCompute', methods=['POST'])
+def seeding_compute():
+    """Fetch a tournament's entrants, resolve to local players, and rank.
+
+    Body: {
+      slug,                         # full start.gg event URL or slug
+      scope_type: 'all'|'series'|'game', scope_value,
+      curve, decay_mode, threshold, recency_factor,   # ranking knobs
+      refresh: bool                 # re-pull entrants instead of using cache
+    }
+    Returns three groups: ranked (matched + history), known_unranked
+    (matched, no history in scope), unmatched (no local player)."""
+    body = request.get_json() or {}
+    tournament, event = _parse_event_slug(body.get("slug", ""), "startgg")
+    if not tournament or not event:
+        return jsonify({"ok": False, "message": "Could not parse an event slug from that input"}), 400
+
+    cache_key = tournament + "|" + event
+    entrants = _seeding_entrant_cache.get(cache_key)
+    if entrants is None or body.get("refresh"):
+        try:
+            entrants = startgg_client.get_all_players_from_tournament(tournament, event)
+        except Exception as e:
+            print("seedingCompute entrant fetch error: %s" % e)
+            return jsonify({"ok": False, "message": "Could not fetch entrants: %s" % e}), 502
+        _seeding_entrant_cache[cache_key] = entrants
+
+    # Resolve each entrant to a local player via the same alias/assignment
+    # logic the importer uses.
+    players = players_db.get_local_players()
+    assignments, by_name = _build_assignments(players)
+
+    def ent_fields(ent):
+        """Normalize an entrant into {tag, user_id, team}.
+
+        get_all_players_from_tournament returns Player OBJECTS (attributes
+        .name/.team/.entrant_id/.country/.seed, no user_id), but other call
+        sites use plain dicts -- handle both. The tag is the display name."""
+        if isinstance(ent, dict):
+            return {"tag": (ent.get("tag") or ent.get("name") or "").strip(),
+                    "user_id": ent.get("user_id"),
+                    "team": (ent.get("team") or "").strip()}
+        return {"tag": (getattr(ent, "name", "") or "").strip(),
+                "user_id": getattr(ent, "user_id", None),
+                "team": (getattr(ent, "team", "") or "").strip()}
+
+    def resolve(f):
+        uid = f.get("user_id")
+        if uid is not None:
+            pid = assignments.get("u:" + str(uid))
+            if pid:
+                return pid
+        return by_name.get((f.get("tag") or "").strip().lower())
+
+    # Scope + ranking settings
+    scope_type = body.get("scope_type", "all")
+    scope_value = body.get("scope_value", "")
+    curve = body.get("curve", "standard")
+    decay_mode = body.get("decay_mode", "none")
+    try:
+        threshold = int(body.get("threshold", 2))
+    except (TypeError, ValueError):
+        threshold = 2
+    try:
+        recency_factor = float(body.get("recency_factor", 0.85))
+    except (TypeError, ValueError):
+        recency_factor = 0.85
+
+    events = _scoped_events(scope_type, scope_value)
+
+    # Split entrants into matched / unmatched
+    matched = {}       # player_id -> entrant fields (first wins if dup)
+    unmatched = []
+    for ent in (entrants or []):
+        f = ent_fields(ent)
+        if not f["tag"]:
+            continue
+        pid = resolve(f)
+        if pid:
+            if pid not in matched:
+                matched[pid] = f
+        else:
+            unmatched.append(f)
+
+    # Rank the matched players; separate those with no history in scope
+    ranked_raw = SeedingRank.rank_players(list(matched.keys()), events,
+                                          curve=curve, decay_mode=decay_mode,
+                                          threshold=threshold, recency_factor=recency_factor)
+    ranked = []
+    known_unranked = []
+    for r in ranked_raw:
+        pid = r["player_id"]
+        name = players.get(pid, {}).get("name", pid)
+        tag = matched[pid].get("tag", "")
+        row = {"player_id": pid, "name": name, "tag": tag,
+               "points": r["points"], "events_counted": r["events_counted"],
+               "placements": r["placements"]}
+        if r["events_counted"] > 0:
+            ranked.append(row)
+        else:
+            known_unranked.append(row)
+
+    # Coverage hint for absence decay: how many events are in scope.
+    coverage = {"events_in_scope": len(events),
+                "scope_type": scope_type, "scope_value": scope_value}
+
+    return jsonify({
+        "ok": True,
+        "ranked": ranked,                 # already sorted best-first
+        "known_unranked": known_unranked, # matched but no scoped history
+        "unmatched": unmatched,           # need reconcile
+        "coverage": coverage,
+        "entrant_count": len(entrants or []),
+    }), 200
+
+
+@api.route('/seedingReconcile', methods=['POST'])
+def seeding_reconcile():
+    """Match a tournament entrant to a local player (existing or new),
+    purely by aliasing -- no event involved.
+
+    Body: { tag, user_id (optional), action: 'existing'|'new',
+            player_id (for existing) }
+    Records the tag (and 'sgg:<user_id>') as aliases so the entrant
+    resolves from now on (in seeding AND imports). Returns the player_id."""
+    body = request.get_json() or {}
+    tag = (body.get("tag") or "").strip()
+    user_id = body.get("user_id")
+    action = body.get("action")
+    if not tag or action not in ("existing", "new"):
+        return jsonify({"ok": False, "message": "Missing tag or action"}), 400
+
+    players = players_db.get_local_players()
+    new_aliases = [tag]
+    if user_id:
+        new_aliases.append("sgg:" + str(user_id))
+
+    if action == "existing":
+        pid = body.get("player_id", "")
+        if pid not in players:
+            return jsonify({"ok": False, "message": "Unknown player_id"}), 400
+        existing = set(a.lower() for a in players[pid].get("aliases", []))
+        for a in new_aliases:
+            if a.lower() != players[pid]["name"].lower() and a.lower() not in existing:
+                players[pid].setdefault("aliases", []).append(a)
+                existing.add(a.lower())
+    else:  # new
+        pid = _next_player_id(players)
+        players[pid] = {"id": pid, "name": tag, "team": "", "country": "",
+                        "social_handle": "", "social_platform": "",
+                        "is_commentator": False, "characters": {}, "roster": {},
+                        "aliases": [a for a in new_aliases if a.lower() != tag.lower()]}
+    players_db.save_local_players(players)
+    return jsonify({"ok": True, "player_id": pid}), 200
 
 
 @api.route('/setEventGame', methods=['POST'])

@@ -17,7 +17,8 @@
     { key: 'stations',     label: 'Stations',         path: 'stations/stations.html' },
     { key: 'players',      label: 'Players',          path: 'players/players.html' },
     { key: 'games',        label: 'Games & Assets',   path: 'playerinfo/characterselect.html' },
-    { key: 'imports',      label: 'Match Imports',    path: 'imports/imports.html' }
+    { key: 'imports',      label: 'Match Imports',    path: 'imports/imports.html' },
+    { key: 'seeding',      label: 'Seeding',          path: 'seeding/seeding.html' }
   ];
 
   // i18n key per item (only used if window.t exists). Kept separate so the
@@ -25,7 +26,7 @@
   var I18N_KEYS = {
     commentators: 'nav_commentators', index: 'nav_dashboard', top8: 'nav_top8',
     crewbattle: 'nav_crewbattle', stations: 'nav_stations', players: 'nav_players',
-    games: 'nav_games', imports: 'nav_imports'
+    games: 'nav_games', imports: 'nav_imports', seeding: 'nav_seeding'
   };
 
   function label(item) {

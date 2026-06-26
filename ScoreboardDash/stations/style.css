@@ -201,3 +201,13 @@ select option { background: var(--bg3); }
   .sq-col { min-width: 0; width: 100%; }
   #tourneySlug, #eventSlug { width: 140px; }
 }
+/* Stream filter picker -- choose which streams to show */
+.stream-picker {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 10px;
+  padding: 8px 14px; margin: 0 0 4px;
+  background: var(--bg2); border: 1px solid var(--border); border-radius: 6px;
+}
+.stream-picker .sp-label { font-size: 12px; color: var(--fg2); text-transform: uppercase; letter-spacing: .04em; }
+.stream-picker .sp-item { display: inline-flex; align-items: center; gap: 5px; font-size: 13px; cursor: pointer; }
+.stream-picker .sp-item input { cursor: pointer; }
+.stream-picker .sp-actions { display: inline-flex; gap: 6px; margin-left: auto; }

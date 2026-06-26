@@ -64,6 +64,9 @@
   </div>
 </div>
 
+<!-- STREAM FILTER (populated after a tournament loads) -->
+<div id="streamPicker" class="stream-picker" style="display:none;"></div>
+
 <!-- CONTENT -->
 <div class="content">
   <div id="queueContent">
@@ -89,6 +92,68 @@ const sqCustomNames = JSON.parse(localStorage.getItem('sq_custom_names') || '{}'
 function saveSqCustomNames() { localStorage.setItem('sq_custom_names', JSON.stringify(sqCustomNames)); }
 let sqFeaturedStream = localStorage.getItem('sq_featured_stream') || '';
 function saveSqFeatured() { localStorage.setItem('sq_featured_stream', sqFeaturedStream); }
+
+// Which streams to SHOW, scoped per tournament (different games run on
+// different streams, so a TO picks the streams that carry their event).
+// Stored as { "<tournSlug>": ["Stream 1", "Stream 2"] }. An ABSENT entry
+// for a tournament means "show all" (nothing filtered yet); an empty array
+// also falls back to showing all so the page is never blank by accident.
+let sqStreamFilter = JSON.parse(localStorage.getItem('sq_stream_filter') || '{}');
+function saveSqStreamFilter() { localStorage.setItem('sq_stream_filter', JSON.stringify(sqStreamFilter)); }
+let sqKnownStreams = [];   // all stream names seen in the last load (raw names)
+
+function selectedStreamsFor(slug) {
+  var sel = sqStreamFilter[slug];
+  return Array.isArray(sel) ? sel : null;   // null = show all
+}
+function isStreamShown(rawName) {
+  var sel = selectedStreamsFor(tournSlug);
+  if (!sel || !sel.length) return true;     // no filter set -> show all
+  return sel.indexOf(rawName) !== -1;
+}
+function toggleStream(rawName, on) {
+  var sel = selectedStreamsFor(tournSlug);
+  if (!sel) sel = sqKnownStreams.slice();   // first toggle starts from "all"
+  var idx = sel.indexOf(rawName);
+  if (on && idx === -1) sel.push(rawName);
+  if (!on && idx !== -1) sel.splice(idx, 1);
+  sqStreamFilter[tournSlug] = sel;
+  saveSqStreamFilter();
+  loadStreamQueue();
+}
+function selectAllStreams(on) {
+  sqStreamFilter[tournSlug] = on ? sqKnownStreams.slice() : [];
+  saveSqStreamFilter();
+  loadStreamQueue();
+}
+
+// Render the per-stream show/hide checkboxes. Hidden until a tournament with
+// at least one stream is loaded; if there's only one stream there's nothing
+// to filter, so it stays hidden.
+function renderStreamPicker() {
+  var box = document.getElementById('streamPicker');
+  if (!box) return;
+  if (!sqKnownStreams || sqKnownStreams.length < 2) { box.style.display = 'none'; box.innerHTML = ''; return; }
+  var sel = selectedStreamsFor(tournSlug);   // null = all shown
+  var label = window.t ? window.t('st_filter_streams') : 'Show streams:';
+  var allTxt = window.t ? window.t('st_all') : 'All';
+  var noneTxt = window.t ? window.t('st_none') : 'None';
+  var html = '<span class="sp-label">' + escHtml(label) + '</span>';
+  sqKnownStreams.forEach(function (name) {
+    var shown = !sel || !sel.length || sel.indexOf(name) !== -1;
+    var disp = sqCustomNames[name] || name;
+    html += '<label class="sp-item">'
+      + '<input type="checkbox" ' + (shown ? 'checked' : '')
+      + ' onchange="toggleStream(' + JSON.stringify(name).replace(/"/g, '&quot;') + ', this.checked)">'
+      + '<span>' + escHtml(disp) + '</span></label>';
+  });
+  html += '<span class="sp-actions">'
+    + '<button class="btn sec sm" onclick="selectAllStreams(true)">' + escHtml(allTxt) + '</button>'
+    + '<button class="btn sec sm" onclick="selectAllStreams(false)">' + escHtml(noneTxt) + '</button>'
+    + '</span>';
+  box.innerHTML = html;
+  box.style.display = 'flex';
+}
 
 // ── SETTINGS ──────────────────────────────────────────────────────
 function saveSettings() {
@@ -262,7 +327,7 @@ async function loadStreamQueue() {
         }
       }`, { slug: tournSlug });
 
-    const queues = (data?.tournament?.streamQueue || []).slice();
+    let queues = (data?.tournament?.streamQueue || []).slice();
     // Resolve a queue's visible label the same way rename/display do: the
     // custom name may be stored under either the raw streamName or its
     // escaped form, so check both before falling back to the raw name.
@@ -281,6 +346,21 @@ async function loadStreamQueue() {
     if (!queues.length) {
       el.innerHTML = '<div class="empty-state"><strong>No stream queue</strong><div class="hint">The TO may not have a stream queue configured on Start.gg.</div></div>';
       setStatus(window.t('st_no_queue'), null);
+      renderStreamPicker();   // clear/hide the picker when there's no queue
+      return;
+    }
+
+    // Remember every stream this tournament exposes (for the picker), then
+    // filter to the TO's selected streams (default = all).
+    sqKnownStreams = queues.map(function (q) { return (q.stream && q.stream.streamName) || 'Stream'; });
+    renderStreamPicker();
+    queues = queues.filter(function (q) {
+      return isStreamShown((q.stream && q.stream.streamName) || 'Stream');
+    });
+    if (!queues.length) {
+      el.innerHTML = '<div class="empty-state"><strong>' + (window.t ? window.t('st_no_streams_selected') : 'No streams selected')
+        + '</strong><div class="hint">' + (window.t ? window.t('st_no_streams_hint') : 'Use the stream filter above to choose which streams to show.') + '</div></div>';
+      setStatus('', null);
       return;
     }
 
@@ -352,6 +432,21 @@ function clearQueue() {
     stopAuto();
     document.getElementById('autoRefresh').checked = false;
     document.getElementById('timerBadge').textContent = '';
+
+    // Reset per-stream choices to defaults so a fresh load shows start.gg's
+    // original stream names with no featured/filter carryover. We drop only
+    // THIS tournament's stream filter entry (other tournaments keep theirs).
+    if (tournSlug && sqStreamFilter[tournSlug]) {
+        delete sqStreamFilter[tournSlug];
+        saveSqStreamFilter();
+    }
+    Object.keys(sqCustomNames).forEach(function (k) { delete sqCustomNames[k]; });
+    saveSqCustomNames();
+    sqFeaturedStream = '';
+    saveSqFeatured();
+    sqKnownStreams = [];
+    renderStreamPicker();   // hides the (now-empty) filter bar
+
     tournSlug = '';
     selectedEventId = null;
     document.getElementById('tourneySlug').value = '';
