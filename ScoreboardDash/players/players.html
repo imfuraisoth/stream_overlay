@@ -61,6 +61,10 @@
         <select id="mCountry"></select>
       </div>
       <div class="field-group">
+        <label for="mState" data-i18n="pl_state">State / Region</label>
+        <input type="text" id="mState" placeholder="e.g. TX (used for seeding checks; not shown on stream)" data-i18n-attr="placeholder:pl_state_ph">
+      </div>
+      <div class="field-group">
         <label data-i18n="pl_social">Social Media</label>
         <div class="social-row">
           <select id="mSocialPlatform">
@@ -312,6 +316,7 @@ function openAddModal() {
   mRenderAliases();
   document.getElementById('mName').value    = '';
   document.getElementById('mTeam').value    = '';
+  document.getElementById('mState').value   = '';
   document.getElementById('mIsCommentator').checked = false;
   document.getElementById('mSocialHandle').value = '';
   document.getElementById('mSocialPlatform').value = '';
@@ -329,6 +334,7 @@ function openEditModal(id) {
   document.getElementById('modalTitle').textContent = window.t('pl_edit_title');
   document.getElementById('mName').value    = p.name || '';
   document.getElementById('mTeam').value    = p.team || '';
+  document.getElementById('mState').value   = p.state || '';
   document.getElementById('mIsCommentator').checked = !!p.is_commentator;
   document.getElementById('mSocialHandle').value = p.social_handle || '';
   document.getElementById('mSocialPlatform').value = p.social_platform || '';
@@ -541,6 +547,7 @@ async function saveModal() {
   const name    = document.getElementById('mName').value.trim();
   const team    = document.getElementById('mTeam').value.trim();
   const country = document.getElementById('mCountry').value;
+  const state   = document.getElementById('mState').value.trim();
   const social_handle     = document.getElementById('mSocialHandle').value.trim();
   const is_commentator    = document.getElementById('mIsCommentator').checked;
   const social_platform = document.getElementById('mSocialPlatform').value;
@@ -548,9 +555,9 @@ async function saveModal() {
 
   const endpoint = _editingOrigName ? '/updateLocalPlayer' : '/saveLocalPlayer';
   const body = _editingOrigName
-    ? { id: _editingOrigName, name, team, country, social_handle, social_platform, is_commentator,
+    ? { id: _editingOrigName, name, team, country, state, social_handle, social_platform, is_commentator,
         characters: window._editingCharacters, roster: window._editingRoster, aliases: window._editingAliases }
-    : { name, team, country, social_handle, social_platform, is_commentator,
+    : { name, team, country, state, social_handle, social_platform, is_commentator,
         characters: window._editingCharacters, roster: window._editingRoster, aliases: window._editingAliases };
 
   try {

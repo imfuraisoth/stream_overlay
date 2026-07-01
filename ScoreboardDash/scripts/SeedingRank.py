@@ -326,3 +326,66 @@ def detect_rematches(ranked, events, early_rounds=2, recency_factor=0.8,
         })
     flags.sort(key=lambda f: f["severity"], reverse=True)
     return flags
+
+
+def detect_state_clashes(ranked, early_rounds=2):
+    """Find seeded players from the SAME state who'd meet early.
+
+    Structurally like detect_rematches but pairs by shared state instead of
+    prior meetings, and has no recency dimension (being from the same state
+    isn't "recent" or "old"). Players with no state set are ignored.
+
+    ranked        -- list of {player_id, name, state, ...} in seed order.
+    early_rounds  -- flag pairs meeting in this round or earlier.
+
+    Returns flags sorted worst-first (earliest round first):
+      { a_seed, a_id, a_name, b_seed, b_id, b_name, state, round,
+        bracket_size, severity }
+    """
+    seed_of = {}
+    name_of = {}
+    state_of = {}
+    order_ids = []
+    for i, r in enumerate(ranked):
+        pid = r.get("player_id")
+        if not pid:
+            continue
+        seed_of[pid] = i + 1
+        name_of[pid] = r.get("name", pid)
+        st = (r.get("state") or "").strip()
+        if st:
+            state_of[pid] = st
+        order_ids.append(pid)
+
+    size = _next_pow2(len(order_ids))
+    bracket = standard_bracket_order(size)
+    slot_of_seed = {seed: slot for slot, seed in enumerate(bracket)}
+
+    # Group players by normalized (case-insensitive) state.
+    by_state = {}
+    for pid, st in state_of.items():
+        by_state.setdefault(st.lower(), []).append(pid)
+
+    flags = []
+    for st_key, pids in by_state.items():
+        if len(pids) < 2:
+            continue
+        for i in range(len(pids)):
+            for j in range(i + 1, len(pids)):
+                a, b = pids[i], pids[j]
+                slot_a = slot_of_seed.get(seed_of[a])
+                slot_b = slot_of_seed.get(seed_of[b])
+                if slot_a is None or slot_b is None:
+                    continue
+                rnd = meeting_round(slot_a, slot_b, size)
+                if rnd > early_rounds:
+                    continue
+                flags.append({
+                    "a_seed": seed_of[a], "a_id": a, "a_name": name_of.get(a, a),
+                    "b_seed": seed_of[b], "b_id": b, "b_name": name_of.get(b, b),
+                    "state": state_of[a],
+                    "round": rnd, "bracket_size": size,
+                    "severity": round(float(early_rounds - rnd + 1), 4),
+                })
+    flags.sort(key=lambda f: f["severity"], reverse=True)
+    return flags

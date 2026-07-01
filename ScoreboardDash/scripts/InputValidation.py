@@ -23,6 +23,7 @@ what it cleaned.
 MAX_NAME = 80
 MAX_TEAM = 60
 MAX_COUNTRY = 40
+MAX_STATE = 40
 MAX_HANDLE = 80
 MAX_PLATFORM = 40
 MAX_ALIAS = 80
@@ -76,6 +77,7 @@ def sanitize_player(rec, issues=None):
         "name": name,
         "team": _clean_str(rec.get("team"), MAX_TEAM),
         "country": _clean_str(rec.get("country"), MAX_COUNTRY),
+        "state": _clean_str(rec.get("state"), MAX_STATE),
         "social_handle": _clean_str(rec.get("social_handle"), MAX_HANDLE),
         "social_platform": _clean_str(rec.get("social_platform"), MAX_PLATFORM),
         "is_commentator": bool(rec.get("is_commentator")),

@@ -48,6 +48,8 @@
     .sd-rematch-head { font-family: var(--font-d, 'Barlow Condensed'); font-weight: 700;
       font-size: 15px; color: var(--accent2, #c43030); margin-bottom: 4px; }
     .sd-rematch-sub { font-size: 12px; color: var(--fg2); margin-bottom: 10px; }
+    .sd-state-card { border-color: var(--accent, #40D0B0); }
+    .sd-state-head { color: var(--accent, #40D0B0); }
     .sd-draghint { font-size: 11px; color: var(--fg2); font-style: italic; margin-bottom: 6px; }
     .sd-drag-row { cursor: grab; }
     .sd-drag-row.sd-dragging { opacity: 0.4; }
@@ -104,9 +106,16 @@
     <label class="sd-ctl" id="recencyWrap" style="display:none;"><span data-i18n="sd_recency_factor">Recency factor</span>
       <input type="number" id="recencyInput" min="0.1" max="1" step="0.05" value="0.85" style="width:80px;" onchange="recompute()">
     </label>
-    <label class="sd-ctl"><span data-i18n="sd_rematch_rounds">Flag rematches within</span>
+    <label class="sd-ctl"><span data-i18n="sd_check_mode">Bracket check</span>
+      <select id="checkMode" onchange="recompute()">
+        <option value="off" data-i18n="sd_check_off">Off</option>
+        <option value="rematch" selected data-i18n="sd_check_rematch">Rematch only</option>
+        <option value="state" data-i18n="sd_check_state">Same-state only</option>
+        <option value="both" data-i18n="sd_check_both">Both</option>
+      </select>
+    </label>
+    <label class="sd-ctl"><span data-i18n="sd_rematch_rounds">Flag within</span>
       <select id="rematchRounds" onchange="recompute()">
-        <option value="0" data-i18n="sd_rematch_off">Off</option>
         <option value="1" data-i18n="sd_rematch_r1">Round 1</option>
         <option value="2" selected data-i18n="sd_rematch_r2">First 2 rounds</option>
         <option value="3" data-i18n="sd_rematch_r3">First 3 rounds</option>
@@ -123,6 +132,7 @@
   <div class="sd-status" id="sdStatus"></div>
 
   <div id="sdRematches"></div>
+  <div id="sdStateClashes"></div>
   <div id="sdRanked"></div>
   <div id="sdKnownUnranked"></div>
   <div id="sdUnmatched"></div>
@@ -206,8 +216,9 @@
       decay_mode: document.getElementById('decaySelect').value,
       threshold: parseInt(document.getElementById('thresholdInput').value, 10) || 2,
       recency_factor: parseFloat(document.getElementById('recencyInput').value) || 0.85,
-      early_rounds: parseInt(document.getElementById('rematchRounds').value, 10) || 0,
-      rematch_check: (parseInt(document.getElementById('rematchRounds').value, 10) || 0) > 0,
+      early_rounds: parseInt(document.getElementById('rematchRounds').value, 10) || 2,
+      check_mode: document.getElementById('checkMode').value,
+      rematch_check: document.getElementById('checkMode').value === 'rematch' || document.getElementById('checkMode').value === 'both',
       rematch_recency: parseFloat(document.getElementById('rematchRecency').value) || 0.8,
       rematch_lookback: parseInt(document.getElementById('rematchLookback').value, 10) || 0
     };
@@ -387,20 +398,18 @@
     recheckRematches();
   }
 
-  // Recompute early-rematch flags from the current seedOrder + the pairwise
-  // prior-meeting data the server sent -- entirely client-side, so it's
-  // instant on every drag. Mirrors SeedingRank.detect_rematches.
+  // Recompute early-rematch AND same-state flags from the current seedOrder,
+  // using the pairwise prior-meeting data + player states the server sent --
+  // entirely client-side, so it's instant on every drag. Mirrors
+  // SeedingRank.detect_rematches / detect_state_clashes.
   function recheckRematches(){
-    if (!lastResult){ renderRematches([]); return; }
-    var earlyRounds = parseInt(document.getElementById('rematchRounds').value, 10) || 0;
-    if (earlyRounds <= 0){ renderRematches([]); return; }
-    var recency = parseFloat(document.getElementById('rematchRecency').value) || 0.8;
-    var lookback = parseInt(document.getElementById('rematchLookback').value, 10) || 0;
-    var pairs = lastResult.pair_history || [];
+    if (!lastResult){ renderRematches([]); renderStateClashes([]); return; }
+    var mode = document.getElementById('checkMode').value;
+    if (mode === 'off'){ renderRematches([]); renderStateClashes([]); return; }
+    var earlyRounds = parseInt(document.getElementById('rematchRounds').value, 10) || 2;
 
-    // Full seed order = current seed list (which may already include promoted
+    // Full seed order = current seed list (may already include promoted
     // known-unranked/unmatched players) + any known-unranked NOT yet promoted.
-    // Filtering by `promoted` avoids counting a dragged-in player twice.
     var tail = (lastResult.known_unranked || []).filter(function(r){ return !promoted[rowKey(r)]; });
     var fullOrder = seedOrder.concat(tail);
     var seedOf = {};
@@ -411,24 +420,63 @@
     var slotOfSeed = {};
     bracket.forEach(function(seed, slot){ slotOfSeed[seed] = slot; });
 
-    var flags = [];
-    pairs.forEach(function(p){
-      if (lookback && p.events_ago >= lookback) return;
-      var sa = seedOf[p.a_id], sb = seedOf[p.b_id];
-      if (!sa || !sb) return;
-      var slotA = slotOfSeed[sa], slotB = slotOfSeed[sb];
-      if (slotA === undefined || slotB === undefined) return;
-      var rnd = meetingRound(slotA, slotB, size);
-      if (rnd > earlyRounds) return;
-      var rweight = Math.pow(recency, p.events_ago);
-      var severity = (earlyRounds - rnd + 1) * rweight;
-      flags.push({ a_seed: sa, a_name: p.a_name, b_seed: sb, b_name: p.b_name,
-        round: rnd, events_ago: p.events_ago, last_label: p.label,
-        last_date: p.date, meetings: p.count, recency_weight: Math.round(rweight*1000)/1000,
-        severity: severity });
-    });
-    flags.sort(function(a,b){ return b.severity - a.severity; });
-    renderRematches(flags);
+    // ── Rematch check ──
+    if (mode === 'rematch' || mode === 'both'){
+      var recency = parseFloat(document.getElementById('rematchRecency').value) || 0.8;
+      var lookback = parseInt(document.getElementById('rematchLookback').value, 10) || 0;
+      var pairs = lastResult.pair_history || [];
+      var flags = [];
+      pairs.forEach(function(p){
+        if (lookback && p.events_ago >= lookback) return;
+        var sa = seedOf[p.a_id], sb = seedOf[p.b_id];
+        if (!sa || !sb) return;
+        var slotA = slotOfSeed[sa], slotB = slotOfSeed[sb];
+        if (slotA === undefined || slotB === undefined) return;
+        var rnd = meetingRound(slotA, slotB, size);
+        if (rnd > earlyRounds) return;
+        var rweight = Math.pow(recency, p.events_ago);
+        var severity = (earlyRounds - rnd + 1) * rweight;
+        flags.push({ a_seed: sa, a_name: p.a_name, b_seed: sb, b_name: p.b_name,
+          round: rnd, events_ago: p.events_ago, last_label: p.label,
+          last_date: p.date, meetings: p.count, recency_weight: Math.round(rweight*1000)/1000,
+          severity: severity });
+      });
+      flags.sort(function(a,b){ return b.severity - a.severity; });
+      renderRematches(flags);
+    } else {
+      renderRematches([]);
+    }
+
+    // ── Same-state check ──
+    if (mode === 'state' || mode === 'both'){
+      var states = lastResult.player_states || {};
+      // group seeded players by normalized state
+      var byState = {};
+      fullOrder.forEach(function(r){
+        var pid = r.player_id; if (!pid) return;
+        var st = (states[pid] || '').trim();
+        if (!st) return;
+        (byState[st.toLowerCase()] = byState[st.toLowerCase()] || []).push({pid: pid, name: r.name, st: st});
+      });
+      var sflags = [];
+      Object.keys(byState).forEach(function(k){
+        var grp = byState[k];
+        for (var i=0;i<grp.length;i++){ for (var j=i+1;j<grp.length;j++){
+          var a=grp[i], b=grp[j];
+          var sa=seedOf[a.pid], sb=seedOf[b.pid];
+          var slotA=slotOfSeed[sa], slotB=slotOfSeed[sb];
+          if (slotA===undefined||slotB===undefined) continue;
+          var rnd=meetingRound(slotA, slotB, size);
+          if (rnd>earlyRounds) continue;
+          sflags.push({ a_seed:sa, a_name:a.name, b_seed:sb, b_name:b.name,
+            state:a.st, round:rnd, severity:(earlyRounds-rnd+1) });
+        }}
+      });
+      sflags.sort(function(a,b){ return b.severity - a.severity; });
+      renderStateClashes(sflags);
+    } else {
+      renderStateClashes([]);
+    }
   }
 
   function renderRematches(flags){
@@ -449,6 +497,28 @@
         + '<td class="sd-seed">R' + f.round + '</td>'
         + '<td><strong>#' + f.a_seed + '</strong> ' + esc(f.a_name) + ' <span class="sd-math">vs</span> <strong>#' + f.b_seed + '</strong> ' + esc(f.b_name) + '</td>'
         + '<td>' + esc(when) + times + '</td>'
+        + '</tr>';
+    });
+    h += '</tbody></table></div>';
+    box.innerHTML = h;
+  }
+
+  function renderStateClashes(flags){
+    var box = document.getElementById('sdStateClashes');
+    if (!flags || !flags.length){ box.innerHTML = ''; return; }
+    var title = window.t ? window.t('sd_state_title') : 'Possible same-state early meetings';
+    var sub = window.t ? window.t('sd_state_sub') : 'These seeded players are from the same state/region and would meet early. Spread out regionals if you want to avoid it.';
+    var h = '<div class="sd-rematch-card sd-state-card"><div class="sd-rematch-head sd-state-head">\u26A0 ' + esc(title) + '</div>'
+      + '<div class="sd-rematch-sub">' + esc(sub) + '</div><table class="sd"><thead><tr>'
+      + '<th>' + (window.t?window.t('sd_rematch_col_round'):'Round') + '</th>'
+      + '<th>' + (window.t?window.t('sd_rematch_col_players'):'Players') + '</th>'
+      + '<th>' + (window.t?window.t('sd_state_col'):'State') + '</th>'
+      + '</tr></thead><tbody>';
+    flags.forEach(function(f){
+      h += '<tr>'
+        + '<td class="sd-seed">R' + f.round + '</td>'
+        + '<td><strong>#' + f.a_seed + '</strong> ' + esc(f.a_name) + ' <span class="sd-math">vs</span> <strong>#' + f.b_seed + '</strong> ' + esc(f.b_name) + '</td>'
+        + '<td>' + esc(f.state) + '</td>'
         + '</tr>';
     });
     h += '</tbody></table></div>';

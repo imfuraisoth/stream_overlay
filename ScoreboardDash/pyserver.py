@@ -369,10 +369,11 @@ def save_local_player():
         if pid is None:
             # New player — assign next ID
             pid = _next_player_id(players)
-            existing = {"id": pid, "name": name, "team": "", "country": "", "social_handle": "", "social_platform": "", "is_commentator": False, "characters": {}, "roster": {}, "aliases": []}
+            existing = {"id": pid, "name": name, "team": "", "country": "", "state": "", "social_handle": "", "social_platform": "", "is_commentator": False, "characters": {}, "roster": {}, "aliases": []}
         # Only overwrite fields that are explicitly provided and non-empty
         if body.get("team"):            existing["team"]            = body["team"]
         if body.get("country"):         existing["country"]         = body["country"]
+        if "state" in body:             existing["state"]           = body["state"]   # allow clearing
         if "social_handle"   in body:              existing["social_handle"]   = body["social_handle"]
         if "social_platform" in body:              existing["social_platform"] = body["social_platform"]
         if "is_commentator" in body:        existing["is_commentator"]  = bool(body["is_commentator"])
@@ -410,6 +411,7 @@ def update_local_player():
     name            = body.get("name", "").strip()
     team            = body.get("team", "")
     country         = body.get("country", "")
+    state           = body.get("state", "")
     social_handle   = body.get("social_handle", "")
     social_platform = body.get("social_platform", "")
     is_commentator  = bool(body.get("is_commentator", False))
@@ -430,6 +432,7 @@ def update_local_player():
         new_aliases = body.get("aliases")
         aliases = new_aliases if new_aliases is not None else existing_aliases
         players[pid] = {"id": pid, "name": name, "team": team, "country": country,
+                        "state": state,
                         "social_handle": social_handle, "social_platform": social_platform,
                         "is_commentator": is_commentator, "characters": characters,
                         "roster": roster, "aliases": aliases}
@@ -989,12 +992,23 @@ def seeding_compute():
     # -but-unranked players, so we detect against that combined order.
     rematch_flags = []
     pair_history = []
+    state_flags = []
+    state_lookup = {}
     try:
-        if body.get("rematch_check", True):
-            try:
-                early_rounds = int(body.get("early_rounds", 2))
-            except (TypeError, ValueError):
-                early_rounds = 2
+        # check_mode: 'rematch' | 'state' | 'both' | 'off'. (Back-compat: the
+        # old rematch_check bool still turns rematch on if check_mode absent.)
+        check_mode = body.get("check_mode")
+        if check_mode is None:
+            check_mode = "rematch" if body.get("rematch_check", True) else "off"
+        do_rematch = check_mode in ("rematch", "both")
+        do_state = check_mode in ("state", "both")
+        try:
+            early_rounds = int(body.get("early_rounds", 2))
+        except (TypeError, ValueError):
+            early_rounds = 2
+        seed_order = ranked + known_unranked   # full entry order
+
+        if do_rematch and early_rounds > 0:
             try:
                 rematch_recency = float(body.get("rematch_recency", 0.8))
             except (TypeError, ValueError):
@@ -1003,28 +1017,38 @@ def seeding_compute():
                 lookback = int(body.get("rematch_lookback", 0))
             except (TypeError, ValueError):
                 lookback = 0
-            seed_order = ranked + known_unranked   # full entry order
             rematch_flags = SeedingRank.detect_rematches(
                 seed_order, events, early_rounds=early_rounds,
                 recency_factor=rematch_recency, lookback=lookback)
-            # Also expose the raw pairwise prior-meeting data so the client can
-            # recompute early-rematch flags instantly when the user drags to
-            # reorder seeds -- no server round-trip, same bracket math.
-            _ordered_ev = SeedingRank._event_order(events)
-            _seed_ids = [r.get("player_id") for r in seed_order if r.get("player_id")]
-            _pm = SeedingRank.prior_meetings(_seed_ids, _ordered_ev)
-            name_lookup = {}
-            for r in seed_order:
-                if r.get("player_id"):
-                    name_lookup[r["player_id"]] = r.get("name", r["player_id"])
-            pair_history = [{"a_id": a, "b_id": b,
-                             "a_name": name_lookup.get(a, a), "b_name": name_lookup.get(b, b),
-                             "events_ago": info["events_ago"], "label": info["label"],
-                             "date": info["date"], "count": info["count"]}
-                            for (a, b), info in _pm.items()]
+
+        if do_state and early_rounds > 0:
+            # attach each seeded player's state from the DB for detection
+            for row in seed_order:
+                pid = row.get("player_id")
+                if pid:
+                    row["state"] = players.get(pid, {}).get("state", "")
+            state_flags = SeedingRank.detect_state_clashes(seed_order, early_rounds=early_rounds)
+
+        # Always expose raw pair history + player states so the client can
+        # recompute BOTH checks instantly on a drag-reorder, no server round-trip.
+        _ordered_ev = SeedingRank._event_order(events)
+        _seed_ids = [r.get("player_id") for r in seed_order if r.get("player_id")]
+        _pm = SeedingRank.prior_meetings(_seed_ids, _ordered_ev)
+        name_lookup = {}
+        state_lookup = {}
+        for r in seed_order:
+            if r.get("player_id"):
+                name_lookup[r["player_id"]] = r.get("name", r["player_id"])
+                state_lookup[r["player_id"]] = players.get(r["player_id"], {}).get("state", "")
+        pair_history = [{"a_id": a, "b_id": b,
+                         "a_name": name_lookup.get(a, a), "b_name": name_lookup.get(b, b),
+                         "events_ago": info["events_ago"], "label": info["label"],
+                         "date": info["date"], "count": info["count"]}
+                        for (a, b), info in _pm.items()]
     except Exception as e:
-        print("seedingCompute rematch detection error: %s" % e)
+        print("seedingCompute detection error: %s" % e)
         rematch_flags = []
+        state_flags = []
 
     return jsonify({
         "ok": True,
@@ -1034,7 +1058,9 @@ def seeding_compute():
         "coverage": coverage,
         "entrant_count": len(entrants or []),
         "rematches": rematch_flags,       # likely early-bracket rematches
+        "state_clashes": state_flags,     # same-state early meetings
         "pair_history": pair_history,      # raw prior meetings, for live re-check on reorder
+        "player_states": state_lookup,    # pid -> state, for live re-check
     }), 200
 
 

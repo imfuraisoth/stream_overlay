@@ -291,7 +291,7 @@ def _merge_player_into(dest_rec, inc_rec):
             if game not in dcur:
                 dcur[game] = val
     # core fields: fill only if empty on destination
-    for field in ("team", "country", "social_handle", "social_platform"):
+    for field in ("team", "country", "state", "social_handle", "social_platform"):
         if not dest_rec.get(field) and inc_rec.get(field):
             dest_rec[field] = inc_rec[field]
 
