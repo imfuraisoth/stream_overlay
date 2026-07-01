@@ -984,6 +984,48 @@ def seeding_compute():
     coverage = {"events_in_scope": len(events),
                 "scope_type": scope_type, "scope_value": scope_value}
 
+    # Rematch detection: predict likely early-bracket rematches from history.
+    # The seed order the TO would enter is ranked (best-first) then the known
+    # -but-unranked players, so we detect against that combined order.
+    rematch_flags = []
+    pair_history = []
+    try:
+        if body.get("rematch_check", True):
+            try:
+                early_rounds = int(body.get("early_rounds", 2))
+            except (TypeError, ValueError):
+                early_rounds = 2
+            try:
+                rematch_recency = float(body.get("rematch_recency", 0.8))
+            except (TypeError, ValueError):
+                rematch_recency = 0.8
+            try:
+                lookback = int(body.get("rematch_lookback", 0))
+            except (TypeError, ValueError):
+                lookback = 0
+            seed_order = ranked + known_unranked   # full entry order
+            rematch_flags = SeedingRank.detect_rematches(
+                seed_order, events, early_rounds=early_rounds,
+                recency_factor=rematch_recency, lookback=lookback)
+            # Also expose the raw pairwise prior-meeting data so the client can
+            # recompute early-rematch flags instantly when the user drags to
+            # reorder seeds -- no server round-trip, same bracket math.
+            _ordered_ev = SeedingRank._event_order(events)
+            _seed_ids = [r.get("player_id") for r in seed_order if r.get("player_id")]
+            _pm = SeedingRank.prior_meetings(_seed_ids, _ordered_ev)
+            name_lookup = {}
+            for r in seed_order:
+                if r.get("player_id"):
+                    name_lookup[r["player_id"]] = r.get("name", r["player_id"])
+            pair_history = [{"a_id": a, "b_id": b,
+                             "a_name": name_lookup.get(a, a), "b_name": name_lookup.get(b, b),
+                             "events_ago": info["events_ago"], "label": info["label"],
+                             "date": info["date"], "count": info["count"]}
+                            for (a, b), info in _pm.items()]
+    except Exception as e:
+        print("seedingCompute rematch detection error: %s" % e)
+        rematch_flags = []
+
     return jsonify({
         "ok": True,
         "ranked": ranked,                 # already sorted best-first
@@ -991,6 +1033,8 @@ def seeding_compute():
         "unmatched": unmatched,           # need reconcile
         "coverage": coverage,
         "entrant_count": len(entrants or []),
+        "rematches": rematch_flags,       # likely early-bracket rematches
+        "pair_history": pair_history,      # raw prior meetings, for live re-check on reorder
     }), 200
 
 

@@ -173,3 +173,156 @@ def rank_players(player_ids, events, curve="standard", decay_mode="none",
     # sort by points desc, then by events_counted desc as a tiebreak
     results.sort(key=lambda r: (r["points"], r["events_counted"]), reverse=True)
     return results
+
+
+# ── REMATCH DETECTION ─────────────────────────────────────────────────
+# start.gg builds standard single-elim brackets with the "opposite ends"
+# rule: seed 1 and seed 2 sit at far ends and only meet in the final, and in
+# general two seeds meet in a round determined by their positions in the
+# standard bracket order. We can't control the bracket (the tool only outputs
+# a seed ORDER the TO types in), but given the seed order + entrant count we
+# can PREDICT which pairs would meet early, cross-reference prior meetings from
+# history, and flag likely early rematches -- weighted so a more recent prior
+# meeting matters more than an old one.
+
+def _next_pow2(n):
+    p = 1
+    while p < n:
+        p *= 2
+    return max(p, 2)
+
+
+def standard_bracket_order(size):
+    """Seed numbers in bracket-SLOT order for a standard single-elim bracket
+    of the given (power-of-two) size -- the "opposite ends" placement.
+
+    e.g. size 4 -> [1,4,2,3]; size 8 -> [1,8,4,5,2,7,3,6]. The list index is
+    the bracket slot; the value is the seed sitting in that slot."""
+    order = [1, 2]
+    while len(order) < size:
+        m = len(order) * 2
+        nxt = []
+        for s in order:
+            nxt.append(s)
+            nxt.append(m + 1 - s)
+        order = nxt
+    return order
+
+
+def meeting_round(slot_a, slot_b, size):
+    """Round (1 = first round) in which two bracket slots would meet, assuming
+    both keep winning. size is the bracket size (power of two)."""
+    r = 1
+    block = 2
+    while block <= size:
+        if slot_a // block == slot_b // block:
+            return r
+        r += 1
+        block *= 2
+    return r  # they'd meet in the final
+
+
+def _pair_key(a, b):
+    return (a, b) if a <= b else (b, a)
+
+
+def prior_meetings(seeded_ids, events_oldest_first):
+    """Scan events for sets between two of the seeded players. Returns
+    {(id_a,id_b): {"events_ago": int, "label": str, "date": str, "count": int}}
+    where events_ago counts from the most recent event (0 = the newest event
+    in scope). Only the MOST RECENT meeting per pair is recorded (plus a total
+    count)."""
+    idset = set(seeded_ids)
+    n = len(events_oldest_first)
+    out = {}
+    for i, ev in enumerate(events_oldest_first):
+        events_ago = (n - 1) - i     # 0 for the newest event
+        for s in (ev.get("sets") or {}).values():
+            p1 = (s.get("p1") or {}).get("player_id")
+            p2 = (s.get("p2") or {}).get("player_id")
+            if not p1 or not p2 or p1 not in idset or p2 not in idset:
+                continue
+            key = _pair_key(p1, p2)
+            rec = out.get(key)
+            if rec is None:
+                out[key] = {"events_ago": events_ago,
+                            "label": ev.get("label") or ev.get("event_slug") or "",
+                            "date": ev.get("event_date") or "",
+                            "count": 1}
+            else:
+                rec["count"] += 1
+                # keep the most recent (smallest events_ago)
+                if events_ago < rec["events_ago"]:
+                    rec["events_ago"] = events_ago
+                    rec["label"] = ev.get("label") or ev.get("event_slug") or ""
+                    rec["date"] = ev.get("event_date") or ""
+    return out
+
+
+def detect_rematches(ranked, events, early_rounds=2, recency_factor=0.8,
+                     lookback=0):
+    """Find likely early rematches given a ranked seed list.
+
+    ranked          -- list of {player_id, name, ...} in seed order (index 0 =
+                       seed 1). name is optional; callers usually attach it.
+    events          -- scoped event dicts (unordered ok; sorted here).
+    early_rounds    -- flag pairs meeting in this round or earlier (1 = only
+                       first-round rematches; 2 = first two rounds; etc.).
+    recency_factor  -- 0..1 decay per event of age; a meeting `events_ago` old
+                       gets weight recency_factor**events_ago. Higher factor =
+                       older meetings still count.
+    lookback        -- if > 0, ignore meetings older than this many events.
+
+    Returns a list of flag dicts sorted worst-first:
+      { a_seed, a_id, a_name, b_seed, b_id, b_name, round, bracket_size,
+        events_ago, last_label, last_date, meetings, recency_weight, severity }
+    """
+    seed_of = {}          # player_id -> seed number (1-indexed)
+    name_of = {}
+    order_ids = []
+    for i, r in enumerate(ranked):
+        pid = r.get("player_id")
+        if not pid:
+            continue
+        seed_of[pid] = i + 1
+        name_of[pid] = r.get("name", pid)
+        order_ids.append(pid)
+
+    size = _next_pow2(len(order_ids))
+    bracket = standard_bracket_order(size)
+    # seed number -> slot index in the bracket
+    slot_of_seed = {seed: slot for slot, seed in enumerate(bracket)}
+
+    ordered = _event_order(events)
+    meetings = prior_meetings(order_ids, ordered)
+
+    flags = []
+    for (a, b), info in meetings.items():
+        if lookback and info["events_ago"] >= lookback:
+            continue
+        sa, sb = seed_of.get(a), seed_of.get(b)
+        if not sa or not sb:
+            continue
+        slot_a = slot_of_seed.get(sa)
+        slot_b = slot_of_seed.get(sb)
+        if slot_a is None or slot_b is None:
+            continue
+        rnd = meeting_round(slot_a, slot_b, size)
+        if rnd > early_rounds:
+            continue
+        rweight = recency_factor ** info["events_ago"]
+        # severity: earlier round dominates; recency breaks ties / scales it.
+        # (early_rounds - rnd + 1) is bigger for earlier rounds.
+        severity = round((early_rounds - rnd + 1) * rweight, 4)
+        flags.append({
+            "a_seed": sa, "a_id": a, "a_name": name_of.get(a, a),
+            "b_seed": sb, "b_id": b, "b_name": name_of.get(b, b),
+            "round": rnd, "bracket_size": size,
+            "events_ago": info["events_ago"],
+            "last_label": info["label"], "last_date": info["date"],
+            "meetings": info["count"],
+            "recency_weight": round(rweight, 3),
+            "severity": severity,
+        })
+    flags.sort(key=lambda f: f["severity"], reverse=True)
+    return flags
