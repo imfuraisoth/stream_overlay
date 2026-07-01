@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title data-i18n="bk_title">Data Backup — Stream Overlay</title>
+  <link rel="icon" type="image/png" href="../images/V.png">
+  <link href="../players/style.css" rel="stylesheet" type="text/css">
+  <script>
+    (function(){var s=localStorage.getItem('sc_theme');if(!s)return;try{var v=JSON.parse(s);Object.keys(v).forEach(function(k){document.documentElement.style.setProperty(k,v[k])});}catch(e){}})();
+  </script>
+  <link href="../theme/theme.css" rel="stylesheet" type="text/css">
+  <style>
+    .bk-wrap { max-width: 820px; margin: 0 auto; padding: 20px; }
+    .bk-hint { font-family: var(--font-d, 'Barlow Condensed'); font-size: 12px; color: var(--fg2); margin: 6px 0 18px; }
+    .bk-card { background: var(--bg2); border: 1px solid var(--border); border-radius: 8px; padding: 18px; margin-bottom: 18px; }
+    .bk-card h3 { margin: 0 0 4px; font-size: 16px; }
+    .bk-card .sub { font-size: 12px; color: var(--fg2); margin-bottom: 14px; }
+    .bk-checks { display: flex; gap: 18px; margin-bottom: 14px; flex-wrap: wrap; }
+    .bk-checks label { display: inline-flex; align-items: center; gap: 7px; font-size: 14px; cursor: pointer; }
+    .bk-status { font-family: var(--font-d, 'Barlow Condensed'); font-size: 13px; color: var(--fg2); margin-top: 10px; min-height: 18px; }
+    .bk-soon { opacity: 0.55; }
+    .bk-soon-tag { display: inline-block; font-size: 10px; text-transform: uppercase; letter-spacing: .05em;
+      border: 1px solid var(--border); border-radius: 10px; padding: 1px 8px; color: var(--fg2); margin-left: 8px; vertical-align: middle; }
+    .bk-summary { background: var(--bg3); border: 1px solid var(--border); border-radius: 6px;
+      padding: 10px 12px; font-size: 13px; margin-bottom: 14px; }
+    .bk-dim { color: var(--fg2); font-size: 12px; }
+    .bk-mode { display: flex; gap: 18px; margin-bottom: 8px; }
+    .bk-mode label { display: inline-flex; align-items: center; gap: 6px; font-size: 14px; cursor: pointer; }
+    .bk-mode-note { font-size: 12px; color: var(--fg2); margin-bottom: 14px; }
+    .btn.danger { background: var(--accent2, #c43030); border-color: var(--accent2, #c43030); color: #fff; }
+    .bk-warn { color: var(--accent2, #c43030); }
+    .bk-resolve-head { margin-bottom: 12px; }
+    .bk-res-row { background: var(--bg3); border: 1px solid var(--border); border-radius: 6px; padding: 10px 12px; margin-bottom: 10px; }
+    .bk-res-name { font-size: 14px; margin-bottom: 6px; }
+    .bk-res-opt { display: block; font-size: 13px; padding: 3px 0; cursor: pointer; }
+    .bk-res-opt input { margin-right: 6px; }
+  </style>
+</head>
+<body>
+<div id="nav-root" style="min-height:45px"></div>
+<div class="bk-wrap">
+  <h2 style="margin-bottom:4px;" data-i18n="bk_heading">Data Backup &amp; Transfer</h2>
+  <div class="bk-hint" data-i18n="bk_hint">
+    Export your player database and match history to a single file, then import it on
+    another computer -- prepare everything on one machine and carry it to the venue.
+  </div>
+
+  <!-- EXPORT -->
+  <div class="bk-card">
+    <h3 data-i18n="bk_export_title">Export</h3>
+    <div class="sub" data-i18n="bk_export_sub">Download a JSON bundle of the selected data.</div>
+    <div class="bk-checks">
+      <label><input type="checkbox" id="expPlayers" checked> <span data-i18n="bk_players">Player database</span></label>
+      <label><input type="checkbox" id="expHistory" checked> <span data-i18n="bk_history">Match history</span></label>
+    </div>
+    <button class="btn" id="expBtn" onclick="doExport()" data-i18n="bk_export_btn">Download Bundle</button>
+    <div class="bk-status" id="expStatus"></div>
+  </div>
+
+  <!-- IMPORT -->
+  <div class="bk-card">
+    <h3 data-i18n="bk_import_title">Import</h3>
+    <div class="sub" data-i18n="bk_import_sub">Load a bundle from another machine. An automatic backup of your current data is taken first.</div>
+
+    <input type="file" id="impFile" accept="application/json,.json" onchange="inspectBundle()" style="margin-bottom:12px;">
+    <div id="impSummary" class="bk-summary" style="display:none;"></div>
+
+    <div id="impOptions" style="display:none;">
+      <div class="bk-checks">
+        <label><input type="checkbox" id="impPlayers" checked> <span data-i18n="bk_players">Player database</span></label>
+        <label><input type="checkbox" id="impHistory" checked> <span data-i18n="bk_history">Match history</span></label>
+      </div>
+      <div class="bk-mode">
+        <label><input type="radio" name="impMode" value="replace" checked onchange="onModeChange()"> <span data-i18n="bk_mode_replace">Replace</span></label>
+        <label><input type="radio" name="impMode" value="merge" onchange="onModeChange()"> <span data-i18n="bk_mode_merge">Merge</span></label>
+      </div>
+      <div class="bk-mode-note" id="impModeNote" data-i18n="bk_replace_note">Replace overwrites the selected data on this machine with the bundle's. Your current data is backed up first.</div>
+      <button class="btn danger" id="impBtn" onclick="doImport()" data-i18n="bk_import_btn">Import (Replace)</button>
+    </div>
+    <div id="impResolve" style="display:none;"></div>
+    <div class="bk-status" id="impStatus"></div>
+  </div>
+</div>
+
+<script>
+  var loadedBundle = null;   // parsed file, held for the import call
+
+  function setExpStatus(t){ var el = document.getElementById('expStatus'); if (el) el.textContent = t || ''; }
+  function setImpStatus(t, warn){ var el = document.getElementById('impStatus'); if (el){ el.textContent = t || ''; el.className = 'bk-status' + (warn ? ' bk-warn' : ''); } }
+
+  function doExport(){
+    var players = document.getElementById('expPlayers').checked;
+    var history = document.getElementById('expHistory').checked;
+    if (!players && !history){
+      setExpStatus(window.t ? window.t('bk_pick_one') : 'Select at least one option to export.');
+      return;
+    }
+    var url = '/exportData?players=' + (players ? '1' : '0') + '&history=' + (history ? '1' : '0');
+    setExpStatus(window.t ? window.t('bk_exporting') : 'Preparing download…');
+    var a = document.createElement('a');
+    a.href = url;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(function(){ setExpStatus(window.t ? window.t('bk_export_done') : 'Bundle downloaded.'); }, 600);
+  }
+
+  // Read the chosen file, validate it server-side, and show what it holds.
+  function inspectBundle(){
+    var fileInput = document.getElementById('impFile');
+    var file = fileInput.files && fileInput.files[0];
+    document.getElementById('impOptions').style.display = 'none';
+    document.getElementById('impSummary').style.display = 'none';
+    loadedBundle = null;
+    if (!file) return;
+    setImpStatus(window.t ? window.t('bk_reading') : 'Reading file…');
+    var reader = new FileReader();
+    reader.onload = function(){
+      var parsed;
+      try { parsed = JSON.parse(reader.result); }
+      catch(e){ setImpStatus(window.t ? window.t('bk_bad_json') : 'That file is not valid JSON.', true); return; }
+      fetch('/importDataInspect', {
+        method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(parsed)
+      }).then(function(r){ return r.json(); }).then(function(data){
+        if (!data.ok){ setImpStatus(data.message || 'Invalid bundle.', true); return; }
+        loadedBundle = parsed;
+        showSummary(data.summary);
+        setImpStatus('');
+      }).catch(function(e){ setImpStatus('' + e, true); });
+    };
+    reader.readAsText(file);
+  }
+
+  function showSummary(s){
+    var box = document.getElementById('impSummary');
+    var parts = [];
+    if (s.contents.indexOf('players') !== -1) parts.push(s.player_count + ' ' + (window.t?window.t('bk_players_lc'):'players'));
+    if (s.contents.indexOf('history') !== -1) parts.push(s.event_count + ' ' + (window.t?window.t('bk_events_lc'):'events'));
+    box.innerHTML = '<strong>' + (window.t?window.t('bk_bundle_contains'):'This bundle contains:') + '</strong> '
+      + parts.join(' · ')
+      + (s.exported_at ? ' <span class="bk-dim">(' + (window.t?window.t('bk_exported'):'exported') + ' ' + escHtmlSafe(s.exported_at) + ')</span>' : '');
+    box.style.display = 'block';
+
+    // Only allow importing sections the bundle actually has.
+    var hasP = s.contents.indexOf('players') !== -1;
+    var hasH = s.contents.indexOf('history') !== -1;
+    var cbP = document.getElementById('impPlayers'), cbH = document.getElementById('impHistory');
+    cbP.checked = hasP; cbP.disabled = !hasP;
+    cbH.checked = hasH; cbH.disabled = !hasH;
+    document.getElementById('impOptions').style.display = 'block';
+  }
+
+  function escHtmlSafe(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+  function currentMode(){
+    var r = document.querySelector('input[name="impMode"]:checked');
+    return r ? r.value : 'replace';
+  }
+
+  function onModeChange(){
+    var mode = currentMode();
+    var btn = document.getElementById('impBtn');
+    var note = document.getElementById('impModeNote');
+    if (mode === 'merge'){
+      btn.textContent = window.t ? window.t('bk_merge_btn') : 'Import (Merge)';
+      btn.classList.remove('danger');
+      if (note) note.textContent = window.t ? window.t('bk_merge_note') : "Merge combines the bundle into your existing data. You'll be asked about any players that can't be matched automatically. Your current data is backed up first.";
+    } else {
+      btn.textContent = window.t ? window.t('bk_import_btn') : 'Import (Replace)';
+      btn.classList.add('danger');
+      if (note) note.textContent = window.t ? window.t('bk_replace_note') : "Replace overwrites the selected data on this machine with the bundle's. Your current data is backed up first.";
+    }
+    // Leaving merge resolution behind if the user switches modes
+    document.getElementById('impResolve').style.display = 'none';
+  }
+
+  function doImport(){
+    if (!loadedBundle){ setImpStatus(window.t?window.t('bk_choose_file'):'Choose a bundle file first.', true); return; }
+    var players = document.getElementById('impPlayers').checked;
+    var history = document.getElementById('impHistory').checked;
+    if (!players && !history){ setImpStatus(window.t?window.t('bk_pick_one'):'Select at least one option to import.', true); return; }
+
+    if (currentMode() === 'merge'){ startMerge(players, history); return; }
+
+    // Replace: typed confirmation, then apply.
+    var typed = window.prompt((window.t?window.t('bk_confirm_prompt'):'Replace will overwrite the selected data on this machine (a backup is taken first). Type REPLACE to confirm.'));
+    if (typed !== 'REPLACE'){ setImpStatus(window.t?window.t('bk_cancelled'):'Import cancelled.'); return; }
+    applyImport('replace', players, history, null);
+  }
+
+  // MERGE: analyze first; if ambiguous players exist, show the resolution UI.
+  function startMerge(players, history){
+    setImpStatus(window.t?window.t('bk_analyzing'):'Analyzing…');
+    document.getElementById('impResolve').style.display = 'none';
+    fetch('/mergeAnalyze', {
+      method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ bundle: loadedBundle })
+    }).then(function(r){ return r.json(); }).then(function(data){
+      if (!data.ok){ setImpStatus(data.message || 'Analysis failed.', true); return; }
+      var plan = data.plan;
+      if (!players || !plan.ambiguous.length){
+        // No player merge, or nothing ambiguous -> apply straight away.
+        applyImport('merge', players, history, {});
+        return;
+      }
+      renderResolution(plan, players, history);
+      setImpStatus('');
+    }).catch(function(e){ setImpStatus('' + e, true); });
+  }
+
+  function renderResolution(plan, players, history){
+    var box = document.getElementById('impResolve');
+    var h = '<div class="bk-resolve-head">'
+      + '<strong>' + (window.t?window.t('bk_resolve_title'):'Some players need your decision') + '</strong>'
+      + '<div class="bk-dim">' + plan.confident.length + ' ' + (window.t?window.t('bk_auto_merged'):'auto-matched')
+      + ' · ' + plan.new.length + ' ' + (window.t?window.t('bk_auto_new'):'new') + '</div></div>';
+    plan.ambiguous.forEach(function(a, i){
+      var opts = '<label class="bk-res-opt"><input type="radio" name="res_'+i+'" value="new" checked> '
+        + (window.t?window.t('bk_import_as_new'):'Import as new player') + '</label>';
+      a.candidates.forEach(function(c){
+        opts += '<label class="bk-res-opt"><input type="radio" name="res_'+i+'" value="'+escHtmlSafe(c.id)+'"> '
+          + (window.t?window.t('bk_merge_into'):'Merge into') + ' <strong>' + escHtmlSafe(c.name) + '</strong>'
+          + ' <span class="bk-dim">(' + escHtmlSafe(c.reason) + ')</span></label>';
+      });
+      h += '<div class="bk-res-row" data-sid="'+escHtmlSafe(a.source_id)+'">'
+        + '<div class="bk-res-name">' + escHtmlSafe(a.name)
+        + (a.aliases && a.aliases.length ? ' <span class="bk-dim">[' + a.aliases.map(escHtmlSafe).join(', ') + ']</span>' : '')
+        + '</div>' + opts + '</div>';
+    });
+    h += '<button class="btn" onclick="confirmMerge('+players+','+history+')" data-i18n="bk_apply_merge">Apply Merge</button>';
+    box.innerHTML = h;
+    box.style.display = 'block';
+  }
+
+  function confirmMerge(players, history){
+    var resolutions = {};
+    document.querySelectorAll('#impResolve .bk-res-row').forEach(function(row, i){
+      var sid = row.getAttribute('data-sid');
+      var pick = row.querySelector('input[name="res_'+i+'"]:checked');
+      var val = pick ? pick.value : 'new';
+      resolutions[sid] = (val === 'new') ? {action:'new'} : {action:'merge', target_id: val};
+    });
+    applyImport('merge', players, history, resolutions);
+  }
+
+  function applyImport(mode, players, history, resolutions){
+    setImpStatus(window.t?window.t('bk_importing'):'Backing up and importing…');
+    var payload = { bundle: loadedBundle, mode: mode, players: players, history: history };
+    if (resolutions) payload.resolutions = resolutions;
+    fetch('/importData', {
+      method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload)
+    }).then(function(r){ return r.json(); }).then(function(data){
+      if (!data.ok){ setImpStatus(data.message || 'Import failed.', true); return; }
+      document.getElementById('impResolve').style.display = 'none';
+      var bits = [];
+      if (mode === 'replace'){
+        if (data.players_imported) bits.push(data.players_imported + ' ' + (window.t?window.t('bk_players_lc'):'players'));
+        if (data.events_imported) bits.push(data.events_imported + ' ' + (window.t?window.t('bk_events_lc'):'events'));
+      } else {
+        if (data.players_merged) bits.push(data.players_merged + ' ' + (window.t?window.t('bk_merged_lc'):'merged'));
+        if (data.players_added) bits.push(data.players_added + ' ' + (window.t?window.t('bk_added_lc'):'added'));
+        if (data.events_imported) bits.push(data.events_imported + ' ' + (window.t?window.t('bk_events_lc'):'events'));
+      }
+      var msg = (window.t?window.t('bk_import_done'):'Imported.') + ' ' + bits.join(' · ') + '. '
+        + (window.t?window.t('bk_backup_saved'):'Prior data backed up to') + ' data/backups/' + escHtmlSafe(data.backup_path);
+      setImpStatus(msg);
+    }).catch(function(e){ setImpStatus('' + e, true); });
+  }
+
+  window.onLangChange = function(){ if (window.applyTranslations) window.applyTranslations(document); };
+</script>
+  <script src="../lang/en.js"></script>
+  <script src="../i18n.js"></script>
+  <script src="../nav.js"></script>
+  <script src="../theme/theme.js" defer></script>
+</body>
+</html>

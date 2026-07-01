@@ -25,6 +25,7 @@ from scripts import startgg_client
 from scripts import parry_client
 from scripts import MatchHistory
 from scripts import SeedingRank
+from scripts import DataTransfer
 import argparse
 import socket
 import os
@@ -608,6 +609,128 @@ def set_event_date():
     if not ok:
         return jsonify({"ok": False, "message": "Event not found"}), 404
     return jsonify({"ok": True, "event_slug": slug, "event_date": date}), 200
+
+
+# ── DATA BACKUP / TRANSFER ────────────────────────────────────────────
+# Export the player DB and/or match history as a single JSON bundle, so a
+# setup prepared on one machine can be moved to another. Import (Replace /
+# Merge) is added in later steps; export comes first.
+
+@api.route('/exportData', methods=['GET'])
+def export_data():
+    """Download a JSON bundle of the player DB and/or match history.
+
+    Query params: players=1/0, history=1/0 (default both). Returns the
+    bundle as a file download."""
+    inc_players = request.args.get("players", "1") != "0"
+    inc_history = request.args.get("history", "1") != "0"
+    if not inc_players and not inc_history:
+        return jsonify({"ok": False, "message": "Select at least one of players or history."}), 400
+    bundle = DataTransfer.build_bundle(players_db, MatchHistory,
+                                       include_players=inc_players,
+                                       include_history=inc_history)
+    stamp = datetime.now().strftime("%Y%m%d-%H%M%S")
+    parts = "-".join(bundle["contents"]) or "empty"
+    fname = "scoreboarddash-%s-%s.json" % (parts, stamp)
+    payload = json.dumps(bundle, ensure_ascii=False, indent=2)
+    resp = Response(payload, mimetype="application/json")
+    resp.headers["Content-Disposition"] = "attachment; filename=" + fname
+    return resp
+
+
+@api.route('/importDataInspect', methods=['POST'])
+def import_data_inspect():
+    """Validate an uploaded bundle and return a summary (what it contains)
+    WITHOUT applying anything. Lets the page show the user what they're about
+    to import before they commit."""
+    bundle = request.get_json(silent=True)
+    if bundle is None:
+        return jsonify({"ok": False, "message": "Could not read that file as JSON."}), 400
+    ok, msg = DataTransfer.validate_bundle(bundle)
+    if not ok:
+        return jsonify({"ok": False, "message": msg}), 400
+    return jsonify({"ok": True, "summary": DataTransfer.bundle_summary(bundle)}), 200
+
+
+@api.route('/importData', methods=['POST'])
+def import_data():
+    """Import a bundle. Body: { bundle: {...}, mode: 'replace',
+    players: bool, history: bool }.
+
+    Always takes an auto-backup of the CURRENT data first (reversible), then
+    replaces the selected sections. (Merge mode is added in a later step.)"""
+    body = request.get_json(silent=True) or {}
+    bundle = body.get("bundle")
+    mode = body.get("mode", "replace")
+    do_players = body.get("players", True)
+    do_history = body.get("history", True)
+
+    if bundle is None:
+        return jsonify({"ok": False, "message": "No bundle provided."}), 400
+    ok, msg = DataTransfer.validate_bundle(bundle)
+    if not ok:
+        return jsonify({"ok": False, "message": msg}), 400
+    if mode not in ("replace", "merge"):
+        return jsonify({"ok": False, "message": "Unknown import mode."}), 400
+
+    # Can only import a section the bundle actually contains.
+    has_players = bundle.get("players") is not None
+    has_history = bundle.get("events") is not None
+    do_players = do_players and has_players
+    do_history = do_history and has_history
+    if not do_players and not do_history:
+        return jsonify({"ok": False, "message": "Nothing to import (check your selections vs. the bundle contents)."}), 400
+
+    # 1) Auto-backup current state (always, before touching anything).
+    backup_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "../data/backups")
+    try:
+        backup_path = DataTransfer.write_auto_backup(players_db, MatchHistory, backup_dir)
+    except Exception as e:
+        return jsonify({"ok": False, "message": "Auto-backup failed, import aborted: %s" % e}), 500
+
+    # 2) Apply.
+    try:
+        if mode == "replace":
+            result = {"players_imported": 0, "events_imported": 0}
+            if do_players:
+                result["players_imported"] = DataTransfer.restore_players(players_db, bundle)
+            if do_history:
+                result["events_imported"] = DataTransfer.restore_history_replace(MatchHistory, bundle)
+                MatchHistory.rebuild_alltime(_alias_map_for_rollup())
+        else:  # merge
+            resolutions = body.get("resolutions") or {}
+            result = DataTransfer.apply_merge(players_db, MatchHistory, bundle, resolutions,
+                                              do_players=do_players, do_history=do_history,
+                                              next_id_fn=_next_player_id)
+            if do_history:
+                MatchHistory.rebuild_alltime(_alias_map_for_rollup())
+    except Exception as e:
+        return jsonify({"ok": False,
+                        "message": "Import failed after backup (your data may be partially changed; "
+                                   "the pre-import backup is at %s): %s" % (backup_path, e)}), 500
+
+    return jsonify({"ok": True, "mode": mode,
+                    "backup_path": os.path.basename(backup_path),
+                    **result}), 200
+
+
+@api.route('/mergeAnalyze', methods=['POST'])
+def merge_analyze():
+    """Analyze a bundle against the current player DB for merge, returning
+    which incoming players auto-merge, auto-add, or need a decision. Does not
+    change anything -- drives the resolution UI."""
+    body = request.get_json(silent=True) or {}
+    bundle = body.get("bundle")
+    if bundle is None:
+        return jsonify({"ok": False, "message": "No bundle provided."}), 400
+    ok, msg = DataTransfer.validate_bundle(bundle)
+    if not ok:
+        return jsonify({"ok": False, "message": msg}), 400
+    if bundle.get("players") is None:
+        return jsonify({"ok": True, "plan": {"confident": [], "new": [], "ambiguous": []}}), 200
+    dest = players_db.get_local_players()
+    plan = DataTransfer.analyze_merge(dest, bundle)
+    return jsonify({"ok": True, "plan": plan}), 200
 
 
 @api.route('/reconcileImport', methods=['POST'])
