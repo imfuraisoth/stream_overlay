@@ -182,7 +182,10 @@ function ensureThemeButton() {
     btn.title = 'Customize theme';
     btn.textContent = 'Theme';
     btn.onclick = toggleThemePanel;
-    nav.appendChild(btn);
+    // Prefer the collapsible items wrapper so the button folds into the
+    // hamburger dropdown on narrow widths; fall back to the nav container.
+    var host = nav.querySelector('.nav-items') || nav;
+    host.appendChild(btn);
 }
 
 // nav.js calls this after it rebuilds the navbar -- re-add our button.

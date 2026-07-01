@@ -103,3 +103,43 @@
   border: 1px solid var(--border) !important; color: var(--fg);
   font-size: 12px; padding: 4px 6px; border-radius: 4px;
 }
+/* ── RESPONSIVE NAV (shared across all pages via theme.css) ──────────
+   The navbar's base look lives in each page's local style.css. These rules
+   add the collapsible hamburger menu for narrow widths and live here because
+   theme.css is the one stylesheet every operator page loads. Loaded after the
+   local style.css, so these layer on top. */
+
+/* .nav-items wraps the header items (see nav.js). On wide screens it's a
+   normal inline row that fills the bar so the Theme button (margin-left:auto)
+   sits at the far right. */
+.nav-items { display: flex; align-items: center; flex: 1; min-width: 0; }
+.header-item a { color: inherit; text-decoration: none; }
+
+/* Hamburger toggle: hidden on wide screens. */
+.nav-hamburger {
+  display: none; background: none; border: none; color: var(--fg);
+  font-size: 22px; line-height: 1; cursor: pointer; padding: 0 12px 0 0; margin: 0;
+}
+
+@media (max-width: 900px) {
+  .top-navbar-container { padding: 0 12px; }   /* keep the 44px bar height */
+  .nav-hamburger { display: block; }
+  /* The dropdown floats BELOW the bar as an absolute overlay, so it doesn't
+     wrap into the 44px bar (which would squeeze the hamburger row upward).
+     The sticky container is the positioning context. */
+  .nav-items {
+    display: none;
+    position: absolute; top: 100%; left: 0; right: 0; z-index: 100;
+    flex-direction: column; align-items: stretch;
+    background: var(--bg2); border-top: 1px solid var(--border);
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.25);
+    padding: 0 12px 4px;
+  }
+  .top-navbar-container.nav-open .nav-items { display: flex; }
+  .nav-items .header-item {
+    height: auto; padding: 11px 6px; border-bottom: 1px solid var(--border);
+  }
+  .nav-items .header-item.active { border-bottom-color: var(--border); }
+  .nav-items .header-sep { display: none; }   /* separators only for the row */
+  .nav-items .theme-nav-btn { margin: 8px 0; align-self: flex-start; }
+}

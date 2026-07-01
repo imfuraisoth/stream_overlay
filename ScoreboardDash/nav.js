@@ -79,7 +79,12 @@
   function build() {
     var prefix = rootPrefix();
     var active = activeKey();
+    // Hamburger toggle (shown only on narrow widths via CSS) + a collapsible
+    // items wrapper. On wide screens the wrapper is a normal inline row; on
+    // narrow screens it becomes a dropdown toggled by the .nav-open class.
     var html = '<div class="top-navbar-container">';
+    html += '<button class="nav-hamburger" aria-label="Menu" aria-expanded="false" onclick="window.toggleNavMenu()">\u2630</button>';
+    html += '<div class="nav-items">';
     ITEMS.forEach(function (item, i) {
       if (item.key === active) {
         html += '<div class="header-item active">' + esc(label(item)) + '</div>';
@@ -88,9 +93,19 @@
       }
       if (i < ITEMS.length - 1) html += '<span class="header-sep">|</span>';
     });
-    html += '</div>';
+    html += '</div>';   // .nav-items
+    html += '</div>';   // .top-navbar-container
     return html;
   }
+
+  // Toggle the dropdown open/closed on narrow widths.
+  window.toggleNavMenu = function () {
+    var c = document.querySelector('.top-navbar-container');
+    var h = document.querySelector('.nav-hamburger');
+    if (!c) return;
+    var open = c.classList.toggle('nav-open');
+    if (h) h.setAttribute('aria-expanded', open ? 'true' : 'false');
+  };
 
   function render() {
     var root = document.getElementById('nav-root');
