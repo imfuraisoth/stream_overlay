@@ -69,6 +69,21 @@ message_data_store = MessageDataStore
 
 api = Flask(__name__)
 CORS(api)
+# Cap request bodies at 20MB. Flask rejects anything larger with a 413 BEFORE
+# reading it into memory, which protects the import endpoints from a huge or
+# malicious bundle exhausting RAM. Real payloads (scoreboard state, player
+# edits, data bundles) are kilobytes to low-KB; a real export is well under 1MB,
+# so 20MB is comfortably future-proof while still stopping a runaway file.
+api.config['MAX_CONTENT_LENGTH'] = 20 * 1024 * 1024
+
+
+@api.errorhandler(413)
+def _too_large(e):
+    # Return JSON (not the default HTML error page) so the import page shows a
+    # clear message instead of failing to parse the response.
+    return jsonify({"ok": False,
+                    "message": "That file is too large (limit is 20 MB). A normal "
+                               "backup is well under 1 MB, so this looks wrong."}), 413
 
 previous_player_1 = (0, 0.0)
 previous_player_2 = (0, 0.0)

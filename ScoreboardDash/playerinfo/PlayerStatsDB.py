@@ -289,6 +289,19 @@ def save_local_players(players):
     if not isinstance(players, dict):
         return
 
+    # Sanitize all incoming records at this single write choke-point, so every
+    # path (UI saves, imports, merges) is protected from malformed/oversized
+    # data. SQL injection is already prevented by parameterized queries; this
+    # is about data quality (empty/huge/duplicate/wrong-type values).
+    try:
+        from scripts import InputValidation
+        players = InputValidation.sanitize_players(players)
+    except Exception as _e:
+        # If validation ever fails to import/run, fall back to raw data rather
+        # than losing the save entirely (parameterized queries still protect
+        # against injection).
+        print("save_local_players: validation skipped (%s)" % _e)
+
     conn = _connect()
     cur = conn.cursor()
     try:

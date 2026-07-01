@@ -32,6 +32,16 @@ BUNDLE_FORMAT = "scoreboarddash-bundle"
 BUNDLE_VERSION = 1
 
 
+def _clean_games(games):
+    """Sanitize a {game: slots} map via InputValidation (clamps slots 1..8,
+    trims/caps names). Falls back to the raw map if validation is unavailable."""
+    try:
+        from scripts import InputValidation
+        return InputValidation.sanitize_games(games)
+    except Exception:
+        return games or {}
+
+
 def build_bundle(players_db, match_history, include_players=True,
                  include_history=True):
     """Build an export bundle dict.
@@ -128,7 +138,7 @@ def restore_players(players_db, bundle):
     if players is None:
         return 0
     # restore games first so rosters/characters have their game rows
-    for name, slots in (bundle.get("games") or {}).items():
+    for name, slots in _clean_games(bundle.get("games")).items():
         try:
             players_db.set_game_slots(name, slots)
         except Exception as e:
@@ -302,7 +312,7 @@ def apply_merge(players_db, match_history, bundle, resolutions,
     if do_players and bundle.get("players") is not None:
         dest = players_db.get_local_players()
         # restore games first (union)
-        for name, slots in (bundle.get("games") or {}).items():
+        for name, slots in _clean_games(bundle.get("games")).items():
             try: players_db.set_game_slots(name, slots)
             except Exception as e: print("apply_merge game %r: %s" % (name, e))
 
