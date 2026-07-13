@@ -10,10 +10,9 @@ function handleGameSelect() {
     renderCharacters(currentGame);
 }
 
-function renderCharacters(game) {
-    renderCharacters(game, function (){});
-}
-
+// NOTE: a 1-arg wrapper used to live here, but a same-named function
+// declaration below silently replaced it (later declaration wins in JS),
+// so 1-arg calls reached the real function with callback undefined.
 function renderCharacters(game, callback) {
     var url = `/getCharacterImages?game=${game}`;
     fetch(url)
@@ -78,7 +77,7 @@ function renderCharacters(game, callback) {
                 container.appendChild(row);
 
             });
-            callback();
+            if (typeof callback === 'function') callback();
         }).catch(function (err) {
                 console.log('error: ' + err);
               });

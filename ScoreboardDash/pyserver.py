@@ -561,6 +561,29 @@ def import_startgg_event():
         except Exception as e:
             print("importStartggEvent standings warning: " + str(e))
             standings = None
+        # DQ hygiene: get_completed_sets now skips DQ sets, so an entrant who
+        # appears in ZERO remaining sets never actually played -- a full DQ.
+        # Drop their placement so they don't earn seeding points for an event
+        # they didn't compete in. (Partial DQs -- played real sets, then DQ'd
+        # out -- keep their placement; only their DQ sets are skipped.)
+        if standings and sets:
+            played_uids = set()
+            played_tags = set()
+            for s in sets:
+                for side in ("p1", "p2"):
+                    ent = s.get(side) or {}
+                    if ent.get("user_id"):
+                        played_uids.add(str(ent["user_id"]))
+                    if ent.get("tag"):
+                        played_tags.add(ent["tag"].strip().lower())
+            before = len(standings)
+            standings = [st for st in standings
+                         if (st.get("user_id") is not None and str(st["user_id"]) in played_uids)
+                         or ((st.get("tag") or "").strip().lower() in played_tags)]
+            dropped = before - len(standings)
+            if dropped:
+                print("importStartggEvent: dropped %d placement(s) for entrant(s) "
+                      "with no played sets (full DQ)" % dropped)
         uid_prefix = "u:"
     if not sets:
         return jsonify({"ok": False, "message": "No completed sets found for that event"}), 404

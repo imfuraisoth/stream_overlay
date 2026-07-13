@@ -474,6 +474,9 @@ def purge_all_players():
         except Exception:
             pass
     return count
+
+
+def resolve_player_id(name):
     """Resolve a display name OR alias to a player id, case-insensitive.
 
     Returns the player id string, or None if nothing matches."""

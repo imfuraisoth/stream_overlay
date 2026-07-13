@@ -720,6 +720,14 @@ def get_completed_sets(tournament_name, event_name, per_page=40, max_pages=50):
             s2 = _slot_score(slots[1])
             if s1 is None or s2 is None:
                 s1, s2 = _parse_display_score(node.get("displayScore"), e1["tag"], e2["tag"])
+            # start.gg marks a DQ with a -1 score on the DQ'd slot (and the
+            # displayScore reads "DQ" when slot scores are absent). A DQ'd
+            # "set" was never actually played, so recording it would poison
+            # H2H records, rematch detection, and seeding points. Skip it.
+            if ((s1 is not None and int(s1) < 0) or
+                    (s2 is not None and int(s2) < 0) or
+                    (node.get("displayScore") or "").strip().upper() == "DQ"):
+                continue
             winner_id = node.get("winnerId")
             winner_user_id = None
             winner_entrant_id = winner_id
