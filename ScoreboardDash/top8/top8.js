@@ -1703,15 +1703,20 @@ function _writeH2HFields(opts) {
     jsonData.p2EventPlacement    = (opts.p2place != null) ? opts.p2place : '';
     jsonData.p1EventPlacementText = (opts.p1place != null) ? _ordinal(opts.p1place) : '';
     jsonData.p2EventPlacementText = (opts.p2place != null) ? _ordinal(opts.p2place) : '';
-    if (typeof sendJSON === 'function') sendJSON();
+    // Top8 pushes state via sendJsonToEndpoint (there is no sendJSON here);
+    // the old guarded sendJSON call silently no-oped, so H2H fields and the
+    // show/hide toggle never reached scoreboard.json / the overlays.
+    if (typeof sendJsonToEndpoint === 'function') sendJsonToEndpoint("updatealldata");
 }
 
 function toggleH2HVisible() {
     jsonData.h2hVisible = !jsonData.h2hVisible;
     var btn = document.getElementById('h2hVisibleBtn');
     if (btn) btn.textContent = jsonData.h2hVisible ? window.t('t8_hide_stream') : window.t('t8_show_stream');
+    // refreshH2H recomputes + sends; if there aren't two resolvable players it
+    // still must push the visibility flag, so fall back to a direct send.
     if (typeof refreshH2H === 'function') refreshH2H();
-    else if (typeof sendJSON === 'function') sendJSON();
+    else if (typeof sendJsonToEndpoint === 'function') sendJsonToEndpoint("updatealldata");
 }
 
 function _ordinal(n) {

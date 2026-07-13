@@ -62,6 +62,30 @@
       color: var(--fg2); border: 1px solid var(--border); border-radius: 8px; padding: 0 6px; margin-left: 6px; }
     .sd-return { cursor: pointer; color: var(--accent, #40D0B0); font-size: 15px; user-select: none; }
     .sd-return:hover { opacity: 0.7; }
+    .loc-modal { position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 1000;
+      display: flex; align-items: center; justify-content: center; }
+    .loc-modal-box { background: var(--bg1, #0D1828); border: 1px solid var(--border);
+      border-radius: 10px; width: min(760px, 92vw); max-height: 86vh; display: flex;
+      flex-direction: column; box-shadow: 0 12px 40px rgba(0,0,0,0.5); }
+    .loc-modal-head { display: flex; justify-content: space-between; align-items: center;
+      padding: 14px 18px; font-family: var(--font-d, 'Barlow Condensed'); font-weight: 700;
+      font-size: 17px; border-bottom: 1px solid var(--border); }
+    .loc-close { cursor: pointer; font-size: 22px; color: var(--fg2); }
+    .loc-close:hover { color: var(--fg1); }
+    .loc-modal-sub { padding: 8px 18px; color: var(--fg2); font-size: 13px; }
+    .loc-modal-body { overflow-y: auto; padding: 6px 18px; }
+    .loc-modal-foot { display: flex; justify-content: flex-end; gap: 8px;
+      padding: 14px 18px; border-top: 1px solid var(--border); }
+    .loc-table th, .loc-table td { text-align: left; padding: 6px 8px; }
+    .loc-flagged-row td { background: rgba(204, 31, 31, 0.07); }
+    .loc-badge { font-size: 10px; text-transform: uppercase; letter-spacing: .04em;
+      border-radius: 8px; padding: 1px 6px; margin-left: 6px; }
+    .loc-conflict { background: rgba(204,31,31,0.2); color: #ff8a8a; }
+    .loc-nonstd { background: rgba(232,160,80,0.2); color: var(--amber, #E8A050); }
+    .loc-fill { background: rgba(64,208,176,0.18); color: var(--accent, #40D0B0); }
+    .loc-unmatched { background: var(--bg2); color: var(--fg2); }
+    .loc-edit { background: var(--bg2); border: 1px solid var(--border); color: var(--fg1);
+      border-radius: 4px; padding: 3px 6px; }
   </style>
 </head>
 <body>
@@ -77,6 +101,22 @@
     <input type="text" id="slugInput" data-i18n-attr="placeholder:sd_slug_ph"
            placeholder="https://www.start.gg/tournament/.../event/...  or  tournament/.../event/...">
     <button class="btn" id="sdFetch" onclick="fetchSeeding(true)" data-i18n="sd_fetch">Fetch Entrants</button>
+    <button class="btn sec" id="sdPullLoc" onclick="pullLocations()" data-i18n="sd_pull_loc">Pull locations from start.gg</button>
+  </div>
+
+  <div id="locReviewModal" class="loc-modal" style="display:none;">
+    <div class="loc-modal-box">
+      <div class="loc-modal-head">
+        <span data-i18n="sd_loc_review_title">Review player locations from start.gg</span>
+        <span class="loc-close" onclick="closeLocReview()">&times;</span>
+      </div>
+      <div class="loc-modal-sub" id="locReviewSummary"></div>
+      <div class="loc-modal-body" id="locReviewBody"></div>
+      <div class="loc-modal-foot">
+        <button class="btn sec" onclick="closeLocReview()" data-i18n="sd_loc_cancel">Cancel</button>
+        <button class="btn" onclick="applyLocations()" data-i18n="sd_loc_apply">Save selected</button>
+      </div>
+    </div>
   </div>
 
   <div class="sd-controls">
@@ -663,6 +703,109 @@
       await loadLocalPlayers();   // new/updated player available in dropdowns
       recompute();                // re-resolve & re-rank with the new match
     } catch(e){ console.log('reconcile error:', e); setStatus(''+e, true); }
+  }
+
+  // ── Location pull + review ──
+  var locReviewRows = [];   // current review rows, with a `.include` flag
+
+  async function pullLocations(){
+    var slug = document.getElementById('slugInput').value.trim();
+    if (!slug){ setStatus(window.t?window.t('sd_need_slug'):'Enter a tournament/event first.', true); return; }
+    setStatus(window.t?window.t('sd_loc_pulling'):'Pulling locations from start.gg...');
+    try {
+      var r = await fetch('/locationReview', {
+        method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({slug: slug})
+      });
+      var data = await r.json();
+      if (!data.ok){ setStatus(data.message||'Pull failed', true); return; }
+      locReviewRows = (data.review||[]).map(function(row){
+        row.include = !row.is_flagged;   // clean fills pre-checked; flagged left for the TO
+        return row;
+      });
+      renderLocReview(data);
+      setStatus('');
+    } catch(e){ console.log('pullLocations error:', e); setStatus(''+e, true); }
+  }
+
+  function renderLocReview(data){
+    var summary = document.getElementById('locReviewSummary');
+    summary.textContent = (window.t?window.t('sd_loc_summary'):'Found locations for review')
+      + ': ' + data.needs_review + ' / ' + data.total_entrants
+      + (data.flagged ? '  (\u26A0 ' + data.flagged + ' ' + (window.t?window.t('sd_loc_flagged'):'flagged') + ')' : '');
+    if (!locReviewRows.length){
+      document.getElementById('locReviewBody').innerHTML =
+        '<div class="sd-empty">' + (window.t?window.t('sd_loc_nothing'):'Nothing to update -- every matched player already has matching location data.') + '</div>';
+    } else {
+      var h = '<table class="sd loc-table"><thead><tr>'
+        + '<th></th>'
+        + '<th>' + (window.t?window.t('sd_loc_col_player'):'Player') + '</th>'
+        + '<th>' + (window.t?window.t('sd_loc_col_current'):'Current') + '</th>'
+        + '<th>' + (window.t?window.t('sd_loc_col_sgg'):'start.gg') + '</th>'
+        + '<th>' + (window.t?window.t('sd_loc_col_save'):'Save as') + '</th>'
+        + '</tr></thead><tbody>';
+      locReviewRows.forEach(function(row, i){
+        var badge = '';
+        if (row.status === 'conflict') badge = '<span class="loc-badge loc-conflict" data-i18n="sd_loc_conflict">conflict</span>';
+        else if (row.status === 'nonstandard') badge = '<span class="loc-badge loc-nonstd" data-i18n="sd_loc_nonstd">non-standard</span>';
+        else if (row.status === 'fill') badge = '<span class="loc-badge loc-fill" data-i18n="sd_loc_fill">new</span>';
+        var unmatched = !row.player_id;
+        var curTxt = (row.current_state||'') + (row.current_city?(' / '+row.current_city):'');
+        var sggTxt = (row.sgg_state||'') + (row.sgg_city?(' / '+row.sgg_city):'')
+                   + (row.sgg_state_id!=null?(' <span class="sd-math">#'+row.sgg_state_id+'</span>'):'');
+        h += '<tr class="' + (row.is_flagged?'loc-flagged-row':'') + '">'
+          + '<td>' + (unmatched ? '' : '<input type="checkbox" ' + (row.include?'checked':'') + ' onchange="locToggle('+i+',this.checked)">') + '</td>'
+          + '<td>' + esc(row.tag) + ' ' + badge + (unmatched?' <span class="loc-badge loc-unmatched" data-i18n="sd_loc_unmatched">unmatched</span>':'') + '</td>'
+          + '<td>' + esc(curTxt) + '</td>'
+          + '<td>' + sggTxt + '</td>'
+          + '<td>' + (unmatched
+              ? '<button class="btn sec sm" onclick="locReconcileNew('+i+')" data-i18n="sd_loc_create">Create profile</button>'
+              : '<input type="text" class="loc-edit" value="'+esc(row.proposed_state)+'" onchange="locEdit('+i+',this.value)" style="width:90px;">')
+          + '</td>'
+          + '</tr>';
+      });
+      h += '</tbody></table>';
+      document.getElementById('locReviewBody').innerHTML = h;
+    }
+    document.getElementById('locReviewModal').style.display = 'flex';
+    if (window.applyTranslations) window.applyTranslations(document);
+  }
+
+  function locToggle(i, on){ if (locReviewRows[i]) locReviewRows[i].include = on; }
+  function locEdit(i, val){
+    if (!locReviewRows[i]) return;
+    locReviewRows[i].proposed_state = val.trim();
+    // manual edit breaks the canonical id link -- clear it so text is authoritative
+    locReviewRows[i].proposed_state_id = null;
+    locReviewRows[i].include = true;
+  }
+  function closeLocReview(){ document.getElementById('locReviewModal').style.display = 'none'; }
+
+  async function locReconcileNew(i){
+    var row = locReviewRows[i]; if (!row) return;
+    await doReconcile({tag: row.tag, user_id: row.user_id, action: 'new',
+                       state: row.proposed_state, state_id: row.proposed_state_id, city: row.sgg_city});
+    // reflect that it's handled
+    row.done = true;
+    setStatus((window.t?window.t('sd_loc_created'):'Created profile for') + ' ' + row.tag);
+    closeLocReview();
+  }
+
+  async function applyLocations(){
+    var updates = locReviewRows.filter(function(r){ return r.include && r.player_id; })
+      .map(function(r){ return {player_id: r.player_id, state: r.proposed_state,
+                                state_id: r.proposed_state_id, city: r.proposed_city}; });
+    if (!updates.length){ closeLocReview(); return; }
+    try {
+      var r = await fetch('/applyLocations', {
+        method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({updates: updates})
+      });
+      var data = await r.json();
+      if (!data.ok){ setStatus(data.message||'Save failed', true); return; }
+      setStatus((window.t?window.t('sd_loc_saved'):'Saved locations for') + ' ' + data.applied + ' ' + (window.t?window.t('sd_loc_players'):'players'));
+      closeLocReview();
+      await loadLocalPlayers();
+      if (lastResult) recompute();   // re-run so state checks pick up new data
+    } catch(e){ console.log('applyLocations error:', e); setStatus(''+e, true); }
   }
 
   (async function init(){

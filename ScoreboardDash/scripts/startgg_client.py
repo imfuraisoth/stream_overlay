@@ -65,12 +65,17 @@ class Match:
 
 
 class Player:
-    def __init__(self, name, entrant_id, team, country, seed):
+    def __init__(self, name, entrant_id, team, country, seed,
+                 state="", state_id=None, city="", user_id=None):
         self.name = name
         self.team = team
         self.entrant_id = entrant_id
         self.country = country
         self.seed = seed
+        self.state = state            # start.gg location.state (text, may be blank)
+        self.state_id = state_id      # start.gg location.stateId (canonical int)
+        self.city = city              # start.gg location.city (text, may be blank)
+        self.user_id = user_id        # start.gg user id (for durable resolution)
 
 
 def get_token():
@@ -358,8 +363,12 @@ def get_players_from_tournament(tournament_name, event_name, page):
                       gamerTag,
                       prefix,
                       user {
+                        id
                         location {
                           country
+                          state
+                          stateId
+                          city
                         }
                       }
                     },
@@ -399,8 +408,11 @@ def get_players_from_tournament(tournament_name, event_name, page):
         gamer_tag = entrant["participants"][0]["gamerTag"]
         team = entrant["participants"][0]["prefix"]
         country = get_country(entrant["participants"][0])
+        loc = get_location(entrant["participants"][0])
         seed = get_seed(entrant["seeds"])
-        entrants_list.append(Player(gamer_tag, entrant_id, team or "", country, seed))
+        entrants_list.append(Player(gamer_tag, entrant_id, team or "", country, seed,
+                                    state=loc["state"], state_id=loc["state_id"],
+                                    city=loc["city"], user_id=loc["user_id"]))
     return entrants_list
 
 
@@ -486,6 +498,21 @@ def get_country(participant):
                     print("Couldn't find country code for country: " + country)
                     country_code = "US"
     return country_code
+
+
+def get_location(participant):
+    """Return {state, state_id, city, user_id} from a participant's start.gg
+    profile location. All may be blank/None (profile privacy or unset)."""
+    out = {"state": "", "state_id": None, "city": "", "user_id": None}
+    user = participant.get("user") if isinstance(participant, dict) else None
+    if isinstance(user, dict):
+        out["user_id"] = user.get("id")
+        location = user.get("location")
+        if isinstance(location, dict):
+            out["state"] = (location.get("state") or "").strip()
+            out["state_id"] = location.get("stateId")
+            out["city"] = (location.get("city") or "").strip()
+    return out
 
 
 def save_start_gg_info(data):

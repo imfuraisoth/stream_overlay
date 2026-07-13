@@ -26,6 +26,7 @@ from scripts import parry_client
 from scripts import MatchHistory
 from scripts import SeedingRank
 from scripts import DataTransfer
+from scripts import LocationResolve
 import argparse
 import socket
 import os
@@ -1096,12 +1097,102 @@ def seeding_reconcile():
                 existing.add(a.lower())
     else:  # new
         pid = _next_player_id(players)
+        # Point 4: if the caller passed start.gg location for this entrant,
+        # save it onto the freshly created profile.
+        loc_state = (body.get("state") or "").strip()
+        loc_state_id = body.get("state_id")
+        loc_city = (body.get("city") or "").strip()
         players[pid] = {"id": pid, "name": tag, "team": "", "country": "",
+                        "state": loc_state, "state_id": loc_state_id, "city": loc_city,
                         "social_handle": "", "social_platform": "",
                         "is_commentator": False, "characters": {}, "roster": {},
                         "aliases": [a for a in new_aliases if a.lower() != tag.lower()]}
     players_db.save_local_players(players)
     return jsonify({"ok": True, "player_id": pid}), 200
+
+
+@api.route('/locationReview', methods=['POST'])
+def location_review():
+    """Pull entrant locations from start.gg and build a review list.
+
+    Body: { "slug": "<url or slug>" }
+    Fetches the tournament's entrants (which now include state/stateId/city),
+    resolves each to a local player the same way seeding does, and returns a
+    review list (fills, conflicts, non-standard values) for the TO to confirm
+    or edit before anything is written. Nothing is saved here."""
+    body = request.get_json() or {}
+    tournament, event = _parse_event_slug(body.get("slug", ""), "startgg")
+    if not tournament or not event:
+        return jsonify({"ok": False, "message": "Could not parse an event slug from that input"}), 400
+    try:
+        entrants = startgg_client.get_all_players_from_tournament(tournament, event)
+    except Exception as e:
+        print("locationReview entrant fetch error: %s" % e)
+        return jsonify({"ok": False, "message": "Could not fetch entrants: %s" % e}), 502
+
+    players = players_db.get_local_players()
+    assignments, by_name = _build_assignments(players)
+
+    def resolve(uid, tag):
+        if uid is not None:
+            pid = assignments.get("u:" + str(uid))
+            if pid:
+                return pid
+        return by_name.get((tag or "").strip().lower())
+
+    # Build the entrant-location list the resolver expects.
+    ent_locs = []
+    for ent in (entrants or []):
+        tag = (getattr(ent, "name", "") or "").strip()
+        uid = getattr(ent, "user_id", None)
+        pid = resolve(uid, tag)
+        ent_locs.append({
+            "player_id": pid,
+            "tag": tag,
+            "user_id": uid,
+            "state": getattr(ent, "state", "") or "",
+            "state_id": getattr(ent, "state_id", None),
+            "city": getattr(ent, "city", "") or "",
+        })
+
+    review = LocationResolve.build_review(
+        ent_locs, lambda pid: players.get(pid) if pid else None)
+    # carry user_id onto review rows (for reconcile-create-new from the UI)
+    uid_by_tag = {e["tag"]: e["user_id"] for e in ent_locs}
+    for r in review:
+        r["user_id"] = uid_by_tag.get(r["tag"])
+    flagged = sum(1 for r in review if r.get("is_flagged"))
+    return jsonify({"ok": True, "review": review,
+                    "total_entrants": len(entrants or []),
+                    "needs_review": len(review), "flagged": flagged}), 200
+
+
+@api.route('/applyLocations', methods=['POST'])
+def apply_locations():
+    """Write the TO-approved location values onto local profiles.
+
+    Body: { "updates": [ {player_id, state, state_id, city}, ... ] }
+    Only the rows the TO approved/edited are sent. Location fields are the
+    only thing changed; everything else on the profile is preserved. Rows
+    with no player_id are ignored (those go through reconcile create-new)."""
+    body = request.get_json() or {}
+    updates = body.get("updates") or []
+    players = players_db.get_local_players()
+    applied = 0
+    for u in updates:
+        pid = u.get("player_id")
+        if not pid or pid not in players:
+            continue
+        if "state" in u:
+            players[pid]["state"] = (u.get("state") or "").strip()
+        if "state_id" in u:
+            players[pid]["state_id"] = u.get("state_id")
+        if "city" in u:
+            players[pid]["city"] = (u.get("city") or "").strip()
+        applied += 1
+    if applied:
+        players_db.save_local_players(players)
+    return jsonify({"ok": True, "applied": applied}), 200
 
 
 @api.route('/setEventGame', methods=['POST'])

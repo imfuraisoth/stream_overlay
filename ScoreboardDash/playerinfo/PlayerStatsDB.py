@@ -28,6 +28,8 @@ def init_db():
         team TEXT DEFAULT '',
         country TEXT DEFAULT '',
         state TEXT DEFAULT '',
+        state_id INTEGER,
+        city TEXT DEFAULT '',
         social_handle TEXT DEFAULT '',
         social_platform TEXT DEFAULT '',
         is_commentator INTEGER DEFAULT 0
@@ -126,13 +128,18 @@ def _migrate_legacy_tables(cur):
         """)
         cur.execute("DROP TABLE _lp_old")
 
-    # Add the 'state' column to existing local_players tables that predate it
-    # (used for same-state seeding checks). Idempotent: only adds if missing.
+    # Add location columns to existing local_players tables that predate them
+    # (used for seeding checks + start.gg location auto-pull). Idempotent:
+    # each column is only added if missing, so this no-ops after the first run.
     cur.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='local_players'")
     if cur.fetchone():
         lp_cols = [r[1] for r in cur.execute("PRAGMA table_info(local_players)").fetchall()]
         if "state" not in lp_cols:
             cur.execute("ALTER TABLE local_players ADD COLUMN state TEXT DEFAULT ''")
+        if "state_id" not in lp_cols:
+            cur.execute("ALTER TABLE local_players ADD COLUMN state_id INTEGER")
+        if "city" not in lp_cols:
+            cur.execute("ALTER TABLE local_players ADD COLUMN city TEXT DEFAULT ''")
 
     # Pre-slot local_player_characters: PRIMARY KEY was (player_id, game)
     cur.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='local_player_characters'")
@@ -228,17 +235,19 @@ def get_local_players():
 
     players = {}
     cur.execute("""
-        SELECT id, name, team, country, state, social_handle, social_platform,
+        SELECT id, name, team, country, state, state_id, city, social_handle, social_platform,
                is_commentator
         FROM local_players
     """)
-    for pid, name, team, country, state, soc_h, soc_p, is_comm in cur.fetchall():
+    for pid, name, team, country, state, state_id, city, soc_h, soc_p, is_comm in cur.fetchall():
         players[pid] = {
             "id": pid,
             "name": name,
             "team": team or "",
             "country": country or "",
             "state": state or "",
+            "state_id": state_id,
+            "city": city or "",
             "social_handle": soc_h or "",
             "social_platform": soc_p or "",
             "is_commentator": bool(is_comm),
@@ -325,14 +334,16 @@ def save_local_players(players):
         for pid, rec in players.items():
             cur.execute("""
                 INSERT INTO local_players
-                    (id, name, team, country, state, social_handle,
+                    (id, name, team, country, state, state_id, city, social_handle,
                      social_platform, is_commentator)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 ON CONFLICT(id) DO UPDATE SET
                     name=excluded.name,
                     team=excluded.team,
                     country=excluded.country,
                     state=excluded.state,
+                    state_id=excluded.state_id,
+                    city=excluded.city,
                     social_handle=excluded.social_handle,
                     social_platform=excluded.social_platform,
                     is_commentator=excluded.is_commentator
@@ -342,6 +353,8 @@ def save_local_players(players):
                 rec.get("team", ""),
                 rec.get("country", ""),
                 rec.get("state", ""),
+                rec.get("state_id"),
+                rec.get("city", ""),
                 rec.get("social_handle", ""),
                 rec.get("social_platform", ""),
                 1 if rec.get("is_commentator") else 0
@@ -499,7 +512,7 @@ def merge_players(primary_id, duplicate_id):
         return False, "Player not found"
 
     # Profile: fill primary's blanks from the duplicate
-    for field in ("team", "country", "state", "social_handle", "social_platform"):
+    for field in ("team", "country", "state", "state_id", "city", "social_handle", "social_platform"):
         if not primary.get(field) and duplicate.get(field):
             primary[field] = duplicate[field]
     primary["is_commentator"] = bool(primary.get("is_commentator") or duplicate.get("is_commentator"))

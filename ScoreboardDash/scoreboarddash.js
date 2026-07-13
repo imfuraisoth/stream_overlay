@@ -973,7 +973,18 @@ function nextRoundUpdate(data) {
 	updateMatchHint('1Next');
 	updateMatchHint('2Next');
 	updateCurrentPlayerDisplay();
+	// Clear all social slots before re-deriving from the DB. Without this, a
+	// slot could keep a previous player's social if the new player isn't in
+	// the local DB and refreshSocialFields' per-field diff didn't fire --
+	// which is why social "didn't always clear" on round cycle.
+	jsonData.p1SocialHandle = ''; jsonData.p1SocialPlatform = '';
+	jsonData.p2SocialHandle = ''; jsonData.p2SocialPlatform = '';
+	jsonData.nextSocial1Handle = ''; jsonData.nextSocial1Platform = '';
+	jsonData.nextSocial2Handle = ''; jsonData.nextSocial2Platform = '';
     refreshSocialFields();
+	// Cycling rounds swaps in new current players -- refresh the matchup
+	// history for the new pairing (previously only updated on scope change).
+	if (typeof refreshH2H === 'function') { refreshH2H(); }
 	sendJsonToEndpoint("updatealldata");
 }
 

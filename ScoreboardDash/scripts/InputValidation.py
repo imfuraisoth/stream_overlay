@@ -24,6 +24,7 @@ MAX_NAME = 80
 MAX_TEAM = 60
 MAX_COUNTRY = 40
 MAX_STATE = 40
+MAX_CITY = 60
 MAX_HANDLE = 80
 MAX_PLATFORM = 40
 MAX_ALIAS = 80
@@ -57,6 +58,17 @@ def _clean_int(v, lo, hi, default):
     return max(lo, min(hi, n))
 
 
+def _coerce_state_id(v):
+    """start.gg stateId is a canonical int (or None). Keep None as None;
+    coerce numeric strings to int; drop anything unusable."""
+    if v is None or v == "":
+        return None
+    try:
+        return int(v)
+    except (TypeError, ValueError):
+        return None
+
+
 def sanitize_player(rec, issues=None):
     """Return a cleaned copy of one player record, or None if unsalvageable.
 
@@ -78,6 +90,8 @@ def sanitize_player(rec, issues=None):
         "team": _clean_str(rec.get("team"), MAX_TEAM),
         "country": _clean_str(rec.get("country"), MAX_COUNTRY),
         "state": _clean_str(rec.get("state"), MAX_STATE),
+        "state_id": _coerce_state_id(rec.get("state_id")),
+        "city": _clean_str(rec.get("city"), MAX_CITY),
         "social_handle": _clean_str(rec.get("social_handle"), MAX_HANDLE),
         "social_platform": _clean_str(rec.get("social_platform"), MAX_PLATFORM),
         "is_commentator": bool(rec.get("is_commentator")),
