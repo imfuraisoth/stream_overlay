@@ -154,6 +154,8 @@
         <option value="rematch" selected data-i18n="sd_check_rematch">Rematch only</option>
         <option value="state" data-i18n="sd_check_state">Same-state only</option>
         <option value="city" data-i18n="sd_check_city">Same-city only</option>
+        <option value="rematch_state" data-i18n="sd_check_rematch_state">Rematch + state</option>
+        <option value="rematch_city" data-i18n="sd_check_rematch_city">Rematch + city</option>
         <option value="all" data-i18n="sd_check_all">All checks</option>
       </select>
     </label>
@@ -358,6 +360,8 @@
     html += '<div class="sd-copybar">'
       + '<button class="btn sec sm" onclick="copySeedList()" data-i18n="sd_copy">Copy seed order</button>'
       + ' <button class="btn sec sm" onclick="resetSeedOrder()" data-i18n="sd_reset_order">Reset to suggested</button>'
+      + ' <button class="btn sec sm" onclick="addAllNoHistory()" data-i18n="sd_add_all_nohist">Add all unseeded</button>'
+      + ' <button class="btn sec sm" onclick="saveSeedOrder()" data-i18n="sd_save_order">Save order</button>'
       + '</div>';
     document.getElementById('sdRanked').innerHTML = html;
     wireDragEvents();
@@ -396,6 +400,78 @@
 
   // Handle a drop at position `to` in the seed list, from either an intra-seed
   // reorder or a section player being promoted in.
+  // Build the seed-list row object for a section player and mark it
+  // promoted. Shared by drag-in, "Add all unseeded", and saved-order
+  // restore. Unmatched entrants carry .tag but no .name.
+  function promoteRowObj(row){
+    promoted[rowKey(row)] = true;
+    var placed = Object.assign({}, row);
+    if (!placed.name) placed.name = placed.tag || '';
+    if (placed.points === undefined) placed.points = 0;
+    if (placed.events_counted === undefined) placed.events_counted = 0;
+    return placed;
+  }
+
+  // Pull every known-unranked and unmatched player into the seed list,
+  // appended at the bottom in their listed order.
+  function addAllNoHistory(){
+    if (!lastResult) return;
+    var added = 0;
+    ((lastResult.known_unranked || []).concat(lastResult.unmatched || [])).forEach(function(row){
+      if (promoted[rowKey(row)]) return;
+      seedOrder.push(promoteRowObj(row));
+      added++;
+    });
+    if (!added) return;
+    renderRankedTable();
+    renderSections();
+    recheckRematches();
+    setStatus(added + ' ' + (window.t?window.t('sd_added_nohist'):'player(s) added to the bottom of the seed list.'));
+  }
+
+  // ── Saved seed orders (localStorage, keyed by event slug) ──
+  // Saving pins your manual arrangement; it AUTO-RESTORES after every
+  // recompute, so changing ranking options no longer wipes your work.
+  // "Reset to suggested" clears the save (otherwise the next recompute
+  // would snap back to it and reset would appear broken).
+  var _orderRestored = false;
+  function _slugKey(){ return document.getElementById('slugInput').value.trim().toLowerCase(); }
+  function _savedOrders(){
+    try { return JSON.parse(localStorage.getItem('sd_saved_orders') || '{}'); }
+    catch(e){ return {}; }
+  }
+  function saveSeedOrder(){
+    if (!seedOrder.length || !_slugKey()) return;
+    var all = _savedOrders();
+    all[_slugKey()] = { keys: seedOrder.map(rowKey), saved_at: Date.now() };
+    try { localStorage.setItem('sd_saved_orders', JSON.stringify(all)); } catch(e){}
+    setStatus(window.t?window.t('sd_order_saved'):'Seed order saved for this event -- it will be restored after recomputes.');
+  }
+  function clearSavedOrder(){
+    var all = _savedOrders();
+    if (all[_slugKey()]){ delete all[_slugKey()];
+      try { localStorage.setItem('sd_saved_orders', JSON.stringify(all)); } catch(e){} }
+  }
+  // Reorder the freshly computed list to match the saved key order.
+  // Saved players missing from this compute are skipped; new players
+  // not in the save keep their computed relative order at the end.
+  function applySavedOrder(){
+    _orderRestored = false;
+    var rec = _savedOrders()[_slugKey()];
+    if (!rec || !rec.keys || !rec.keys.length) return;
+    var pool = {};
+    seedOrder.forEach(function(r){ pool[rowKey(r)] = r; });
+    var newOrder = [];
+    rec.keys.forEach(function(k){
+      if (pool[k]){ newOrder.push(pool[k]); delete pool[k]; return; }
+      var row = findSectionRow(k);
+      if (row) newOrder.push(promoteRowObj(row));   // was promoted when saved
+    });
+    seedOrder.forEach(function(r){ var k = rowKey(r); if (pool[k]){ newOrder.push(r); delete pool[k]; } });
+    seedOrder = newOrder;
+    _orderRestored = true;
+  }
+
   function dropIntoSeed(to){
     if (!dragInfo) return;
     if (dragInfo.source === 'seed'){
@@ -407,13 +483,7 @@
     } else {                                // promoting a section player
       var row = findSectionRow(dragInfo.key);
       if (!row){ dragInfo = null; return; }
-      promoted[rowKey(row)] = true;
-      // give it neutral seeding fields so the table renders cleanly; unmatched
-      // entrants carry .tag but no .name, so fall back to the tag for display.
-      var placed = Object.assign({}, row);
-      if (!placed.name) placed.name = placed.tag || '';
-      if (placed.points === undefined) placed.points = 0;
-      if (placed.events_counted === undefined) placed.events_counted = 0;
+      var placed = promoteRowObj(row);
       seedOrder.splice(Math.min(to, seedOrder.length), 0, placed);
     }
     dragInfo = null;
@@ -435,6 +505,8 @@
 
   function resetSeedOrder(){
     if (!lastResult) return;
+    clearSavedOrder();   // else the next recompute would restore it
+    _orderRestored = false;
     promoted = {};
     seedOrder = (lastResult.ranked || []).slice();
     renderRankedTable();
@@ -465,7 +537,7 @@
     bracket.forEach(function(seed, slot){ slotOfSeed[seed] = slot; });
 
     // ── Rematch check ──
-    if (mode === 'rematch' || mode === 'both' || mode === 'all'){
+    if (mode === 'rematch' || mode === 'both' || mode === 'all' || mode === 'rematch_state' || mode === 'rematch_city'){
       var recency = parseFloat(document.getElementById('rematchRecency').value) || 0.8;
       var lookback = parseInt(document.getElementById('rematchLookback').value, 10) || 0;
       var pairs = lastResult.pair_history || [];
@@ -492,7 +564,7 @@
     }
 
     // ── Same-state check ──
-    if (mode === 'state' || mode === 'both' || mode === 'all'){
+    if (mode === 'state' || mode === 'both' || mode === 'all' || mode === 'rematch_state'){
       var states = lastResult.player_states || {};
       // group seeded players by normalized state
       var byState = {};
@@ -523,7 +595,7 @@
     }
 
     // ── Same-city check ──
-    if (mode === 'city' || mode === 'all'){
+    if (mode === 'city' || mode === 'all' || mode === 'rematch_city'){
       var cities = lastResult.player_cities || {};
       var cstates = lastResult.player_states || {};
       var cstateIds = lastResult.player_state_ids || {};
@@ -637,6 +709,7 @@
     // `promoted`). A fresh compute resets any manual promotion.
     promoted = {};
     seedOrder = (data.ranked || []).slice();
+    applySavedOrder();   // pinned manual order survives recomputes
     renderRankedTable();
     renderSections();     // known-unranked + unmatched (minus promoted)
     recheckRematches();   // uses seedOrder + data.pair_history
@@ -705,6 +778,7 @@
       msg += ' · ' + (window.t?window.t('sd_sparse_warn'):'Few events in scope — by-absence decay needs the series imported fairly completely to be accurate.');
       warn = true;
     }
+    if (_orderRestored) msg += ' \u00B7 ' + (window.t?window.t('sd_order_restored'):'saved seed order restored');
     setStatus(msg, warn);
   }
 

@@ -1035,9 +1035,9 @@ def seeding_compute():
         check_mode = body.get("check_mode")
         if check_mode is None:
             check_mode = "rematch" if body.get("rematch_check", True) else "off"
-        do_rematch = check_mode in ("rematch", "both", "all")
-        do_state = check_mode in ("state", "both", "all")
-        do_city = check_mode in ("city", "all")
+        do_rematch = check_mode in ("rematch", "both", "all", "rematch_state", "rematch_city")
+        do_state = check_mode in ("state", "both", "all", "rematch_state")
+        do_city = check_mode in ("city", "all", "rematch_city")
         try:
             early_rounds = int(body.get("early_rounds", 2))
         except (TypeError, ValueError):
