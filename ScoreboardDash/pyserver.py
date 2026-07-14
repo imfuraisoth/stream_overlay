@@ -375,6 +375,7 @@ def save_local_player():
         if body.get("team"):            existing["team"]            = body["team"]
         if body.get("country"):         existing["country"]         = body["country"]
         if "state" in body:             existing["state"]           = body["state"]   # allow clearing
+        if "city" in body:              existing["city"]            = body["city"]    # allow clearing
         if "social_handle"   in body:              existing["social_handle"]   = body["social_handle"]
         if "social_platform" in body:              existing["social_platform"] = body["social_platform"]
         if "is_commentator" in body:        existing["is_commentator"]  = bool(body["is_commentator"])
@@ -413,6 +414,7 @@ def update_local_player():
     team            = body.get("team", "")
     country         = body.get("country", "")
     state           = body.get("state", "")
+    city            = body.get("city", "")
     social_handle   = body.get("social_handle", "")
     social_platform = body.get("social_platform", "")
     is_commentator  = bool(body.get("is_commentator", False))
@@ -432,8 +434,14 @@ def update_local_player():
         existing_aliases = players[pid].get("aliases", [])
         new_aliases = body.get("aliases")
         aliases = new_aliases if new_aliases is not None else existing_aliases
+        # Preserve the auto-pulled state_id when the state TEXT is unchanged;
+        # if the TO edited the state, the text becomes authoritative and the
+        # old canonical id no longer applies. (Without this, every manual
+        # profile edit silently wiped state_id.)
+        old_state = (players[pid].get("state") or "").strip()
+        state_id = players[pid].get("state_id") if (state or "").strip() == old_state else None
         players[pid] = {"id": pid, "name": name, "team": team, "country": country,
-                        "state": state,
+                        "state": state, "state_id": state_id, "city": city,
                         "social_handle": social_handle, "social_platform": social_platform,
                         "is_commentator": is_commentator, "characters": characters,
                         "roster": roster, "aliases": aliases}
@@ -1125,7 +1133,8 @@ def seeding_reconcile():
         loc_state = (body.get("state") or "").strip()
         loc_state_id = body.get("state_id")
         loc_city = (body.get("city") or "").strip()
-        players[pid] = {"id": pid, "name": tag, "team": "", "country": "",
+        loc_country = (body.get("country") or "").strip().upper()
+        players[pid] = {"id": pid, "name": tag, "team": "", "country": loc_country,
                         "state": loc_state, "state_id": loc_state_id, "city": loc_city,
                         "social_handle": "", "social_platform": "",
                         "is_commentator": False, "characters": {}, "roster": {},
@@ -1176,6 +1185,7 @@ def location_review():
             "state": getattr(ent, "state", "") or "",
             "state_id": getattr(ent, "state_id", None),
             "city": getattr(ent, "city", "") or "",
+            "country": getattr(ent, "location_country", "") or "",
         })
 
     review = LocationResolve.build_review(
@@ -1185,8 +1195,11 @@ def location_review():
     for r in review:
         r["user_id"] = uid_by_tag.get(r["tag"])
     flagged = sum(1 for r in review if r.get("is_flagged"))
+    with_location = sum(1 for e in ent_locs
+                        if e.get("state") or e.get("state_id") is not None or e.get("country"))
     return jsonify({"ok": True, "review": review,
                     "total_entrants": len(entrants or []),
+                    "with_location": with_location,
                     "needs_review": len(review), "flagged": flagged}), 200
 
 
@@ -1212,6 +1225,8 @@ def apply_locations():
             players[pid]["state_id"] = u.get("state_id")
         if "city" in u:
             players[pid]["city"] = (u.get("city") or "").strip()
+        if "country" in u:
+            players[pid]["country"] = (u.get("country") or "").strip().upper()
         applied += 1
     if applied:
         players_db.save_local_players(players)

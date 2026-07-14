@@ -65,6 +65,10 @@
         <input type="text" id="mState" placeholder="e.g. TX (used for seeding checks; not shown on stream)" data-i18n-attr="placeholder:pl_state_ph">
       </div>
       <div class="field-group">
+        <label for="mCity" data-i18n="pl_city">City</label>
+        <input type="text" id="mCity" placeholder="e.g. Dallas (for future seeding checks; not shown on stream)" data-i18n-attr="placeholder:pl_city_ph">
+      </div>
+      <div class="field-group">
         <label data-i18n="pl_social">Social Media</label>
         <div class="social-row">
           <select id="mSocialPlatform">
@@ -233,6 +237,7 @@ function renderTable() {
       <th onclick="sortBy('name')" class="sortable">Name <span class="sort-icon">⇅</span></th>
       <th onclick="sortBy('team')" class="sortable">Team <span class="sort-icon">⇅</span></th>
       <th onclick="sortBy('country')" class="sortable">Country <span class="sort-icon">⇅</span></th>
+      <th onclick="sortBy('state')" class="sortable">Location <span class="sort-icon">⇅</span></th>
       <th onclick="sortBy('social_handle')" class="sortable">Social <span class="sort-icon">⇅</span></th>
       <th class="col-com">Com</th>
       <th class="col-actions">Actions</th>
@@ -248,6 +253,9 @@ function renderTable() {
         ? `<div style="font-size:10px;color:var(--fg2);font-weight:400;">aka ${escHtml(p.aliases.join(', '))}</div>` : ''}</td>
       <td class="col-team">${team ? `<span class="team-badge">${team}</span>` : '<span class="cell-empty">—</span>'}</td>
       <td class="col-country">${country || '<span class="cell-empty">—</span>'}</td>
+      <td class="col-location">${p.state
+        ? `${escHtml(p.state)}${p.city ? `<span style="color:var(--fg2);font-size:11px;"> · ${escHtml(p.city)}</span>` : ''}`
+        : '<span class="cell-empty">—</span>'}</td>
       <td class="col-socials">${p.social_handle
         ? `<span class="platform-badge platform-${escHtml(p.social_platform||'')}">${platformIcon(p.social_platform)}${escHtml(p.social_handle)}</span>`
         : '<span class="cell-empty">—</span>'}</td>
@@ -317,6 +325,7 @@ function openAddModal() {
   document.getElementById('mName').value    = '';
   document.getElementById('mTeam').value    = '';
   document.getElementById('mState').value   = '';
+  document.getElementById('mCity').value    = '';
   document.getElementById('mIsCommentator').checked = false;
   document.getElementById('mSocialHandle').value = '';
   document.getElementById('mSocialPlatform').value = '';
@@ -335,6 +344,7 @@ function openEditModal(id) {
   document.getElementById('mName').value    = p.name || '';
   document.getElementById('mTeam').value    = p.team || '';
   document.getElementById('mState').value   = p.state || '';
+  document.getElementById('mCity').value    = p.city || '';
   document.getElementById('mIsCommentator').checked = !!p.is_commentator;
   document.getElementById('mSocialHandle').value = p.social_handle || '';
   document.getElementById('mSocialPlatform').value = p.social_platform || '';
@@ -548,6 +558,7 @@ async function saveModal() {
   const team    = document.getElementById('mTeam').value.trim();
   const country = document.getElementById('mCountry').value;
   const state   = document.getElementById('mState').value.trim();
+  const city    = document.getElementById('mCity').value.trim();
   const social_handle     = document.getElementById('mSocialHandle').value.trim();
   const is_commentator    = document.getElementById('mIsCommentator').checked;
   const social_platform = document.getElementById('mSocialPlatform').value;
@@ -555,9 +566,9 @@ async function saveModal() {
 
   const endpoint = _editingOrigName ? '/updateLocalPlayer' : '/saveLocalPlayer';
   const body = _editingOrigName
-    ? { id: _editingOrigName, name, team, country, state, social_handle, social_platform, is_commentator,
+    ? { id: _editingOrigName, name, team, country, state, city, social_handle, social_platform, is_commentator,
         characters: window._editingCharacters, roster: window._editingRoster, aliases: window._editingAliases }
-    : { name, team, country, state, social_handle, social_platform, is_commentator,
+    : { name, team, country, state, city, social_handle, social_platform, is_commentator,
         characters: window._editingCharacters, roster: window._editingRoster, aliases: window._editingAliases };
 
   try {

@@ -95,56 +95,94 @@ def resolve_one(profile_state, profile_state_id, sgg_state, sgg_state_id):
     return CONFLICT, sgg_state, sgg_state_id, True
 
 
+def resolve_country(profile_country, sgg_country, has_us_state):
+    """Decide the country action for one player, mirroring resolve_one's
+    flag-don't-overwrite philosophy.
+
+    sgg_country     -- mapped 2-letter code from start.gg, or "" if unset.
+    has_us_state    -- True when start.gg supplied a recognized US state;
+                       used to INFER country US when the country field
+                       itself is blank (a US state implies the US).
+
+    Returns (status, proposed_country, is_flagged, inferred)."""
+    prof = (profile_country or "").strip().upper()
+    sgg = (sgg_country or "").strip().upper()
+    inferred = False
+    if not sgg and has_us_state:
+        sgg = "US"
+        inferred = True
+    if not sgg:
+        return NONE, "", False, False
+    if not prof:
+        return FILL, sgg, False, inferred
+    if prof == sgg:
+        return MATCH, prof, False, False
+    return CONFLICT, sgg, True, inferred
+
+
 def build_review(entrant_locations, resolve_fn):
     """Build a review list from pulled entrant locations.
 
     entrant_locations: list of dicts, each:
-      { player_id (or None if unmatched), tag, state, state_id, city }
-    resolve_fn(player_id) -> profile dict (or None) with keys state, state_id.
+      { player_id (or None if unmatched), tag, state, state_id, city, country }
+    resolve_fn(player_id) -> profile dict (or None) with keys state, state_id,
+      city, country.
 
     Returns a list of review rows (only those needing attention OR a fill):
       { player_id, tag, status, is_flagged,
-        current_state, current_state_id,
-        sgg_state, sgg_state_id, sgg_city,
-        proposed_state, proposed_state_id, proposed_city }
-    MATCH and NONE rows are omitted (nothing for the TO to act on), except we
-    still carry city-only updates as fills when the state matched.
-    """
+        current_state, current_state_id, current_city, current_country,
+        sgg_state, sgg_state_id, sgg_city, sgg_country,
+        proposed_state, proposed_state_id, proposed_city, proposed_country,
+        city_fill, country_status, country_inferred }
+    Rows where the state, city, AND country all need no action are omitted."""
     review = []
     for ent in entrant_locations:
         pid = ent.get("player_id")
         sgg_state = ent.get("state") or ""
         sgg_state_id = ent.get("state_id")
         sgg_city = ent.get("city") or ""
+        sgg_country = ent.get("country") or ""
         prof = resolve_fn(pid) if pid else None
         prof_state = (prof or {}).get("state", "") if prof else ""
         prof_state_id = (prof or {}).get("state_id") if prof else None
         prof_city = (prof or {}).get("city", "") if prof else ""
+        prof_country = (prof or {}).get("country", "") if prof else ""
 
         status, prop_state, prop_state_id, flagged = resolve_one(
             prof_state, prof_state_id, sgg_state, sgg_state_id)
 
+        # country: a recognized US state implies the US when country is blank
+        has_us_state = (sgg_state_id is not None) or (normalize_state(sgg_state) is not None)
+        c_status, prop_country, c_flagged, c_inferred = resolve_country(
+            prof_country, sgg_country, has_us_state)
+
         # city fill: propose whenever start.gg has a city the profile lacks
         city_fill = bool(sgg_city and not prof_city)
 
-        # Skip rows with genuinely nothing to do: no state action AND no city fill.
-        if status in (MATCH, NONE) and not city_fill:
+        # Skip rows with genuinely nothing to do on any of the three fields.
+        if status in (MATCH, NONE) and c_status in (MATCH, NONE) \
+                and not city_fill:
             continue
 
         review.append({
             "player_id": pid,
             "tag": ent.get("tag", ""),
             "status": status,
-            "is_flagged": flagged,
+            "is_flagged": flagged or c_flagged,
             "current_state": prof_state,
             "current_state_id": prof_state_id,
             "current_city": prof_city,
+            "current_country": prof_country,
             "sgg_state": sgg_state,
             "sgg_state_id": sgg_state_id,
             "sgg_city": sgg_city,
+            "sgg_country": (sgg_country or ("US" if c_inferred else "")),
             "proposed_state": prop_state,
             "proposed_state_id": prop_state_id,
             "proposed_city": sgg_city if city_fill else prof_city,
+            "proposed_country": prop_country if c_status in (FILL, CONFLICT) else prof_country,
             "city_fill": city_fill,
+            "country_status": c_status,
+            "country_inferred": c_inferred,
         })
     return review

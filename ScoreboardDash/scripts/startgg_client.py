@@ -66,7 +66,8 @@ class Match:
 
 class Player:
     def __init__(self, name, entrant_id, team, country, seed,
-                 state="", state_id=None, city="", user_id=None):
+                 state="", state_id=None, city="", user_id=None,
+                 location_country=""):
         self.name = name
         self.team = team
         self.entrant_id = entrant_id
@@ -76,6 +77,7 @@ class Player:
         self.state_id = state_id      # start.gg location.stateId (canonical int)
         self.city = city              # start.gg location.city (text, may be blank)
         self.user_id = user_id        # start.gg user id (for durable resolution)
+        self.location_country = location_country  # mapped code, "" if unset (no US default)
 
 
 def get_token():
@@ -412,7 +414,8 @@ def get_players_from_tournament(tournament_name, event_name, page):
         seed = get_seed(entrant["seeds"])
         entrants_list.append(Player(gamer_tag, entrant_id, team or "", country, seed,
                                     state=loc["state"], state_id=loc["state_id"],
-                                    city=loc["city"], user_id=loc["user_id"]))
+                                    city=loc["city"], user_id=loc["user_id"],
+                                    location_country=loc["country"]))
     return entrants_list
 
 
@@ -501,9 +504,11 @@ def get_country(participant):
 
 
 def get_location(participant):
-    """Return {state, state_id, city, user_id} from a participant's start.gg
-    profile location. All may be blank/None (profile privacy or unset)."""
-    out = {"state": "", "state_id": None, "city": "", "user_id": None}
+    """Return {state, state_id, city, country, user_id} from a participant's
+    start.gg profile location. All may be blank/None (profile privacy or
+    unset). Unlike get_country, `country` here has NO US default -- it's ""
+    when start.gg has no country, so callers can tell absence from US."""
+    out = {"state": "", "state_id": None, "city": "", "country": "", "user_id": None}
     user = participant.get("user") if isinstance(participant, dict) else None
     if isinstance(user, dict):
         out["user_id"] = user.get("id")
@@ -512,6 +517,9 @@ def get_location(participant):
             out["state"] = (location.get("state") or "").strip()
             out["state_id"] = location.get("stateId")
             out["city"] = (location.get("city") or "").strip()
+            raw_country = (location.get("country") or "").strip()
+            if raw_country:
+                out["country"] = country_code_map.get(raw_country) or ""
     return out
 
 

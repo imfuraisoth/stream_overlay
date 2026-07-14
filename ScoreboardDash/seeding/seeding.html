@@ -733,8 +733,11 @@
       + ': ' + data.needs_review + ' / ' + data.total_entrants
       + (data.flagged ? '  (\u26A0 ' + data.flagged + ' ' + (window.t?window.t('sd_loc_flagged'):'flagged') + ')' : '');
     if (!locReviewRows.length){
+      var emptyMsg = (data.with_location === 0)
+        ? (window.t?window.t('sd_loc_none_returned'):'start.gg returned no location data for these entrants.')
+        : (window.t?window.t('sd_loc_nothing'):'Nothing to update -- every matched player already has matching location data.');
       document.getElementById('locReviewBody').innerHTML =
-        '<div class="sd-empty">' + (window.t?window.t('sd_loc_nothing'):'Nothing to update -- every matched player already has matching location data.') + '</div>';
+        '<div class="sd-empty">' + emptyMsg + '</div>';
     } else {
       var h = '<table class="sd loc-table"><thead><tr>'
         + '<th></th>'
@@ -749,9 +752,17 @@
         else if (row.status === 'nonstandard') badge = '<span class="loc-badge loc-nonstd" data-i18n="sd_loc_nonstd">non-standard</span>';
         else if (row.status === 'fill') badge = '<span class="loc-badge loc-fill" data-i18n="sd_loc_fill">new</span>';
         var unmatched = !row.player_id;
-        var curTxt = (row.current_state||'') + (row.current_city?(' / '+row.current_city):'');
-        var sggTxt = (row.sgg_state||'') + (row.sgg_city?(' / '+row.sgg_city):'')
-                   + (row.sgg_state_id!=null?(' <span class="sd-math">#'+row.sgg_state_id+'</span>'):'');
+        var curTxt = (row.current_country ? row.current_country + ' \u00B7 ' : '')
+                   + (row.current_state||'') + (row.current_city?(' / '+row.current_city):'');
+        var sggCountry = row.sgg_country
+          ? '<strong>' + esc(row.sgg_country) + '</strong>'
+            + (row.country_inferred ? ' <span class="sd-math" title="' + (window.t?window.t('sd_loc_inferred_tip'):'Inferred from US state') + '">(' + (window.t?window.t('sd_loc_inferred'):'inferred') + ')</span>' : '')
+            + ((row.sgg_state || row.sgg_city) ? ' \u00B7 ' : '')
+          : '';
+        var sggTxt = sggCountry
+                   + (row.sgg_state||'')
+                   + (row.sgg_state_id!=null?(' <span class="sd-math">#'+row.sgg_state_id+'</span>'):'')
+                   + (row.sgg_city?(' / '+row.sgg_city):'');
         h += '<tr class="' + (row.is_flagged?'loc-flagged-row':'') + '">'
           + '<td>' + (unmatched ? '' : '<input type="checkbox" ' + (row.include?'checked':'') + ' onchange="locToggle('+i+',this.checked)">') + '</td>'
           + '<td>' + esc(row.tag) + ' ' + badge + (unmatched?' <span class="loc-badge loc-unmatched" data-i18n="sd_loc_unmatched">unmatched</span>':'') + '</td>'
@@ -783,7 +794,8 @@
   async function locReconcileNew(i){
     var row = locReviewRows[i]; if (!row) return;
     await doReconcile({tag: row.tag, user_id: row.user_id, action: 'new',
-                       state: row.proposed_state, state_id: row.proposed_state_id, city: row.sgg_city});
+                       state: row.proposed_state, state_id: row.proposed_state_id, city: row.sgg_city,
+                       country: row.proposed_country});
     // reflect that it's handled
     row.done = true;
     setStatus((window.t?window.t('sd_loc_created'):'Created profile for') + ' ' + row.tag);
@@ -793,7 +805,8 @@
   async function applyLocations(){
     var updates = locReviewRows.filter(function(r){ return r.include && r.player_id; })
       .map(function(r){ return {player_id: r.player_id, state: r.proposed_state,
-                                state_id: r.proposed_state_id, city: r.proposed_city}; });
+                                state_id: r.proposed_state_id, city: r.proposed_city,
+                                country: r.proposed_country}; });
     if (!updates.length){ closeLocReview(); return; }
     try {
       var r = await fetch('/applyLocations', {
