@@ -389,3 +389,81 @@ def detect_state_clashes(ranked, early_rounds=2):
                 })
     flags.sort(key=lambda f: f["severity"], reverse=True)
     return flags
+
+def detect_city_clashes(ranked, early_rounds=2):
+    """Find seeded players from the SAME city who'd meet early.
+
+    The city-tier companion to detect_state_clashes: at a state-heavy event
+    (e.g. a Texas major) the state check flags everyone and becomes noise,
+    while same-CITY still surfaces genuinely local clusters.
+
+    City is free text with no canonical id, so matching is normalized
+    (trimmed, case-insensitive: "dallas" == "Dallas"). Because city names
+    collide across states (Springfield, Portland...), a pair is EXCLUDED
+    when both players have a state and the states differ; if either lacks
+    a state, the city match is allowed.
+
+    ranked        -- list of {player_id, name, city, state, state_id, ...}
+                     in seed order.
+    early_rounds  -- flag pairs meeting in this round or earlier.
+
+    Returns flags sorted worst-first:
+      { a_seed, a_id, a_name, b_seed, b_id, b_name, city, round,
+        bracket_size, severity }
+    """
+    seed_of = {}
+    name_of = {}
+    city_of = {}
+    statekey_of = {}
+    order_ids = []
+    for i, r in enumerate(ranked):
+        pid = r.get("player_id")
+        if not pid:
+            continue
+        seed_of[pid] = i + 1
+        name_of[pid] = r.get("name", pid)
+        ct = (r.get("city") or "").strip()
+        if ct:
+            city_of[pid] = ct
+        sid = r.get("state_id")
+        st = (r.get("state") or "").strip()
+        if sid not in (None, ""):
+            statekey_of[pid] = "id:%s" % sid
+        elif st:
+            statekey_of[pid] = "txt:%s" % st.lower()
+        order_ids.append(pid)
+
+    size = _next_pow2(len(order_ids))
+    bracket = standard_bracket_order(size)
+    slot_of_seed = {seed: slot for slot, seed in enumerate(bracket)}
+
+    by_city = {}
+    for pid, ct in city_of.items():
+        by_city.setdefault(ct.lower(), []).append(pid)
+
+    flags = []
+    for ct_key, pids in by_city.items():
+        if len(pids) < 2:
+            continue
+        for i in range(len(pids)):
+            for j in range(i + 1, len(pids)):
+                a, b = pids[i], pids[j]
+                ka, kb = statekey_of.get(a), statekey_of.get(b)
+                if ka and kb and ka != kb:
+                    continue   # same city NAME, different states
+                slot_a = slot_of_seed.get(seed_of[a])
+                slot_b = slot_of_seed.get(seed_of[b])
+                if slot_a is None or slot_b is None:
+                    continue
+                rnd = meeting_round(slot_a, slot_b, size)
+                if rnd > early_rounds:
+                    continue
+                flags.append({
+                    "a_seed": seed_of[a], "a_id": a, "a_name": name_of.get(a, a),
+                    "b_seed": seed_of[b], "b_id": b, "b_name": name_of.get(b, b),
+                    "city": city_of[a],
+                    "round": rnd, "bracket_size": size,
+                    "severity": round(float(early_rounds - rnd + 1), 4),
+                })
+    flags.sort(key=lambda f: f["severity"], reverse=True)
+    return flags

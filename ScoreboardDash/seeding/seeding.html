@@ -50,6 +50,8 @@
     .sd-rematch-sub { font-size: 12px; color: var(--fg2); margin-bottom: 10px; }
     .sd-state-card { border-color: var(--accent, #40D0B0); }
     .sd-state-head { color: var(--accent, #40D0B0); }
+    .sd-city-card { border-color: var(--amber, #E8A050); }
+    .sd-city-head { color: var(--amber, #E8A050); }
     .sd-draghint { font-size: 11px; color: var(--fg2); font-style: italic; margin-bottom: 6px; }
     .sd-drag-row { cursor: grab; }
     .sd-drag-row.sd-dragging { opacity: 0.4; }
@@ -151,7 +153,8 @@
         <option value="off" data-i18n="sd_check_off">Off</option>
         <option value="rematch" selected data-i18n="sd_check_rematch">Rematch only</option>
         <option value="state" data-i18n="sd_check_state">Same-state only</option>
-        <option value="both" data-i18n="sd_check_both">Both</option>
+        <option value="city" data-i18n="sd_check_city">Same-city only</option>
+        <option value="all" data-i18n="sd_check_all">All checks</option>
       </select>
     </label>
     <label class="sd-ctl"><span data-i18n="sd_rematch_rounds">Flag within</span>
@@ -173,6 +176,7 @@
 
   <div id="sdRematches"></div>
   <div id="sdStateClashes"></div>
+  <div id="sdCityClashes"></div>
   <div id="sdRanked"></div>
   <div id="sdKnownUnranked"></div>
   <div id="sdUnmatched"></div>
@@ -443,9 +447,9 @@
   // entirely client-side, so it's instant on every drag. Mirrors
   // SeedingRank.detect_rematches / detect_state_clashes.
   function recheckRematches(){
-    if (!lastResult){ renderRematches([]); renderStateClashes([]); return; }
+    if (!lastResult){ renderRematches([]); renderStateClashes([]); renderCityClashes([]); return; }
     var mode = document.getElementById('checkMode').value;
-    if (mode === 'off'){ renderRematches([]); renderStateClashes([]); return; }
+    if (mode === 'off'){ renderRematches([]); renderStateClashes([]); renderCityClashes([]); return; }
     var earlyRounds = parseInt(document.getElementById('rematchRounds').value, 10) || 2;
 
     // Full seed order = current seed list (may already include promoted
@@ -461,7 +465,7 @@
     bracket.forEach(function(seed, slot){ slotOfSeed[seed] = slot; });
 
     // ── Rematch check ──
-    if (mode === 'rematch' || mode === 'both'){
+    if (mode === 'rematch' || mode === 'both' || mode === 'all'){
       var recency = parseFloat(document.getElementById('rematchRecency').value) || 0.8;
       var lookback = parseInt(document.getElementById('rematchLookback').value, 10) || 0;
       var pairs = lastResult.pair_history || [];
@@ -488,7 +492,7 @@
     }
 
     // ── Same-state check ──
-    if (mode === 'state' || mode === 'both'){
+    if (mode === 'state' || mode === 'both' || mode === 'all'){
       var states = lastResult.player_states || {};
       // group seeded players by normalized state
       var byState = {};
@@ -516,6 +520,46 @@
       renderStateClashes(sflags);
     } else {
       renderStateClashes([]);
+    }
+
+    // ── Same-city check ──
+    if (mode === 'city' || mode === 'all'){
+      var cities = lastResult.player_cities || {};
+      var cstates = lastResult.player_states || {};
+      var cstateIds = lastResult.player_state_ids || {};
+      function stateKeyOf(pid){
+        var sid = cstateIds[pid];
+        if (sid !== null && sid !== undefined && sid !== '') return 'id:' + sid;
+        var st = (cstates[pid] || '').trim();
+        return st ? ('txt:' + st.toLowerCase()) : '';
+      }
+      var byCity = {};
+      fullOrder.forEach(function(r){
+        var pid = r.player_id; if (!pid) return;
+        var ct = (cities[pid] || '').trim();
+        if (!ct) return;
+        (byCity[ct.toLowerCase()] = byCity[ct.toLowerCase()] || []).push({pid: pid, name: r.name, ct: ct});
+      });
+      var cflags = [];
+      Object.keys(byCity).forEach(function(k){
+        var grp = byCity[k];
+        for (var i=0;i<grp.length;i++){ for (var j=i+1;j<grp.length;j++){
+          var a=grp[i], b=grp[j];
+          var ka=stateKeyOf(a.pid), kb=stateKeyOf(b.pid);
+          if (ka && kb && ka !== kb) continue;   // same city name, different states
+          var sa=seedOf[a.pid], sb=seedOf[b.pid];
+          var slotA=slotOfSeed[sa], slotB=slotOfSeed[sb];
+          if (slotA===undefined||slotB===undefined) continue;
+          var rnd=meetingRound(slotA, slotB, size);
+          if (rnd>earlyRounds) continue;
+          cflags.push({ a_seed:sa, a_name:a.name, b_seed:sb, b_name:b.name,
+            city:a.ct, round:rnd, severity:(earlyRounds-rnd+1) });
+        }}
+      });
+      cflags.sort(function(a,b){ return b.severity - a.severity; });
+      renderCityClashes(cflags);
+    } else {
+      renderCityClashes([]);
     }
   }
 
@@ -559,6 +603,28 @@
         + '<td class="sd-seed">R' + f.round + '</td>'
         + '<td><strong>#' + f.a_seed + '</strong> ' + esc(f.a_name) + ' <span class="sd-math">vs</span> <strong>#' + f.b_seed + '</strong> ' + esc(f.b_name) + '</td>'
         + '<td>' + esc(f.state) + '</td>'
+        + '</tr>';
+    });
+    h += '</tbody></table></div>';
+    box.innerHTML = h;
+  }
+
+  function renderCityClashes(flags){
+    var box = document.getElementById('sdCityClashes');
+    if (!flags || !flags.length){ box.innerHTML = ''; return; }
+    var title = window.t ? window.t('sd_city_title') : 'Possible same-city early meetings';
+    var sub = window.t ? window.t('sd_city_sub') : 'These seeded players are from the same city and would meet early. At state-heavy events this is the sharper local signal.';
+    var h = '<div class="sd-rematch-card sd-city-card"><div class="sd-rematch-head sd-city-head">\u26A0 ' + esc(title) + '</div>'
+      + '<div class="sd-rematch-sub">' + esc(sub) + '</div><table class="sd"><thead><tr>'
+      + '<th>' + (window.t?window.t('sd_rematch_col_round'):'Round') + '</th>'
+      + '<th>' + (window.t?window.t('sd_rematch_col_players'):'Players') + '</th>'
+      + '<th>' + (window.t?window.t('sd_city_col'):'City') + '</th>'
+      + '</tr></thead><tbody>';
+    flags.forEach(function(f){
+      h += '<tr>'
+        + '<td class="sd-seed">R' + f.round + '</td>'
+        + '<td><strong>#' + f.a_seed + '</strong> ' + esc(f.a_name) + ' <span class="sd-math">vs</span> <strong>#' + f.b_seed + '</strong> ' + esc(f.b_name) + '</td>'
+        + '<td>' + esc(f.city) + '</td>'
         + '</tr>';
     });
     h += '</tbody></table></div>';
@@ -761,7 +827,6 @@
           : '';
         var sggTxt = sggCountry
                    + (row.sgg_state||'')
-                   + (row.sgg_state_id!=null?(' <span class="sd-math">#'+row.sgg_state_id+'</span>'):'')
                    + (row.sgg_city?(' / '+row.sgg_city):'');
         h += '<tr class="' + (row.is_flagged?'loc-flagged-row':'') + '">'
           + '<td>' + (unmatched ? '' : '<input type="checkbox" ' + (row.include?'checked':'') + ' onchange="locToggle('+i+',this.checked)">') + '</td>'

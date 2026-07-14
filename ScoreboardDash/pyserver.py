@@ -1025,15 +1025,19 @@ def seeding_compute():
     rematch_flags = []
     pair_history = []
     state_flags = []
+    city_flags = []
     state_lookup = {}
+    city_lookup = {}
+    state_id_lookup = {}
     try:
         # check_mode: 'rematch' | 'state' | 'both' | 'off'. (Back-compat: the
         # old rematch_check bool still turns rematch on if check_mode absent.)
         check_mode = body.get("check_mode")
         if check_mode is None:
             check_mode = "rematch" if body.get("rematch_check", True) else "off"
-        do_rematch = check_mode in ("rematch", "both")
-        do_state = check_mode in ("state", "both")
+        do_rematch = check_mode in ("rematch", "both", "all")
+        do_state = check_mode in ("state", "both", "all")
+        do_city = check_mode in ("city", "all")
         try:
             early_rounds = int(body.get("early_rounds", 2))
         except (TypeError, ValueError):
@@ -1061,6 +1065,17 @@ def seeding_compute():
                     row["state"] = players.get(pid, {}).get("state", "")
             state_flags = SeedingRank.detect_state_clashes(seed_order, early_rounds=early_rounds)
 
+        if do_city and early_rounds > 0:
+            # city needs state/state_id too (cross-state same-name exclusion)
+            for row in seed_order:
+                pid = row.get("player_id")
+                if pid:
+                    prec = players.get(pid, {})
+                    row["city"] = prec.get("city", "")
+                    row["state"] = prec.get("state", "")
+                    row["state_id"] = prec.get("state_id")
+            city_flags = SeedingRank.detect_city_clashes(seed_order, early_rounds=early_rounds)
+
         # Always expose raw pair history + player states so the client can
         # recompute BOTH checks instantly on a drag-reorder, no server round-trip.
         _ordered_ev = SeedingRank._event_order(events)
@@ -1072,6 +1087,8 @@ def seeding_compute():
             if r.get("player_id"):
                 name_lookup[r["player_id"]] = r.get("name", r["player_id"])
                 state_lookup[r["player_id"]] = players.get(r["player_id"], {}).get("state", "")
+                city_lookup[r["player_id"]] = players.get(r["player_id"], {}).get("city", "")
+                state_id_lookup[r["player_id"]] = players.get(r["player_id"], {}).get("state_id")
         pair_history = [{"a_id": a, "b_id": b,
                          "a_name": name_lookup.get(a, a), "b_name": name_lookup.get(b, b),
                          "events_ago": info["events_ago"], "label": info["label"],
@@ -1081,6 +1098,7 @@ def seeding_compute():
         print("seedingCompute detection error: %s" % e)
         rematch_flags = []
         state_flags = []
+        city_flags = []
 
     return jsonify({
         "ok": True,
@@ -1093,6 +1111,9 @@ def seeding_compute():
         "state_clashes": state_flags,     # same-state early meetings
         "pair_history": pair_history,      # raw prior meetings, for live re-check on reorder
         "player_states": state_lookup,    # pid -> state, for live re-check
+        "city_clashes": city_flags,       # same-city early meetings
+        "player_cities": city_lookup,     # pid -> city, for live re-check
+        "player_state_ids": state_id_lookup,  # pid -> stateId (city cross-state rule)
     }), 200
 
 
