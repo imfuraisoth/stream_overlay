@@ -1205,10 +1205,9 @@ function getAllPlayersForTournament(event) {
     loadPlayerData(false, true);
 }
 
-function loadPlayerData(fromCache) {
-   loadPlayerData(fromCache, false);
-}
-
+// NOTE: a 1-arg wrapper used to precede this, silently shadowed by this
+// same-named declaration. Calls with one arg get notify=undefined, which
+// behaves as false -- the wrapper's intent -- so it was safely removed.
 function loadPlayerData(fromCache, notify) {
     var param1 = encodeURIComponent(startggInfo.tournament);
     var param2 = encodeURIComponent(startggInfo.event);

@@ -1,0 +1,26 @@
+# Line-ending policy: this project uses CRLF for its text files (Windows
+# toolchain). Declaring it here makes git enforce it mechanically instead
+# of relying on manual normalization before every commit.
+*.py    text eol=crlf
+*.js    text eol=crlf
+*.html  text eol=crlf
+*.css   text eol=crlf
+*.json  text eol=crlf
+*.md    text eol=crlf
+*.txt   text eol=crlf
+*.bat   text eol=crlf
+
+# Binary assets: never touch line endings.
+*.png   binary
+*.jpg   binary
+*.jpeg  binary
+*.gif   binary
+*.webp  binary
+*.ico   binary
+*.mp4   binary
+*.webm  binary
+*.woff  binary
+*.woff2 binary
+*.ttf   binary
+*.zip   binary
+*.db    binary
