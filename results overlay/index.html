@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+<!-- LIVES AT: results overlay/index.html -- Results overlay (OBS browser source) -- sibling folder NEXT TO ScoreboardDash, not inside it -->
 <html>
   <head>
     <meta charset="utf-8">
@@ -49,120 +50,125 @@
             console.log('error: ' + err);
           });
           function appendData(data) {
+            // Hardened against the duplicate-stacking race (same fix as the
+            // commentator overlays): the cached value now updates AT
+            // DETECTION TIME (it used to update inside the 1s delay, so a
+            // second poll landing in that window -- fetch jitter, or OBS
+            // coalescing throttled timers on scene switch -- saw the stale
+            // cache and queued a duplicate append), and every append first
+            // purges ALL elements with that id (getElementById only returns
+            // the first match, so extras could never be removed and stacked
+            // forever). querySelectorAll purges them all and self-heals.
+            function replaceItem(id, build) {
+              document.querySelectorAll('[id="' + id + '"]').forEach(function (el) {
+                fadeOutElement(el);
+              });
+              sleep(1000).then(function () {
+                document.querySelectorAll('[id="' + id + '"]').forEach(function (el) {
+                  el.remove();
+                });
+                build();
+              });
+            }
 
             if (data.nextplayer1 !== nextPlayer1) {
-              var element = document.getElementById("next1");
-              if (!!element) {
-                fadeOutElement(element);
-              }
-			  sleep(1000).then(() => {
-				  nextPlayer1 = data.nextplayer1;
-				  if (data.nextplayer1.length > 0) {
-					var np1 = document.createElement("span");
-					np1.setAttribute("id", "nextPlayer1");
-					np1.style.color = "#FFFFFF";
-					np1.innerHTML = data.nextplayer1;
-					var div = document.createElement("div");
-					div.setAttribute("id", "next1");
-					div.appendChild(np1);
-					document.body.appendChild(div);
-					modifyNames(np1);
-				  }
-				});	  
+              nextPlayer1 = data.nextplayer1;
+              var vNext1 = data.nextplayer1 || "";
+              replaceItem("next1", function () {
+                if (vNext1.length === 0) return;
+                var np1 = document.createElement("span");
+                np1.setAttribute("id", "nextPlayer1");
+                np1.style.color = "#FFFFFF";
+                np1.innerHTML = vNext1;
+                var div = document.createElement("div");
+                div.setAttribute("id", "next1");
+                div.appendChild(np1);
+                document.body.appendChild(div);
+                modifyNames(np1);
+              });
             }
 
             if (data.nextplayer2 !== nextPlayer2) {
-              var element = document.getElementById("next2");
-              if (!!element) {
-                fadeOutElement(element);
-              }
-			  sleep(1000).then(() => {
-				  nextPlayer2 = data.nextplayer2;
-				  if (data.nextplayer2.length > 0) {
-					var np2 = document.createElement("span");
-					np2.setAttribute("id", "nextPlayer2");
-					np2.style.color = "#FFFFFF";
-					np2.innerHTML = data.nextplayer2;
-					var div = document.createElement("div");
-					div.setAttribute("id", "next2");
-					div.appendChild(np2);
-					document.body.appendChild(div);
-					modifyNames(np2);
-				  }
-			  });
+              nextPlayer2 = data.nextplayer2;
+              var vNext2 = data.nextplayer2 || "";
+              replaceItem("next2", function () {
+                if (vNext2.length === 0) return;
+                var np2 = document.createElement("span");
+                np2.setAttribute("id", "nextPlayer2");
+                np2.style.color = "#FFFFFF";
+                np2.innerHTML = vNext2;
+                var div = document.createElement("div");
+                div.setAttribute("id", "next2");
+                div.appendChild(np2);
+                document.body.appendChild(div);
+                modifyNames(np2);
+              });
             }
-			
-			if (data.resultplayer1 !== resultName1 || data.resultscore1 !== result1) {
-              var element = document.getElementById("results1");
-              if (!!element) {
-                fadeOutElement(element);
-              }
-			  sleep(1000).then(() => {
-				  resultName1 = data.resultplayer1;
-				  result1 = data.resultscore1;
-				  if (resultName1.length > 0) {
-					var rp1 = document.createElement("td");
-					rp1.setAttribute("id", "resultName1");
-					rp1.style.color = "#FFFFFF";
-					rp1.innerHTML = resultName1;
-					
-					var r1 = document.createElement("td");
-					r1.setAttribute("id", "result1");
-					r1.style.color = "#FFFFFF";
-					r1.innerHTML = result1
-					if (result1.length > 1) {
-						r1.style.fontSize = "35px";
-					} else {
-						r1.style.fontSize = "45px";
-					}
-					
-					var div = document.createElement("table");
-					div.setAttribute("id", "results1");
-					div.appendChild(rp1);
-					div.appendChild(r1);
-					div.style.scrollWidth = "10px";
-					document.body.appendChild(div);
-					modifyNames(rp1);
-				  }
-				});
-            }	
 
-			if (data.resultplayer2 !== resultName2 || data.resultscore2 !== result2) {
-              var element = document.getElementById("results2");
-              if (!!element) {
-                fadeOutElement(element);
-              }
-			  
-			  sleep(1000).then(() => {
-				  resultName2 = data.resultplayer2;
-				  result2 = data.resultscore2;
-				  if (resultName2.length > 0) {
-					var rp2 = document.createElement("td");
-					rp2.setAttribute("id", "resultName2");
-					rp2.style.color = "#FFFFFF";
-					rp2.innerHTML = resultName2;
-					
-					var r2 = document.createElement("td");
-					r2.setAttribute("id", "result2");
-					r2.style.color = "#FFFFFF";
-					r2.innerHTML = result2
-					if (result2.length > 1) {
-						r2.style.fontSize = "35px";
-					} else {
-						r2.style.fontSize = "45px";
-					}
-					
-					var div = document.createElement("table");
-					div.setAttribute("id", "results2");
-					div.appendChild(rp2);
-					div.appendChild(r2);
-					div.style.scrollWidth = "150px";
-					document.body.appendChild(div);
-					modifyNames(rp2);
-				  }
-			  });
-            }	
-          }  
+            if (data.resultplayer1 !== resultName1 || data.resultscore1 !== result1) {
+              resultName1 = data.resultplayer1;
+              result1 = data.resultscore1;
+              var vRName1 = data.resultplayer1 || "";
+              var vRScore1 = data.resultscore1 || "";
+              replaceItem("results1", function () {
+                if (vRName1.length === 0) return;
+                var rp1 = document.createElement("td");
+                rp1.setAttribute("id", "resultName1");
+                rp1.style.color = "#FFFFFF";
+                rp1.innerHTML = vRName1;
+
+                var r1 = document.createElement("td");
+                r1.setAttribute("id", "result1");
+                r1.style.color = "#FFFFFF";
+                r1.innerHTML = vRScore1;
+                if (vRScore1.length > 1) {
+                    r1.style.fontSize = "35px";
+                } else {
+                    r1.style.fontSize = "45px";
+                }
+
+                var div = document.createElement("table");
+                div.setAttribute("id", "results1");
+                div.appendChild(rp1);
+                div.appendChild(r1);
+                div.style.scrollWidth = "10px";
+                document.body.appendChild(div);
+                modifyNames(rp1);
+              });
+            }
+
+            if (data.resultplayer2 !== resultName2 || data.resultscore2 !== result2) {
+              resultName2 = data.resultplayer2;
+              result2 = data.resultscore2;
+              var vRName2 = data.resultplayer2 || "";
+              var vRScore2 = data.resultscore2 || "";
+              replaceItem("results2", function () {
+                if (vRName2.length === 0) return;
+                var rp2 = document.createElement("td");
+                rp2.setAttribute("id", "resultName2");
+                rp2.style.color = "#FFFFFF";
+                rp2.innerHTML = vRName2;
+
+                var r2 = document.createElement("td");
+                r2.setAttribute("id", "result2");
+                r2.style.color = "#FFFFFF";
+                r2.innerHTML = vRScore2;
+                if (vRScore2.length > 1) {
+                    r2.style.fontSize = "35px";
+                } else {
+                    r2.style.fontSize = "45px";
+                }
+
+                var div = document.createElement("table");
+                div.setAttribute("id", "results2");
+                div.appendChild(rp2);
+                div.appendChild(r2);
+                div.style.scrollWidth = "150px";
+                document.body.appendChild(div);
+                modifyNames(rp2);
+              });
+            }
+          }
     }
 
     function fadeOutElement(element) {

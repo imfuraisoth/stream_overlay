@@ -1,3 +1,4 @@
+/* LIVES AT: ScoreboardDash/style.css -- Event Dashboard (index.html) */
 /* ── HITCONFIRM-INSPIRED THEME ─────────────────────────────────── */
 @import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;900&family=Barlow:wght@400;500&display=swap');
 
@@ -19,12 +20,7 @@
   --font-b:  'Barlow', sans-serif;
   --button-color: var(--accent);
   --link-color:   var(--accent);
-}
-
-/* RESET */
-*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; border: none; }
-html { overflow-y: scroll; }
-body {
+}body {
   background: var(--bg);
   color: var(--fg);
   font-family: var(--font-b);
@@ -61,9 +57,7 @@ a, a:hover, a:visited, a:active { color: inherit; text-decoration: none; }
   transition: color .15s, border-color .15s;
   cursor: pointer;
   white-space: nowrap;
-}
-.header-item:hover { color: var(--fg); }
-.header-item a { color: inherit; }
+}.header-item a { color: inherit; }
 
 /* ── MAIN CONTENT WRAPPER ───────────────────────────────────────── */
 .container { width: 100%; }
@@ -389,9 +383,7 @@ select {
   border-radius: 4px;
   outline: none;
   width: 100%;
-}
-input:focus, select:focus { border-color: var(--accent) !important; }
-input::placeholder { color: var(--fg2) !important; }
+}input::placeholder { color: var(--fg2) !important; }
 select option { background: var(--bg3); color: var(--fg); }
 
 .form_score_1p, .form_score_2p,
@@ -498,19 +490,7 @@ button:active, .rectangle_button:active { transform: translateY(1px); }
   background: #2a1a40 !important;
   border-color: #8b5cf6 !important;
   color: #c4a0f8 !important;
-}
-
-/* ── POPUP ──────────────────────────────────────────────────────── */
-.popup {
-  display: none;
-  position: fixed;
-  z-index: 100;
-  left: 0; top: 0;
-  width: 100%; height: 100%;
-  background: rgba(0,0,0,.6);
-  backdrop-filter: blur(2px);
-}
-.popup-content {
+}.popup-content {
   background: var(--bg2);
   border: 1px solid var(--border);
   border-radius: 6px;
@@ -581,30 +561,7 @@ datalist { max-height: 150px; overflow-y: auto; }
 /* ── PLAYER SOURCE TOGGLE ── */
 .player-source-toggle {
   display: flex; flex-direction: column; gap: 5px; margin-top: 2px;
-}
-.player-source-label {
-  font-family: var(--font-d); font-size: 10px; font-weight: 700;
-  letter-spacing: .1em; text-transform: uppercase; color: var(--fg2);
-}
-.toggle-group {
-  display: flex; gap: 2px;
-}
-.toggle-btn {
-  background: var(--bg4); border: 1px solid var(--border) !important;
-  color: var(--fg2); font-family: var(--font-d); font-size: 11px;
-  font-weight: 700; letter-spacing: .06em; text-transform: uppercase;
-  padding: 4px 10px; border-radius: 3px; cursor: pointer;
-  transition: background .15s, color .15s, border-color .15s;
-  line-height: 1;
-}
-.toggle-btn:hover { border-color: var(--accent) !important; color: var(--accent); }
-.toggle-btn.active {
-  background: var(--accent); color: #0e0d0b;
-  border-color: var(--accent) !important;
-}
-.toggle-btn.active:hover { background: var(--accent); filter: brightness(1.12); }
-
-.additionalsContainer {
+}.additionalsContainer {
   padding: 14px;
   display: flex;
   flex-direction: column;
@@ -652,9 +609,7 @@ datalist { max-height: 150px; overflow-y: auto; }
   .matchMetaDataContainer { padding: 10px; gap: 8px; }
   .extraSectionContainer { padding: 0; }
   .section-panel, .nextRoundContainer, .leftSectionContainer, .rightContainer { border-radius: 4px; }
-  .top-navbar-container { flex-wrap: wrap; height: auto; padding: 8px 12px; gap: 4px; }
-  .header-item { padding: 4px 8px; height: auto; font-size: 11px; }
-}
+  .top-navbar-container { flex-wrap: wrap; height: auto; padding: 8px 12px; gap: 4px; }}
 
 /* Player cards should never overflow their column */
 .playerCard-p1, .playerCard-p2 {
@@ -754,119 +709,7 @@ datalist { max-height: 150px; overflow-y: auto; }
 }
 .social-display-value {
   font-size: 12px; color: var(--accent); font-family: var(--font-b);
-}
-
-/* ── NAME PICKER ── */
-.name-input-wrap {
-  display: flex; align-items: stretch; gap: 4px; width: 100%;
-}
-.name-input-wrap input {
-  flex: 1; min-width: 0;
-}
-select.name-picker {
-  flex-shrink: 0;
-  width: 28px;
-  min-width: 28px;
-  max-width: 28px;
-  padding: 0;
-  margin: 0;
-  background: var(--bg4);
-  border: 1px solid var(--border) !important;
-  color: var(--accent);
-  font-size: 11px;
-  border-radius: 4px;
-  cursor: pointer;
-  outline: none;
-  appearance: none;
-  -webkit-appearance: none;
-  text-align: center;
-  align-self: stretch;
-  box-sizing: border-box;
-}
-select.name-picker:focus { border-color: var(--accent) !important; }
-select.name-picker option { font-size: 13px; }
-
-/* ── CHARACTER SELECT ── */
-.char-select-row { flex-direction: column; align-items: flex-start; gap: 4px; }
-.char-picker-inline {
-  display: flex; gap: 4px; align-items: center; width: 100%; flex-wrap: wrap;
-}
-.char-select-pack { font-size: 11px; flex: 1; min-width: 80px; }
-
-/* The selected character display button */
-.char-picker-btn {
-  display: flex; align-items: center; gap: 5px; cursor: pointer;
-  background: var(--bg4); border: 1px solid var(--border) !important;
-  border-radius: 4px; padding: 3px 8px; flex: 1;
-  height: 29px; box-sizing: border-box;
-  transition: border-color .15s;
-}
-.char-picker-btn:hover { border-color: var(--accent) !important; }
-.char-picker-btn.open { border-color: var(--accent) !important; }
-.char-selected-thumb { width: 21px; height: 21px; object-fit: contain; flex-shrink: 0; }
-.char-selected-label { font-size: 11px; color: var(--fg); flex: 1; text-transform: capitalize; }
-.char-picker-arrow { font-size: 10px; color: var(--fg2); flex-shrink: 0; }
-
-/* Popover panel */
-.char-picker-popover {
-  position: relative; z-index: 200;
-  background: var(--bg3); border: 1px solid var(--border);
-  border-radius: 6px; padding: 8px;
-  max-height: 320px; overflow-y: auto;
-  width: 100%;
-}
-
-/* Character rows in popover */
-.char-row {
-  display: flex; align-items: center; gap: 6px;
-  padding: 4px 6px; border-radius: 4px; cursor: pointer;
-  transition: background .1s;
-}
-.char-row:hover { background: var(--bg4); }
-.char-row.expanded { background: var(--bg4); }
-.char-row-thumb {
-  width: 36px; height: 36px; object-fit: contain; flex-shrink: 0;
-}
-.char-row-name {
-  font-size: 12px; font-family: var(--font-d); font-weight: 700;
-  letter-spacing: .06em; text-transform: capitalize; color: var(--fg); flex: 1;
-}
-.char-row-arrow { font-size: 10px; color: var(--fg2); transition: transform .15s; }
-.char-row.expanded .char-row-arrow { transform: rotate(90deg); }
-
-/* Palette strip shown under expanded character */
-.char-palette-strip {
-  display: flex; flex-wrap: wrap; gap: 3px;
-  padding: 4px 6px 6px 48px;
-}
-.char-palette-thumb {
-  width: 36px; height: 36px; object-fit: contain;
-  border-radius: 3px; cursor: pointer;
-  border: 2px solid transparent; transition: border-color .1s, transform .1s;
-}
-.char-palette-thumb:hover { border-color: var(--fg2); transform: scale(1.1); }
-.char-palette-thumb.selected { border-color: var(--accent); box-shadow: 0 0 5px var(--accent); }
-
-/* ── CHARACTER PALETTE PREVIEW ── */
-#char-preview {
-  position: fixed;
-  z-index: 9999;
-  pointer-events: none;
-  display: none;
-  background: var(--bg2);
-  border: 1px solid var(--accent);
-  border-radius: 6px;
-  padding: 4px;
-  box-shadow: 0 4px 16px rgba(0,0,0,.6);
-}
-#char-preview img {
-  display: block;
-  width: 120px;
-  height: 120px;
-  object-fit: contain;
-  image-rendering: pixelated;
-}
-#char-preview-label {
+}#char-preview-label {
   font-family: var(--font-d);
   font-size: 11px;
   font-weight: 700;
@@ -875,122 +718,7 @@ select.name-picker option { font-size: 13px; }
   color: var(--fg2);
   text-align: center;
   padding: 3px 0 1px;
-}
-
-/* ── CHARACTER PORTRAIT (score area) ── */
-.score-portrait-row {
-  display: flex; align-items: center; gap: 10px;
-}
-.char-portrait {
-  width: 112px; height: 112px; object-fit: contain;
-  image-rendering: pixelated; flex-shrink: 0;
-  border-radius: 3px; margin-left: auto;
-}
-#p2CharPortrait {
-  transform: scaleX(-1);
-}
-/* ── Character slot tabs (multi-pick games) ─────────────────── */
-.char-slot-tabs {
-	display: flex;
-	gap: 3px;
-	align-items: center;
-	flex-shrink: 0;
-}
-.char-slot-tab {
-	width: 24px;
-	height: 24px;
-	border: 1px solid var(--border, #555);
-	border-radius: 4px;
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	cursor: pointer;
-	font-size: 11px;
-	color: var(--fg2, #aaa);
-	background: var(--bg2, transparent);
-	box-sizing: border-box;
-	overflow: hidden;
-}
-.char-slot-tab img { width: 20px; height: 20px; object-fit: contain; }
-.char-slot-tab:hover { border-color: var(--accent, #e33); }
-.char-slot-tab.active { border-color: var(--accent, #e33); box-shadow: 0 0 0 1px var(--accent, #e33) inset; }
-.char-slot-tab.filled span { display: none; }
-
-/* ── Roster popover view + footer ───────────────────────────── */
-.char-roster-head {
-	font-family: var(--font-d);
-	font-size: 10px;
-	font-weight: 700;
-	letter-spacing: .1em;
-	text-transform: uppercase;
-	color: var(--fg2, #aaa);
-	padding: 6px 8px 4px;
-	border-bottom: 1px solid var(--border, #555);
-}
-.char-roster-pal { color: var(--fg2, #aaa); font-size: 10px; }
-.char-popover-footer {
-	display: flex;
-	gap: 6px;
-	padding: 6px 8px;
-	border-top: 1px solid var(--border, #555);
-}
-.char-popover-footbtn {
-	flex: 1;
-	font-family: var(--font-d);
-	font-size: 10px;
-	padding: 4px 6px;
-	cursor: pointer;
-	background: var(--bg2, transparent);
-	color: var(--fg, #eee);
-	border: 1px solid var(--border, #555);
-	border-radius: 4px;
-}
-.char-popover-footbtn:hover { border-color: var(--accent, #e33); }
-
-/* ── Explicit player save (card buttons + resolve hints) ────── */
-.player-save-row {
-	display: flex;
-	align-items: center;
-	justify-content: space-between;
-	gap: 8px;
-	margin-top: 6px;
-	width: 100%;
-}
-.player-match-hint {
-	font-family: var(--font-d);
-	font-size: 10px;
-	color: var(--fg2);
-	white-space: nowrap;
-	overflow: hidden;
-	text-overflow: ellipsis;
-	min-width: 0;
-}
-.player-match-hint.matched { color: var(--green, #43a047); }
-.player-match-hint.unmatched { color: var(--amber, #E8A050); }
-.player-save-btn {
-	font-family: var(--font-d);
-	font-size: 10px;
-	font-weight: 700;
-	letter-spacing: .06em;
-	padding: 4px 10px;
-	cursor: pointer;
-	background: var(--bg2, transparent);
-	color: var(--fg, #eee);
-	border: 1px solid var(--border, #555);
-	border-radius: 4px;
-	flex-shrink: 0;
-}
-.player-save-btn:hover { border-color: var(--accent, #e33); }
-
-/* ── Head-to-Head matchup panel ─────────────────────────────── */
-.h2h-panel {
-	margin-top: 8px;
-	padding: 8px 10px;
-	background: var(--bg2, #181714);
-	border: 1px solid var(--border, #333028);
-	border-radius: 6px;
-}
-.h2h-label {
+}.h2h-label {
 	font-family: var(--font-d, 'Barlow Condensed');
 	font-size: 11px;
 	font-weight: 700;
@@ -1014,18 +742,3 @@ select.name-picker option { font-size: 13px; }
 	padding: 4px 8px;
 	margin-bottom: 8px;
 }
-.h2h-result {
-	font-family: var(--font-d, 'Barlow Condensed');
-	font-size: 15px;
-	color: var(--fg, #f0ece0);
-	text-align: center;
-	min-height: 18px;
-}
-.h2h-result.muted {
-	font-size: 11px;
-	color: var(--fg2, #9a9280);
-}
-.h2h-result strong { color: var(--accent, #e8a020); }
-
-/* Placement beside name in event-scoped H2H */
-.h2h-place { color: var(--fg2, #9a9280); font-weight: 400; font-size: .85em; }

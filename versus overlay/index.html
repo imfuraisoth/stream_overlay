@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+<!-- LIVES AT: versus overlay/index.html -- Versus overlay (OBS browser source) -- sibling folder NEXT TO ScoreboardDash, not inside it -->
 <html>
   <head>
     <meta charset="utf-8">
@@ -40,10 +41,11 @@
           });
           function appendData(data) {
             if (data.p1Team !== p1Team) {
-              var element = document.getElementById("team1Div");
-              if (!!element) {
-                fadeOutElement(element);
-              }
+              // fade ALL with this id -- getElementById only returns the
+              // first, so coalesced double-updates orphaned duplicates
+              document.querySelectorAll('[id="team1Div"]').forEach(function (el) {
+                fadeOutElement(el);
+              });
 
               p1Team = data.p1Team;
               if (data.p1Team.length > 0) {
@@ -59,14 +61,9 @@
             }
 
             if (data.p1Name !== p1Name) {
-              var element = document.getElementById("name1Div");
-			  var element1 = document.getElementById("name1DivBg");
-              if (!!element) {
-                fadeOutElement(element);
-              }
-			  if (!!element1) {
-				fadeOutElement(element1);
-			  }
+              document.querySelectorAll('[id="name1Div"], [id="name1DivBg"]').forEach(function (el) {
+                fadeOutElement(el);
+              });
 
               p1Name = data.p1Name;
               if (data.p1Name.length > 0) {
@@ -95,10 +92,9 @@
             }
 
             if (data.p2Team !== p2Team) {
-              var element = document.getElementById("team2Div");
-			  if (!!element) {
-                fadeOutElement(element);
-              }
+              document.querySelectorAll('[id="team2Div"]').forEach(function (el) {
+                fadeOutElement(el);
+              });
 
               p2Team = data.p2Team;
               if (data.p2Team.length > 0) {
@@ -114,14 +110,9 @@
             }
 
             if (data.p2Name !== p2Name) {
-              var element = document.getElementById("name2Div");
-			  var element1 = document.getElementById("name2DivBg");
-              if (!!element) {
-                fadeOutElement(element);
-              }
-			  if (!!element1) {
-				fadeOutElement(element1);
-			  }
+              document.querySelectorAll('[id="name2Div"], [id="name2DivBg"]').forEach(function (el) {
+                fadeOutElement(el);
+              });
 
               p2Name = data.p2Name;
               if (data.p2Name.length > 0) {
