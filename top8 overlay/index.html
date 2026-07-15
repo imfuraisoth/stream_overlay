@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+<!-- LIVES AT: top8 overlay/index.html -- Top 8 overlay (OBS browser source) -- sibling folder NEXT TO ScoreboardDash, not inside it -->
 <html>
   <head>
     <meta charset="utf-8">
@@ -122,11 +123,17 @@
             console.log('error: ' + err);
           });
           function appendData(data) {
+            // Hardened: removals use querySelectorAll (fade ALL elements
+            // with the id) instead of getElementById (first match only),
+            // so coalesced double-updates -- OBS resuming throttled timers
+            // on scene switch -- can no longer orphan duplicates that
+            // stack permanently. Caches here already update at detection
+            // time, so the commentator/results stale-cache race does not
+            // apply to this overlay.
             if (data.r1.p1.name !== r1_name1) {
-              var element = document.getElementById("r1_d_n1");
-              if (!!element) {
-                fadeOutElement(element);
-              }
+              document.querySelectorAll('[id="r1_d_n1"]').forEach(function (el) {
+                fadeOutElement(el);
+              });
 
               r1_name1 = data.r1.p1.name;
               if (data.r1.p1.name.length > 0) {
@@ -144,10 +151,9 @@
             }
 
             if (data.r1.p1.score !== r1_score1) {
-              var element = document.getElementById("r1_d_s1");
-              if (!!element) {
-                fadeOutElement(element);
-              }
+              document.querySelectorAll('[id="r1_d_s1"]').forEach(function (el) {
+                fadeOutElement(el);
+              });
 
               r1_score1 = data.r1.p1.score;
               if (data.r1.p1.score.length > 0) {
@@ -163,10 +169,9 @@
             }
 
             if (data.r1.p2.name !== r1_name2) {
-              var element = document.getElementById("r1_d_n2");
-              if (!!element) {
-                fadeOutElement(element);
-              }
+              document.querySelectorAll('[id="r1_d_n2"]').forEach(function (el) {
+                fadeOutElement(el);
+              });
 
               r1_name2 = data.r1.p2.name;
               if (data.r1.p2.name.length > 0) {
@@ -184,10 +189,9 @@
             }
 
             if (data.r1.p2.score !== r1_score2) {
-              var element = document.getElementById("r1_d_s2");
-              if (!!element) {
-                fadeOutElement(element);
-              }
+              document.querySelectorAll('[id="r1_d_s2"]').forEach(function (el) {
+                fadeOutElement(el);
+              });
 
               r1_score2 = data.r1.p2.score;
               if (data.r1.p2.score.length > 0) {
@@ -205,10 +209,9 @@
             <!-- ******************************************************************* -->
 
             if (data.r2.p1.name !== r2_name1) {
-              var element = document.getElementById("r2_d_n1");
-              if (!!element) {
-                fadeOutElement(element);
-              }
+              document.querySelectorAll('[id="r2_d_n1"]').forEach(function (el) {
+                fadeOutElement(el);
+              });
 
               r2_name1 = data.r2.p1.name;
               if (data.r2.p1.name.length > 0) {
@@ -226,10 +229,9 @@
             }
 
             if (data.r2.p1.score !== r2_score1) {
-              var element = document.getElementById("r2_d_s1");
-              if (!!element) {
-                fadeOutElement(element);
-              }
+              document.querySelectorAll('[id="r2_d_s1"]').forEach(function (el) {
+                fadeOutElement(el);
+              });
 
               r2_score1 = data.r2.p1.score;
               if (data.r2.p1.score.length > 0) {
@@ -245,10 +247,9 @@
             }
 
             if (data.r2.p2.name !== r2_name2) {
-              var element = document.getElementById("r2_d_n2");
-              if (!!element) {
-                fadeOutElement(element);
-              }
+              document.querySelectorAll('[id="r2_d_n2"]').forEach(function (el) {
+                fadeOutElement(el);
+              });
 
               r2_name2 = data.r2.p2.name;
               if (data.r2.p2.name.length > 0) {
@@ -266,10 +267,9 @@
             }
 
             if (data.r2.p2.score !== r2_score2) {
-              var element = document.getElementById("r2_d_s2");
-              if (!!element) {
-                fadeOutElement(element);
-              }
+              document.querySelectorAll('[id="r2_d_s2"]').forEach(function (el) {
+                fadeOutElement(el);
+              });
 
               r2_score2 = data.r2.p2.score;
               if (data.r2.p2.score.length > 0) {
@@ -287,10 +287,9 @@
             <!-- ******************************************************************* -->
 
             if (data.r3.p1.name !== r3_name1) {
-              var element = document.getElementById("r3_d_n1");
-              if (!!element) {
-                fadeOutElement(element);
-              }
+              document.querySelectorAll('[id="r3_d_n1"]').forEach(function (el) {
+                fadeOutElement(el);
+              });
 
               r3_name1 = data.r3.p1.name;
               if (data.r3.p1.name.length > 0) {
@@ -308,10 +307,9 @@
             }
 
             if (data.r3.p1.score !== r3_score1) {
-              var element = document.getElementById("r3_d_s1");
-              if (!!element) {
-                fadeOutElement(element);
-              }
+              document.querySelectorAll('[id="r3_d_s1"]').forEach(function (el) {
+                fadeOutElement(el);
+              });
 
               r3_score1 = data.r3.p1.score;
               if (data.r3.p1.score.length > 0) {
@@ -327,10 +325,9 @@
             }
 
             if (data.r3.p2.name !== r3_name2) {
-              var element = document.getElementById("r3_d_n2");
-              if (!!element) {
-                fadeOutElement(element);
-              }
+              document.querySelectorAll('[id="r3_d_n2"]').forEach(function (el) {
+                fadeOutElement(el);
+              });
 
               r3_name2 = data.r3.p2.name;
               if (data.r3.p2.name.length > 0) {
@@ -348,10 +345,9 @@
             }
 
             if (data.r3.p2.score !== r3_score2) {
-              var element = document.getElementById("r3_d_s2");
-              if (!!element) {
-                fadeOutElement(element);
-              }
+              document.querySelectorAll('[id="r3_d_s2"]').forEach(function (el) {
+                fadeOutElement(el);
+              });
 
               r3_score2 = data.r3.p2.score;
               if (data.r3.p2.score.length > 0) {
@@ -369,10 +365,9 @@
  <!-- ******************************************************************* -->
 
             if (data.r4.p1.name !== r4_name1) {
-              var element = document.getElementById("r4_d_n1");
-              if (!!element) {
-                fadeOutElement(element);
-              }
+              document.querySelectorAll('[id="r4_d_n1"]').forEach(function (el) {
+                fadeOutElement(el);
+              });
 
               r4_name1 = data.r4.p1.name;
               if (data.r4.p1.name.length > 0) {
@@ -390,10 +385,9 @@
             }
 
             if (data.r4.p1.score !== r4_score1) {
-              var element = document.getElementById("r4_d_s1");
-              if (!!element) {
-                fadeOutElement(element);
-              }
+              document.querySelectorAll('[id="r4_d_s1"]').forEach(function (el) {
+                fadeOutElement(el);
+              });
 
               r4_score1 = data.r4.p1.score;
               if (data.r4.p1.score.length > 0) {
@@ -409,10 +403,9 @@
             }
 
             if (data.r4.p2.name !== r4_name2) {
-              var element = document.getElementById("r4_d_n2");
-              if (!!element) {
-                fadeOutElement(element);
-              }
+              document.querySelectorAll('[id="r4_d_n2"]').forEach(function (el) {
+                fadeOutElement(el);
+              });
 
               r4_name2 = data.r4.p2.name;
               if (data.r4.p2.name.length > 0) {
@@ -430,10 +423,9 @@
             }
 
             if (data.r4.p2.score !== r4_score2) {
-              var element = document.getElementById("r4_d_s2");
-              if (!!element) {
-                fadeOutElement(element);
-              }
+              document.querySelectorAll('[id="r4_d_s2"]').forEach(function (el) {
+                fadeOutElement(el);
+              });
 
               r4_score2 = data.r4.p2.score;
               if (data.r4.p2.score.length > 0) {
@@ -451,10 +443,9 @@
             <!-- ******************************************************************* -->
 
             if (data.r5.p1.name !== r5_name1) {
-              var element = document.getElementById("r5_d_n1");
-              if (!!element) {
-                fadeOutElement(element);
-              }
+              document.querySelectorAll('[id="r5_d_n1"]').forEach(function (el) {
+                fadeOutElement(el);
+              });
 
               r5_name1 = data.r5.p1.name;
               if (data.r5.p1.name.length > 0) {
@@ -472,10 +463,9 @@
             }
 
             if (data.r5.p1.score !== r5_score1) {
-              var element = document.getElementById("r5_d_s1");
-              if (!!element) {
-                fadeOutElement(element);
-              }
+              document.querySelectorAll('[id="r5_d_s1"]').forEach(function (el) {
+                fadeOutElement(el);
+              });
 
               r5_score1 = data.r5.p1.score;
               if (data.r5.p1.score.length > 0) {
@@ -491,10 +481,9 @@
             }
 
             if (data.r5.p2.name !== r5_name2) {
-              var element = document.getElementById("r5_d_n2");
-              if (!!element) {
-                fadeOutElement(element);
-              }
+              document.querySelectorAll('[id="r5_d_n2"]').forEach(function (el) {
+                fadeOutElement(el);
+              });
 
               r5_name2 = data.r5.p2.name;
               if (data.r5.p2.name.length > 0) {
@@ -512,10 +501,9 @@
             }
 
             if (data.r5.p2.score !== r5_score2) {
-              var element = document.getElementById("r5_d_s2");
-              if (!!element) {
-                fadeOutElement(element);
-              }
+              document.querySelectorAll('[id="r5_d_s2"]').forEach(function (el) {
+                fadeOutElement(el);
+              });
 
               r5_score2 = data.r5.p2.score;
               if (data.r5.p2.score.length > 0) {
@@ -533,10 +521,9 @@
             <!-- ******************************************************************* -->
 
             if (data.r6.p1.name !== r6_name1) {
-              var element = document.getElementById("r6_d_n1");
-              if (!!element) {
-                fadeOutElement(element);
-              }
+              document.querySelectorAll('[id="r6_d_n1"]').forEach(function (el) {
+                fadeOutElement(el);
+              });
 
               r6_name1 = data.r6.p1.name;
               if (data.r6.p1.name.length > 0) {
@@ -554,10 +541,9 @@
             }
 
             if (data.r6.p1.score !== r6_score1) {
-              var element = document.getElementById("r6_d_s1");
-              if (!!element) {
-                fadeOutElement(element);
-              }
+              document.querySelectorAll('[id="r6_d_s1"]').forEach(function (el) {
+                fadeOutElement(el);
+              });
 
               r6_score1 = data.r6.p1.score;
               if (data.r6.p1.score.length > 0) {
@@ -573,10 +559,9 @@
             }
 
             if (data.r6.p2.name !== r6_name2) {
-              var element = document.getElementById("r6_d_n2");
-              if (!!element) {
-                fadeOutElement(element);
-              }
+              document.querySelectorAll('[id="r6_d_n2"]').forEach(function (el) {
+                fadeOutElement(el);
+              });
 
               r6_name2 = data.r6.p2.name;
               if (data.r6.p2.name.length > 0) {
@@ -594,10 +579,9 @@
             }
 
             if (data.r6.p2.score !== r6_score2) {
-              var element = document.getElementById("r6_d_s2");
-              if (!!element) {
-                fadeOutElement(element);
-              }
+              document.querySelectorAll('[id="r6_d_s2"]').forEach(function (el) {
+                fadeOutElement(el);
+              });
 
               r6_score2 = data.r6.p2.score;
               if (data.r6.p2.score.length > 0) {
@@ -615,10 +599,9 @@
             <!-- ******************************************************************* -->
 
             if (data.r7.p1.name !== r7_name1) {
-              var element = document.getElementById("r7_d_n1");
-              if (!!element) {
-                fadeOutElement(element);
-              }
+              document.querySelectorAll('[id="r7_d_n1"]').forEach(function (el) {
+                fadeOutElement(el);
+              });
 
               r7_name1 = data.r7.p1.name;
               if (data.r7.p1.name.length > 0) {
@@ -636,10 +619,9 @@
             }
 
             if (data.r7.p1.score !== r7_score1) {
-              var element = document.getElementById("r7_d_s1");
-              if (!!element) {
-                fadeOutElement(element);
-              }
+              document.querySelectorAll('[id="r7_d_s1"]').forEach(function (el) {
+                fadeOutElement(el);
+              });
 
               r7_score1 = data.r7.p1.score;
               if (data.r7.p1.score.length > 0) {
@@ -655,10 +637,9 @@
             }
 
             if (data.r7.p2.name !== r7_name2) {
-              var element = document.getElementById("r7_d_n2");
-              if (!!element) {
-                fadeOutElement(element);
-              }
+              document.querySelectorAll('[id="r7_d_n2"]').forEach(function (el) {
+                fadeOutElement(el);
+              });
 
               r7_name2 = data.r7.p2.name;
               if (data.r7.p2.name.length > 0) {
@@ -676,10 +657,9 @@
             }
 
             if (data.r7.p2.score !== r7_score2) {
-              var element = document.getElementById("r7_d_s2");
-              if (!!element) {
-                fadeOutElement(element);
-              }
+              document.querySelectorAll('[id="r7_d_s2"]').forEach(function (el) {
+                fadeOutElement(el);
+              });
 
               r7_score2 = data.r7.p2.score;
               if (data.r7.p2.score.length > 0) {
@@ -697,10 +677,9 @@
             <!-- ******************************************************************* -->
 
             if (data.r8.p1.name !== r8_name1) {
-              var element = document.getElementById("r8_d_n1");
-              if (!!element) {
-                fadeOutElement(element);
-              }
+              document.querySelectorAll('[id="r8_d_n1"]').forEach(function (el) {
+                fadeOutElement(el);
+              });
 
               r8_name1 = data.r8.p1.name;
               if (data.r8.p1.name.length > 0) {
@@ -718,10 +697,9 @@
             }
 
             if (data.r8.p1.score !== r8_score1) {
-              var element = document.getElementById("r8_d_s1");
-              if (!!element) {
-                fadeOutElement(element);
-              }
+              document.querySelectorAll('[id="r8_d_s1"]').forEach(function (el) {
+                fadeOutElement(el);
+              });
 
               r8_score1 = data.r8.p1.score;
               if (data.r8.p1.score.length > 0) {
@@ -737,10 +715,9 @@
             }
 
             if (data.r8.p2.name !== r8_name2) {
-              var element = document.getElementById("r8_d_n2");
-              if (!!element) {
-                fadeOutElement(element);
-              }
+              document.querySelectorAll('[id="r8_d_n2"]').forEach(function (el) {
+                fadeOutElement(el);
+              });
 
               r8_name2 = data.r8.p2.name;
               if (data.r8.p2.name.length > 0) {
@@ -758,10 +735,9 @@
             }
 
             if (data.r8.p2.score !== r8_score2) {
-              var element = document.getElementById("r8_d_s2");
-              if (!!element) {
-                fadeOutElement(element);
-              }
+              document.querySelectorAll('[id="r8_d_s2"]').forEach(function (el) {
+                fadeOutElement(el);
+              });
 
               r8_score2 = data.r8.p2.score;
               if (data.r8.p2.score.length > 0) {
@@ -779,10 +755,9 @@
             <!-- ******************************************************************* -->
 
             if (data.r9.p1.name !== r9_name1) {
-              var element = document.getElementById("r9_d_n1");
-              if (!!element) {
-                fadeOutElement(element);
-              }
+              document.querySelectorAll('[id="r9_d_n1"]').forEach(function (el) {
+                fadeOutElement(el);
+              });
 
               r9_name1 = data.r9.p1.name;
               if (data.r9.p1.name.length > 0) {
@@ -800,10 +775,9 @@
             }
 
             if (data.r9.p1.score !== r9_score1) {
-              var element = document.getElementById("r9_d_s1");
-              if (!!element) {
-                fadeOutElement(element);
-              }
+              document.querySelectorAll('[id="r9_d_s1"]').forEach(function (el) {
+                fadeOutElement(el);
+              });
 
               r9_score1 = data.r9.p1.score;
               if (data.r9.p1.score.length > 0) {
@@ -819,10 +793,9 @@
             }
 
             if (data.r9.p2.name !== r9_name2) {
-              var element = document.getElementById("r9_d_n2");
-              if (!!element) {
-                fadeOutElement(element);
-              }
+              document.querySelectorAll('[id="r9_d_n2"]').forEach(function (el) {
+                fadeOutElement(el);
+              });
 
               r9_name2 = data.r9.p2.name;
               if (data.r9.p2.name.length > 0) {
@@ -840,10 +813,9 @@
             }
 
             if (data.r9.p2.score !== r9_score2) {
-              var element = document.getElementById("r9_d_s2");
-              if (!!element) {
-                fadeOutElement(element);
-              }
+              document.querySelectorAll('[id="r9_d_s2"]').forEach(function (el) {
+                fadeOutElement(el);
+              });
 
               r9_score2 = data.r9.p2.score;
               if (data.r9.p2.score.length > 0) {
@@ -861,10 +833,9 @@
             <!-- ******************************************************************* -->
 
             if (data.r10.p1.name !== r10_name1) {
-              var element = document.getElementById("r10_d_n1");
-              if (!!element) {
-                fadeOutElement(element);
-              }
+              document.querySelectorAll('[id="r10_d_n1"]').forEach(function (el) {
+                fadeOutElement(el);
+              });
 
               r10_name1 = data.r10.p1.name;
               if (data.r10.p1.name.length > 0) {
@@ -882,10 +853,9 @@
             }
 
             if (data.r10.p1.score !== r10_score1) {
-              var element = document.getElementById("r10_d_s1");
-              if (!!element) {
-                fadeOutElement(element);
-              }
+              document.querySelectorAll('[id="r10_d_s1"]').forEach(function (el) {
+                fadeOutElement(el);
+              });
 
               r10_score1 = data.r10.p1.score;
               if (data.r10.p1.score.length > 0) {
@@ -901,10 +871,9 @@
             }
 
             if (data.r10.p2.name !== r10_name2) {
-              var element = document.getElementById("r10_d_n2");
-              if (!!element) {
-                fadeOutElement(element);
-              }
+              document.querySelectorAll('[id="r10_d_n2"]').forEach(function (el) {
+                fadeOutElement(el);
+              });
 
               r10_name2 = data.r10.p2.name;
               if (data.r10.p2.name.length > 0) {
@@ -922,10 +891,9 @@
             }
 
             if (data.r10.p2.score !== r10_score2) {
-              var element = document.getElementById("r10_d_s2");
-              if (!!element) {
-                fadeOutElement(element);
-              }
+              document.querySelectorAll('[id="r10_d_s2"]').forEach(function (el) {
+                fadeOutElement(el);
+              });
 
               r10_score2 = data.r10.p2.score;
               if (data.r10.p2.score.length > 0) {
@@ -941,10 +909,9 @@
             }
 
             if (data.r10.p1.score2 !== r10_score1_2) {
-              var element = document.getElementById("r10_d_s1_2");
-              if (!!element) {
-                fadeOutElement(element);
-              }
+              document.querySelectorAll('[id="r10_d_s1_2"]').forEach(function (el) {
+                fadeOutElement(el);
+              });
 
               r10_score1_2 = data.r10.p1.score2;
               if (data.r10.p1.score2.length > 0) {
@@ -960,10 +927,9 @@
             }
 
             if (data.r10.p2.score2 !== r10_score2_2) {
-              var element = document.getElementById("r10_d_s2_2");
-              if (!!element) {
-                fadeOutElement(element);
-              }
+              document.querySelectorAll('[id="r10_d_s2_2"]').forEach(function (el) {
+                fadeOutElement(el);
+              });
 
               r10_score2_2 = data.r10.p2.score2;
               if (data.r10.p2.score2.length > 0) {
@@ -980,10 +946,9 @@
 
     <!-- *************************** Set Flag info ********************** -->
           if (data.r1.p1.country !== r1_country1) {
-              var element = document.getElementById("r1_d_c1");
-              if (!!element) {
-                fadeOutElement(element);
-              }
+              document.querySelectorAll('[id="r1_d_c1"]').forEach(function (el) {
+                fadeOutElement(el);
+              });
 
               r1_country1 = data.r1.p1.country;
               if (data.r1.p1.country.length > 0) {
@@ -998,10 +963,9 @@
           }
 
           if (data.r1.p2.country !== r1_country2) {
-              var element = document.getElementById("r1_d_c2");
-              if (!!element) {
-                fadeOutElement(element);
-              }
+              document.querySelectorAll('[id="r1_d_c2"]').forEach(function (el) {
+                fadeOutElement(el);
+              });
 
               r1_country2 = data.r1.p2.country;
               if (data.r1.p2.country.length > 0) {
@@ -1016,10 +980,9 @@
           }
 
           if (data.r2.p1.country !== r2_country1) {
-              var element = document.getElementById("r2_d_c1");
-              if (!!element) {
-                fadeOutElement(element);
-              }
+              document.querySelectorAll('[id="r2_d_c1"]').forEach(function (el) {
+                fadeOutElement(el);
+              });
 
               r2_country1 = data.r2.p1.country;
               if (data.r2.p1.country.length > 0) {
@@ -1034,10 +997,9 @@
           }
 
           if (data.r2.p2.country !== r2_country2) {
-              var element = document.getElementById("r2_d_c2");
-              if (!!element) {
-                fadeOutElement(element);
-              }
+              document.querySelectorAll('[id="r2_d_c2"]').forEach(function (el) {
+                fadeOutElement(el);
+              });
 
               r2_country2 = data.r2.p2.country;
               if (data.r2.p2.country.length > 0) {
@@ -1052,10 +1014,9 @@
           }
 
           if (data.r3.p1.country !== r3_country1) {
-              var element = document.getElementById("r3_d_c1");
-              if (!!element) {
-                fadeOutElement(element);
-              }
+              document.querySelectorAll('[id="r3_d_c1"]').forEach(function (el) {
+                fadeOutElement(el);
+              });
 
               r3_country1 = data.r3.p1.country;
               if (data.r3.p1.country.length > 0) {
@@ -1070,10 +1031,9 @@
           }
 
           if (data.r3.p2.country !== r3_country2) {
-              var element = document.getElementById("r3_d_c2");
-              if (!!element) {
-                fadeOutElement(element);
-              }
+              document.querySelectorAll('[id="r3_d_c2"]').forEach(function (el) {
+                fadeOutElement(el);
+              });
 
               r3_country2 = data.r3.p2.country;
               if (data.r3.p2.country.length > 0) {
@@ -1088,10 +1048,9 @@
           }
 
           if (data.r4.p1.country !== r4_country1) {
-              var element = document.getElementById("r4_d_c1");
-              if (!!element) {
-                fadeOutElement(element);
-              }
+              document.querySelectorAll('[id="r4_d_c1"]').forEach(function (el) {
+                fadeOutElement(el);
+              });
 
               r4_country1 = data.r4.p1.country;
               if (data.r4.p1.country.length > 0) {
@@ -1106,10 +1065,9 @@
           }
 
           if (data.r4.p2.country !== r4_country2) {
-              var element = document.getElementById("r4_d_c2");
-              if (!!element) {
-                fadeOutElement(element);
-              }
+              document.querySelectorAll('[id="r4_d_c2"]').forEach(function (el) {
+                fadeOutElement(el);
+              });
 
               r4_country2 = data.r4.p2.country;
               if (data.r4.p2.country.length > 0) {
@@ -1124,10 +1082,9 @@
           }
 
           if (data.r5.p1.country !== r5_country1) {
-              var element = document.getElementById("r5_d_c1");
-              if (!!element) {
-                fadeOutElement(element);
-              }
+              document.querySelectorAll('[id="r5_d_c1"]').forEach(function (el) {
+                fadeOutElement(el);
+              });
 
               r5_country1 = data.r5.p1.country;
               if (data.r5.p1.country.length > 0) {
@@ -1142,10 +1099,9 @@
           }
 
           if (data.r5.p2.country !== r5_country2) {
-              var element = document.getElementById("r5_d_c2");
-              if (!!element) {
-                fadeOutElement(element);
-              }
+              document.querySelectorAll('[id="r5_d_c2"]').forEach(function (el) {
+                fadeOutElement(el);
+              });
 
               r5_country2 = data.r5.p2.country;
               if (data.r5.p2.country.length > 0) {
@@ -1160,10 +1116,9 @@
           }
 
           if (data.r6.p1.country !== r6_country1) {
-              var element = document.getElementById("r6_d_c1");
-              if (!!element) {
-                fadeOutElement(element);
-              }
+              document.querySelectorAll('[id="r6_d_c1"]').forEach(function (el) {
+                fadeOutElement(el);
+              });
 
               r6_country1 = data.r6.p1.country;
               if (data.r6.p1.country.length > 0) {
@@ -1178,10 +1133,9 @@
           }
 
           if (data.r6.p2.country !== r6_country2) {
-              var element = document.getElementById("r6_d_c2");
-              if (!!element) {
-                fadeOutElement(element);
-              }
+              document.querySelectorAll('[id="r6_d_c2"]').forEach(function (el) {
+                fadeOutElement(el);
+              });
 
               r6_country2 = data.r6.p2.country;
               if (data.r6.p2.country.length > 0) {
@@ -1196,10 +1150,9 @@
           }
 
           if (data.r7.p1.country !== r7_country1) {
-              var element = document.getElementById("r7_d_c1");
-              if (!!element) {
-                fadeOutElement(element);
-              }
+              document.querySelectorAll('[id="r7_d_c1"]').forEach(function (el) {
+                fadeOutElement(el);
+              });
 
               r7_country1 = data.r7.p1.country;
               if (data.r7.p1.country.length > 0) {
@@ -1214,10 +1167,9 @@
           }
 
           if (data.r7.p2.country !== r7_country2) {
-              var element = document.getElementById("r7_d_c2");
-              if (!!element) {
-                fadeOutElement(element);
-              }
+              document.querySelectorAll('[id="r7_d_c2"]').forEach(function (el) {
+                fadeOutElement(el);
+              });
 
               r7_country2 = data.r7.p2.country;
               if (data.r7.p2.country.length > 0) {
@@ -1232,10 +1184,9 @@
           }
 
           if (data.r8.p1.country !== r8_country1) {
-              var element = document.getElementById("r8_d_c1");
-              if (!!element) {
-                fadeOutElement(element);
-              }
+              document.querySelectorAll('[id="r8_d_c1"]').forEach(function (el) {
+                fadeOutElement(el);
+              });
 
               r8_country1 = data.r8.p1.country;
               if (data.r8.p1.country.length > 0) {
@@ -1250,10 +1201,9 @@
           }
 
           if (data.r8.p2.country !== r8_country2) {
-              var element = document.getElementById("r8_d_c2");
-              if (!!element) {
-                fadeOutElement(element);
-              }
+              document.querySelectorAll('[id="r8_d_c2"]').forEach(function (el) {
+                fadeOutElement(el);
+              });
 
               r8_country2 = data.r8.p2.country;
               if (data.r8.p2.country.length > 0) {
@@ -1268,10 +1218,9 @@
           }
 
           if (data.r9.p1.country !== r9_country1) {
-              var element = document.getElementById("r9_d_c1");
-              if (!!element) {
-                fadeOutElement(element);
-              }
+              document.querySelectorAll('[id="r9_d_c1"]').forEach(function (el) {
+                fadeOutElement(el);
+              });
 
               r9_country1 = data.r9.p1.country;
               if (data.r9.p1.country.length > 0) {
@@ -1286,10 +1235,9 @@
           }
 
           if (data.r9.p2.country !== r9_country2) {
-              var element = document.getElementById("r9_d_c2");
-              if (!!element) {
-                fadeOutElement(element);
-              }
+              document.querySelectorAll('[id="r9_d_c2"]').forEach(function (el) {
+                fadeOutElement(el);
+              });
 
               r9_country2 = data.r9.p2.country;
               if (data.r9.p2.country.length > 0) {
@@ -1304,10 +1252,9 @@
           }
 
           if (data.r10.p1.country !== r10_country1) {
-              var element = document.getElementById("r10_d_c1");
-              if (!!element) {
-                fadeOutElement(element);
-              }
+              document.querySelectorAll('[id="r10_d_c1"]').forEach(function (el) {
+                fadeOutElement(el);
+              });
 
               r10_country1 = data.r10.p1.country;
               if (data.r10.p1.country.length > 0) {
@@ -1322,10 +1269,9 @@
           }
 
           if (data.r10.p2.country !== r10_country2) {
-              var element = document.getElementById("r10_d_c2");
-              if (!!element) {
-                fadeOutElement(element);
-              }
+              document.querySelectorAll('[id="r10_d_c2"]').forEach(function (el) {
+                fadeOutElement(el);
+              });
 
               r10_country2 = data.r10.p2.country;
               if (data.r10.p2.country.length > 0) {
