@@ -510,6 +510,9 @@ function clearQueue() {
 // ── ZOOM ──────────────────────────────────────────────────────────
 function doZoom(delta) {
   sqScale = Math.min(3, Math.max(0.5, Math.round((sqScale + delta) * 10) / 10));
+  // Set on <html> (not just #sqGrid) so the announcement bar -- which sits
+  // outside the grid in the DOM -- scales along with it.
+  document.documentElement.style.setProperty('--sq-scale', sqScale);
   const grid = document.getElementById('sqGrid');
   if (grid) grid.style.setProperty('--sq-scale', sqScale);
   document.getElementById('zoomLabel').textContent = Math.round(sqScale * 100) + '%';

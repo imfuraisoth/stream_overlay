@@ -22,24 +22,55 @@
        display (booth monitor, second screen), not an editing surface. That
        also structurally fixes the "auto-refresh scrolls to the top past
        admin controls" problem: there's nothing above the queue to scroll
-       past, because there's nothing here but the announcement + the queue. */
+       past, because there's nothing here but the announcement + the queue.
+       The one control bar it DOES have (zoom + auto-refresh) is small,
+       floats in the corner, and persists its own settings (localStorage,
+       separate keys from the main page) so a booth display that gets
+       reloaded comes back exactly as it was left. */
     body { overflow: auto; }
-    #refresh-indicator {
-      position: fixed; bottom: 8px; right: 12px; font-size: 10px;
-      color: var(--fg2); font-family: var(--font-d); letter-spacing: .08em; opacity: .4;
+    .po-controls {
+      position: fixed; top: 8px; right: 10px; z-index: 50;
+      display: flex; align-items: center; gap: 8px;
+      background: var(--bg2); border: 1px solid var(--border); border-radius: 6px;
+      padding: 5px 10px; opacity: .55; transition: opacity .15s;
     }
-    .po-content { padding: 16px; }
+    .po-controls:hover { opacity: 1; }
+    .po-controls select {
+      background: var(--bg3); border: 1px solid var(--border); color: var(--fg);
+      border-radius: 4px; padding: 2px 4px; font-size: 11px;
+    }
+    .po-auto-row { display: flex; align-items: center; gap: 4px; font-size: 11px; color: var(--fg2); cursor: pointer; }
+    .po-content { padding: 16px; padding-top: 44px; }
   </style>
 </head>
 <body>
-<div id="refresh-indicator">AUTO-REFRESH 20s</div>
+<div class="po-controls">
+  <div class="st-zoom">
+    <button class="st-zoom-btn" onclick="poZoom(-0.1)">−</button>
+    <span class="st-zoom-label" id="poZoomLabel">100%</span>
+    <button class="st-zoom-btn" onclick="poZoom(0.1)">+</button>
+  </div>
+  <label class="po-auto-row">
+    <input type="checkbox" id="poAutoRefresh" onchange="poToggleAuto()">
+    <span data-i18n="st_autorefresh">Auto-refresh</span>
+  </label>
+  <select id="poAutoInterval" onchange="poResetAuto()">
+    <option value="15">15s</option>
+    <option value="20">20s</option>
+    <option value="30">30s</option>
+    <option value="60">60s</option>
+    <option value="120">2min</option>
+  </select>
+  <span class="timer-badge" id="poTimerBadge"></span>
+  <button class="btn sec sm" onclick="refreshAll()" data-i18n="st_refresh">Refresh</button>
+</div>
 
 <div class="po-content">
   <!-- Announcement: read-only display of the same server-persisted text
        edited on the main Stations page. Hidden entirely when empty. -->
   <div class="st-announcement-bar" id="announcementBar" style="display:none;">
     <span class="st-announcement-icon">📣</span>
-    <span id="announcementText" style="font-size:16px;"></span>
+    <span id="announcementText" class="st-announcement-text"></span>
   </div>
 
   <div id="queueContent">
@@ -158,7 +189,7 @@ async function loadStreamQueue() {
       return;
     }
 
-    let html = '<div class="sq-grid" id="sqGrid">';
+    let html = '<div class="sq-grid" id="sqGrid" style="--sq-scale:' + poScale + '">';
     queues.forEach(q => {
       const sn = q.stream?.streamName || 'Stream';
       const snSafe = escHtml(sn);
@@ -207,14 +238,68 @@ async function loadStreamQueue() {
   }
 }
 
-// ── POLL LOOP ─────────────────────────────────────────────────────
-const POLL_SECONDS = 20;
+// ── ZOOM (persisted so a reloaded booth display keeps its size) ──
+let poScale = parseFloat(localStorage.getItem('sq_popout_scale')) || 1;
+function poZoom(delta) {
+  poScale = Math.min(3, Math.max(0.5, Math.round((poScale + delta) * 10) / 10));
+  localStorage.setItem('sq_popout_scale', poScale);
+  applyPoScale();
+  document.getElementById('poZoomLabel').textContent = Math.round(poScale * 100) + '%';
+}
+// Set --sq-scale on <html>, not just #sqGrid -- the announcement bar lives
+// outside the grid in the DOM, so it only picks up the variable if it's
+// set somewhere it actually inherits from.
+function applyPoScale() {
+  document.documentElement.style.setProperty('--sq-scale', poScale);
+  const grid = document.getElementById('sqGrid');
+  if (grid) grid.style.setProperty('--sq-scale', poScale);
+}
+
+// ── AUTO-REFRESH (persisted; on by default -- this is a booth display) ──
+let poAutoOn = localStorage.getItem('sq_popout_auto') !== 'off';   // default ON
+let poInterval = parseInt(localStorage.getItem('sq_popout_interval'), 10) || 20;
+let poTimer = null;
+let poCountdown = 0;
+
+function poToggleAuto() {
+  poAutoOn = document.getElementById('poAutoRefresh').checked;
+  localStorage.setItem('sq_popout_auto', poAutoOn ? 'on' : 'off');
+  if (poAutoOn) poStartAuto(); else poStopAuto();
+}
+function poResetAuto() {
+  poInterval = parseInt(document.getElementById('poAutoInterval').value, 10) || 20;
+  localStorage.setItem('sq_popout_interval', poInterval);
+  if (poAutoOn) { poStopAuto(); poStartAuto(); }
+}
+function poStartAuto() {
+  poCountdown = poInterval;
+  poUpdateTimerBadge();
+  poTimer = setInterval(() => {
+    poCountdown--;
+    if (poCountdown <= 0) { poCountdown = poInterval; refreshAll(); }
+    poUpdateTimerBadge();
+  }, 1000);
+}
+function poStopAuto() {
+  clearInterval(poTimer);
+  poTimer = null;
+  document.getElementById('poTimerBadge').textContent = '';
+}
+function poUpdateTimerBadge() {
+  document.getElementById('poTimerBadge').textContent = (window.t?window.t('st_next_in'):'Next in') + ' ' + poCountdown + 's';
+}
+
+// ── INITIAL LOAD ──
 async function refreshAll() {
   await resolveSettings();
   await Promise.all([loadStreamQueue(), loadAnnouncementDisplay()]);
 }
+document.getElementById('poZoomLabel').textContent = Math.round(poScale * 100) + '%';
+document.getElementById('poAutoInterval').value = String(poInterval);
+document.getElementById('poAutoRefresh').checked = poAutoOn;
+applyPoScale();   // apply the persisted zoom immediately, before the first refresh even lands
 refreshAll();
-setInterval(refreshAll, POLL_SECONDS * 1000);
+if (poAutoOn) poStartAuto();
 </script>
 
 <script src="../theme/theme.js" defer></script>

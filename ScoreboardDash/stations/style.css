@@ -119,16 +119,22 @@ input::placeholder { color: var(--fg2); }select {
 .stream-picker .sp-item input { cursor: pointer; }
 .stream-picker .sp-actions { display: inline-flex; gap: 6px; margin-left: auto; }
 
-/* Announcement -- editable inline, shown above the queue here AND on the popout */
+/* Announcement -- editable inline, shown above the queue here AND on the popout.
+   Scales with --sq-scale (the same zoom variable the queue grid uses) so
+   bumping zoom for booth readability enlarges the announcement too. The
+   variable is set on <html> by doZoom()/poZoom(), not just on #sqGrid, so
+   it reaches this bar even though it sits outside the grid in the DOM. */
 .st-announcement-bar {
-  display: flex; align-items: center; gap: 10px;
-  padding: 10px 14px; margin: 0 0 10px;
+  display: flex; align-items: center; gap: calc(10px * var(--sq-scale, 1));
+  padding: calc(10px * var(--sq-scale, 1)) calc(14px * var(--sq-scale, 1));
+  margin: 0 0 10px;
   background: var(--bg2); border: 1px solid var(--accent); border-radius: 6px;
 }
-.st-announcement-icon { font-size: 16px; flex-shrink: 0; }
+.st-announcement-icon { font-size: calc(16px * var(--sq-scale, 1)); flex-shrink: 0; }
 .st-announcement-bar input {
   flex: 1; background: transparent; border: none; outline: none;
-  color: var(--fg); font-family: var(--font-b); font-size: 15px;
+  color: var(--fg); font-family: var(--font-b); font-size: calc(15px * var(--sq-scale, 1));
 }
 .st-announcement-bar input::placeholder { color: var(--fg2); font-style: italic; }
 .st-announcement-status { font-size: 11px; color: var(--accent); text-transform: uppercase; letter-spacing: .04em; flex-shrink: 0; }
+.st-announcement-text { font-size: calc(16px * var(--sq-scale, 1)); }
