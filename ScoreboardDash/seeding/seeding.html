@@ -44,6 +44,13 @@
       border-radius: 4px; padding: 3px 5px; font-size: 12px; }
     .sd-empty { color: var(--fg2); font-style: italic; padding: 8px; }
     .sd-copybar { margin: 10px 0; }
+    .sd-pools-hint { color: var(--fg2); font-size: 12px; font-style: italic; margin: -6px 0 10px; }
+    #sdPools { display: flex; flex-wrap: wrap; gap: 16px; margin: 10px 0; }
+    .sd-pool-block { flex: 1 1 320px; min-width: 280px; border: 1px solid var(--border, rgba(255,255,255,0.1));
+      border-radius: 6px; padding: 10px; background: var(--bg2, rgba(255,255,255,0.02)); }
+    .sd-pool-dropzone { border: 1px dashed var(--border, rgba(255,255,255,0.2)); border-radius: 4px;
+      text-align: center; padding: 18px 8px; }
+    .sd-pool-dropzone.sd-drop-target { border-color: var(--accent, #40D0B0); color: var(--accent, #40D0B0); }
     .sd-rematch-card { background: var(--bg2); border: 1px solid var(--accent2, #c43030);
       border-radius: 8px; padding: 14px 16px; margin-bottom: 18px; }
     .sd-rematch-head { font-family: var(--font-d, 'Barlow Condensed'); font-weight: 700;
@@ -173,6 +180,13 @@
     <label class="sd-ctl"><span data-i18n="sd_rematch_lookback">Only last N events (0=all)</span>
       <input type="number" id="rematchLookback" min="0" value="0" style="width:70px;" onchange="recompute()">
     </label>
+    <label class="sd-ctl"><span data-i18n="sd_pool_count">Pools</span>
+      <input type="number" id="poolCountInput" min="1" max="16" value="1" style="width:60px;" onchange="onPoolCountChange()">
+    </label>
+  </div>
+  <div class="sd-pools-hint" id="sdPoolsHint" style="display:none;" data-i18n="sd_pools_hint">
+    Pools are fully manual -- drag players from Overall ranking into a pool below. Rematch/state/city checks
+    run independently within each pool; pools never compare against each other.
   </div>
 
   <div class="sd-status" id="sdStatus"></div>
@@ -181,6 +195,7 @@
   <div id="sdStateClashes"></div>
   <div id="sdCityClashes"></div>
   <div id="sdRanked"></div>
+  <div id="sdPools"></div>
   <div id="sdKnownUnranked"></div>
   <div id="sdUnmatched"></div>
 </div>
@@ -188,8 +203,49 @@
 <script>
   var lastResult = null;     // last compute response
   var seedOrder = [];        // mutable ranked order (drag-and-drop reorders this)
-  var dragInfo = null;       // {source:'seed'|'section', key, index}
+  var dragInfo = null;       // {source:'seed'|'section'|'pool', poolIndex?, key?, index}
   var promoted = {};         // identity key -> true for section players dragged into the seed list
+
+  // ── Pools ──
+  // Fully manual: no algorithm assigns players to a pool. seedOrder acts as
+  // the "Overall ranking" staging list; the TO drags players out of it into
+  // whichever pool they choose. Each pools[i] is an independent ordered
+  // array of row objects, checked (rematch/state/city) entirely on its own --
+  // pairs are only ever found within seedOf built from that one pool's
+  // members, so cross-pool comparisons are structurally impossible, not
+  // just filtered out.
+  var poolCount = 1;         // 1 = feature off, exact original single-list behavior
+  var pools = [];            // pools[i] = [] of row objects, length === poolCount when on
+
+  // Resize `pools` to poolCount. Growing pads with empty pools. Shrinking
+  // reclaims players from the removed pools back into the staging list
+  // rather than discarding them. Turning pools off (poolCount<=1) empties
+  // `pools` entirely and returns everyone to seedOrder.
+  function ensurePoolsArray(){
+    if (!pools) pools = [];
+    if (poolCount <= 1){
+      pools.forEach(function(p){ seedOrder = seedOrder.concat(p); });
+      pools = [];
+      return;
+    }
+    while (pools.length < poolCount) pools.push([]);
+    if (pools.length > poolCount){
+      var removed = pools.splice(poolCount);
+      removed.forEach(function(p){ seedOrder = seedOrder.concat(p); });
+    }
+  }
+
+  function onPoolCountChange(){
+    var v = parseInt(document.getElementById('poolCountInput').value, 10);
+    poolCount = (isNaN(v) || v < 1) ? 1 : v;
+    document.getElementById('poolCountInput').value = poolCount;
+    document.getElementById('sdPoolsHint').style.display = poolCount > 1 ? '' : 'none';
+    ensurePoolsArray();
+    renderRankedTable();
+    renderPools();
+    renderSections();
+    recheckAll();
+  }
 
   // Stable identity for a row: player_id if it has one, else the tag.
   function rowKey(r){ return r.player_id ? ('p:' + r.player_id) : ('t:' + (r.tag || r.name || '')); }
@@ -327,13 +383,32 @@
   // Render the ranked list as a draggable table. Seed numbers reflect current
   // positions in seedOrder; dragging a row reorders and re-checks rematches.
   function renderRankedTable(){
-    var html = '<div class="sd-section-title">' + (window.t ? window.t('sd_ranked') : 'Suggested seed order') + '</div>';
+    var poolsOn = poolCount > 1;
+    var html = '<div class="sd-section-title">'
+      + (poolsOn ? (window.t?window.t('sd_overall_ranking'):'Overall ranking')
+                 : (window.t ? window.t('sd_ranked') : 'Suggested seed order'))
+      + '</div>';
     if (!seedOrder.length){
       html += '<div class="sd-empty">' + (window.t ? window.t('sd_none_ranked') : 'No entrants with history in this scope yet.') + '</div>';
+      // Still offer a way to build a list by hand -- e.g. a brand-new event
+      // with zero match history for anyone. "Copy" and "Save order" also
+      // matter here if pools already hold everyone (staging emptied out by
+      // design, not by accident).
+      var poolsHaveMembers = pools.some(function(p){ return p.length; });
+      html += '<div class="sd-copybar">'
+        + '<button class="btn sec sm" onclick="addAllNoHistory()" data-i18n="sd_add_all_nohist">Add all unseeded</button>'
+        + (poolsHaveMembers
+          ? ' <button class="btn sec sm" onclick="copySeedList()" data-i18n="sd_copy">Copy seed order</button>'
+          + ' <button class="btn sec sm" onclick="saveSeedOrder()" data-i18n="sd_save_order">Save order</button>'
+          : '')
+        + '</div>';
       document.getElementById('sdRanked').innerHTML = html;
       return;
     }
-    html += '<div class="sd-draghint">' + (window.t?window.t('sd_drag_hint'):'Drag rows to reorder seeds -- rematch check updates live.') + '</div>';
+    html += '<div class="sd-draghint">'
+      + (poolsOn ? (window.t?window.t('sd_drag_hint_pools'):'Drag players down into a pool below.')
+                 : (window.t?window.t('sd_drag_hint'):'Drag rows to reorder seeds -- rematch check updates live.'))
+      + '</div>';
     html += '<table class="sd"><thead><tr>'
       + '<th class="sd-seed">#</th><th>' + (window.t?window.t('sd_col_player'):'Player') + '</th>'
       + '<th class="sd-pts">' + (window.t?window.t('sd_col_points'):'Points') + '</th>'
@@ -360,7 +435,8 @@
     html += '</tbody></table>';
     html += '<div class="sd-copybar">'
       + '<button class="btn sec sm" onclick="copySeedList()" data-i18n="sd_copy">Copy seed order</button>'
-      + ' <button class="btn sec sm" onclick="resetSeedOrder()" data-i18n="sd_reset_order">Reset to suggested</button>'
+      + ' <button class="btn sec sm" onclick="resetSeedOrder()" ' + (poolsOn ? 'data-i18n="sd_reset_pools"' : 'data-i18n="sd_reset_order"') + '>'
+        + (poolsOn ? (window.t?window.t('sd_reset_pools'):'Empty all pools') : (window.t?window.t('sd_reset_order'):'Reset to suggested')) + '</button>'
       + ' <button class="btn sec sm" onclick="addAllNoHistory()" data-i18n="sd_add_all_nohist">Add all unseeded</button>'
       + ' <button class="btn sec sm" onclick="saveSeedOrder()" data-i18n="sd_save_order">Save order</button>'
       + '</div>';
@@ -399,6 +475,93 @@
     }
   }
 
+  // Render every pool as its own independent draggable table with its own
+  // rematch/state/city panels. No-op (clears the container) when pools are
+  // off. Rebuilt from scratch on every change, same pattern as the staging
+  // table -- simple and always consistent, cheap at this scale.
+  function renderPools(){
+    var container = document.getElementById('sdPools');
+    if (poolCount <= 1 || !pools.length){ container.innerHTML = ''; return; }
+    var html = '';
+    for (var i = 0; i < pools.length; i++){
+      var list = pools[i];
+      html += '<div class="sd-pool-block">';
+      html += '<div class="sd-section-title">' + (window.t?window.t('sd_pool_label'):'Pool') + ' ' + (i+1)
+            + ' <span class="sd-math">(' + list.length + ')</span></div>';
+      if (!list.length){
+        html += '<div class="sd-empty sd-pool-dropzone" data-pool="' + i + '">'
+              + (window.t?window.t('sd_pool_empty'):'Drag players here') + '</div>';
+      } else {
+        html += '<table class="sd"><thead><tr>'
+          + '<th class="sd-seed">#</th><th>' + (window.t?window.t('sd_col_player'):'Player') + '</th>'
+          + '<th class="sd-pts">' + (window.t?window.t('sd_col_points'):'Points') + '</th>'
+          + '<th class="sd-evt">' + (window.t?window.t('sd_col_events'):'Events') + '</th>'
+          + '</tr></thead><tbody id="sdPoolBody' + i + '">';
+        list.forEach(function(row, idx){
+          var isPromoted = !!promoted[rowKey(row)];
+          var ptsCell = isPromoted ? '<span class="sd-math">\u2014</span>' : row.points;
+          var evtCell = isPromoted ? '<span class="sd-math">\u2014</span>' : row.events_counted;
+          html += '<tr class="sd-drag-row" draggable="true" data-pool="' + i + '" data-idx="' + idx + '">'
+            + '<td class="sd-seed"><span class="sd-grip">\u2630</span>' + (idx+1) + '</td>'
+            + '<td>' + esc(row.name) + (row.tag && row.tag.toLowerCase()!==row.name.toLowerCase() ? ' <span class="sd-math">('+esc(row.tag)+')</span>' : '')
+              + (isPromoted ? ' <span class="sd-nohist">' + (window.t?window.t('sd_no_history'):'no history') + '</span>' : '') + '</td>'
+            + '<td class="sd-pts">' + ptsCell + '</td>'
+            + '<td class="sd-evt">' + evtCell + '</td>'
+            + '</tr>';
+        });
+        html += '</tbody></table>';
+      }
+      html += '<div id="sdPoolRematch' + i + '"></div><div id="sdPoolState' + i + '"></div><div id="sdPoolCity' + i + '"></div>';
+      html += '</div>';
+    }
+    container.innerHTML = html;
+    wirePoolDragEvents();
+  }
+
+  function wirePoolDragEvents(){
+    document.querySelectorAll('.sd-pool-block .sd-drag-row').forEach(function(tr){
+      var poolIdx = parseInt(tr.getAttribute('data-pool'), 10);
+      tr.addEventListener('dragstart', function(e){
+        dragInfo = {source: 'pool', poolIndex: poolIdx, index: parseInt(tr.getAttribute('data-idx'), 10)};
+        tr.classList.add('sd-dragging');
+        e.dataTransfer.effectAllowed = 'move';
+      });
+      tr.addEventListener('dragend', function(){ tr.classList.remove('sd-dragging'); });
+      tr.addEventListener('dragover', function(e){ e.preventDefault(); tr.classList.add('sd-drop-target'); });
+      tr.addEventListener('dragleave', function(){ tr.classList.remove('sd-drop-target'); });
+      tr.addEventListener('drop', function(e){
+        e.preventDefault();
+        tr.classList.remove('sd-drop-target');
+        var to = parseInt(tr.getAttribute('data-idx'), 10);
+        moveRow(pools[poolIdx], to);
+      });
+    });
+    // Each pool's own tbody (append-at-end) and empty-state dropzone.
+    for (var i = 0; i < pools.length; i++){
+      (function(i){
+        var body = document.getElementById('sdPoolBody' + i);
+        if (body){
+          body.addEventListener('dragover', function(e){ e.preventDefault(); });
+          body.addEventListener('drop', function(e){
+            if (e.target.closest && e.target.closest('.sd-drag-row')) return;
+            e.preventDefault();
+            moveRow(pools[i], pools[i].length);
+          });
+        }
+        var zone = document.querySelector('.sd-pool-dropzone[data-pool="' + i + '"]');
+        if (zone){
+          zone.addEventListener('dragover', function(e){ e.preventDefault(); zone.classList.add('sd-drop-target'); });
+          zone.addEventListener('dragleave', function(){ zone.classList.remove('sd-drop-target'); });
+          zone.addEventListener('drop', function(e){
+            e.preventDefault();
+            zone.classList.remove('sd-drop-target');
+            moveRow(pools[i], pools[i].length);
+          });
+        }
+      })(i);
+    }
+  }
+
   // Handle a drop at position `to` in the seed list, from either an intra-seed
   // reorder or a section player being promoted in.
   // Build the seed-list row object for a section player and mark it
@@ -426,7 +589,7 @@
     if (!added) return;
     renderRankedTable();
     renderSections();
-    recheckRematches();
+    recheckAll();
     setStatus(added + ' ' + (window.t?window.t('sd_added_nohist'):'player(s) added to the bottom of the seed list.'));
   }
 
@@ -442,9 +605,15 @@
     catch(e){ return {}; }
   }
   function saveSeedOrder(){
-    if (!seedOrder.length || !_slugKey()) return;
+    var hasAnyone = seedOrder.length || pools.some(function(p){ return p.length; });
+    if (!hasAnyone || !_slugKey()) return;
     var all = _savedOrders();
-    all[_slugKey()] = { keys: seedOrder.map(rowKey), saved_at: Date.now() };
+    all[_slugKey()] = {
+      keys: seedOrder.map(rowKey),
+      pools: pools.map(function(p){ return p.map(rowKey); }),
+      pool_count: poolCount,
+      saved_at: Date.now()
+    };
     try { localStorage.setItem('sd_saved_orders', JSON.stringify(all)); } catch(e){}
     setStatus(window.t?window.t('sd_order_saved'):'Seed order saved for this event -- it will be restored after recomputes.');
   }
@@ -453,45 +622,216 @@
     if (all[_slugKey()]){ delete all[_slugKey()];
       try { localStorage.setItem('sd_saved_orders', JSON.stringify(all)); } catch(e){} }
   }
-  // Reorder the freshly computed list to match the saved key order.
-  // Saved players missing from this compute are skipped; new players
-  // not in the save keep their computed relative order at the end.
+  // Reorder the freshly computed list (and, if pools are in use, redistribute
+  // into them) to match the saved arrangement. Saved players missing from
+  // this compute are skipped; new players not in the save keep their
+  // computed relative order at the end of the staging list. If the save
+  // used pools, poolCount is adopted from it so pools render before restore.
   function applySavedOrder(){
     _orderRestored = false;
     var rec = _savedOrders()[_slugKey()];
-    if (!rec || !rec.keys || !rec.keys.length) return;
-    var pool = {};
-    seedOrder.forEach(function(r){ pool[rowKey(r)] = r; });
-    var newOrder = [];
-    rec.keys.forEach(function(k){
-      if (pool[k]){ newOrder.push(pool[k]); delete pool[k]; return; }
+    if (!rec || !rec.keys) return;
+    if (rec.pool_count && rec.pool_count > 1 && poolCount <= 1){
+      poolCount = rec.pool_count;
+      var pc = document.getElementById('poolCountInput');
+      if (pc) pc.value = poolCount;
+      var hint = document.getElementById('sdPoolsHint');
+      if (hint) hint.style.display = '';
+    }
+    ensurePoolsArray();
+
+    var lookup = {};
+    seedOrder.forEach(function(r){ lookup[rowKey(r)] = r; });
+
+    function takeRow(k){
+      if (lookup[k]){ var r = lookup[k]; delete lookup[k]; return r; }
       var row = findSectionRow(k);
-      if (row) newOrder.push(promoteRowObj(row));   // was promoted when saved
+      if (row) return promoteRowObj(row);   // was promoted when saved
+      return null;                          // player left the event entirely
+    }
+
+    var newStaging = [];
+    rec.keys.forEach(function(k){ var r = takeRow(k); if (r) newStaging.push(r); });
+    var newPools = (rec.pools || []).map(function(poolKeys){
+      var arr = [];
+      poolKeys.forEach(function(k){ var r = takeRow(k); if (r) arr.push(r); });
+      return arr;
     });
-    seedOrder.forEach(function(r){ var k = rowKey(r); if (pool[k]){ newOrder.push(r); delete pool[k]; } });
-    seedOrder = newOrder;
+    while (newPools.length < poolCount) newPools.push([]);
+    newPools.length = poolCount;
+    // anyone left in lookup (new entrants not in the saved keys) -> append
+    // to staging in computed order
+    seedOrder.forEach(function(r){ var k = rowKey(r); if (lookup[k]){ newStaging.push(r); delete lookup[k]; } });
+
+    seedOrder = newStaging;
+    pools = newPools;
     _orderRestored = true;
   }
 
-  function dropIntoSeed(to){
+  // Generic version of the rematch/state/city detection, scoped to a single
+  // list (no tail concatenation, no cross-list awareness at all). Used for
+  // each pool. seedOf is built ONLY from `list`'s own members, so a pair
+  // can only be flagged when BOTH players are seeded within this same list --
+  // cross-pool comparisons are structurally impossible, not just filtered.
+  function computeChecksForList(list, containers){
+    var mode = document.getElementById('checkMode').value;
+    if (mode === 'off' || !list.length){
+      renderRematches([], containers.rematch);
+      renderStateClashes([], containers.state);
+      renderCityClashes([], containers.city);
+      return;
+    }
+    var earlyRounds = parseInt(document.getElementById('rematchRounds').value, 10) || 2;
+    var seedOf = {};
+    list.forEach(function(r, i){ if (r.player_id) seedOf[r.player_id] = i + 1; });
+    var size = nextPow2(list.length);
+    var bracket = standardBracketOrder(size);
+    var slotOfSeed = {};
+    bracket.forEach(function(seed, slot){ slotOfSeed[seed] = slot; });
+
+    if (mode === 'rematch' || mode === 'both' || mode === 'all' || mode === 'rematch_state' || mode === 'rematch_city'){
+      var recency = parseFloat(document.getElementById('rematchRecency').value) || 0.8;
+      var lookback = parseInt(document.getElementById('rematchLookback').value, 10) || 0;
+      var pairs = (lastResult && lastResult.pair_history) || [];
+      var flags = [];
+      pairs.forEach(function(p){
+        if (lookback && p.events_ago >= lookback) return;
+        var sa = seedOf[p.a_id], sb = seedOf[p.b_id];
+        if (!sa || !sb) return;   // both must be IN THIS LIST -- naturally scoped
+        var slotA = slotOfSeed[sa], slotB = slotOfSeed[sb];
+        if (slotA === undefined || slotB === undefined) return;
+        var rnd = meetingRound(slotA, slotB, size);
+        if (rnd > earlyRounds) return;
+        var rweight = Math.pow(recency, p.events_ago);
+        var severity = (earlyRounds - rnd + 1) * rweight;
+        flags.push({ a_seed: sa, a_name: p.a_name, b_seed: sb, b_name: p.b_name,
+          round: rnd, events_ago: p.events_ago, last_label: p.label,
+          last_date: p.date, meetings: p.count, recency_weight: Math.round(rweight*1000)/1000,
+          severity: severity });
+      });
+      flags.sort(function(a,b){ return b.severity - a.severity; });
+      renderRematches(flags, containers.rematch);
+    } else {
+      renderRematches([], containers.rematch);
+    }
+
+    if (mode === 'state' || mode === 'both' || mode === 'all' || mode === 'rematch_state'){
+      var states = (lastResult && lastResult.player_states) || {};
+      var byState = {};
+      list.forEach(function(r){
+        var pid = r.player_id; if (!pid) return;
+        var st = (states[pid] || '').trim();
+        if (!st) return;
+        (byState[st.toLowerCase()] = byState[st.toLowerCase()] || []).push({pid: pid, name: r.name, st: st});
+      });
+      var sflags = [];
+      Object.keys(byState).forEach(function(k){
+        var grp = byState[k];
+        for (var i=0;i<grp.length;i++){ for (var j=i+1;j<grp.length;j++){
+          var a=grp[i], b=grp[j];
+          var sa=seedOf[a.pid], sb=seedOf[b.pid];
+          var slotA=slotOfSeed[sa], slotB=slotOfSeed[sb];
+          if (slotA===undefined||slotB===undefined) continue;
+          var rnd=meetingRound(slotA, slotB, size);
+          if (rnd>earlyRounds) continue;
+          sflags.push({ a_seed:sa, a_name:a.name, b_seed:sb, b_name:b.name,
+            state:a.st, round:rnd, severity:(earlyRounds-rnd+1) });
+        }}
+      });
+      sflags.sort(function(a,b){ return b.severity - a.severity; });
+      renderStateClashes(sflags, containers.state);
+    } else {
+      renderStateClashes([], containers.state);
+    }
+
+    if (mode === 'city' || mode === 'all' || mode === 'rematch_city'){
+      var cities = (lastResult && lastResult.player_cities) || {};
+      var cstates = (lastResult && lastResult.player_states) || {};
+      var cstateIds = (lastResult && lastResult.player_state_ids) || {};
+      function poolStateKeyOf(pid){
+        var sid = cstateIds[pid];
+        if (sid !== null && sid !== undefined && sid !== '') return 'id:' + sid;
+        var st = (cstates[pid] || '').trim();
+        return st ? ('txt:' + st.toLowerCase()) : '';
+      }
+      var byCity = {};
+      list.forEach(function(r){
+        var pid = r.player_id; if (!pid) return;
+        var ct = (cities[pid] || '').trim();
+        if (!ct) return;
+        (byCity[ct.toLowerCase()] = byCity[ct.toLowerCase()] || []).push({pid: pid, name: r.name, ct: ct});
+      });
+      var cflags = [];
+      Object.keys(byCity).forEach(function(k){
+        var grp = byCity[k];
+        for (var i=0;i<grp.length;i++){ for (var j=i+1;j<grp.length;j++){
+          var a=grp[i], b=grp[j];
+          var ka=poolStateKeyOf(a.pid), kb=poolStateKeyOf(b.pid);
+          if (ka && kb && ka !== kb) continue;
+          var sa=seedOf[a.pid], sb=seedOf[b.pid];
+          var slotA=slotOfSeed[sa], slotB=slotOfSeed[sb];
+          if (slotA===undefined||slotB===undefined) continue;
+          var rnd=meetingRound(slotA, slotB, size);
+          if (rnd>earlyRounds) continue;
+          cflags.push({ a_seed:sa, a_name:a.name, b_seed:sb, b_name:b.name,
+            city:a.ct, round:rnd, severity:(earlyRounds-rnd+1) });
+        }}
+      });
+      cflags.sort(function(a,b){ return b.severity - a.severity; });
+      renderCityClashes(cflags, containers.city);
+    } else {
+      renderCityClashes([], containers.city);
+    }
+  }
+
+  // Dispatcher: single-list mode uses the original recheckRematches
+  // (untouched, targeting the original 3 containers). Pools mode clears
+  // those 3 (staging is not a bracket) and runs computeChecksForList once
+  // per pool, each fully independent.
+  function recheckAll(){
+    if (poolCount <= 1){
+      recheckRematches();
+      return;
+    }
+    renderRematches([]); renderStateClashes([]); renderCityClashes([]);
+    for (var i = 0; i < pools.length; i++){
+      computeChecksForList(pools[i], {
+        rematch: 'sdPoolRematch' + i, state: 'sdPoolState' + i, city: 'sdPoolCity' + i
+      });
+    }
+  }
+
+
+  // Unified move: works whether the drag came from the staging list, a pool,
+  // or a section (known-unranked/unmatched), and whether the drop target is
+  // the staging list or any pool. This is what lets a player be dragged
+  // straight between two different pools, or back out to staging.
+  function moveRow(targetArr, to){
     if (!dragInfo) return;
+    var moved;
     if (dragInfo.source === 'seed'){
-      var from = dragInfo.index;
-      if (from === to){ dragInfo = null; return; }
-      var moved = seedOrder.splice(from, 1)[0];
-      if (from < to) to--;                 // account for the removal shift
-      seedOrder.splice(to, 0, moved);
+      if (targetArr === seedOrder && dragInfo.index === to){ dragInfo = null; return; }
+      moved = seedOrder.splice(dragInfo.index, 1)[0];
+      if (targetArr === seedOrder && dragInfo.index < to) to--;
+    } else if (dragInfo.source === 'pool'){
+      var srcArr = pools[dragInfo.poolIndex];
+      if (targetArr === srcArr && dragInfo.index === to){ dragInfo = null; return; }
+      moved = srcArr.splice(dragInfo.index, 1)[0];
+      if (targetArr === srcArr && dragInfo.index < to) to--;
     } else {                                // promoting a section player
       var row = findSectionRow(dragInfo.key);
       if (!row){ dragInfo = null; return; }
-      var placed = promoteRowObj(row);
-      seedOrder.splice(Math.min(to, seedOrder.length), 0, placed);
+      moved = promoteRowObj(row);
     }
+    targetArr.splice(Math.min(to, targetArr.length), 0, moved);
     dragInfo = null;
     renderRankedTable();      // renumber seeds
+    renderPools();
     renderSections();         // remove the promoted player from its section
-    recheckRematches();       // live re-check with new order
+    recheckAll();             // live re-check with new order
   }
+
+  function dropIntoSeed(to){ moveRow(seedOrder, to); }
 
   // Send a promoted player back out of the seed list to its original section.
   function returnFromSeed(key){
@@ -500,8 +840,9 @@
     }
     delete promoted[key];
     renderRankedTable();
+    renderPools();
     renderSections();
-    recheckRematches();
+    recheckAll();
   }
 
   function resetSeedOrder(){
@@ -510,9 +851,13 @@
     _orderRestored = false;
     promoted = {};
     seedOrder = (lastResult.ranked || []).slice();
+    // Pools have no "suggested" assignment (fully manual) -- reset empties
+    // every pool and returns everyone to Overall ranking.
+    for (var i = 0; i < pools.length; i++){ pools[i] = []; }
     renderRankedTable();
+    renderPools();
     renderSections();
-    recheckRematches();
+    recheckAll();
   }
 
   // Recompute early-rematch AND same-state flags from the current seedOrder,
@@ -636,8 +981,9 @@
     }
   }
 
-  function renderRematches(flags){
-    var box = document.getElementById('sdRematches');
+  function renderRematches(flags, containerId){
+    var box = document.getElementById(containerId || 'sdRematches');
+    if (!box) return;
     if (!flags || !flags.length){ box.innerHTML = ''; return; }
     var title = window.t ? window.t('sd_rematch_title') : 'Possible early rematches';
     var sub = window.t ? window.t('sd_rematch_sub') : 'These seeded players have played before and would meet early under standard (opposite-ends) placement. Nudge their seeds apart if you want to avoid it.';
@@ -660,8 +1006,9 @@
     box.innerHTML = h;
   }
 
-  function renderStateClashes(flags){
-    var box = document.getElementById('sdStateClashes');
+  function renderStateClashes(flags, containerId){
+    var box = document.getElementById(containerId || 'sdStateClashes');
+    if (!box) return;
     if (!flags || !flags.length){ box.innerHTML = ''; return; }
     var title = window.t ? window.t('sd_state_title') : 'Possible same-state early meetings';
     var sub = window.t ? window.t('sd_state_sub') : 'These seeded players are from the same state/region and would meet early. Spread out regionals if you want to avoid it.';
@@ -682,8 +1029,9 @@
     box.innerHTML = h;
   }
 
-  function renderCityClashes(flags){
-    var box = document.getElementById('sdCityClashes');
+  function renderCityClashes(flags, containerId){
+    var box = document.getElementById(containerId || 'sdCityClashes');
+    if (!box) return;
     if (!flags || !flags.length){ box.innerHTML = ''; return; }
     var title = window.t ? window.t('sd_city_title') : 'Possible same-city early meetings';
     var sub = window.t ? window.t('sd_city_sub') : 'These seeded players are from the same city and would meet early. At state-heavy events this is the sharper local signal.';
@@ -707,13 +1055,19 @@
   function render(data){
     // Working copy of the ranked order that drag-and-drop mutates. Known-
     // unranked and unmatched players can also be dragged in (tracked in
-    // `promoted`). A fresh compute resets any manual promotion.
+    // `promoted`). A fresh compute resets any manual promotion AND any
+    // manual pool arrangement -- exactly like the existing single-list
+    // contract, where an unsaved manual order is discarded by a recompute.
+    // Click "Save order" to have pools (and staging order) survive one.
     promoted = {};
     seedOrder = (data.ranked || []).slice();
-    applySavedOrder();   // pinned manual order survives recomputes
+    pools = [];
+    if (poolCount > 1) ensurePoolsArray();   // re-pad to current pool count, all empty
+    applySavedOrder();   // pinned manual order (incl. pools) survives recomputes
     renderRankedTable();
+    renderPools();
     renderSections();     // known-unranked + unmatched (minus promoted)
-    recheckRematches();   // uses seedOrder + data.pair_history
+    recheckAll();          // uses seedOrder/pools + data.pair_history
     // status + coverage warning
     renderStatus(data);
   }
@@ -816,10 +1170,26 @@
   }
 
   function copySeedList(){
-    if (!seedOrder || !seedOrder.length) return;
-    // Copy the CURRENT order (including any manual drag reordering).
-    var lines = seedOrder.map(function(r, i){ return (i+1) + '. ' + r.name; });
-    var text = lines.join('\n');
+    var hasAnyone = (seedOrder && seedOrder.length) || pools.some(function(p){ return p.length; });
+    if (!hasAnyone) return;
+    var text;
+    if (poolCount > 1){
+      var blocks = [];
+      pools.forEach(function(list, i){
+        if (!list.length) return;
+        var label = (window.t?window.t('sd_pool_label'):'Pool') + ' ' + (i+1);
+        blocks.push(label + '\n' + list.map(function(r, j){ return (j+1) + '. ' + r.name; }).join('\n'));
+      });
+      if (seedOrder.length){
+        var unassignedLabel = window.t?window.t('sd_overall_ranking'):'Overall ranking';
+        blocks.push(unassignedLabel + ' (' + (window.t?window.t('sd_unassigned'):'unassigned') + ')\n'
+          + seedOrder.map(function(r, j){ return (j+1) + '. ' + r.name; }).join('\n'));
+      }
+      text = blocks.join('\n\n');
+    } else {
+      // Copy the CURRENT order (including any manual drag reordering).
+      text = seedOrder.map(function(r, i){ return (i+1) + '. ' + r.name; }).join('\n');
+    }
     if (navigator.clipboard) navigator.clipboard.writeText(text);
     setStatus(window.t ? window.t('sd_copied') : 'Seed order copied.');
   }
