@@ -60,6 +60,7 @@
       <span class="st-zoom-label" id="zoomLabel">100%</span>
       <button class="st-zoom-btn" onclick="doZoom(0.1)">+</button>
     </div>
+    <button class="btn sec sm" onclick="window.open('stations_popout.html','stationspopout','width=1400,height=860,scrollbars=yes,resizable=yes')" data-i18n="st_popout">⧉ Popout</button>
     <button class="btn sec sm" onclick="clearQueue()" data-i18n="st_clear">✕ Clear</button>
     <button class="btn sec sm" onclick="loadStreamQueue()" data-i18n="st_refresh">Refresh</button>
   </div>
@@ -67,6 +68,18 @@
 
 <!-- STREAM FILTER (populated after a tournament loads) -->
 <div id="streamPicker" class="stream-picker" style="display:none;"></div>
+
+<!-- ANNOUNCEMENT (server-persisted -- shown above the queue here AND on the
+     popout/booth display; editable right in place, autosaves). -->
+<div class="st-announcement-bar">
+  <span class="st-announcement-icon">📣</span>
+  <input type="text" id="stAnnouncement" maxlength="300"
+    data-i18n-attr="placeholder:st_announcement_ph"
+    placeholder="Announcement shown above the station lists (e.g. Please report match scores to the front desk)"
+    oninput="queueAnnouncementSave()" onblur="saveAnnouncement()"
+    onkeydown="if(event.key==='Enter'){ this.blur(); }">
+  <span class="st-announcement-status" id="stAnnouncementStatus"></span>
+</div>
 
 <!-- CONTENT -->
 <div class="content">
@@ -154,6 +167,38 @@ function renderStreamPicker() {
     + '</span>';
   box.innerHTML = html;
   box.style.display = 'flex';
+}
+
+// ── ANNOUNCEMENT ──────────────────────────────────────────────────
+// Server-persisted (not localStorage) so a popout on a separate venue
+// machine/TV picks it up too. Editable right in the display field: debounced
+// autosave while typing, plus an immediate save on blur/Enter.
+let _announceTimer = null;
+async function loadAnnouncement() {
+  try {
+    const r = await fetch('/getStationAnnouncement');
+    const data = await r.json();
+    document.getElementById('stAnnouncement').value = data.text || '';
+  } catch (e) { /* server not reachable -- leave field blank, non-fatal */ }
+}
+function queueAnnouncementSave() {
+  clearTimeout(_announceTimer);
+  _announceTimer = setTimeout(saveAnnouncement, 800);
+}
+async function saveAnnouncement() {
+  clearTimeout(_announceTimer);
+  const text = document.getElementById('stAnnouncement').value.trim();
+  const statusEl = document.getElementById('stAnnouncementStatus');
+  try {
+    const r = await fetch('/saveStationAnnouncement', {
+      method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({text})
+    });
+    const data = await r.json();
+    if (data.ok && statusEl) {
+      statusEl.textContent = window.t ? window.t('st_announcement_saved') : 'Saved';
+      setTimeout(function(){ if (statusEl.textContent) statusEl.textContent = ''; }, 1500);
+    }
+  } catch (e) { if (statusEl) statusEl.textContent = window.t ? window.t('st_error') : 'Error'; }
 }
 
 // ── SETTINGS ──────────────────────────────────────────────────────
@@ -508,6 +553,7 @@ document.getElementById('tourneySlug').addEventListener('keydown', e => { if (e.
 
 // Auto-populate from server on load
 document.addEventListener('DOMContentLoaded', restoreSettings);
+document.addEventListener('DOMContentLoaded', loadAnnouncement);
 </script>
   <script src="../lang/en.js"></script>
   <script src="../i18n.js"></script>

@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<!-- LIVES AT: ScoreboardDash/stations/stations_popout.html -- read-only Stations queue display for a second monitor/venue TV, no editing chrome -->
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Stations — Stream Overlay</title>
+  <link rel="icon" type="image/png" href="../images/V.png">
+  <script>
+    (function(){
+      var s = localStorage.getItem('sc_theme_popout');
+      if (!s) return;
+      try { var v = JSON.parse(s); Object.keys(v).forEach(function(k){ document.documentElement.style.setProperty(k,v[k]); }); }
+      catch(e) {}
+    })();
+  </script>
+  <link href="../base.css" rel="stylesheet" type="text/css">
+  <link href="style.css" rel="stylesheet" type="text/css">
+  <link href="../theme/theme.css" rel="stylesheet" type="text/css">
+  <style>
+    /* ── POPOUT OVERRIDES ──
+       No nav/config/toolbar chrome at all -- this is a fire-and-forget
+       display (booth monitor, second screen), not an editing surface. That
+       also structurally fixes the "auto-refresh scrolls to the top past
+       admin controls" problem: there's nothing above the queue to scroll
+       past, because there's nothing here but the announcement + the queue. */
+    body { overflow: auto; }
+    #refresh-indicator {
+      position: fixed; bottom: 8px; right: 12px; font-size: 10px;
+      color: var(--fg2); font-family: var(--font-d); letter-spacing: .08em; opacity: .4;
+    }
+    .po-content { padding: 16px; }
+  </style>
+</head>
+<body>
+<div id="refresh-indicator">AUTO-REFRESH 20s</div>
+
+<div class="po-content">
+  <!-- Announcement: read-only display of the same server-persisted text
+       edited on the main Stations page. Hidden entirely when empty. -->
+  <div class="st-announcement-bar" id="announcementBar" style="display:none;">
+    <span class="st-announcement-icon">📣</span>
+    <span id="announcementText" style="font-size:16px;"></span>
+  </div>
+
+  <div id="queueContent">
+    <div class="empty-state">
+      <strong>No tournament loaded</strong>
+      <div class="hint">Load a tournament on the main Stations page first.</div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── STATE ─────────────────────────────────────────────────────────
+// Custom names / featured stream / stream filter live in localStorage on
+// the main Stations page. If this popout is the SAME browser (e.g. opened
+// via the "Popout" button, or a second monitor on the same PC), they carry
+// over automatically. If it's opened on a SEPARATE machine (a venue TV),
+// localStorage does NOT travel with it -- this popout will still show the
+// live queue correctly, just with start.gg's raw stream names, no featured
+// highlight, and no stream filtering (a reasonable default, not broken).
+let tournSlug = '';
+let selectedEventId = null;
+let _apiToken = '';
+const sqCustomNames = JSON.parse(localStorage.getItem('sq_custom_names') || '{}');
+const sqFeaturedStream = localStorage.getItem('sq_featured_stream') || '';
+let sqStreamFilter = JSON.parse(localStorage.getItem('sq_stream_filter') || '{}');
+function selectedStreamsFor(slug) { var sel = sqStreamFilter[slug]; return Array.isArray(sel) ? sel : null; }
+function isStreamShown(rawName) {
+  var sel = selectedStreamsFor(tournSlug);
+  if (!sel || !sel.length) return true;
+  return sel.indexOf(rawName) !== -1;
+}
+
+function escHtml(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+async function gql(query, variables = {}) {
+  const res = await fetch('https://api.start.gg/gql/alpha', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + _apiToken },
+    body: JSON.stringify({ query, variables })
+  });
+  if (!res.ok) throw new Error('HTTP ' + res.status);
+  const json = await res.json();
+  if (json.errors?.length) throw new Error(json.errors[0].message);
+  return json.data;
+}
+
+// Resolve which tournament/event to show, same dual-source pattern as the
+// main page: prefer the server (works even on a separate machine), fall
+// back to localStorage (same-browser convenience).
+async function resolveSettings() {
+  try {
+    const [tokenRes, infoRes] = await Promise.all([
+      fetch('/getStartggToken'), fetch('/getTournamentInfo')
+    ]);
+    if (tokenRes.ok) { const t = await tokenRes.json(); _apiToken = t.token || ''; }
+    if (infoRes.ok) {
+      const info = await infoRes.json();
+      if (info.tournament) tournSlug = info.tournament;
+    }
+  } catch (e) { /* server not reachable */ }
+  if (!tournSlug) tournSlug = localStorage.getItem('sq_tourney_slug') || '';
+  tournSlug = tournSlug.replace(/^https?:\/\/[^/]+\//, '').replace(/\/events.*$/, '').replace(/\/$/, '');
+}
+
+// ── ANNOUNCEMENT ──────────────────────────────────────────────────
+async function loadAnnouncementDisplay() {
+  try {
+    const r = await fetch('/getStationAnnouncement');
+    const data = await r.json();
+    const bar = document.getElementById('announcementBar');
+    const txt = document.getElementById('announcementText');
+    if (data.text) { txt.textContent = data.text; bar.style.display = ''; }
+    else { bar.style.display = 'none'; }
+  } catch (e) { /* leave prior state on a transient failure */ }
+}
+
+// ── QUEUE (read-only render -- no rename/feature-toggle controls) ──
+async function loadStreamQueue() {
+  const el = document.getElementById('queueContent');
+  if (!tournSlug) {
+    el.innerHTML = '<div class="empty-state"><strong>No tournament loaded</strong><div class="hint">Load a tournament on the main Stations page first.</div></div>';
+    return;
+  }
+  try {
+    const data = await gql(`
+      query($slug: String!) {
+        tournament(slug: $slug) {
+          streamQueue {
+            stream { streamSource streamName }
+            sets {
+              id fullRoundText state
+              station { number }
+              slots { entrant { name participants { gamerTag prefix } } }
+            }
+          }
+        }
+      }`, { slug: tournSlug });
+
+    let queues = (data?.tournament?.streamQueue || []).slice();
+    function sqLabel(q) {
+      var raw = (q.stream && q.stream.streamName) || 'Stream';
+      if (sqCustomNames[raw] != null) return sqCustomNames[raw];
+      var esc = escHtml(raw);
+      if (sqCustomNames[esc] != null) return sqCustomNames[esc];
+      return raw;
+    }
+    queues.sort(function (a, b) {
+      return sqLabel(a).localeCompare(sqLabel(b), undefined, { numeric: true, sensitivity: 'base' });
+    });
+    queues = queues.filter(function (q) { return isStreamShown((q.stream && q.stream.streamName) || 'Stream'); });
+
+    if (!queues.length) {
+      el.innerHTML = '<div class="empty-state"><strong>No stream queue</strong><div class="hint">The TO may not have a stream queue configured on Start.gg.</div></div>';
+      return;
+    }
+
+    let html = '<div class="sq-grid" id="sqGrid">';
+    queues.forEach(q => {
+      const sn = q.stream?.streamName || 'Stream';
+      const snSafe = escHtml(sn);
+      const customName = sqCustomNames[sn] || sqCustomNames[snSafe] || sn;
+      const isFeatured = sqFeaturedStream === snSafe;
+
+      html += `<div class="sq-col">`;
+      html += `<div class="sq-col-hdr${isFeatured ? ' sq-col-featured' : ''}">`;
+      html += `<span class="sq-col-name">📡 ${escHtml(customName)}</span>`;
+      html += `</div>`;
+      html += `<div class="sq-list">`;
+
+      const sets = q.sets || [];
+      if (!sets.length) {
+        html += `<div class="sq-row"><div class="sq-match" style="color:var(--fg2)">Queue empty</div></div>`;
+      }
+      sets.forEach((s, i) => {
+        const slot0 = s.slots[0], slot1 = s.slots[1];
+        const p0 = slot0?.entrant?.participants?.[0];
+        const p1e = slot1?.entrant?.participants?.[0];
+        const tag0 = p0?.gamerTag || slot0?.entrant?.name || 'TBD';
+        const tag1 = p1e?.gamerTag || slot1?.entrant?.name || 'TBD';
+        const pfx0 = p0?.prefix ? `<span style="color:var(--accent);margin-right:3px;">${escHtml(p0.prefix)}</span>` : '';
+        const pfx1 = p1e?.prefix ? `<span style="color:var(--accent);margin-right:3px;">${escHtml(p1e.prefix)}</span>` : '';
+        const round = s.fullRoundText || '';
+        const station = s.station?.number ? ' · Station ' + s.station.number : '';
+        const isLive = s.state === 2;
+        const onStream = isFeatured && isLive;
+        const rowCls = onStream ? 'on-stream' : isLive ? 'now-playing' : i === 0 ? 'next-up' : '';
+        const badge = onStream ? '<span class="sq-badge on-stream">On Stream</span>'
+          : isLive ? '<span class="sq-badge now-playing">Now Playing</span>'
+          : i === 0 ? '<span class="sq-badge next-up">Next Up</span>'
+          : '<span class="sq-badge queued">Queued</span>';
+        html += `<div class="sq-row ${rowCls}">
+          <div class="sq-match">${pfx0}${escHtml(tag0)} <span style="color:var(--fg2)">vs</span> ${pfx1}${escHtml(tag1)}</div>
+          <div class="sq-round">${escHtml(round)}${escHtml(station)}</div>
+          <div class="sq-footer">${badge}</div>
+        </div>`;
+      });
+      html += `</div></div>`;
+    });
+    html += `</div>`;
+    el.innerHTML = html;
+  } catch (e) {
+    el.innerHTML = '<div class="err-msg">⚠ ' + escHtml(e.message) + '</div>';
+  }
+}
+
+// ── POLL LOOP ─────────────────────────────────────────────────────
+const POLL_SECONDS = 20;
+async function refreshAll() {
+  await resolveSettings();
+  await Promise.all([loadStreamQueue(), loadAnnouncementDisplay()]);
+}
+refreshAll();
+setInterval(refreshAll, POLL_SECONDS * 1000);
+</script>
+
+<script src="../theme/theme.js" defer></script>
+<script>
+// Independent popout theme storage, same convention as the Top 8 popout.
+window.addEventListener('load', function() {
+  var _origSave = window.saveTheme;
+  window.saveTheme = function(vars) {
+    var style = getComputedStyle(document.documentElement);
+    var full = {};
+    ['--bg','--bg2','--bg3','--bg4','--fg','--fg2','--accent','--accent2',
+     '--green','--blue','--purple','--p1-color','--p2-color','--border'].forEach(function(k) {
+      full[k] = style.getPropertyValue(k).trim();
+    });
+    Object.assign(full, vars);
+    localStorage.setItem('sc_theme_popout', JSON.stringify(full));
+  };
+  window.resetTheme = function() {
+    localStorage.removeItem('sc_theme_popout');
+    applyPreset('HitConfirm Dark');
+  };
+  var saved = localStorage.getItem('sc_theme_popout');
+  if (saved) {
+    try { var v = JSON.parse(saved); Object.keys(v).forEach(function(k){ document.documentElement.style.setProperty(k,v[k]); }); }
+    catch(e) {}
+  }
+});
+</script>
+</body>
+</html>

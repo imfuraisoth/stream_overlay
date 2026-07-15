@@ -54,6 +54,7 @@ replays_folder = "recordings/replays"
 saved_replays_folder = "../../clips"
 scoreboard_data_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), "../data/scoreboard.json")
 crewbattle_data_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), "../data/crewbattle.json")
+station_announcement_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), "../data/station_announcement.json")
 commentators_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), "../data/commentators.json")
 player_1 = os.path.join(os.path.dirname(os.path.abspath(__file__)), "../data/player1.txt")
 player_2 = os.path.join(os.path.dirname(os.path.abspath(__file__)), "../data/player2.txt")
@@ -326,6 +327,30 @@ def get_crew_battle():
         data = {"team1": _default_team("East"), "team2": _default_team("West"),
                 "pageSize": 12, "game": ""}
     return json.dumps(data, ensure_ascii=False), 200
+
+
+@api.route('/getStationAnnouncement', methods=['GET'])
+def get_station_announcement():
+    """Return the current stations-page announcement text (e.g. 'Please
+    report match scores to...'). Shown above the station/stream queue lists
+    on both the main Stations page and its popout. Server-persisted (not
+    localStorage) so it reaches a popout running on a separate venue
+    machine/TV, not just the TO's own browser."""
+    data = FileUtils.read_file(station_announcement_file)
+    return json.dumps({"text": (data or {}).get("text", "")}, ensure_ascii=False), 200
+
+
+@api.route('/saveStationAnnouncement', methods=['POST'])
+def save_station_announcement():
+    body = request.get_json() or {}
+    text = (body.get("text") or "").strip()[:300]   # generous cap, plain display text
+    try:
+        with open(station_announcement_file, "w", encoding="utf-8") as f:
+            json.dump({"text": text}, f, ensure_ascii=False, indent=2)
+        return jsonify({"ok": True, "text": text}), 200
+    except Exception as e:
+        print("saveStationAnnouncement error: " + str(e))
+        return jsonify({"ok": False, "message": str(e)}), 500
 
 
 @api.route('/saveCrewBattle', methods=['POST'])

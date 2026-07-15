@@ -12,16 +12,6 @@
   --font-b: 'Barlow', sans-serif;
 }body { background: var(--bg); color: var(--fg); font-family: var(--font-b); font-size: 14px; min-height: 100vh; display: flex; flex-direction: column; }
 /* ── NAV ── */
-.top-navbar-container { position: sticky; top: 0; z-index: 100;
-  background: var(--bg2); border-bottom: 1px solid var(--border);
-  padding: 0 18px; display: flex; align-items: center; height: 44px; flex-shrink: 0;
-}
-.header-item {
-  font-family: var(--font-d); font-size: 12px; font-weight: 700;
-  letter-spacing: .08em; text-transform: uppercase; color: var(--fg2);
-  padding: 0 14px; height: 100%; display: flex; align-items: center;
-  border-bottom: 2px solid transparent; transition: color .15s; cursor: pointer; white-space: nowrap;
-}.header-sep { color: var(--border); padding: 0 4px; height: 100%; display: flex; align-items: center; font-size: 16px; }
 
 /* ── PAGE ── */
 .page-content { padding: 16px; display: flex; flex-direction: column; gap: 14px; max-width: 1100px; }
