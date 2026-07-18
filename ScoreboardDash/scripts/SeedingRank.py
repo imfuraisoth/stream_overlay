@@ -391,30 +391,46 @@ def detect_state_clashes(ranked, early_rounds=2):
     return flags
 
 def detect_city_clashes(ranked, early_rounds=2):
-    """Find seeded players from the SAME city who'd meet early.
+    """Find seeded players from the SAME city -- or the same METRO AREA --
+    who'd meet early.
 
     The city-tier companion to detect_state_clashes: at a state-heavy event
     (e.g. a Texas major) the state check flags everyone and becomes noise,
-    while same-CITY still surfaces genuinely local clusters.
+    while same-city/metro still surfaces genuinely local clusters.
 
-    City is free text with no canonical id, so matching is normalized
-    (trimmed, case-insensitive: "dallas" == "Dallas"). Because city names
-    collide across states (Springfield, Portland...), a pair is EXCLUDED
-    when both players have a state and the states differ; if either lacks
-    a state, the city match is allowed.
+    Metro-area matching (when a player's city+state resolves to a US
+    Metropolitan/Micropolitan Statistical Area via MetroLookup) is what lets
+    suburbs of the same metro cluster together -- Plano, Garland, and
+    Richardson all group with Dallas even though none of them share its
+    exact city name. A player whose city doesn't resolve to a known metro
+    (international, unrecognized, a typo, a joke entry) falls back to exact
+    city-name matching, same as before metro support existed.
 
-    ranked        -- list of {player_id, name, city, state, state_id, ...}
-                     in seed order.
+    Grouping key per player:
+      - "metro:<MSA name>" if row["metro"] is set (unambiguous by
+        construction -- an MSA name IS the disambiguated geographic
+        entity, so no state cross-check is needed for these).
+      - "city:<normalized city text>" otherwise. Because raw city names
+        collide across states (Springfield, Portland...), a pair in this
+        fallback tier is EXCLUDED when both players have a state and the
+        states differ; if either lacks a state, the match is allowed.
+
+    ranked        -- list of {player_id, name, city, state, state_id,
+                     metro, ...} in seed order. "metro" is optional --
+                     omitting it (or leaving every value None) reproduces
+                     the pre-metro exact-city-only behavior exactly.
     early_rounds  -- flag pairs meeting in this round or earlier.
 
     Returns flags sorted worst-first:
-      { a_seed, a_id, a_name, b_seed, b_id, b_name, city, round,
+      { a_seed, a_id, a_name, b_seed, b_id, b_name, city, via, round,
         bracket_size, severity }
+    "city" holds the shared label to display (the metro name for a metro
+    match, the shared city text otherwise); "via" is "metro" or "city".
     """
     seed_of = {}
     name_of = {}
-    city_of = {}
     statekey_of = {}
+    group_of = {}    # pid -> (group_key, display_label, via)
     order_ids = []
     for i, r in enumerate(ranked):
         pid = r.get("player_id")
@@ -422,35 +438,47 @@ def detect_city_clashes(ranked, early_rounds=2):
             continue
         seed_of[pid] = i + 1
         name_of[pid] = r.get("name", pid)
-        ct = (r.get("city") or "").strip()
-        if ct:
-            city_of[pid] = ct
         sid = r.get("state_id")
         st = (r.get("state") or "").strip()
         if sid not in (None, ""):
             statekey_of[pid] = "id:%s" % sid
         elif st:
             statekey_of[pid] = "txt:%s" % st.lower()
+
+        metro = (r.get("metro") or "").strip()
+        ct = (r.get("city") or "").strip()
+        if metro:
+            group_of[pid] = ("metro:" + metro.lower(), metro, "metro")
+        elif ct:
+            group_of[pid] = ("city:" + ct.lower(), ct, "city")
         order_ids.append(pid)
 
     size = _next_pow2(len(order_ids))
     bracket = standard_bracket_order(size)
     slot_of_seed = {seed: slot for slot, seed in enumerate(bracket)}
 
-    by_city = {}
-    for pid, ct in city_of.items():
-        by_city.setdefault(ct.lower(), []).append(pid)
+    by_group = {}
+    for pid, (key, label, via) in group_of.items():
+        by_group.setdefault(key, []).append(pid)
 
     flags = []
-    for ct_key, pids in by_city.items():
+    for key, pids in by_group.items():
         if len(pids) < 2:
             continue
+        via = group_of[pids[0]][2]
+        label = group_of[pids[0]][1]
         for i in range(len(pids)):
             for j in range(i + 1, len(pids)):
                 a, b = pids[i], pids[j]
-                ka, kb = statekey_of.get(a), statekey_of.get(b)
-                if ka and kb and ka != kb:
-                    continue   # same city NAME, different states
+                if via == "city":
+                    # exact-city-text fallback tier only: exclude same-NAME
+                    # different-state pairs (Springfield, Portland...).
+                    # Metro-tier pairs skip this -- the MSA already
+                    # disambiguates geography, cross-state metros (e.g.
+                    # Texarkana, TX-AR) are meant to group together.
+                    ka, kb = statekey_of.get(a), statekey_of.get(b)
+                    if ka and kb and ka != kb:
+                        continue
                 slot_a = slot_of_seed.get(seed_of[a])
                 slot_b = slot_of_seed.get(seed_of[b])
                 if slot_a is None or slot_b is None:
@@ -461,7 +489,7 @@ def detect_city_clashes(ranked, early_rounds=2):
                 flags.append({
                     "a_seed": seed_of[a], "a_id": a, "a_name": name_of.get(a, a),
                     "b_seed": seed_of[b], "b_id": b, "b_name": name_of.get(b, b),
-                    "city": city_of[a],
+                    "city": label, "via": via,
                     "round": rnd, "bracket_size": size,
                     "severity": round(float(early_rounds - rnd + 1), 4),
                 })

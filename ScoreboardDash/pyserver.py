@@ -27,6 +27,7 @@ from scripts import MatchHistory
 from scripts import SeedingRank
 from scripts import DataTransfer
 from scripts import LocationResolve
+from scripts import MetroLookup
 import argparse
 import socket
 import os
@@ -1054,6 +1055,7 @@ def seeding_compute():
     state_lookup = {}
     city_lookup = {}
     state_id_lookup = {}
+    metro_lookup = {}
     try:
         # check_mode: 'rematch' | 'state' | 'both' | 'off'. (Back-compat: the
         # old rematch_check bool still turns rematch on if check_mode absent.)
@@ -1091,7 +1093,10 @@ def seeding_compute():
             state_flags = SeedingRank.detect_state_clashes(seed_order, early_rounds=early_rounds)
 
         if do_city and early_rounds > 0:
-            # city needs state/state_id too (cross-state same-name exclusion)
+            # city needs state/state_id too (cross-state same-name exclusion),
+            # plus metro area so suburbs of the same metro cluster together
+            # (e.g. Plano/Garland/Richardson group with Dallas) rather than
+            # only matching on an exact city-name string.
             for row in seed_order:
                 pid = row.get("player_id")
                 if pid:
@@ -1099,6 +1104,8 @@ def seeding_compute():
                     row["city"] = prec.get("city", "")
                     row["state"] = prec.get("state", "")
                     row["state_id"] = prec.get("state_id")
+                    row["metro"] = MetroLookup.resolve_metro(row["state"], row["city"])
+                    metro_lookup[pid] = row["metro"]
             city_flags = SeedingRank.detect_city_clashes(seed_order, early_rounds=early_rounds)
 
         # Always expose raw pair history + player states so the client can
@@ -1114,6 +1121,9 @@ def seeding_compute():
                 state_lookup[r["player_id"]] = players.get(r["player_id"], {}).get("state", "")
                 city_lookup[r["player_id"]] = players.get(r["player_id"], {}).get("city", "")
                 state_id_lookup[r["player_id"]] = players.get(r["player_id"], {}).get("state_id")
+                if r["player_id"] not in metro_lookup:
+                    metro_lookup[r["player_id"]] = MetroLookup.resolve_metro(
+                        state_lookup[r["player_id"]], city_lookup[r["player_id"]])
         pair_history = [{"a_id": a, "b_id": b,
                          "a_name": name_lookup.get(a, a), "b_name": name_lookup.get(b, b),
                          "events_ago": info["events_ago"], "label": info["label"],
@@ -1124,6 +1134,7 @@ def seeding_compute():
         rematch_flags = []
         state_flags = []
         city_flags = []
+        metro_lookup = {}
 
     return jsonify({
         "ok": True,
@@ -1139,6 +1150,7 @@ def seeding_compute():
         "city_clashes": city_flags,       # same-city early meetings
         "player_cities": city_lookup,     # pid -> city, for live re-check
         "player_state_ids": state_id_lookup,  # pid -> stateId (city cross-state rule)
+        "player_metro": metro_lookup,     # pid -> metro area name or None (city check upgrade)
     }), 200
 
 

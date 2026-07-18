@@ -684,33 +684,44 @@
       var cities = (lastResult && lastResult.player_cities) || {};
       var cstates = (lastResult && lastResult.player_states) || {};
       var cstateIds = (lastResult && lastResult.player_state_ids) || {};
+      var cmetros = (lastResult && lastResult.player_metro) || {};
       function poolStateKeyOf(pid){
         var sid = cstateIds[pid];
         if (sid !== null && sid !== undefined && sid !== '') return 'id:' + sid;
         var st = (cstates[pid] || '').trim();
         return st ? ('txt:' + st.toLowerCase()) : '';
       }
-      var byCity = {};
+      // Group by metro area when resolved (server-side, via MetroLookup) so
+      // suburbs of the same metro cluster together; fall back to exact-city
+      // text (today's pre-metro behavior) when no metro match exists.
+      var byGroup = {};
       list.forEach(function(r){
         var pid = r.player_id; if (!pid) return;
+        var metro = (cmetros[pid] || '').trim();
         var ct = (cities[pid] || '').trim();
-        if (!ct) return;
-        (byCity[ct.toLowerCase()] = byCity[ct.toLowerCase()] || []).push({pid: pid, name: r.name, ct: ct});
+        var key, label, via;
+        if (metro){ key = 'metro:' + metro.toLowerCase(); label = metro; via = 'metro'; }
+        else if (ct){ key = 'city:' + ct.toLowerCase(); label = ct; via = 'city'; }
+        else return;
+        (byGroup[key] = byGroup[key] || []).push({pid: pid, name: r.name, label: label, via: via});
       });
       var cflags = [];
-      Object.keys(byCity).forEach(function(k){
-        var grp = byCity[k];
+      Object.keys(byGroup).forEach(function(k){
+        var grp = byGroup[k];
+        var via = grp[0].via;
         for (var i=0;i<grp.length;i++){ for (var j=i+1;j<grp.length;j++){
           var a=grp[i], b=grp[j];
-          var ka=poolStateKeyOf(a.pid), kb=poolStateKeyOf(b.pid);
-          if (ka && kb && ka !== kb) continue;
+          if (via === 'city'){
+            var ka=poolStateKeyOf(a.pid), kb=poolStateKeyOf(b.pid);
+            if (ka && kb && ka !== kb) continue;   // same city NAME, different states
+          }
           var sa=seedOf[a.pid], sb=seedOf[b.pid];
           var slotA=slotOfSeed[sa], slotB=slotOfSeed[sb];
           if (slotA===undefined||slotB===undefined) continue;
           var rnd=meetingRound(slotA, slotB, size);
           if (rnd>earlyRounds) continue;
           cflags.push({ a_seed:sa, a_name:a.name, b_seed:sb, b_name:b.name,
-            city:a.ct, round:rnd, severity:(earlyRounds-rnd+1) });
+            city:a.label, via:via, round:rnd, severity:(earlyRounds-rnd+1) });
         }}
       });
       cflags.sort(function(a,b){ return b.severity - a.severity; });
@@ -768,6 +779,22 @@
   }
 
   function dropIntoSeed(to){ moveRow(seedOrder, to); }
+
+  // Button-based pool assignment for a known-unranked or unmatched player
+  // (mirrors quickMove, but the source is a section row rather than an
+  // array -- promoting is required first, same as a drag-in would do).
+  function quickAssignFromSection(key, toPool){
+    var row = findSectionRow(key);
+    if (!row) return;
+    var placed = promoteRowObj(row);
+    var dstArr = (toPool === -1) ? seedOrder : pools[toPool];
+    if (!dstArr) return;
+    dstArr.push(placed);
+    renderRankedTable();
+    renderPools();
+    renderSections();
+    recheckAll();
+  }
 
   // Button-based alternative to drag-and-drop for pool assignment: click a
   // number to send a player straight into that pool (from staging or from
@@ -899,33 +926,42 @@
       var cities = lastResult.player_cities || {};
       var cstates = lastResult.player_states || {};
       var cstateIds = lastResult.player_state_ids || {};
+      var cmetros = lastResult.player_metro || {};
       function stateKeyOf(pid){
         var sid = cstateIds[pid];
         if (sid !== null && sid !== undefined && sid !== '') return 'id:' + sid;
         var st = (cstates[pid] || '').trim();
         return st ? ('txt:' + st.toLowerCase()) : '';
       }
-      var byCity = {};
+      // Group by metro area when resolved, falling back to exact city text.
+      var byGroup = {};
       fullOrder.forEach(function(r){
         var pid = r.player_id; if (!pid) return;
+        var metro = (cmetros[pid] || '').trim();
         var ct = (cities[pid] || '').trim();
-        if (!ct) return;
-        (byCity[ct.toLowerCase()] = byCity[ct.toLowerCase()] || []).push({pid: pid, name: r.name, ct: ct});
+        var key, label, via;
+        if (metro){ key = 'metro:' + metro.toLowerCase(); label = metro; via = 'metro'; }
+        else if (ct){ key = 'city:' + ct.toLowerCase(); label = ct; via = 'city'; }
+        else return;
+        (byGroup[key] = byGroup[key] || []).push({pid: pid, name: r.name, label: label, via: via});
       });
       var cflags = [];
-      Object.keys(byCity).forEach(function(k){
-        var grp = byCity[k];
+      Object.keys(byGroup).forEach(function(k){
+        var grp = byGroup[k];
+        var via = grp[0].via;
         for (var i=0;i<grp.length;i++){ for (var j=i+1;j<grp.length;j++){
           var a=grp[i], b=grp[j];
-          var ka=stateKeyOf(a.pid), kb=stateKeyOf(b.pid);
-          if (ka && kb && ka !== kb) continue;   // same city name, different states
+          if (via === 'city'){
+            var ka=stateKeyOf(a.pid), kb=stateKeyOf(b.pid);
+            if (ka && kb && ka !== kb) continue;   // same city name, different states
+          }
           var sa=seedOf[a.pid], sb=seedOf[b.pid];
           var slotA=slotOfSeed[sa], slotB=slotOfSeed[sb];
           if (slotA===undefined||slotB===undefined) continue;
           var rnd=meetingRound(slotA, slotB, size);
           if (rnd>earlyRounds) continue;
           cflags.push({ a_seed:sa, a_name:a.name, b_seed:sb, b_name:b.name,
-            city:a.ct, round:rnd, severity:(earlyRounds-rnd+1) });
+            city:a.label, via:via, round:rnd, severity:(earlyRounds-rnd+1) });
         }}
       });
       cflags.sort(function(a,b){ return b.severity - a.severity; });
@@ -996,10 +1032,13 @@
       + '<th>' + (window.t?window.t('sd_city_col'):'City') + '</th>'
       + '</tr></thead><tbody>';
     flags.forEach(function(f){
+      var cityCell = esc(f.city) + (f.via === 'metro'
+        ? ' <span class="sd-math" title="' + (window.t?window.t('sd_city_metro_tip'):'Different exact city, same metro area') + '">(' + (window.t?window.t('sd_city_metro'):'metro') + ')</span>'
+        : '');
       h += '<tr>'
         + '<td class="sd-seed">R' + f.round + '</td>'
         + '<td><strong>#' + f.a_seed + '</strong> ' + esc(f.a_name) + ' <span class="sd-math">vs</span> <strong>#' + f.b_seed + '</strong> ' + esc(f.b_name) + '</td>'
-        + '<td>' + esc(f.city) + '</td>'
+        + '<td>' + cityCell + '</td>'
         + '</tr>';
     });
     h += '</tbody></table></div>';
@@ -1031,6 +1070,18 @@
   // here so they aren't shown twice.
   function renderSections(){
     var data = lastResult || {};
+    var poolsOn = poolCount > 1;
+    // Build the "→P1 →P2 ..." button cluster shared by both sections below.
+    function sectionAssignButtons(key){
+      if (!poolsOn) return '';
+      var out = '<span class="sd-assign">';
+      for (var p = 0; p < poolCount; p++){
+        out += '<button class="sd-assign-btn" onclick="quickAssignFromSection(\'' + esc(key).replace(/'/g,"\\'") + '\',' + p + ')" title="'
+          + (window.t?window.t('sd_move_to_pool'):'Move to Pool') + ' ' + (p+1) + '">' + (p+1) + '</button>';
+      }
+      out += '</span>';
+      return out;
+    }
     // ── Known but unranked (matched, no history) ──
     var ku = (data.known_unranked || []).filter(function(r){ return !promoted[rowKey(r)]; });
     var h2 = '';
@@ -1040,10 +1091,13 @@
          + '<div class="sd-draghint">' + (window.t?window.t('sd_drag_in_hint'):'Drag a player up into the seed order to place them.') + '</div>'
          + '<table class="sd"><tbody id="sdKuBody">';
       ku.forEach(function(row){
-        h2 += '<tr class="sd-section-row" draggable="true" data-key="' + esc(rowKey(row)) + '" data-origin="ku">'
+        var key = rowKey(row);
+        h2 += '<tr class="sd-section-row" draggable="true" data-key="' + esc(key) + '" data-origin="ku">'
           + '<td><span class="sd-grip">\u2630</span>' + esc(row.name)
           + (row.tag && row.tag.toLowerCase()!==row.name.toLowerCase() ? ' <span class="sd-math">('+esc(row.tag)+')</span>' : '')
-          + '</td></tr>';
+          + '</td>'
+          + (poolsOn ? '<td>' + sectionAssignButtons(key) + '</td>' : '')
+          + '</tr>';
       });
       h2 += '</tbody></table>';
     }
@@ -1057,18 +1111,23 @@
       h3 = '<div class="sd-section-title">' + (window.t?window.t('sd_unmatched'):'Unmatched entrants') + '</div>'
          + '<div class="sd-hint">' + (window.t?window.t('sd_unmatched_hint'):'These entrants don\'t match a local player. Assign each to an existing player or create a new one.') + '</div>'
          + '<div class="sd-draghint">' + (window.t?window.t('sd_drag_in_hint'):'Drag a player up into the seed order to place them.') + '</div>'
-         + '<table class="sd"><thead><tr><th>' + (window.t?window.t('sd_col_entrant'):'start.gg entrant') + '</th><th>' + (window.t?window.t('sd_col_action'):'Action') + '</th></tr></thead><tbody id="sdUmBody">';
+         + '<table class="sd"><thead><tr><th>' + (window.t?window.t('sd_col_entrant'):'start.gg entrant') + '</th><th>' + (window.t?window.t('sd_col_action'):'Action') + '</th>'
+         + (poolsOn ? '<th>' + (window.t?window.t('sd_col_assign'):'Assign') + '</th>' : '')
+         + '</tr></thead><tbody id="sdUmBody">';
       umAll.forEach(function(ent, i){
         if (promoted['t:' + (ent.tag || '')]) return;   // dragged into seed list
         var opts = '<option value="">' + (window.t?window.t('sd_select_player'):'— select player —') + '</option>'
           + localPlayers.map(function(p){ return '<option value="'+esc(p.id)+'">'+esc(p.name)+'</option>'; }).join('');
-        h3 += '<tr class="sd-section-row" draggable="true" data-key="' + esc('t:'+(ent.tag||'')) + '" data-origin="um" data-umidx="' + i + '">'
+        var umKey = 't:' + (ent.tag || '');
+        h3 += '<tr class="sd-section-row" draggable="true" data-key="' + esc(umKey) + '" data-origin="um" data-umidx="' + i + '">'
           + '<td><span class="sd-grip">\u2630</span>' + esc(ent.tag) + '</td><td>'
           + '<span class="sd-recon">'
             + '<select id="recon'+i+'">' + opts + '</select>'
             + '<button class="btn sec sm" onclick="reconAssign('+i+')" data-i18n="sd_assign">Assign</button>'
             + '<button class="btn sec sm" onclick="reconCreate('+i+')" data-i18n="sd_create">Create new</button>'
-          + '</span></td></tr>';
+          + '</span></td>'
+          + (poolsOn ? '<td>' + sectionAssignButtons(umKey) + '</td>' : '')
+          + '</tr>';
       });
       h3 += '</tbody></table>';
     }
