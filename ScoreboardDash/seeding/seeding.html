@@ -168,10 +168,23 @@
   var seriesList = [];
 
   function esc(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
-  function setStatus(t, warn){
+  var _statusFadeTimer = null;
+  function setStatus(t, warn, autoFade){
     var el = document.getElementById('sdStatus');
+    clearTimeout(_statusFadeTimer);
+    el.style.opacity = '1';
     el.textContent = t || '';
     el.className = 'sd-status' + (warn ? ' sd-warn' : '');
+    // Transient success notices (Save order, Copy, etc.) fade out after a
+    // couple seconds -- so clicking the same action again always produces
+    // a fresh, visibly-reappearing confirmation instead of silently doing
+    // nothing to a message that's still sitting there from last time.
+    if (autoFade && t){
+      _statusFadeTimer = setTimeout(function(){
+        el.style.opacity = '0';
+        setTimeout(function(){ if (el.style.opacity === '0') el.textContent = ''; }, 400);
+      }, 2500);
+    }
   }
 
   async function loadLocalPlayers(){
@@ -526,7 +539,7 @@
     renderRankedTable();
     renderSections();
     recheckAll();
-    setStatus(added + ' ' + (window.t?window.t('sd_added_nohist'):'player(s) added to the bottom of the seed list.'));
+    setStatus(added + ' ' + (window.t?window.t('sd_added_nohist'):'player(s) added to the bottom of the seed list.'), false, true);
   }
 
   // ── Saved seed orders (localStorage, keyed by event slug) ──
@@ -551,7 +564,7 @@
       saved_at: Date.now()
     };
     try { localStorage.setItem('sd_saved_orders', JSON.stringify(all)); } catch(e){}
-    setStatus(window.t?window.t('sd_order_saved'):'Seed order saved for this event -- it will be restored after recomputes.');
+    setStatus(window.t?window.t('sd_order_saved'):'Seed order saved for this event -- it will be restored after recomputes.', false, true);
   }
   function clearSavedOrder(){
     var all = _savedOrders();
@@ -1204,7 +1217,7 @@
       text = seedOrder.map(function(r, i){ return (i+1) + '. ' + r.name; }).join('\n');
     }
     if (navigator.clipboard) navigator.clipboard.writeText(text);
-    setStatus(window.t ? window.t('sd_copied') : 'Seed order copied.');
+    setStatus(window.t ? window.t('sd_copied') : 'Seed order copied.', false, true);
   }
 
   async function reconAssign(i){
@@ -1321,7 +1334,7 @@
                        country: row.proposed_country});
     // reflect that it's handled
     row.done = true;
-    setStatus((window.t?window.t('sd_loc_created'):'Created profile for') + ' ' + row.tag);
+    setStatus((window.t?window.t('sd_loc_created'):'Created profile for') + ' ' + row.tag, false, true);
     closeLocReview();
   }
 
@@ -1337,7 +1350,7 @@
       });
       var data = await r.json();
       if (!data.ok){ setStatus(data.message||'Save failed', true); return; }
-      setStatus((window.t?window.t('sd_loc_saved'):'Saved locations for') + ' ' + data.applied + ' ' + (window.t?window.t('sd_loc_players'):'players'));
+      setStatus((window.t?window.t('sd_loc_saved'):'Saved locations for') + ' ' + data.applied + ' ' + (window.t?window.t('sd_loc_players'):'players'), false, true);
       closeLocReview();
       await loadLocalPlayers();
       if (lastResult) recompute();   // re-run so state checks pick up new data

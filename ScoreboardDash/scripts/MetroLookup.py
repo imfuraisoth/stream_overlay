@@ -26,6 +26,8 @@ import re
 import urllib.error
 import urllib.request
 
+from scripts import LocationResolve
+
 _HERE = os.path.dirname(os.path.abspath(__file__))
 GAZETTEER_PATH = os.path.join(_HERE, "..", "resources", "us_places_gazetteer.json")
 CACHE_PATH = os.path.join(_HERE, "..", "data", "metro_cache.json")
@@ -78,7 +80,12 @@ def _normalize_city(city):
 
 def _coords_for(state, city):
     gaz = _load_gazetteer()
-    key = (state or "").strip().upper() + "|" + _normalize_city(city)
+    # The gazetteer keys on the 2-letter USPS code (that's what the Census
+    # file uses), but the player's state field is free text -- a TO might
+    # type "Texas" instead of "TX". Normalize through the same state-name
+    # mapping the location-review flow already uses, so either form works.
+    usps = LocationResolve.normalize_state(state) or (state or "").strip().upper()
+    key = usps + "|" + _normalize_city(city)
     return gaz.get(key)
 
 
@@ -91,7 +98,8 @@ def resolve_metro(state, city, timeout=5):
     if not state or not city:
         return None
     cache = _load_cache()
-    cache_key = state.strip().upper() + "|" + _normalize_city(city)
+    usps = LocationResolve.normalize_state(state) or state.strip().upper()
+    cache_key = usps + "|" + _normalize_city(city)
     if cache_key in cache:
         return cache[cache_key] or None   # cached "no match" is stored as null
 

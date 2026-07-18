@@ -12,7 +12,7 @@
     .sd-ctl { display: flex; flex-direction: column; gap: 4px; font-size: 11px; color: var(--fg2); }
     .sd-ctl select, .sd-ctl input { background: var(--bg3); border: 1px solid var(--border);
       color: var(--fg); border-radius: 4px; padding: 4px 6px; font-size: 13px; }
-    .sd-status { font-family: var(--font-d, 'Barlow Condensed'); font-size: 13px; color: var(--fg2); margin: 8px 0; }
+    .sd-status { font-family: var(--font-d, 'Barlow Condensed'); font-size: 13px; color: var(--fg2); margin: 8px 0; transition: opacity .4s; }
     .sd-warn { color: var(--accent2, #c43030); }
     .sd-section-title { font-family: var(--font-d, 'Barlow Condensed'); font-weight: 700;
       text-transform: uppercase; letter-spacing: .04em; font-size: 14px; color: var(--fg);
